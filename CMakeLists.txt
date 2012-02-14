@@ -1,0 +1,57 @@
+PROJECT(geomod)
+
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+
+ENABLE_LANGUAGE(CXX)
+
+# Add local modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+                      ${CMAKE_SOURCE_DIR}/cmake/Modules)
+
+FIND_PACKAGE(PythonLibs REQUIRED)
+FIND_PACKAGE(GoTools REQUIRED)
+FIND_PACKAGE(GoTrivariate REQUIRED)
+FIND_PACKAGE(GoCompositeModel REQUIRED)
+FIND_PACKAGE(SISL REQUIRED)
+FIND_PACKAGE(Parametrization REQUIRED)
+FIND_PACKAGE(TTL REQUIRED)
+FIND_PACKAGE(Newmat REQUIRED)
+FIND_PACKAGE(GoIgeslib REQUIRED)
+FIND_PACKAGE(GoTopology REQUIRED)
+FIND_PACKAGE(GoImplicitization REQUIRED)
+FIND_PACKAGE(GoIntersections REQUIRED)
+FIND_PACKAGE(Numpy)
+
+# Order of GoTools libraries is not random!
+SET(DEPLIBS ${PYTHON_LIBRARIES}
+            ${GoCompositeModel_LIBRARIES}
+            ${SISL_LIBRARIES}
+            ${Parametrization_LIBRARIES}
+            ${TTL_LIBRARIES}
+            ${GoIgeslib_LIBRARIES}
+            ${GoTopology_LIBRARIES}
+            ${GoIntersections_LIBRARIES}
+            ${GoImplicitization_LIBRARIES}
+            ${Newmat_LIBRARIES}
+            ${GoTools_LIBRARIES}
+            ${GoTrivariate_LIBRARIES})
+
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS}")
+
+SET(INCLUDE_DIRS ${GoTools_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+
+IF(PYTHON_NUMPY_FOUND)
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${PYTHON_NUMPY_INCLUDE_DIR})
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAS_NUMPY=1")
+ENDIF(PYTHON_NUMPY_FOUND)
+
+INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
+
+# Additional compiler flags required by GoTools
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS}")
+
+FILE(GLOB_RECURSE SRCS *.C)
+
+ADD_EXECUTABLE(geomod ${SRCS})
+TARGET_LINK_LIBRARIES(geomod ${DEPLIBS})

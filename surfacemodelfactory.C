@@ -1,0 +1,52 @@
+#include "surfacemodelfactory.h"
+
+#include "geomodeller.h"
+#include "pyutils.h"
+#include "surface.h"
+#include "surfacemodel.h"
+
+#include "GoTools/compositemodel/RegularizeFace.h"
+#include "GoTools/geometry/BoundedSurface.h"
+#include "GoTools/geometry/ParamSurface.h"
+
+#ifdef HAS_NUMPY
+#define PY_ARRAY_UNIQUE_SYMBOL GEOMOD_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <arrayobject.h>
+#endif
+
+PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"surface", NULL };
+  PyObject* surfaceo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&surfaceo))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(surfaceo);
+  if (!surface)
+    return NULL;
+
+  SurfaceModel* result = (SurfaceModel*)Surface_Type.tp_alloc(&SurfaceModel_Type,0);
+  shared_ptr<Go::BoundedSurface> par_surf_bd = 
+        dynamic_pointer_cast<Go::BoundedSurface, Go::ParamSurface>(surface);
+  if (par_surf_bd && !par_surf_bd->allIsSpline())
+    surface = shared_ptr<Go::ParamSurface>(par_surf_bd->allSplineCopy());
+
+  shared_ptr<Go::ftSurface> ft_surf(new Go::ftSurface(surface,-1));
+  ft_surf->createInitialEdges(modState.gapTolerance,modState.kinkTolerance);
+  shared_ptr<Go::RegularizeFace> reg_face(new Go::RegularizeFace(ft_surf,
+                                                                 modState.gapTolerance,
+                                                                 modState.kinkTolerance,
+                                                                 modState.neighbourTolerance));
+
+  std::vector<shared_ptr<Go::ftSurface> > sub_faces = reg_face->getRegularFaces();
+  result->data.reset(new Go::SurfaceModel(modState.approxTolerance,
+                                          modState.gapTolerance,
+                                          modState.neighbourTolerance,
+                                          modState.kinkTolerance,
+                                          modState.bendTolerance,
+                                          sub_faces));
+
+  return (PyObject*)result;
+}
