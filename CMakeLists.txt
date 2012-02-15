@@ -37,7 +37,6 @@ SET(DEPLIBS ${PYTHON_LIBRARIES}
 
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS}")
-
 SET(INCLUDE_DIRS ${GoTools_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
 
 INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
@@ -49,3 +48,14 @@ FILE(GLOB_RECURSE SRCS *.C)
 
 ADD_EXECUTABLE(geomod ${SRCS})
 TARGET_LINK_LIBRARIES(geomod ${DEPLIBS})
+
+ADD_CUSTOM_TARGET(doc ${CMAKE_BINARY_DIR}/geomod
+                      ${CMAKE_SOURCE_DIR}/doc/gendocumentation.py
+                      DEPENDS geomod
+                      COMMENT "Generating API documentation" VERBATIM)
+
+ADD_CUSTOM_TARGET(pdfdoc pdflatex
+                  api.tex
+                  DEPENDS doc
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc/latex
+                  COMMENT "Compiling documentation to PDF (doc/latex/api.pdf)" VERBATIM)

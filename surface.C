@@ -35,7 +35,12 @@ PyObject* Surface_Str(Surface* self)
   return PyString_FromString(str.str().c_str());
 }
 
-PyDoc_STRVAR(surface_raise_order__doc__,"Raise order of a spline surface");
+PyDoc_STRVAR(surface_raise_order__doc__,"Raise order of a spline surface\n"
+                                        "@param raise_u: Raise of order in u\n"
+                                        "@type raise_u: int (>= 0)\n"
+                                        "@param raise_v: Raise of order in v\n"
+                                        "@type raise_v: int (>= 0)\n"
+                                        "@returns: None");
 PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"raise_u", "raise_v", NULL };
@@ -58,7 +63,8 @@ PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
-PyDoc_STRVAR(surface_get_knots__doc__,"Return knots for a spline surface");
+PyDoc_STRVAR(surface_get_knots__doc__,"Return unique knots for a spline surface\n"
+                                      "@return: Tuple with List of float");
 PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
@@ -85,7 +91,12 @@ PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(surface_insert_knot__doc__,"Insert a knot in a parameter direction of spline surface");
+PyDoc_STRVAR(surface_insert_knot__doc__,"Insert a knot in a spline surface\n"
+                                        "@param direction: Direction to insert knot in\n"
+                                        "@type direction: int (0 or 1)\n"
+                                        "@param knot: The knot to insert\n"
+                                        "@type knot: float\n"
+                                        "@return: None");
 PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"direction", "knot", NULL };
@@ -112,7 +123,12 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
-PyDoc_STRVAR(surface_rotate__doc__,"Rotate a surface around a given axis with a given angle");
+PyDoc_STRVAR(surface_rotate__doc__,"Rotate a surface around an axis\n"
+                                   "@param axis: The axis to rotate around\n"
+                                   "@type axis: Point, list of floats or tuple of floats\n"
+                                   "@param angle: Angle to rotate surface with in radians\n"
+                                   "@type angle: float\n"
+                                   "@return: None");
 PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", "angle", NULL };

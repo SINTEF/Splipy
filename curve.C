@@ -44,7 +44,8 @@ PyObject* Curve_Str(Curve* self)
   return PyString_FromString(str.str().c_str());
 }
 
-PyDoc_STRVAR(curve_get_knots__doc__,"Get the unique knots of a spline curve");
+PyDoc_STRVAR(curve_get_knots__doc__,"Get the unique knots of a spline curve\n"
+                                    "@return: List of float\n");
 PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
@@ -63,7 +64,10 @@ PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve");
+PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve\n"
+                                      "@param knot: The knot to insert\n"
+                                      "@type knot: float\n"
+                                      "@return: None");
 PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"knot", NULL };

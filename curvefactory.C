@@ -14,7 +14,14 @@
 
 extern "C" {
 
-PyDoc_STRVAR(generate_circle__doc__, "Generate a circle");
+PyDoc_STRVAR(generate_circle__doc__, "Generate a circle\n"
+                                     "@param center: The center of the circle\n"
+                                     "@type center: Point, list of floats or tuple of floats\n"
+                                     "@param radius: The radius of the circle\n"
+                                     "@type radius: float\n"
+                                     "@param normal: The normal of the circle\n"
+                                     "@type normal: Point, list of floats or tuple of floats\n"
+                                     "@return: Curve describing the circle");
 PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "radius", "normal", NULL };
@@ -56,7 +63,16 @@ PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_circle_segment__doc__, "Generate a circle segment");
+PyDoc_STRVAR(generate_circle_segment__doc__, "Generate a circle segment\n"
+                                             "@param center: The center of the circle\n"
+                                             "@type center: Point, list of floats or tuple of floats\n"
+                                             "@param radius: The radius of the circle\n"
+                                             "@type radius: float\n"
+                                             "@param angle: The angle of the circle segment in radians\n"
+                                             "@type angle: float\n"
+                                             "@param normal: The normal of the circle\n"
+                                             "@type normal: Point, list of floats or tuple of floats\n"
+                                             "@return: Curve describing the circle segment");
 PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "angle", "normal", NULL };
@@ -91,7 +107,18 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse");
+PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse\n"
+                                      "@param center: Center of ellipse\n"
+                                      "@type center: Point, list of floats or tuple of floats\n"
+                                      "@param semi_axis: The semi-axis of the ellipse\n"
+                                      "@type semi_axis: Point, list of floats or tuple of floats\n"
+                                      "@param radius1: The first radius of the ellipse\n"
+                                      "@type radius1: float\n"
+                                      "@param radius2: The second radius of the ellipse\n"
+                                      "@type radius2: float\n"
+                                      "@param normal: Normal of ellipse\n"
+                                      "@type normal: Point, list of floats or tuple of floats\n"
+                                      "@return: Curve describing the ellipse");
 PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2", "normal", NULL };
@@ -129,7 +156,22 @@ PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_elliptic_segment__doc__, "Generate an elliptic segment");
+PyDoc_STRVAR(generate_elliptic_segment__doc__, "Generate an elliptic segment\n"
+                                               "@param center: Center of ellipse\n"
+                                               "@type center: Point, list of floats or tuple of floats\n"
+                                               "@param semi_axis: The semi-axis of the ellipse\n"
+                                               "@type semi_axis: Point, list of floats or tuple of floats\n"
+                                               "@param radius1: The first radius of the ellipse\n"
+                                               "@type radius1: float\n"
+                                               "@param radius2: The second radius of the ellipse\n"
+                                               "@type radius2: float\n"
+                                               "@param startangle: The starting angle of the elliptic segment\n"
+                                               "@type startangle: float\n"
+                                               "@param endangle: The ending angle of the elliptic segment\n"
+                                               "@type endangle: float\n"
+                                               "@param normal: Normal of ellipse\n"
+                                               "@type normal: Point, list of floats or tuple of floats\n"
+                                               "@return: Curve describing the ellipse");
 PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2",
@@ -164,7 +206,18 @@ PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_helix__doc__, "Generate a helix");
+PyDoc_STRVAR(generate_helix__doc__, "Generate a helix\n"
+                                    "@param center: Center of helix\n"
+                                    "@type center: Point, list of floats or tuple of floats\n"
+                                    "@param start: Starting point of helix\n"
+                                    "@type start: Point, list of floats or tuple of floats\n"
+                                    "@param axis: Center axis of helix\n"
+                                    "@type axis: Point, list of floats or tuple of floats\n"
+                                    "@param frequency: Frequency of helix\n"
+                                    "@type frequency: float\n"
+                                    "@param quadrants: Number of quadrants in helix\n"
+                                    "@type quadrants: 1 <= int <= 4\n"
+                                    "@return: Curve describing the helix");
 PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "axis", "frequency", "quadrants", NULL };
@@ -195,7 +248,16 @@ PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_interpolate_curve__doc__, "Generate a curve from a point cloud");
+PyDoc_STRVAR(generate_interpolate_curve__doc__, "Construct a spline curve from a point cloud\n"
+                                                "@param points: The point cloud\n"
+                                                "@type points: List of (Point, list of floats or tuple of floats)\n"
+                                                "@param parvals: The parameter values for the points\n"
+                                                "@type parvals: List of floats\n"
+                                                "@param order: (optional) The order of the spline curve\n"
+                                                "@type order: int >= 1\n"
+                                                "@param maxiter: (optional) The maxium number of iterations in interpolation scheme\n"
+                                                "@type maxiter: int >= 1\n"
+                                                "@return: Spline curve interpolating the point cloud\n");
 PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"points", "parvals", "order", "maxiter", NULL };
@@ -241,12 +303,12 @@ PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kw
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_line__doc__, "Line(p0,direction) - Generate an infinite line\n"
-                                   "\n"
-                                   "p0          : Point, list or tuple of floats\n"
-                                   "direction   : Point, list or tuple of floats\n"
-                                   "example:\n"
-                                   " - GoTools.Line([0,0,0],[1,0,0])"); 
+PyDoc_STRVAR(generate_line__doc__, "Generate an infinite line\n"
+                                   "@param p0: The starting point of the line\n"
+                                   "@type p0: Point, list of floats or tuple of floats\n"
+                                   "@param direction: The direction of the line\n"
+                                   "@type direction: Point, list of floats or tuple of floats\n"
+                                   "@return: Curve describing the line");
 PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "dir", NULL };
@@ -267,7 +329,14 @@ PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_line_segment__doc__, "Generate a line segment");
+PyDoc_STRVAR(generate_line_segment__doc__, "Generate a line segment\n"
+                                           "@param p0: The starting point of the line\n"
+                                           "@type p0: Point, list of floats or tuple of floats\n"
+                                           "@param p1: The ending point of the line\n"
+                                           "@type p1: Point, list of floats or tuple of floats\n"
+                                           "@param relative: (optional) p1 is relative to p0\n"
+                                           "@type relative: bool\n"
+                                           "@return: Curve describing the line segment");
 PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "p1", "relative", NULL };

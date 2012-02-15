@@ -22,18 +22,9 @@ GeoModellerState modState;
 extern "C"
 {
 
-PyDoc_STRVAR(get_version__doc__, "Get GeoModeller module version");
+PyDoc_STRVAR(get_go_version__doc__, "Get GoTools version\n"
+                                    "@return: String with version in format major.minor.patch");
 PyObject* GeoMod_GetVersion(PyObject* self)
-{
-  char tmp[24];
-  sprintf(tmp,"%i.%i.%i",GEOMODELLER_VERSION_MAJOR,
-                         GEOMODELLER_VERSION_MINOR,
-                         GEOMODELLER_VERSION_PATCH);
-  return Py_BuildValue((char*)"s", tmp);
-}
-
-PyDoc_STRVAR(get_go_version__doc__, "Get GoTools version");
-PyObject* GeoMod_GetGoToolsVersion(PyObject* self)
 {
   char tmp[24];
   sprintf(tmp,"%i.%i.%i",GO_VERSION_MAJOR,
@@ -42,10 +33,13 @@ PyObject* GeoMod_GetGoToolsVersion(PyObject* self)
   return Py_BuildValue((char*)"s", tmp);
 }
 
-PyDoc_STRVAR(set_dim__doc__, "Set geometry dimensionality");
+PyDoc_STRVAR(set_dim__doc__, "Set geometry dimensionality\n"
+                             "@param dimension: Dimensionality to set\n"
+                             "@type dimension: int (2 or 3)\n"
+                             "@return: None");
 PyObject* GeoMod_SetDimension(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"dim", NULL };
+  static const char* keyWords[] = {"dimension", NULL };
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
                                    (char**)keyWords,&modState.dim))
     return NULL;
@@ -54,7 +48,12 @@ PyObject* GeoMod_SetDimension(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-PyDoc_STRVAR(set_tolerance__doc__, "Set a tolerance");
+PyDoc_STRVAR(set_tolerance__doc__, "Set a tolerance\n"
+                                   "@param type: Tolerance that should be changed\n"
+                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', or 'bend'\n"
+                                   "@param tolerance: Tolerance to set\n"
+                                   "@type tolerance: float\n"
+                                   "@return: None");
 PyObject* GeoMod_SetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"type", "tolerance", NULL };
@@ -85,7 +84,10 @@ PyObject* GeoMod_SetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-PyDoc_STRVAR(set_final_output__doc__, "Set final output");
+PyDoc_STRVAR(set_final_output__doc__, "Set final output file\n"
+                                      "@param file: The output file\n"
+                                      "@type file:  string\n"
+                                      "@return:     None");
 PyObject* GeoMod_SetFinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"file", NULL };
@@ -101,7 +103,11 @@ PyObject* GeoMod_SetFinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-PyDoc_STRVAR(set_debug_level__doc__, "Set debug level");
+PyDoc_STRVAR(set_debug_level__doc__, "Set debug level\n"
+                                     "@param level: The requested debug level\n"
+                                     "@type  level: int >= 1\n"
+                                     "@return:      None\n"
+                                     "\n");
 PyObject* GeoMod_SetDebugLevel(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"level", NULL };
@@ -167,10 +173,19 @@ static void DoWrite(const std::string& fname, PyObject* objectso, bool convert)
     WriteEntity(g2_file,objectso,convert);
 }
 
-PyDoc_STRVAR(writeg2__doc__,"Write results to G2 file");
+PyDoc_STRVAR(writeg2__doc__,"Write entities to G2 file\n"
+                            "@param filename: The file to write\n"
+                            "@type  filename: string\n"
+                            "@param entities: The entities to write to file\n"
+                            "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
+                            "@param  convert: Convert to a spline entity before saving\n"
+                            "@type   convert: bool\n"
+                            "@param    level: Debug level to store file at\n"
+                            "@type     level: int >= 1\n"
+                            "@return: None");
 PyObject* GeoMod_WriteG2(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"filename", "objects", "convert", "level", NULL };
+  static const char* keyWords[] = {"filename", "entities", "convert", "level", NULL };
   PyObject* objectso;
   char* fname = 0;  
   bool convert=false;
@@ -186,7 +201,10 @@ PyObject* GeoMod_WriteG2(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-PyDoc_STRVAR(readg2__doc__,"Read entity from G2 file");
+PyDoc_STRVAR(readg2__doc__,"Read entities from G2 file\n"
+                            "@param filename: The file to read\n"
+                            "@type  filename: string\n"
+                            "@return: Curve, Surface, Volume, SurfaceModel or a list of these");
 PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"filename", NULL };
@@ -225,10 +243,15 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(final_output__doc__,"Write final results to G2 file");
+PyDoc_STRVAR(final_output__doc__,"Write final entities to G2 file\n"
+                                 "@param entities: The entities to write to file\n"
+                                 "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
+                                 "@param  convert: Convert to a spline entity before saving\n"
+                                 "@type   convert: bool\n"
+                                 "@return: None");
 PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"objects", "convert", NULL };
+  static const char* keyWords[] = {"entities", "convert", NULL };
   PyObject* objectso;
   bool convert=false;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|b",
@@ -246,9 +269,8 @@ PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyMethodDef GeoMod_methods[] = {
      // setup and general methods
-     {(char*)"GetVersion",            (PyCFunction)GeoMod_GetVersion,        METH_VARARGS,               get_version__doc__},
+     {(char*)"GetVersion",            (PyCFunction)GeoMod_GetVersion,        METH_VARARGS,               get_go_version__doc__},
      {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS,               set_tolerance__doc__},
-     {(char*)"GetGoToolsVersion",     (PyCFunction)GeoMod_GetGoToolsVersion, METH_VARARGS,               get_go_version__doc__},
      {(char*)"SetDimension",          (PyCFunction)GeoMod_SetDimension,      METH_VARARGS|METH_KEYWORDS, set_dim__doc__},
      {(char*)"SetFinalOutput",        (PyCFunction)GeoMod_SetFinalOutput,    METH_VARARGS|METH_KEYWORDS, set_final_output__doc__},
 
