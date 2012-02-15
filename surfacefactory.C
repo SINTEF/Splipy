@@ -19,12 +19,6 @@
 #include "GoTools/geometry/SweepSurfaceCreator.h"
 #include "GoTools/geometry/Torus.h"
 
-#ifdef HAS_NUMPY
-#define PY_ARRAY_UNIQUE_SYMBOL GEOMOD_ARRAY_API
-#define NO_IMPORT_ARRAY
-#include <arrayobject.h>
-#endif
-
 PyObject* Generate_Plane(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "normal", NULL };

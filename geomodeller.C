@@ -11,11 +11,6 @@
 
 #include <fstream>
 
-#ifdef HAS_NUMPY
-#define PY_ARRAY_UNIQUE_SYMBOL GEOMOD_ARRAY_API
-#include <arrayobject.h>
-#endif
-
 GeoModellerState modState;
 
 // Documentation for modules stored here so we don't have to extern them
@@ -360,9 +355,6 @@ registerPythonTypes()
   geoModule = Py_InitModule((char*)"GoTools", GeoMod_methods);
   if (!geoModule)
     return;
-#ifdef USE_NUMPY
-  import_array();
-#endif
   PyModule_AddObject(geoModule,(char*)"Curve",(PyObject*)&Curve_Type);
   PyModule_AddObject(geoModule,(char*)"Point",(PyObject*)&Point_Type);
   PyModule_AddObject(geoModule,(char*)"Surface",(PyObject*)&Surface_Type);

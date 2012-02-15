@@ -1,11 +1,5 @@
 #include "pyutils.h"
 
-#ifdef HAS_NUMPY
-#define PY_ARRAY_UNIQUE_SYMBOL GEOMOD_ARRAY_API
-#define NO_IMPORT_ARRAY
-#include <arrayobject.h>
-#endif
-
 void InitializeTypeObject(PyTypeObject* type_object)
 { 
   static PyTypeObject py_type_object_header = { PyObject_HEAD_INIT(NULL) 0};
@@ -24,6 +18,7 @@ shared_ptr<Go::Point> PyObject_AsGoPoint(PyObject* obj)
     return ((Point*)obj)->data;
 
   shared_ptr<Go::Point> result;
+
   // A python list
   if (PyObject_TypeCheck(obj,&PyList_Type)) {
     std::vector<double> vec;
@@ -44,18 +39,6 @@ shared_ptr<Go::Point> PyObject_AsGoPoint(PyObject* obj)
       result.reset(new Go::Point(&vec[0],&vec[0]+vec.size(),true));
   }
 
-  // A numpy array
-#ifdef HAS_NUMPY
-//  if (!result) {
-//    PyArrayObject* vector = (PyArrayObject*)PyArray_FromAny(obj,NULL,0,0,0,NULL);
-//    if (vector) {
-//      int siz = vector->dimensions[0];
-//      result.reset(new Go::Point((double*)vector->data,
-//                                 ((double*)vector->data)+siz,true));
-//    }
-//  }
-#endif
-  
   return result;
 }
 

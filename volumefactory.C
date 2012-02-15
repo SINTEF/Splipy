@@ -16,12 +16,6 @@
 #include "GoTools/trivariate/TorusVolume.h"
 #include "GoTools/trivariate/SweepVolumeCreator.h"
 
-#ifdef HAS_NUMPY
-#define PY_ARRAY_UNIQUE_SYMBOL GEOMOD_ARRAY_API
-#define NO_IMPORT_ARRAY
-#include <arrayobject.h>
-#endif
-
 PyObject* Generate_Box(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"corner", "axis_x", "axis_y", "length_x", "length_y", "length_z", NULL };

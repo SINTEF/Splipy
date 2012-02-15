@@ -8,12 +8,6 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef HAS_NUMPY
-#define PY_ARRAY_UNIQUE_SYMBOL GEOMOD_ARRAY_API
-#define NO_IMPORT_ARRAY
-#include <arrayobject.h>
-#endif
-
 extern "C"
 {
 PyTypeObject Curve_Type;
