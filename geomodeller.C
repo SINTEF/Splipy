@@ -2,6 +2,7 @@
 
 #include "curve.h"
 #include "point.h"
+#include "pyutils.h"
 #include "surface.h"
 #include "surfacemodel.h"
 #include "volume.h"
@@ -13,46 +14,10 @@
 
 GeoModellerState modState;
 
-// Documentation for modules stored here so we don't have to extern them
-
 #include "curvefactory.h"
-PyDoc_STRVAR(generate_line__doc__, "Generate a line");
-PyDoc_STRVAR(generate_line_segment__doc__, "Generate a line segment");
-PyDoc_STRVAR(generate_circle__doc__, "Generate a circle");
-PyDoc_STRVAR(generate_circle_segment__doc__, "Generate a circle segment");
-PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse");
-PyDoc_STRVAR(generate_elliptic_segment__doc__, "Generate an elliptic segment");
-PyDoc_STRVAR(generate_helix__doc__, "Generate a helix");
-PyDoc_STRVAR(generate_interpolate_curve__doc__, "Generate a curve from a point cloud");
-
 #include "surfacefactory.h"
-PyDoc_STRVAR(generate_plane__doc__,"Generate an infinite plane");
-PyDoc_STRVAR(generate_sphere_surface__doc__,"Generate a sphere surface");
-PyDoc_STRVAR(generate_cylinder_surface__doc__,"Generate a cylinder surface");
-PyDoc_STRVAR(generate_cone_surface__doc__,"Generate a cone surface");
-PyDoc_STRVAR(generate_torus_surface__doc__,"Generate a torus surface");
-PyDoc_STRVAR(generate_circular_disc__doc__,"Generate a circular disc");
-PyDoc_STRVAR(generate_sweep_curve_rotational__doc__,"Generate a surface by rotationally sweeping a curve");
-PyDoc_STRVAR(generate_sweep_curve_linear__doc__,"Generate a surface by linearly sweeping a curve along a curve");
-PyDoc_STRVAR(generate_rectangle__doc__,"Generate a rectangle");
-PyDoc_STRVAR(generate_trim_surface__doc__,"Generate a surface by trimming one surface with another");
-PyDoc_STRVAR(generate_addloop__doc__,"Generate a surface by adding a loop");
-PyDoc_STRVAR(generate_loft_curves__doc__,"Generate a surface by lofting curves");
-
 #include "volumefactory.h"
-PyDoc_STRVAR(generate_box__doc__, "Generate a box");
-PyDoc_STRVAR(generate_cone__doc__, "Generate a cone");
-PyDoc_STRVAR(generate_cylinder__doc__, "Generate a cylinder");
-PyDoc_STRVAR(generate_parallelepiped__doc__, "Generate a parallelepiped");
-PyDoc_STRVAR(generate_sphere__doc__, "Generate a sphere");
-PyDoc_STRVAR(generate_torus__doc__, "Generate a torus");
-PyDoc_STRVAR(generate_torus_segment__doc__, "Generate a torus segment");
-PyDoc_STRVAR(generate_loft_surfaces__doc__, "Generate a volume by lofting surfaces");
-PyDoc_STRVAR(generate_sweep_surface_linear__doc__, "Generate a volume by sweeping a surface along a curve, or curve along a surface");
-PyDoc_STRVAR(generate_sweep_surface_rotational__doc__, "Generate a volume by sweeping a rotated surface");
-
 #include "surfacemodelfactory.h"
-PyDoc_STRVAR(generate_regularize_surface__doc__, "Regularize a surface");
 
 extern "C"
 {
@@ -281,60 +246,23 @@ PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyMethodDef GeoMod_methods[] = {
      // setup and general methods
-     {(char*)"GetVersion",            (PyCFunction)GeoMod_GetVersion,        METH_VARARGS, get_version__doc__},
-     {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS, set_tolerance__doc__},
-     {(char*)"GetGoToolsVersion",     (PyCFunction)GeoMod_GetGoToolsVersion, METH_VARARGS, get_go_version__doc__},
-     {(char*)"SetDimension",          (PyCFunction)GeoMod_SetDimension, METH_VARARGS|METH_KEYWORDS, set_dim__doc__},
-     {(char*)"SetFinalOutput",        (PyCFunction)GeoMod_SetFinalOutput, METH_VARARGS|METH_KEYWORDS, set_final_output__doc__},
-
-     // curve generators
-     {(char*)"Circle",                (PyCFunction)Generate_Circle, METH_VARARGS|METH_KEYWORDS, generate_circle__doc__},
-     {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment, METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
-     {(char*)"Ellipse",               (PyCFunction)Generate_Ellipse, METH_VARARGS|METH_KEYWORDS, generate_ellipse__doc__},
-     {(char*)"EllipticSegment",       (PyCFunction)Generate_EllipticSegment, METH_VARARGS|METH_KEYWORDS, generate_elliptic_segment__doc__},
-     {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve, METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
-     {(char*)"Helix",                 (PyCFunction)Generate_Helix, METH_VARARGS|METH_KEYWORDS, generate_helix__doc__},
-     {(char*)"Line",                  (PyCFunction)Generate_Line, METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
-     {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment, METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
-
-     // surface generators
-     {(char*)"Plane",                 (PyCFunction)Generate_Plane, METH_VARARGS|METH_KEYWORDS, generate_plane__doc__},
-     {(char*)"CircularDisc",          (PyCFunction)Generate_CircularDisc, METH_VARARGS|METH_KEYWORDS, generate_plane__doc__},
-     {(char*)"SphereSurface",         (PyCFunction)Generate_SphereSurface, METH_VARARGS|METH_KEYWORDS, generate_sphere_surface__doc__},
-     {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface, METH_VARARGS|METH_KEYWORDS, generate_sphere_surface__doc__},
-     {(char*)"ConeSurface",           (PyCFunction)Generate_ConeSurface, METH_VARARGS|METH_KEYWORDS, generate_cone_surface__doc__},
-     {(char*)"TorusSurface",          (PyCFunction)Generate_TorusSurface, METH_VARARGS|METH_KEYWORDS, generate_torus_surface__doc__},
-     {(char*)"Rectangle",             (PyCFunction)Generate_Rectangle, METH_VARARGS|METH_KEYWORDS, generate_rectangle__doc__},
-     {(char*)"RotationalCurveSweep",  (PyCFunction)Generate_SweepCurveRotational, METH_VARARGS|METH_KEYWORDS, generate_sweep_curve_rotational__doc__},
-     {(char*)"LinearCurveSweep",      (PyCFunction)Generate_SweepCurveLinear, METH_VARARGS|METH_KEYWORDS, generate_sweep_curve_linear__doc__},
-     {(char*)"TrimSurface",           (PyCFunction)Generate_TrimSurface, METH_VARARGS|METH_KEYWORDS, generate_trim_surface__doc__},
-     {(char*)"AddLoop",               (PyCFunction)Generate_AddLoop, METH_VARARGS|METH_KEYWORDS, generate_addloop__doc__},
-     {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves, METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},
-
-     // volume generators
-     {(char*)"Box",                   (PyCFunction)Generate_Box, METH_VARARGS|METH_KEYWORDS, generate_box__doc__},
-     {(char*)"Cone",                  (PyCFunction)Generate_Cone, METH_VARARGS|METH_KEYWORDS, generate_cone__doc__},
-     {(char*)"Cylinder",              (PyCFunction)Generate_Cylinder, METH_VARARGS|METH_KEYWORDS, generate_cylinder__doc__},
-     {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces, METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},
-     {(char*)"LinearSurfaceSweep",    (PyCFunction)Generate_SweepSurfaceLinear, METH_VARARGS|METH_KEYWORDS, generate_sweep_surface_linear__doc__},
-     {(char*)"RotationalSurfaceSweep",(PyCFunction)Generate_SweepSurfaceRotational, METH_VARARGS|METH_KEYWORDS, generate_sweep_surface_rotational__doc__},
-     {(char*)"Parallelepiped",        (PyCFunction)Generate_Parallelepiped, METH_VARARGS|METH_KEYWORDS, generate_parallelepiped__doc__},
-     {(char*)"Sphere",                (PyCFunction)Generate_Sphere, METH_VARARGS|METH_KEYWORDS, generate_sphere__doc__},
-     {(char*)"Torus",                 (PyCFunction)Generate_Torus, METH_VARARGS|METH_KEYWORDS, generate_torus__doc__},
-     {(char*)"TorusSegment",          (PyCFunction)Generate_Torus, METH_VARARGS|METH_KEYWORDS, generate_torus_segment__doc__},
-
-     // surface model generators
-     {(char*)"RegularizeSurface",     (PyCFunction)Generate_RegularizeSurface, METH_VARARGS|METH_KEYWORDS, generate_regularize_surface__doc__},
+     {(char*)"GetVersion",            (PyCFunction)GeoMod_GetVersion,        METH_VARARGS,               get_version__doc__},
+     {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS,               set_tolerance__doc__},
+     {(char*)"GetGoToolsVersion",     (PyCFunction)GeoMod_GetGoToolsVersion, METH_VARARGS,               get_go_version__doc__},
+     {(char*)"SetDimension",          (PyCFunction)GeoMod_SetDimension,      METH_VARARGS|METH_KEYWORDS, set_dim__doc__},
+     {(char*)"SetFinalOutput",        (PyCFunction)GeoMod_SetFinalOutput,    METH_VARARGS|METH_KEYWORDS, set_final_output__doc__},
 
      // I/O
-     {(char*)"FinalOutput",           (PyCFunction)GeoMod_FinalOutput, METH_VARARGS|METH_KEYWORDS, final_output__doc__},
-     {(char*)"ReadG2",                (PyCFunction)GeoMod_ReadG2, METH_VARARGS|METH_KEYWORDS, readg2__doc__},
-     {(char*)"SetDebugLevel",         (PyCFunction)GeoMod_SetDebugLevel, METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
-     {(char*)"WriteG2",               (PyCFunction)GeoMod_WriteG2, METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
+     {(char*)"FinalOutput",           (PyCFunction)GeoMod_FinalOutput,       METH_VARARGS|METH_KEYWORDS, final_output__doc__},
+     {(char*)"ReadG2",                (PyCFunction)GeoMod_ReadG2,            METH_VARARGS|METH_KEYWORDS, readg2__doc__},
+     {(char*)"SetDebugLevel",         (PyCFunction)GeoMod_SetDebugLevel,     METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
+     {(char*)"WriteG2",               (PyCFunction)GeoMod_WriteG2,           METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
      
      // done - need a null entry for termination
      {NULL,                       NULL,                                  0,            NULL}
    };
+
+PyMethodDef* allmethods=NULL;
 
 PyMODINIT_FUNC
 InitGeoModTypes()
@@ -352,7 +280,16 @@ registerPythonTypes()
   InitGeoModTypes();
   Py_INCREF(&Point_Type);
   PyObject* geoModule;
-  geoModule = Py_InitModule((char*)"GoTools", GeoMod_methods);
+  std::vector<PyMethodDef> defs;
+  PyMethods_Append(defs,GeoMod_methods);
+  PyMethods_Append(defs,CurveFactory_methods);
+  PyMethods_Append(defs,SurfaceFactory_methods);
+  PyMethods_Append(defs,SurfaceModelFactory_methods);
+  PyMethods_Append(defs,VolumeFactory_methods);
+  defs.push_back({NULL,NULL,0,NULL});
+  allmethods = new PyMethodDef[defs.size()];
+  memcpy(allmethods,&defs[0],defs.size()*sizeof(PyMethodDef));
+  geoModule = Py_InitModule((char*)"GoTools", allmethods);
   if (!geoModule)
     return;
   PyModule_AddObject(geoModule,(char*)"Curve",(PyObject*)&Curve_Type);
@@ -365,6 +302,11 @@ registerPythonTypes()
 }
 
 // helper functions
+void GeoMod_Deinit()
+{
+  delete[] allmethods;
+}
+
 Go::Point someNormal(const Go::Point& vec)
 {
   if (vec.dimension() == 2)

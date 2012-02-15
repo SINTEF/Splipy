@@ -12,51 +12,9 @@
 #include "GoTools/geometry/SISLconversion.h"
 #include "sislP.h"
 
-PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"p0", "dir", NULL };
-  PyObject* p0o;
-  PyObject* diro;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
-                                   (char**)keyWords,&p0o,&diro))
-    return NULL;
+extern "C" {
 
-  shared_ptr<Go::Point> p0 = PyObject_AsGoPoint(p0o);
-  shared_ptr<Go::Point> dir = PyObject_AsGoPoint(diro);
-  if (!p0 || !dir)
-    return NULL;
-
-  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-  result->data.reset(new Go::Line(*p0,*dir));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"p0", "p1", "relative", NULL };
-  PyObject* p0o;
-  PyObject* p1o;
-  bool vector=false;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|b",
-                                   (char**)keyWords,&p0o,&p1o,&vector))
-    return NULL;
-
-  shared_ptr<Go::Point> p0 = PyObject_AsGoPoint(p0o);
-  shared_ptr<Go::Point> p1 = PyObject_AsGoPoint(p1o);
-  if (!p0 || !p1)
-    return NULL;
-
-  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-  if (vector)
-    result->data.reset(new Go::Line(*p0,*p1));
-  else
-    result->data.reset(new Go::Line(*p0,*p1-*p0));
-  static_pointer_cast<Go::Line>(result->data)->setParamBounds(0.0,1.0);
-
-  return (PyObject*)result;
-}
-
+PyDoc_STRVAR(generate_circle__doc__, "Generate a circle");
 PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "radius", "normal", NULL };
@@ -98,6 +56,7 @@ PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_circle_segment__doc__, "Generate a circle segment");
 PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "angle", "normal", NULL };
@@ -132,6 +91,7 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse");
 PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2", "normal", NULL };
@@ -169,6 +129,7 @@ PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_elliptic_segment__doc__, "Generate an elliptic segment");
 PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2",
@@ -203,6 +164,7 @@ PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_helix__doc__, "Generate a helix");
 PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "axis", "frequency", "quadrants", NULL };
@@ -233,6 +195,7 @@ PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_interpolate_curve__doc__, "Generate a curve from a point cloud");
 PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"points", "parvals", "order", "maxiter", NULL };
@@ -276,4 +239,70 @@ PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kw
   result->data = approx.getApproxCurve(maxdist,avdist,max_iter);
 
   return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_line__doc__, "Line(p0,direction) - Generate an infinite line\n"
+                                   "\n"
+                                   "p0          : Point, list or tuple of floats\n"
+                                   "direction   : Point, list or tuple of floats\n"
+                                   "example:\n"
+                                   " - GoTools.Line([0,0,0],[1,0,0])"); 
+PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"p0", "dir", NULL };
+  PyObject* p0o;
+  PyObject* diro;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&p0o,&diro))
+    return NULL;
+
+  shared_ptr<Go::Point> p0 = PyObject_AsGoPoint(p0o);
+  shared_ptr<Go::Point> dir = PyObject_AsGoPoint(diro);
+  if (!p0 || !dir)
+    return NULL;
+
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  result->data.reset(new Go::Line(*p0,*dir));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_line_segment__doc__, "Generate a line segment");
+PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"p0", "p1", "relative", NULL };
+  PyObject* p0o;
+  PyObject* p1o;
+  bool vector=false;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|b",
+                                   (char**)keyWords,&p0o,&p1o,&vector))
+    return NULL;
+
+  shared_ptr<Go::Point> p0 = PyObject_AsGoPoint(p0o);
+  shared_ptr<Go::Point> p1 = PyObject_AsGoPoint(p1o);
+  if (!p0 || !p1)
+    return NULL;
+
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  if (vector)
+    result->data.reset(new Go::Line(*p0,*p1));
+  else
+    result->data.reset(new Go::Line(*p0,*p1-*p0));
+  static_pointer_cast<Go::Line>(result->data)->setParamBounds(0.0,1.0);
+
+  return (PyObject*)result;
+}
+
+  PyMethodDef CurveFactory_methods[] = {
+     {(char*)"Circle",                (PyCFunction)Generate_Circle,           METH_VARARGS|METH_KEYWORDS, generate_circle__doc__},
+     {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment,    METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
+     {(char*)"Ellipse",               (PyCFunction)Generate_Ellipse,          METH_VARARGS|METH_KEYWORDS, generate_ellipse__doc__},
+     {(char*)"EllipticSegment",       (PyCFunction)Generate_EllipticSegment,  METH_VARARGS|METH_KEYWORDS, generate_elliptic_segment__doc__},
+     {(char*)"Helix",                 (PyCFunction)Generate_Helix,            METH_VARARGS|METH_KEYWORDS, generate_helix__doc__},
+     {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve, METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
+     {(char*)"Line",                  (PyCFunction)Generate_Line,             METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
+     {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,      METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
+     {NULL,                           NULL,                                   0,                          NULL}
+  };
+
 }

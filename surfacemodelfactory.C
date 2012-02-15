@@ -9,6 +9,9 @@
 #include "GoTools/geometry/BoundedSurface.h"
 #include "GoTools/geometry/ParamSurface.h"
 
+extern "C" {
+
+PyDoc_STRVAR(generate_regularize_surface__doc__, "Regularize a surface");
 PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", NULL };
@@ -43,4 +46,11 @@ PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* k
                                           sub_faces));
 
   return (PyObject*)result;
+}
+
+PyMethodDef SurfaceModelFactory_methods[] = {
+     {(char*)"RegularizeSurface", (PyCFunction)Generate_RegularizeSurface, METH_VARARGS|METH_KEYWORDS, generate_regularize_surface__doc__},
+     {NULL,                       0,                                       0,                          NULL}
+  };
+
 }

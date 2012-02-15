@@ -51,3 +51,5 @@ PyObject* ReadG2(std::ifstream& str, PyTypeObject& type)
 
   return (PyObject*)result;
 }
+
+void GeoMod_Deinit();

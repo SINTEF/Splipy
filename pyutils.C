@@ -65,3 +65,11 @@ shared_ptr<Go::ParamVolume> PyObject_AsGoVolume(PyObject* obj)
 
   return shared_ptr<Go::ParamVolume>();
 }
+
+void PyMethods_Append(std::vector<PyMethodDef>& defs, PyMethodDef* start)
+{
+  while (start && start->ml_name) {
+    defs.push_back(*start);
+    start++;
+  }
+}

@@ -19,236 +19,8 @@
 #include "GoTools/geometry/SweepSurfaceCreator.h"
 #include "GoTools/geometry/Torus.h"
 
-PyObject* Generate_Plane(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"p0", "normal", NULL };
-  PyObject* p0o;
-  PyObject* normalo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
-                                   (char**)keyWords,&p0o,&normalo))
-    return NULL;
-
-  shared_ptr<Go::Point> p0     = PyObject_AsGoPoint(p0o);
-  shared_ptr<Go::Point> normal = PyObject_AsGoPoint(normalo);
-  if (!p0o || !normal)
-    return NULL;
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  result->data.reset(new Go::Plane(*p0,*normal));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_SphereSurface(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"center", "radius", NULL };
-  PyObject* centero;
-  double radius;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Od",
-                                   (char**)keyWords,&centero,&radius))
-    return NULL;
-
-  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  if (!center)
-    return NULL;
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  Go::Point x_axis(1.0, 0.0, 0.0);
-  Go::Point z_axis(0.0, 0.0, 1.0);
-
-  result->data.reset(new Go::Sphere(radius,*center,x_axis,z_axis));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_CylinderSurface(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"center", "axis", "radius", "height", NULL };
-  PyObject* centero;
-  PyObject* axiso;
-  double radius;
-  double height = std::numeric_limits<double>::infinity();
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOd|d",
-                                   (char**)keyWords,&centero,
-                                   &axiso,&radius,&height))
-    return NULL;
-
-  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
-    return NULL;
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  result->data.reset(new Go::Cylinder(radius,*center,*axis,someNormal(*axis)));
-  if (height != std::numeric_limits<double>::infinity())
-    static_pointer_cast<Go::Cylinder>(result->data)->setParameterBounds(0.0,0.0,2.0*M_PI,height);
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_ConeSurface(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"apex", "axis", "angle", "radius", "height", NULL };
-  PyObject* centero;
-  PyObject* axiso;
-  double apex;
-  double angle;
-  double height = std::numeric_limits<double>::infinity();
-  double radius = 0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOd|dd",
-                                   (char**)keyWords,&centero,
-                                   &axiso,&apex,&angle,&height,&radius))
-    return NULL;
-
-  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
-    return NULL;
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-
-  result->data.reset(new Go::Cone(radius,*center,*axis,someNormal(*axis), angle));
-  static_pointer_cast<Go::Cylinder>(result->data)->setParameterBounds(0.0,0.0,2.0*M_PI,height);
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_TorusSurface(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"center", "axis", "major_radius", "minor_radius", NULL };
-  PyObject* centero;
-  PyObject* axiso;
-  double major_radius;
-  double minor_radius;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOdd",
-                                   (char**)keyWords,&centero,&axiso,
-                                   &major_radius,&minor_radius))
-    return NULL;
-
-  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
-    return NULL;
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-
-  result->data.reset(new Go::Torus(major_radius,minor_radius,
-                                      *center,*axis,someNormal(*axis)));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_CircularDisc(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"center", "boundarypoint", "normal", NULL };
-  PyObject* centero;
-  PyObject* bpointo;
-  PyObject* normalo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|O",
-                                   (char**)keyWords,&centero,&bpointo,&normalo))
-    return NULL;
-
-  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  shared_ptr<Go::Point> bpoint = PyObject_AsGoPoint(bpointo);
-  if (!center || !bpoint)
-    return NULL;
-
-  Go::Point normal(0.0,0.0);
-  if (modState.dim == 3) {
-    shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
-    if (!norm)
-      return NULL;
-    normal = *norm;
-  }
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-
-  Go::Point x_axis = *bpoint-*center;
-  Go::Point z_axis = normal-((normal*x_axis)/x_axis.length2())*x_axis;
-  result->data.reset(new Go::Disc(*center,x_axis.length(),x_axis,z_axis));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_Rectangle(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"corner", "axis_x", "axis_y", "length_x", "length_y", NULL };
-  PyObject* cornero;
-  PyObject* axisxo;
-  PyObject* axisyo;
-  double length_x, length_y;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOOdd",
-                                   (char**)keyWords,&cornero,&axisxo,
-                                   &axisyo,&length_x,&length_y))
-    return NULL;
-
-  shared_ptr<Go::Point> corner = PyObject_AsGoPoint(cornero);
-  shared_ptr<Go::Point> axisx  = PyObject_AsGoPoint(axisxo);
-  shared_ptr<Go::Point> axisy  = PyObject_AsGoPoint(axisyo);
-  if (!corner || !axisx || !axisy)
-    return NULL;
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-
-  Go::Point dir_v_ortog = *axisy-(*axisx*(*axisy))/axisx->length2()*(*axisx);
-  if (modState.dim == 3)
-    *axisy = (*axisx) % dir_v_ortog;
-  result->data.reset(new Go::Plane(*corner,*axisy, *axisx));
-  static_pointer_cast<Go::Plane>(result->data)->setParameterBounds(0.0,0.0,length_x,length_y);
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_SweepCurveRotational(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"curve", "pos", "axis", "angle", NULL };
-  PyObject* curveo;
-  PyObject* poso;
-  PyObject* axiso;
-  double angle = 2*M_PI;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO|d",
-                                   (char**)keyWords,&curveo,&poso,&axiso,&angle))
-    return NULL;
-
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(curveo);
-  shared_ptr<Go::Point> pos   = PyObject_AsGoPoint(poso);
-  shared_ptr<Go::Point> axis  = PyObject_AsGoPoint(axiso);
-
-  if (!curve || !pos || !axis)
-    return NULL;
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  shared_ptr<Go::SplineCurve> c = convertSplineCurve(curve);
-  result->data.reset(Go::SweepSurfaceCreator::rotationalSweptSurface(*c, angle, *pos, *axis));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_TrimSurface(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"original", "trim", NULL };
-  PyObject* originalo;
-  PyObject* trimo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
-                                   (char**)keyWords,&originalo,&trimo))
-    return NULL;
-
-  shared_ptr<Go::ParamSurface> surf1 = PyObject_AsGoSurface(originalo);
-  shared_ptr<Go::ParamSurface> surf2 = PyObject_AsGoSurface(trimo);
-  if (!surf1 || !surf2)
-    return NULL;
-
-  shared_ptr<Go::SplineSurface> surf_base = convertSplineSurface(surf1);
-  shared_ptr<Go::SplineSurface> surf_remove = convertSplineSurface(surf2);
-
-  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  std::vector<std::shared_ptr<Go::BoundedSurface> > trimmed_sfs =
-      Go::BoundedUtils::trimSurfWithSurf(surf_base, surf_remove, fabs(modState.gapTolerance));
-  result->data = trimmed_sfs[0];
-
-  return (PyObject*)result;
-}
-
+extern "C" {
+PyDoc_STRVAR(generate_addloop__doc__,"Generate a surface by adding a loop");
 PyObject* Generate_AddLoop(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", "loop", NULL };
@@ -363,6 +135,118 @@ PyObject* Generate_AddLoop(PyObject* self, PyObject* args, PyObject* kwds)
   result->data.reset(new Go::BoundedSurface(underlying, curves, tolerances));
 }
 
+PyDoc_STRVAR(generate_circular_disc__doc__,"Generate a circular disc");
+PyObject* Generate_CircularDisc(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"center", "boundarypoint", "normal", NULL };
+  PyObject* centero;
+  PyObject* bpointo;
+  PyObject* normalo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|O",
+                                   (char**)keyWords,&centero,&bpointo,&normalo))
+    return NULL;
+
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  shared_ptr<Go::Point> bpoint = PyObject_AsGoPoint(bpointo);
+  if (!center || !bpoint)
+    return NULL;
+
+  Go::Point normal(0.0,0.0);
+  if (modState.dim == 3) {
+    shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
+    if (!norm)
+      return NULL;
+    normal = *norm;
+  }
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+
+  Go::Point x_axis = *bpoint-*center;
+  Go::Point z_axis = normal-((normal*x_axis)/x_axis.length2())*x_axis;
+  result->data.reset(new Go::Disc(*center,x_axis.length(),x_axis,z_axis));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_cone_surface__doc__,"Generate a cone surface");
+PyObject* Generate_ConeSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"apex", "axis", "angle", "radius", "height", NULL };
+  PyObject* centero;
+  PyObject* axiso;
+  double apex;
+  double angle;
+  double height = std::numeric_limits<double>::infinity();
+  double radius = 0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOd|dd",
+                                   (char**)keyWords,&centero,
+                                   &axiso,&apex,&angle,&height,&radius))
+    return NULL;
+
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
+  if (!center || !axis)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+
+  result->data.reset(new Go::Cone(radius,*center,*axis,someNormal(*axis), angle));
+  static_pointer_cast<Go::Cylinder>(result->data)->setParameterBounds(0.0,0.0,2.0*M_PI,height);
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_cylinder_surface__doc__,"Generate a cylinder surface");
+PyObject* Generate_CylinderSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"center", "axis", "radius", "height", NULL };
+  PyObject* centero;
+  PyObject* axiso;
+  double radius;
+  double height = std::numeric_limits<double>::infinity();
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOd|d",
+                                   (char**)keyWords,&centero,
+                                   &axiso,&radius,&height))
+    return NULL;
+
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
+  if (!center || !axis)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data.reset(new Go::Cylinder(radius,*center,*axis,someNormal(*axis)));
+  if (height != std::numeric_limits<double>::infinity())
+    static_pointer_cast<Go::Cylinder>(result->data)->setParameterBounds(0.0,0.0,2.0*M_PI,height);
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_linear_curve_sweep__doc__,"Generate a surface by linearly sweeping a curve along a curve");
+PyObject* Generate_LinearCurveSweep(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"curve1", "curve2", "point", NULL };
+  PyObject* curve1o;
+  PyObject* curve2o;
+  PyObject* pointo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO",
+                                   (char**)keyWords,&curve1o,&curve2o,&pointo))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> curve1 = PyObject_AsGoCurve(curve1o);
+  shared_ptr<Go::ParamCurve> curve2 = PyObject_AsGoCurve(curve2o);
+  shared_ptr<Go::Point> point       = PyObject_AsGoPoint(pointo);
+  if (!curve1 || !curve2 || !point)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data.reset(Go::SweepSurfaceCreator::linearSweptSurface(*convertSplineCurve(curve1),
+                                                                    *convertSplineCurve(curve2),*point));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_loft_curves__doc__,"Generate a surface by lofting curves");
 PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curves", NULL };
@@ -391,25 +275,170 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyObject* Generate_SweepCurveLinear(PyObject* self, PyObject* args, PyObject* kwds)
+PyDoc_STRVAR(generate_plane__doc__,"Generate an infinite plane");
+PyObject* Generate_Plane(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"curve1", "curve2", "point", NULL };
-  PyObject* curve1o;
-  PyObject* curve2o;
-  PyObject* pointo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO",
-                                   (char**)keyWords,&curve1o,&curve2o,&pointo))
+  static const char* keyWords[] = {"p0", "normal", NULL };
+  PyObject* p0o;
+  PyObject* normalo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&p0o,&normalo))
     return NULL;
 
-  shared_ptr<Go::ParamCurve> curve1 = PyObject_AsGoCurve(curve1o);
-  shared_ptr<Go::ParamCurve> curve2 = PyObject_AsGoCurve(curve2o);
-  shared_ptr<Go::Point> point       = PyObject_AsGoPoint(pointo);
-  if (!curve1 || !curve2 || !point)
+  shared_ptr<Go::Point> p0     = PyObject_AsGoPoint(p0o);
+  shared_ptr<Go::Point> normal = PyObject_AsGoPoint(normalo);
+  if (!p0o || !normal)
     return NULL;
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  result->data.reset(Go::SweepSurfaceCreator::linearSweptSurface(*convertSplineCurve(curve1),
-                                                                    *convertSplineCurve(curve2),*point));
+  result->data.reset(new Go::Plane(*p0,*normal));
 
   return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_rectangle__doc__,"Generate a rectangle");
+PyObject* Generate_Rectangle(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"corner", "axis_x", "axis_y", "length_x", "length_y", NULL };
+  PyObject* cornero;
+  PyObject* axisxo;
+  PyObject* axisyo;
+  double length_x, length_y;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOOdd",
+                                   (char**)keyWords,&cornero,&axisxo,
+                                   &axisyo,&length_x,&length_y))
+    return NULL;
+
+  shared_ptr<Go::Point> corner = PyObject_AsGoPoint(cornero);
+  shared_ptr<Go::Point> axisx  = PyObject_AsGoPoint(axisxo);
+  shared_ptr<Go::Point> axisy  = PyObject_AsGoPoint(axisyo);
+  if (!corner || !axisx || !axisy)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+
+  Go::Point dir_v_ortog = *axisy-(*axisx*(*axisy))/axisx->length2()*(*axisx);
+  result->data.reset(new Go::Plane(*corner,*axisx % dir_v_ortog, *axisx));
+  static_pointer_cast<Go::Plane>(result->data)->setParameterBounds(0.0,0.0,length_x,length_y);
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_rotational_curve_sweep__doc__,"Generate a surface by rotationally sweeping a curve");
+PyObject* Generate_RotationalCurveSweep(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"curve", "pos", "axis", "angle", NULL };
+  PyObject* curveo;
+  PyObject* poso;
+  PyObject* axiso;
+  double angle = 2*M_PI;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO|d",
+                                   (char**)keyWords,&curveo,&poso,&axiso,&angle))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(curveo);
+  shared_ptr<Go::Point> pos   = PyObject_AsGoPoint(poso);
+  shared_ptr<Go::Point> axis  = PyObject_AsGoPoint(axiso);
+
+  if (!curve || !pos || !axis)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  shared_ptr<Go::SplineCurve> c = convertSplineCurve(curve);
+  result->data.reset(Go::SweepSurfaceCreator::rotationalSweptSurface(*c, angle, *pos, *axis));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_sphere_surface__doc__,"Generate a sphere surface");
+PyObject* Generate_SphereSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"center", "radius", NULL };
+  PyObject* centero;
+  double radius;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Od",
+                                   (char**)keyWords,&centero,&radius))
+    return NULL;
+
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  if (!center)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  Go::Point x_axis(1.0, 0.0, 0.0);
+  Go::Point z_axis(0.0, 0.0, 1.0);
+
+  result->data.reset(new Go::Sphere(radius,*center,x_axis,z_axis));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_torus_surface__doc__,"Generate a torus surface");
+PyObject* Generate_TorusSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"center", "axis", "major_radius", "minor_radius", NULL };
+  PyObject* centero;
+  PyObject* axiso;
+  double major_radius;
+  double minor_radius;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOdd",
+                                   (char**)keyWords,&centero,&axiso,
+                                   &major_radius,&minor_radius))
+    return NULL;
+
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
+  if (!center || !axis)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+
+  result->data.reset(new Go::Torus(major_radius,minor_radius,
+                                      *center,*axis,someNormal(*axis)));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_trim_surface__doc__,"Generate a surface by trimming one surface with another");
+PyObject* Generate_TrimSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"original", "trim", NULL };
+  PyObject* originalo;
+  PyObject* trimo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&originalo,&trimo))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surf1 = PyObject_AsGoSurface(originalo);
+  shared_ptr<Go::ParamSurface> surf2 = PyObject_AsGoSurface(trimo);
+  if (!surf1 || !surf2)
+    return NULL;
+
+  shared_ptr<Go::SplineSurface> surf_base = convertSplineSurface(surf1);
+  shared_ptr<Go::SplineSurface> surf_remove = convertSplineSurface(surf2);
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  std::vector<std::shared_ptr<Go::BoundedSurface> > trimmed_sfs =
+      Go::BoundedUtils::trimSurfWithSurf(surf_base, surf_remove, fabs(modState.gapTolerance));
+  result->data = trimmed_sfs[0];
+
+  return (PyObject*)result;
+}
+
+PyMethodDef SurfaceFactory_methods[] = {
+     {(char*)"AddLoop",               (PyCFunction)Generate_AddLoop,              METH_VARARGS|METH_KEYWORDS, generate_addloop__doc__},
+     {(char*)"CircularDisc",          (PyCFunction)Generate_CircularDisc,         METH_VARARGS|METH_KEYWORDS, generate_plane__doc__},
+     {(char*)"ConeSurface",           (PyCFunction)Generate_ConeSurface,          METH_VARARGS|METH_KEYWORDS, generate_cone_surface__doc__},
+     {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_sphere_surface__doc__},
+     {(char*)"LinearCurveSweep",      (PyCFunction)Generate_LinearCurveSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_curve_sweep__doc__},
+     {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves,           METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},
+     {(char*)"Plane",                 (PyCFunction)Generate_Plane,                METH_VARARGS|METH_KEYWORDS, generate_plane__doc__},
+     {(char*)"Rectangle",             (PyCFunction)Generate_Rectangle,            METH_VARARGS|METH_KEYWORDS, generate_rectangle__doc__},
+     {(char*)"RotationalCurveSweep",  (PyCFunction)Generate_RotationalCurveSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_curve_sweep__doc__},
+     {(char*)"SphereSurface",         (PyCFunction)Generate_SphereSurface,        METH_VARARGS|METH_KEYWORDS, generate_sphere_surface__doc__},
+     {(char*)"TorusSurface",          (PyCFunction)Generate_TorusSurface,         METH_VARARGS|METH_KEYWORDS, generate_torus_surface__doc__},
+     {(char*)"TrimSurface",           (PyCFunction)Generate_TrimSurface,          METH_VARARGS|METH_KEYWORDS, generate_trim_surface__doc__},
+     {NULL,                           NULL,                                       0,                          NULL}
+  };
+
 }

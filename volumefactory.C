@@ -16,6 +16,9 @@
 #include "GoTools/trivariate/TorusVolume.h"
 #include "GoTools/trivariate/SweepVolumeCreator.h"
 
+extern "C" {
+
+PyDoc_STRVAR(generate_box__doc__, "Generate a box");
 PyObject* Generate_Box(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"corner", "axis_x", "axis_y", "length_x", "length_y", "length_z", NULL };
@@ -44,6 +47,7 @@ PyObject* Generate_Box(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_cone__doc__, "Generate a cone");
 PyObject* Generate_Cone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"apex", "axis", "angle", "height", "radius", NULL };
@@ -69,6 +73,7 @@ PyObject* Generate_Cone(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_cylinder__doc__, "Generate a cylinder");
 PyObject* Generate_Cylinder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "boundary_point", "normal", "height", NULL };
@@ -99,82 +104,7 @@ PyObject* Generate_Cylinder(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyObject* Generate_Parallelepiped(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"corner", "axis_x", "axis_y", "axis_z", "length_x", "length_y", "length_z", NULL };
-  PyObject* cornero;
-  PyObject* axisxo;
-  PyObject* axisyo;
-  PyObject* axiszo;
-  double length_x, length_y, length_z;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOOOddd",
-                                   (char**)keyWords,&cornero,&axisxo,
-                                                    &axisyo,&axiszo,&length_x,
-                                                    &length_y,&length_z))
-    return NULL;
-       
-  shared_ptr<Go::Point> corner = PyObject_AsGoPoint(cornero);
-  shared_ptr<Go::Point> axisx  = PyObject_AsGoPoint(axisxo);
-  shared_ptr<Go::Point> axisy  = PyObject_AsGoPoint(axisyo);
-  shared_ptr<Go::Point> axisz  = PyObject_AsGoPoint(axiszo);
-  if (!corner || !axisx || !axisy || !axisz)
-    return NULL;
-
-  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
-  
-  result->data.reset(new Go::Parallelepiped(*corner,*axisx, *axisy, *axisz, 
-                                            length_x, length_y, length_z));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_Sphere(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"center", "radius", NULL };
-  PyObject* centero;
-  double radius;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Od",
-                                   (char**)keyWords,&centero,&radius))
-    return NULL;
-       
-  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  if (!center)
-    return NULL;
-
-  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
-
-  Go::Point x_axis(1.f,0.f,0.f);
-  Go::Point z_axis(0.f,0.f,1.f);
-  
-  result->data.reset(new Go::SphereVolume(radius,*center,x_axis,z_axis));
-
-  return (PyObject*)result;
-}
-
-PyObject* Generate_Torus(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"center", "axis", "major_radius", "minor_radius", NULL };
-  PyObject* centero;
-  PyObject* axiso;
-  double major_radius, minor_radius;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOdd",
-                                   (char**)keyWords,&centero,&axiso,
-                                                    &major_radius,&minor_radius))
-    return NULL;
-       
-  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
-    return NULL;
-
-  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
-
-  result->data.reset(new Go::TorusVolume(major_radius,minor_radius, *center,
-                                         *axis, someNormal(*axis)));
-
-  return (PyObject*)result;
-}
-
+PyDoc_STRVAR(generate_loft_surfaces__doc__, "Generate a volume by lofting surfaces");
 PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surfaces", NULL };
@@ -203,7 +133,8 @@ PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyObject* Generate_SweepSurfaceLinear(PyObject* self, PyObject* args, PyObject* kwds)
+PyDoc_STRVAR(generate_linear_surface_sweep__doc__, "Generate a volume by sweeping a surface along a curve, or curve along a surface");
+PyObject* Generate_LinearSurfaceSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "curve", "point", NULL };
   PyObject* o1;
@@ -234,7 +165,8 @@ PyObject* Generate_SweepSurfaceLinear(PyObject* self, PyObject* args, PyObject* 
   return (PyObject*)result;
 }
 
-PyObject* Generate_SweepSurfaceRotational(PyObject* self, PyObject* args, PyObject* kwds)
+PyDoc_STRVAR(generate_rotational_surface_sweep__doc__, "Generate a volume by sweeping a rotated surface");
+PyObject* Generate_RotationalSurfaceSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "position", "axis", "angle", NULL };
   PyObject* surfaceo;
@@ -257,4 +189,98 @@ PyObject* Generate_SweepSurfaceRotational(PyObject* self, PyObject* args, PyObje
                                                                    angle,*pos,*axis));
 
   return (PyObject*)result;
+}
+
+
+PyDoc_STRVAR(generate_parallelepiped__doc__, "Generate a parallelepiped");
+PyObject* Generate_Parallelepiped(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"corner", "axis_x", "axis_y", "axis_z", "length_x", "length_y", "length_z", NULL };
+  PyObject* cornero;
+  PyObject* axisxo;
+  PyObject* axisyo;
+  PyObject* axiszo;
+  double length_x, length_y, length_z;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOOOddd",
+                                   (char**)keyWords,&cornero,&axisxo,
+                                                    &axisyo,&axiszo,&length_x,
+                                                    &length_y,&length_z))
+    return NULL;
+       
+  shared_ptr<Go::Point> corner = PyObject_AsGoPoint(cornero);
+  shared_ptr<Go::Point> axisx  = PyObject_AsGoPoint(axisxo);
+  shared_ptr<Go::Point> axisy  = PyObject_AsGoPoint(axisyo);
+  shared_ptr<Go::Point> axisz  = PyObject_AsGoPoint(axiszo);
+  if (!corner || !axisx || !axisy || !axisz)
+    return NULL;
+
+  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+  
+  result->data.reset(new Go::Parallelepiped(*corner,*axisx, *axisy, *axisz, 
+                                            length_x, length_y, length_z));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_sphere__doc__, "Generate a sphere");
+PyObject* Generate_Sphere(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"center", "radius", NULL };
+  PyObject* centero;
+  double radius;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Od",
+                                   (char**)keyWords,&centero,&radius))
+    return NULL;
+       
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  if (!center)
+    return NULL;
+
+  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+
+  Go::Point x_axis(1.f,0.f,0.f);
+  Go::Point z_axis(0.f,0.f,1.f);
+  
+  result->data.reset(new Go::SphereVolume(radius,*center,x_axis,z_axis));
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_torus__doc__, "Generate a torus");
+PyObject* Generate_Torus(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"center", "axis", "major_radius", "minor_radius", NULL };
+  PyObject* centero;
+  PyObject* axiso;
+  double major_radius, minor_radius;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOdd",
+                                   (char**)keyWords,&centero,&axiso,
+                                                    &major_radius,&minor_radius))
+    return NULL;
+       
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
+  if (!center || !axis)
+    return NULL;
+
+  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+
+  result->data.reset(new Go::TorusVolume(major_radius,minor_radius, *center,
+                                         *axis, someNormal(*axis)));
+
+  return (PyObject*)result;
+}
+
+PyMethodDef VolumeFactory_methods[] = {
+     {(char*)"Box",                   (PyCFunction)Generate_Box,                    METH_VARARGS|METH_KEYWORDS, generate_box__doc__},
+     {(char*)"Cone",                  (PyCFunction)Generate_Cone,                   METH_VARARGS|METH_KEYWORDS, generate_cone__doc__},
+     {(char*)"Cylinder",              (PyCFunction)Generate_Cylinder,               METH_VARARGS|METH_KEYWORDS, generate_cylinder__doc__},
+     {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces,           METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},
+     {(char*)"LinearSurfaceSweep",    (PyCFunction)Generate_LinearSurfaceSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_surface_sweep__doc__},
+     {(char*)"RotationalSurfaceSweep",(PyCFunction)Generate_RotationalSurfaceSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_surface_sweep__doc__},
+     {(char*)"Parallelepiped",        (PyCFunction)Generate_Parallelepiped,         METH_VARARGS|METH_KEYWORDS, generate_parallelepiped__doc__},
+     {(char*)"Sphere",                (PyCFunction)Generate_Sphere,                 METH_VARARGS|METH_KEYWORDS, generate_sphere__doc__},
+     {(char*)"Torus",                 (PyCFunction)Generate_Torus,                  METH_VARARGS|METH_KEYWORDS, generate_torus__doc__},
+     {NULL,                           NULL,                                         0,                          NULL}
+   };
 }

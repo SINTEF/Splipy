@@ -4,5 +4,5 @@
 #include "GoTools/utils/config.h"
 
 extern "C" {
-  PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* kwds);
+  extern PyMethodDef SurfaceModelFactory_methods[];
 }
