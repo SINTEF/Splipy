@@ -7,6 +7,7 @@
 #include "GoTools/geometry/ClassType.h"
 #include "GoTools/trivariate/ElementaryVolume.h"
 
+#include <fstream>
 #include <sstream>
 
 #ifdef HAS_NUMPY
@@ -102,4 +103,21 @@ shared_ptr<Go::SplineVolume> convertSplineVolume(shared_ptr<Go::ParamVolume> vol
     return dynamic_pointer_cast<Go::SplineVolume, Go::ParamVolume>(volume);
   shared_ptr<Go::ElementaryVolume> e_volume = dynamic_pointer_cast<Go::ElementaryVolume, Go::ParamVolume>(volume);
   return shared_ptr<Go::SplineVolume>(e_volume->geometryVolume());
+}
+
+void WriteVolumeG2(std::ofstream& g2_file, Volume* volume, bool convert)
+{
+  if (convert) {
+    shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume->data);
+    if (!vol->isLeftHanded())
+    {
+      vol = shared_ptr<Go::SplineVolume>(vol->clone());
+      vol->reverseParameterDirection(2);
+    }
+    vol->writeStandardHeader(g2_file);
+    vol->write(g2_file);
+  } else {
+    volume->data->writeStandardHeader(g2_file);
+    volume->data->write(g2_file);
+  }
 }

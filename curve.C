@@ -5,6 +5,7 @@
 
 #include "GoTools/geometry/ClassType.h"
 
+#include <fstream>
 #include <sstream>
 
 #ifdef HAS_NUMPY
@@ -116,4 +117,16 @@ shared_ptr<Go::SplineCurve> convertSplineCurve(shared_ptr<Go::ParamCurve> curve)
   if (curve->instanceType() == Go::Class_SplineCurve)
     return dynamic_pointer_cast<Go::SplineCurve, Go::ParamCurve>(curve);
   return shared_ptr<Go::SplineCurve>(curve->geometryCurve());
+}
+
+void WriteCurveG2(std::ofstream& g2_file, Curve* curve, bool convert)
+{
+  if (convert) {
+    shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve->data);
+    crv->writeStandardHeader(g2_file);
+    crv->write(g2_file);
+  } else {
+    curve->data->writeStandardHeader(g2_file);
+    curve->data->write(g2_file);
+  }
 }

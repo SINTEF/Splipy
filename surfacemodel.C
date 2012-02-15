@@ -6,6 +6,7 @@
 #include "GoTools/geometry/ElementarySurface.h"
 #include "GoTools/geometry/SplineSurface.h"
 
+#include <fstream>
 #include <sstream>
 
 #ifdef HAS_NUMPY
@@ -91,4 +92,21 @@ void init_SurfaceModel_Type()
   PyType_Ready(&SurfaceModel_Type);
 }
 
+}
+
+void WriteSurfaceModelG2(std::ofstream& g2_file, SurfaceModel* model, bool convert)
+{
+  if (!model->data)
+    return;
+  for (int i=0;i<model->data->nmbEntities();++i) {
+    if (convert) {
+      shared_ptr<Go::SplineSurface> surf = model->data->getSplineSurface(i);
+      surf->writeStandardHeader(g2_file);
+      surf->write(g2_file);
+    } else {
+      shared_ptr<Go::ParamSurface> surf = model->data->getSurface(i);
+      surf->writeStandardHeader(g2_file);
+      surf->write(g2_file);
+    }
+  }
 }

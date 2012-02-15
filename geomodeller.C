@@ -158,47 +158,6 @@ PyObject* GeoMod_SetDebugLevel(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-static void WriteCurve(std::ofstream& g2_file, Curve* curve, bool convert)
-{
-  if (convert) {
-    shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve->data);
-    crv->writeStandardHeader(g2_file);
-    crv->write(g2_file);
-  } else {
-    curve->data->writeStandardHeader(g2_file);
-    curve->data->write(g2_file);
-  }
-}
-
-static void WriteSurface(std::ofstream& g2_file, Surface* surface, bool convert)
-{
-  if (convert) {
-    shared_ptr<Go::SplineSurface> srf = convertSplineSurface(surface->data);
-    srf->writeStandardHeader(g2_file);
-    srf->write(g2_file);
-  } else {
-    surface->data->writeStandardHeader(g2_file);
-    surface->data->write(g2_file);
-  }
-}
-
-static void WriteVolume(std::ofstream& g2_file, Volume* volume, bool convert)
-{
-  if (convert) {
-    shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume->data);
-    if (!vol->isLeftHanded())
-    {
-      vol = shared_ptr<Go::SplineVolume>(vol->clone());
-      vol->reverseParameterDirection(2);
-    }
-    vol->writeStandardHeader(g2_file);
-    vol->write(g2_file);
-  } else {
-    volume->data->writeStandardHeader(g2_file);
-    volume->data->write(g2_file);
-  }
-}
-
 static void WriteSurfaceModel(std::ofstream& g2_file, SurfaceModel* model, bool convert)
 {
   if (!model->data)
@@ -216,16 +175,18 @@ static void WriteSurfaceModel(std::ofstream& g2_file, SurfaceModel* model, bool 
   }
 }
 
+// these statics are needed to handle the dynamic type of the input parameters
+// we may be given a list of objects, or a single object
 static void WriteEntity(std::ofstream& g2_file, PyObject* obj, bool convert)
 {
   if (PyObject_TypeCheck(obj,&Curve_Type))
-    WriteCurve(g2_file,(Curve*)obj,convert);
+    WriteCurveG2(g2_file,(Curve*)obj,convert);
   if (PyObject_TypeCheck(obj,&Surface_Type))
-    WriteSurface(g2_file,(Surface*)obj,convert);
+    WriteSurfaceG2(g2_file,(Surface*)obj,convert);
   if (PyObject_TypeCheck(obj,&Volume_Type))
-    WriteVolume(g2_file,(Volume*)obj,convert);
+    WriteVolumeG2(g2_file,(Volume*)obj,convert);
   if (PyObject_TypeCheck(obj,&SurfaceModel_Type))
-    WriteSurfaceModel(g2_file,(SurfaceModel*)obj,convert);
+    WriteSurfaceModelG2(g2_file,(SurfaceModel*)obj,convert);
 }
 
 static void DoWrite(const std::string& fname, PyObject* objectso, bool convert)
@@ -276,15 +237,30 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   std::ifstream f(fname);
-  Go::ObjectHeader header;
-  f >> header;
   PyObject* result=NULL;
-  if (header.classType() == Go::SplineCurve::classType())
-    result = ReadG2<Curve, Go::SplineCurve>(f,Curve_Type);
-  if (header.classType() == Go::SplineSurface::classType())
-    result = ReadG2<Surface, Go::SplineSurface>(f,Surface_Type);
-  if (header.classType() == Go::SplineVolume::classType())
-    result = ReadG2<Volume, Go::SplineVolume>(f,Volume_Type);
+  PyObject* curr=NULL;
+  while (!f.eof() && f.good()) {
+    if (curr) {
+      if (!result)
+        result = PyList_New(0);
+      PyList_Append(result,curr);
+    }
+    Go::ObjectHeader header;
+    f >> header;
+    if (header.classType() == Go::SplineCurve::classType())
+      curr = ReadG2<Curve, Go::SplineCurve>(f,Curve_Type);
+    if (header.classType() == Go::SplineSurface::classType())
+      curr = ReadG2<Surface, Go::SplineSurface>(f,Surface_Type);
+    if (header.classType() == Go::SplineVolume::classType())
+      curr = ReadG2<Volume, Go::SplineVolume>(f,Volume_Type);
+    char temp[1024];
+    f.getline(temp,1024); // read padding lines
+    f.peek(); // and peek next byte to update flags
+  }
+  if (!result)
+    result = curr;
+  if (PyObject_TypeCheck(result,&PyList_Type))
+    PyList_Append(result,curr);
 
   return result;
 }

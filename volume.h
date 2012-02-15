@@ -15,4 +15,7 @@ extern "C" {
 
   extern PyTypeObject Volume_Type;
 }
+
+// helpers
 shared_ptr<Go::SplineVolume> convertSplineVolume(shared_ptr<Go::ParamVolume> volume);
+void WriteVolumeG2(std::ofstream& g2_file, Volume* volume, bool convert);

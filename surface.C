@@ -7,6 +7,7 @@
 #include "GoTools/geometry/GeometryTools.h"
 #include "GoTools/geometry/SplineSurface.h"
 
+#include <fstream>
 #include <sstream>
 
 #ifdef HAS_NUMPY
@@ -199,3 +200,14 @@ void printSurfaceToStream(std::ostream& str, shared_ptr<Go::ParamSurface> surf)
     str << "(empty)";
 }
 
+void WriteSurfaceG2(std::ofstream& g2_file, Surface* surface, bool convert)
+{
+  if (convert) {
+    shared_ptr<Go::SplineSurface> srf = convertSplineSurface(surface->data);
+    srf->writeStandardHeader(g2_file);
+    srf->write(g2_file);
+  } else {
+    surface->data->writeStandardHeader(g2_file);
+    surface->data->write(g2_file);
+  }
+}

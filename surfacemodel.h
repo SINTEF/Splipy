@@ -14,3 +14,6 @@ extern "C" {
 
   extern PyTypeObject SurfaceModel_Type;
 }
+
+// helpers
+void WriteSurfaceModelG2(std::ofstream& g2_file, SurfaceModel* model, bool convert);
