@@ -16,4 +16,5 @@ extern "C" {
   extern PyTypeObject Curve_Type;
 }
 
+// helpers
 shared_ptr<Go::SplineCurve> convertSplineCurve(shared_ptr<Go::ParamCurve> curve);

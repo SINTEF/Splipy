@@ -7,6 +7,7 @@
 #include "volume.h"
 
 #include "GoTools/geometry/GoTools.h"
+#include "GoTools/geometry/ObjectHeader.h"
 
 #include <fstream>
 
@@ -264,6 +265,30 @@ PyObject* GeoMod_WriteG2(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(readg2__doc__,"Read entity from G2 file");
+PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"filename", NULL };
+  PyObject* objectso;
+  char* fname = 0;  
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
+                                   (char**)keyWords,&fname))
+    return NULL;
+
+  std::ifstream f(fname);
+  Go::ObjectHeader header;
+  f >> header;
+  PyObject* result=NULL;
+  if (header.classType() == Go::SplineCurve::classType())
+    result = ReadG2<Curve, Go::SplineCurve>(f,Curve_Type);
+  if (header.classType() == Go::SplineSurface::classType())
+    result = ReadG2<Surface, Go::SplineSurface>(f,Surface_Type);
+  if (header.classType() == Go::SplineVolume::classType())
+    result = ReadG2<Volume, Go::SplineVolume>(f,Volume_Type);
+
+  return result;
+}
+
 PyDoc_STRVAR(final_output__doc__,"Write final results to G2 file");
 PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 {
@@ -331,9 +356,10 @@ PyMethodDef GeoMod_methods[] = {
      {(char*)"RegularizeSurface",     (PyCFunction)Generate_RegularizeSurface, METH_VARARGS|METH_KEYWORDS, generate_regularize_surface__doc__},
 
      // I/O
-     {(char*)"WriteG2",             (PyCFunction)GeoMod_WriteG2, METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
-     {(char*)"FinalOutput",         (PyCFunction)GeoMod_FinalOutput, METH_VARARGS|METH_KEYWORDS, final_output__doc__},
-     {(char*)"SetDebugLevel",       (PyCFunction)GeoMod_SetDebugLevel, METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
+     {(char*)"FinalOutput",           (PyCFunction)GeoMod_FinalOutput, METH_VARARGS|METH_KEYWORDS, final_output__doc__},
+     {(char*)"ReadG2",                (PyCFunction)GeoMod_ReadG2, METH_VARARGS|METH_KEYWORDS, readg2__doc__},
+     {(char*)"SetDebugLevel",         (PyCFunction)GeoMod_SetDebugLevel, METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
+     {(char*)"WriteG2",               (PyCFunction)GeoMod_WriteG2, METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
      
      // done - need a null entry for termination
      {NULL,                       NULL,                                  0,            NULL}

@@ -4,6 +4,7 @@
 
 #include "GoTools/geometry/ClassType.h"
 #include "GoTools/geometry/ElementarySurface.h"
+#include "GoTools/geometry/GeometryTools.h"
 #include "GoTools/geometry/SplineSurface.h"
 
 #include <sstream>
@@ -116,10 +117,39 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
+PyDoc_STRVAR(surface_rotate__doc__,"Rotate a surface around a given axis with a given angle");
+PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"axis", "angle", NULL };
+  PyObject* axiso;
+  double angle=0.f;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Od",
+                                   (char**)keyWords,&axiso,&angle))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
+  if (!surface || !axis)
+    return NULL;
+
+   if (!surface->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surface);
+     surface = surf->data;
+   }
+
+   Go::rotateSplineSurf(*axis, angle,
+                        *static_pointer_cast<Go::SplineSurface>(surface));
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyMethodDef Surface_methods[] = {
-     {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots, METH_VARARGS|METH_KEYWORDS,surface_get_knots__doc__},
-     {(char*)"InsertKnot", (PyCFunction)Surface_InsertKnot, METH_VARARGS|METH_KEYWORDS,surface_insert_knot__doc__},
-     {(char*)"RaiseOrder", (PyCFunction)Surface_RaiseOrder, METH_VARARGS|METH_KEYWORDS,surface_raise_order__doc__},
+     {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots,   METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
+     {(char*)"InsertKnot", (PyCFunction)Surface_InsertKnot, METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
+     {(char*)"RaiseOrder", (PyCFunction)Surface_RaiseOrder, METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
+     {(char*)"Rotate",     (PyCFunction)Surface_Rotate,     METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
      {NULL,           NULL,                     0,            NULL}
    };
 

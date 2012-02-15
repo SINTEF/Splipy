@@ -41,3 +41,13 @@ extern "C"
 
 // helper functions
 Go::Point someNormal(const Go::Point& vec);
+
+  template<class PythonClass, class GoType>
+PyObject* ReadG2(std::ifstream& str, PyTypeObject& type)
+{
+  PythonClass* result = (PythonClass*)type.tp_alloc(&type,0);
+  result->data.reset(new GoType());
+  result->data->read(str);
+
+  return (PyObject*)result;
+}
