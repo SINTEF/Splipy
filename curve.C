@@ -49,8 +49,49 @@ PyObject* Curve_Str(Curve* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyDoc_STRVAR(curve_get_knots__doc__,"Get the unique knots of a spline curve");
+PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  if (!curve)
+    return NULL;
+  Curve* crv = (Curve*)self;
+  crv->data = convertSplineCurve(curve);
+  PyObject* result = PyList_New(0);
+  std::vector<double> knots;
+  static_pointer_cast<Go::SplineCurve>(crv->data)->basis().knotsSimple(knots);
+  for (std::vector<double>::iterator it  = knots.begin();
+                                     it != knots.end();++it) {
+    PyList_Append(result,Py_BuildValue((char*)"d",*it));
+  }
+                
+  return result;
+}
+
+PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve");
+PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"knot", NULL };
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  double knot;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
+                                   (char**)keyWords,&knot) || !curve)
+    return NULL;
+
+  Curve* crv = (Curve*)self;
+  crv->data = convertSplineCurve(curve);
+
+  static_pointer_cast<Go::SplineCurve>(crv->data)->insertKnot(knot);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyMethodDef Curve_methods[] = {
-     {NULL,           NULL,                     0,            NULL}
+     {(char*)"GetKnots",   (PyCFunction)Curve_GetKnots,   METH_VARARGS,               curve_get_knots__doc__},
+     {(char*)"InsertKnot", (PyCFunction)Curve_InsertKnot, METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
+     {NULL,                NULL,                          0,                          NULL}
    };
 
 PyDoc_STRVAR(curve__doc__, "A parametric description of a curve");
@@ -60,7 +101,7 @@ void init_Curve_Type()
   Curve_Type.tp_name = "GoTools.Curve";
   Curve_Type.tp_basicsize = sizeof(Curve);
   Curve_Type.tp_dealloc = (destructor)Curve_Dealloc;
-  Curve_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
+  Curve_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES;
   Curve_Type.tp_doc = curve__doc__;
   Curve_Type.tp_methods = Curve_methods;
   Curve_Type.tp_base = 0;

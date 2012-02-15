@@ -15,6 +15,6 @@ extern "C" {
   extern PyTypeObject Surface_Type;
 }
 
+// helper functions
 shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> surface);
-
 void printSurfaceToStream(std::ostream& str, shared_ptr<Go::ParamSurface> surf);

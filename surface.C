@@ -39,7 +39,87 @@ PyObject* Surface_Str(Surface* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyDoc_STRVAR(surface_raise_order__doc__,"Raise order of a spline surface");
+PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"raise_u", "raise_v", NULL };
+  int raise_u=0, raise_v=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ii",
+                                   (char**)keyWords,&raise_u,&raise_v))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+   if (!surface->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surface);
+     surface = surf->data;
+   }
+   static_pointer_cast<Go::SplineSurface>(surface)->raiseOrder(raise_u,raise_v);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+PyDoc_STRVAR(surface_get_knots__doc__,"Return knots for a spline surface");
+PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+  if (!surface->isSpline()) {
+    Surface* surf = (Surface*)self;
+    surf->data = convertSplineSurface(surface);
+    surface = surf->data;
+  }
+
+  PyObject* result = PyTuple_New(2);
+  for (int i=0;i<2;++i) {
+    PyObject* list = PyList_New(0);
+    std::vector<double> knots;
+    static_pointer_cast<Go::SplineSurface>(surface)->basis(i).knotsSimple(knots);
+    for (std::vector<double>::iterator it  = knots.begin();
+                                       it != knots.end();++it) {
+      PyList_Append(list,Py_BuildValue((char*)"d",*it));
+    }
+    PyTuple_SetItem(result,i,list);
+  }
+
+  return result;
+}
+
+PyDoc_STRVAR(surface_insert_knot__doc__,"Insert a knot in a parameter direction of spline surface");
+PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"direction", "knot", NULL };
+  int direction=0;
+  double knot;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"id",
+                                   (char**)keyWords,&direction,&knot))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+   if (!surface->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surface);
+     surface = surf->data;
+   }
+   if (direction == 0)
+     static_pointer_cast<Go::SplineSurface>(surface)->insertKnot_u(knot);
+   else
+     static_pointer_cast<Go::SplineSurface>(surface)->insertKnot_v(knot);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyMethodDef Surface_methods[] = {
+     {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots, METH_VARARGS|METH_KEYWORDS,surface_get_knots__doc__},
+     {(char*)"InsertKnot", (PyCFunction)Surface_InsertKnot, METH_VARARGS|METH_KEYWORDS,surface_insert_knot__doc__},
+     {(char*)"RaiseOrder", (PyCFunction)Surface_RaiseOrder, METH_VARARGS|METH_KEYWORDS,surface_raise_order__doc__},
      {NULL,           NULL,                     0,            NULL}
    };
 

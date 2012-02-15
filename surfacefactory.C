@@ -25,22 +25,6 @@
 #include <arrayobject.h>
 #endif
 
-static Go::Point someNormal(const Go::Point& vec)
-{
-  if (vec.dimension() == 2)
-    return Go::Point(-vec[1], vec[0]);
-
-  Go::Point unit;
-  if (fabs(vec[0]) < fabs(vec[1]) && fabs(vec[0]) < fabs(vec[2]))
-    unit = Go::Point(1.0, 0.0, 0.0);
-  else if (fabs(vec[1]) < fabs(vec[2]))
-    unit = Go::Point(0.0, 1.0, 0.0);
-  else
-    unit = Go::Point(0.0, 0.0, 1.0);
-
-  return vec % unit;
-}
-
 PyObject* Generate_Plane(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "normal", NULL };
@@ -213,7 +197,9 @@ PyObject* Generate_Rectangle(PyObject* self, PyObject* args, PyObject* kwds)
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
 
   Go::Point dir_v_ortog = *axisy-(*axisx*(*axisy))/axisx->length2()*(*axisx);
-  result->data.reset(new Go::Plane(*corner,(*axisx) % dir_v_ortog, *axisx));
+  if (modState.dim == 3)
+    *axisy = (*axisx) % dir_v_ortog;
+  result->data.reset(new Go::Plane(*corner,*axisy, *axisx));
   static_pointer_cast<Go::Plane>(result->data)->setParameterBounds(0.0,0.0,length_x,length_y);
 
   return (PyObject*)result;

@@ -36,5 +36,8 @@ extern GeoModellerState modState;
 
 extern "C"
 {
-void registerPythonTypes();
+  void registerPythonTypes();
 }
+
+// helper functions
+Go::Point someNormal(const Go::Point& vec);

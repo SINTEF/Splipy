@@ -5,6 +5,7 @@
 #include "point.h"
 #include "pyutils.h"
 
+#include "GoTools/creators/ApproxCurve.h"
 #include "GoTools/geometry/Circle.h"
 #include "GoTools/geometry/Ellipse.h"
 #include "GoTools/geometry/Line.h"
@@ -234,6 +235,51 @@ PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
   s1012(start->begin(), center->begin(), axis->begin(),
         frequency, quadrants, 0, &sisl_helix, &stat);
   result->data.reset(Go::SISLCurve2Go(sisl_helix));
+
+  return (PyObject*)result;
+}
+
+PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"points", "parvals", "order", "maxiter", NULL };
+  PyObject* pointso;
+  PyObject* parvals;
+  int order=3;
+  int max_iter=5;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|ii",
+                                   (char**)keyWords,&pointso,&parvals,
+                                                    &order,&max_iter))
+    return NULL;
+
+  if (!PyObject_TypeCheck(pointso,&PyList_Type) || 
+      !PyObject_TypeCheck(parvals,&PyList_Type))
+    return NULL;
+
+  // get points
+  std::vector<double> points;
+  for (int i=0; i < PyList_Size(pointso); ++i) {
+    PyObject* entryo = PyList_GetItem(pointso,i);
+    shared_ptr<Go::Point> entry = PyObject_AsGoPoint(entryo);
+    if (entry) {
+      points.push_back((*entry)[0]);
+      points.push_back((*entry)[1]);
+      if (modState.dim == 3)
+        points.push_back((*entry)[2]);
+    }
+  }
+
+  // get parameters
+  std::vector<double> params;
+  for (int i=0; i < PyList_Size(parvals); ++i)
+    params.push_back(PyFloat_AsDouble(PyList_GetItem(parvals,i)));
+
+  Go::ApproxCurve approx(points,params,modState.dim,modState.approxTolerance,
+                         params.size(),order);
+
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  double maxdist;
+  double avdist;
+  result->data = approx.getApproxCurve(maxdist,avdist,max_iter);
 
   return (PyObject*)result;
 }

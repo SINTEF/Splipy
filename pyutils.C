@@ -17,6 +17,8 @@ void InitializeTypeObject(PyTypeObject* type_object)
 
 shared_ptr<Go::Point> PyObject_AsGoPoint(PyObject* obj)
 {
+  if (!obj)
+    return shared_ptr<Go::Point>();
   // Instance of a point
   if (PyObject_TypeCheck(obj,&Point_Type))
     return ((Point*)obj)->data;

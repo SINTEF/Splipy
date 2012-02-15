@@ -18,16 +18,20 @@ PyObject* Point_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
   Point* self;
   self = (Point*)type->tp_alloc(type,0);
-  static const char* keyWords[] = {"x", "y", "z", NULL };
+  static const char* keyWords[] = {"x", "y", "z", "list", NULL };
   double x=0,y=0,z=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|ddd",
-                                   (char**)keyWords,&x,&y,&z))
+  PyObject* list=NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|dddO",
+                                   (char**)keyWords,&x,&y,&z,&list))
     return NULL;
 
-  if (modState.dim == 2)
-    self->data.reset(new Go::Point(x,y));
-  else
-    self->data.reset(new Go::Point(x,y,z));
+  self->data = PyObject_AsGoPoint(list);
+  if (!self->data) {
+    if (modState.dim == 2)
+      self->data.reset(new Go::Point(x,y));
+    else
+      self->data.reset(new Go::Point(x,y,z));
+  }
   return (PyObject*)self;
 }
 
@@ -133,6 +137,16 @@ PyObject* Point_Mod(PyObject* o1, PyObject* o2)
   return (PyObject*)result;
 }
 
+PyObject* Point_Abs(PyObject* o1)
+{
+  shared_ptr<Go::Point> p1 = PyObject_AsGoPoint(o1);
+  Point* result = NULL;
+  if (p1)
+    result = (Point*)Py_BuildValue((char*)"d",p1->length());
+
+  return (PyObject*)result;
+}
+
 PyMethodDef Point_methods[] = {
      {NULL,           NULL,                     0,            NULL}
    };
@@ -149,6 +163,7 @@ void init_Point_Type()
   Point_operators.nb_divide = Point_Div;
   Point_operators.nb_remainder = Point_Mod;
   Point_operators.nb_negative = Point_Neg;
+  Point_operators.nb_absolute = Point_Abs;
   Point_Type.tp_name = "GoTools.Point";
   Point_Type.tp_basicsize = sizeof(Point);
   Point_Type.tp_dealloc = (destructor)Point_Dealloc;

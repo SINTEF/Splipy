@@ -27,6 +27,7 @@ PyDoc_STRVAR(generate_circle_segment__doc__, "Generate a circle segment");
 PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse");
 PyDoc_STRVAR(generate_elliptic_segment__doc__, "Generate an elliptic segment");
 PyDoc_STRVAR(generate_helix__doc__, "Generate a helix");
+PyDoc_STRVAR(generate_interpolate_curve__doc__, "Generate a curve from a point cloud");
 
 #include "surfacefactory.h"
 PyDoc_STRVAR(generate_plane__doc__,"Generate an infinite plane");
@@ -44,8 +45,12 @@ PyDoc_STRVAR(generate_loft_curves__doc__,"Generate a surface by lofting curves")
 
 #include "volumefactory.h"
 PyDoc_STRVAR(generate_box__doc__, "Generate a box");
+PyDoc_STRVAR(generate_cone__doc__, "Generate a cone");
 PyDoc_STRVAR(generate_cylinder__doc__, "Generate a cylinder");
 PyDoc_STRVAR(generate_parallelepiped__doc__, "Generate a parallelepiped");
+PyDoc_STRVAR(generate_sphere__doc__, "Generate a sphere");
+PyDoc_STRVAR(generate_torus__doc__, "Generate a torus");
+PyDoc_STRVAR(generate_torus_segment__doc__, "Generate a torus segment");
 PyDoc_STRVAR(generate_loft_surfaces__doc__, "Generate a volume by lofting surfaces");
 PyDoc_STRVAR(generate_sweep_surface_linear__doc__, "Generate a volume by sweeping a surface along a curve, or curve along a surface");
 PyDoc_STRVAR(generate_sweep_surface_rotational__doc__, "Generate a volume by sweeping a rotated surface");
@@ -291,6 +296,7 @@ PyMethodDef GeoMod_methods[] = {
      {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment, METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
      {(char*)"Ellipse",               (PyCFunction)Generate_Ellipse, METH_VARARGS|METH_KEYWORDS, generate_ellipse__doc__},
      {(char*)"EllipticSegment",       (PyCFunction)Generate_EllipticSegment, METH_VARARGS|METH_KEYWORDS, generate_elliptic_segment__doc__},
+     {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve, METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
      {(char*)"Helix",                 (PyCFunction)Generate_Helix, METH_VARARGS|METH_KEYWORDS, generate_helix__doc__},
      {(char*)"Line",                  (PyCFunction)Generate_Line, METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
      {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment, METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
@@ -311,11 +317,15 @@ PyMethodDef GeoMod_methods[] = {
 
      // volume generators
      {(char*)"Box",                   (PyCFunction)Generate_Box, METH_VARARGS|METH_KEYWORDS, generate_box__doc__},
+     {(char*)"Cone",                  (PyCFunction)Generate_Cone, METH_VARARGS|METH_KEYWORDS, generate_cone__doc__},
      {(char*)"Cylinder",              (PyCFunction)Generate_Cylinder, METH_VARARGS|METH_KEYWORDS, generate_cylinder__doc__},
      {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces, METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},
      {(char*)"LinearSurfaceSweep",    (PyCFunction)Generate_SweepSurfaceLinear, METH_VARARGS|METH_KEYWORDS, generate_sweep_surface_linear__doc__},
      {(char*)"RotationalSurfaceSweep",(PyCFunction)Generate_SweepSurfaceRotational, METH_VARARGS|METH_KEYWORDS, generate_sweep_surface_rotational__doc__},
      {(char*)"Parallelepiped",        (PyCFunction)Generate_Parallelepiped, METH_VARARGS|METH_KEYWORDS, generate_parallelepiped__doc__},
+     {(char*)"Sphere",                (PyCFunction)Generate_Sphere, METH_VARARGS|METH_KEYWORDS, generate_sphere__doc__},
+     {(char*)"Torus",                 (PyCFunction)Generate_Torus, METH_VARARGS|METH_KEYWORDS, generate_torus__doc__},
+     {(char*)"TorusSegment",          (PyCFunction)Generate_Torus, METH_VARARGS|METH_KEYWORDS, generate_torus_segment__doc__},
 
      // surface model generators
      {(char*)"RegularizeSurface",     (PyCFunction)Generate_RegularizeSurface, METH_VARARGS|METH_KEYWORDS, generate_regularize_surface__doc__},
@@ -358,4 +368,21 @@ registerPythonTypes()
   PyModule_AddObject(geoModule,(char*)"Volume",(PyObject*)&Volume_Type);
 }
 
+}
+
+// helper functions
+Go::Point someNormal(const Go::Point& vec)
+{
+  if (vec.dimension() == 2)
+    return Go::Point(-vec[1], vec[0]);
+
+  Go::Point unit;
+  if (fabs(vec[0]) < fabs(vec[1]) && fabs(vec[0]) < fabs(vec[2]))
+    unit = Go::Point(1.0, 0.0, 0.0);
+  else if (fabs(vec[1]) < fabs(vec[2]))
+    unit = Go::Point(0.0, 1.0, 0.0);
+  else
+    unit = Go::Point(0.0, 0.0, 1.0);
+
+  return vec % unit;
 }
