@@ -325,7 +325,7 @@ PyDoc_STRVAR(generate_torus__doc__, "Generate a torus\n"
                                     "@type axis: Point, list of floats or tuple of floats\n"
                                     "@param major_radius: Major radius of the torus\n"
                                     "@type major_radius: float\n"
-                                    "@param minors_radius: Minor radius of the torus\n"
+                                    "@param minor_radius: Minor radius of the torus\n"
                                     "@type minor_radius: float\n"
                                     "@return: Volume describing the torus");
 PyObject* Generate_Torus(PyObject* self, PyObject* args, PyObject* kwds)

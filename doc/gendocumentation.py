@@ -4,8 +4,8 @@ from epydoc.docwriter.html import HTMLWriter
 from epydoc.docwriter.latex import LatexWriter
 
 doxy = build_doc_index(['GoTools', \
-                        'GoTools.Curve' \
-                        'GoTools.Surface' \
+                        'GoTools.Curve', \
+                        'GoTools.Surface', \
                         'GoTools.VolumeFactory', \
                         'GoTools.CurveFactory', \
                         'GoTools.SurfaceFactory', \
