@@ -1,4 +1,6 @@
 from GoTools import *
+from GoTools.SurfaceFactory import *
+from GoTools.SurfaceModelFactory import *
 
 SetDimension(3)
 SetFinalOutput("removepart2_3.g2")

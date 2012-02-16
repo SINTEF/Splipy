@@ -33,6 +33,5 @@ int main(int argc, char** argv)
   PyRun_SimpleFile(f,file);
   fclose(f);
   Py_Finalize();
-  GeoMod_Deinit();
   return 0;
 }

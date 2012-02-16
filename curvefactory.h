@@ -3,5 +3,6 @@
 #include <Python.h>
 
 extern "C" {
-  extern PyMethodDef CurveFactory_methods[];
+  void init_CurveFactory_Module();
+  extern PyObject* CurveFactory_module;
 }

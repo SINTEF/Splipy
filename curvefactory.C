@@ -13,6 +13,7 @@
 #include "sislP.h"
 
 extern "C" {
+PyObject* CurveFactory_module;
 
 PyDoc_STRVAR(generate_circle__doc__, "Generate a circle\n"
                                      "@param center: The center of the circle\n"
@@ -374,4 +375,11 @@ PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
      {NULL,                           NULL,                                   0,                          NULL}
   };
 
+PyDoc_STRVAR(curve_factory__doc__,"A module with methods for generating curves");
+
+PyMODINIT_FUNC
+init_CurveFactory_Module()
+{
+  CurveFactory_module = Py_InitModule3((char*)"GoTools.CurveFactory",CurveFactory_methods,curve_factory__doc__);
+}
 }

@@ -1,4 +1,5 @@
 from GoTools import *
+from GoTools.SurfaceFactory import *
 
 SetDimension(3)
 

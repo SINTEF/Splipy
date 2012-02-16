@@ -3,5 +3,6 @@
 #include <Python.h>
 
 extern "C" {
-  extern PyMethodDef VolumeFactory_methods[];
+  void init_VolumeFactory_Module();
+  extern PyObject* VolumeFactory_module;
 }

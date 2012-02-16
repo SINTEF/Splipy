@@ -10,8 +10,12 @@
 #include "GoTools/geometry/ParamSurface.h"
 
 extern "C" {
+PyObject* SurfaceModelFactory_module;
 
-PyDoc_STRVAR(generate_regularize_surface__doc__, "Regularize a surface");
+PyDoc_STRVAR(generate_regularize_surface__doc__, "Regularize a surface\n"
+                                                 "@param surface: Surface to regularize\n"
+                                                 "@type surface: Surface\n"
+                                                 "@return: SurfaceModel with the resulting multi-surface model");
 PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", NULL };
@@ -52,5 +56,13 @@ PyMethodDef SurfaceModelFactory_methods[] = {
      {(char*)"RegularizeSurface", (PyCFunction)Generate_RegularizeSurface, METH_VARARGS|METH_KEYWORDS, generate_regularize_surface__doc__},
      {NULL,                       0,                                       0,                          NULL}
   };
+
+PyDoc_STRVAR(surface_model_factory__doc__,"A module with methods for generating surface models");
+
+PyMODINIT_FUNC
+init_SurfaceModelFactory_Module()
+{
+  SurfaceModelFactory_module = Py_InitModule3((char*)"GoTools.SurfaceModelFactory",SurfaceModelFactory_methods,surface_model_factory__doc__);
+}
 
 }

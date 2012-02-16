@@ -1,4 +1,5 @@
 from GoTools import *
+from GoTools.CurveFactory import *
 
 SetDimension(3)
 

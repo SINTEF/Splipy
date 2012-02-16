@@ -4,5 +4,6 @@
 #include "GoTools/utils/config.h"
 
 extern "C" {
-  extern PyMethodDef SurfaceModelFactory_methods[];
+  void init_SurfaceModelFactory_Module();
+  extern PyObject* SurfaceModelFactory_module;
 }

@@ -1,4 +1,7 @@
 from GoTools import *
+from GoTools.CurveFactory import *
+from GoTools.SurfaceFactory import *
+from GoTools.VolumeFactory import *
 from math import *
 
 SetDimension(3)

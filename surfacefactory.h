@@ -3,5 +3,6 @@
 #include <Python.h>
 
 extern "C" {
-  extern PyMethodDef SurfaceFactory_methods[];
+  void init_SurfaceFactory_Module();
+  extern PyObject* SurfaceFactory_module;
 }

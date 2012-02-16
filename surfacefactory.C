@@ -20,6 +20,8 @@
 #include "GoTools/geometry/Torus.h"
 
 extern "C" {
+PyObject* SurfaceFactory_module;
+
 PyDoc_STRVAR(generate_addloop__doc__,"Add a loop to a surface\n"
                                      "@param original: The original surface\n"
                                      "@type original: Surface\n"
@@ -524,5 +526,13 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"TrimSurface",           (PyCFunction)Generate_TrimSurface,          METH_VARARGS|METH_KEYWORDS, generate_trim_surface__doc__},
      {NULL,                           NULL,                                       0,                          NULL}
   };
+
+PyDoc_STRVAR(surface_factory__doc__,"A module with methods for generating surfaces");
+
+PyMODINIT_FUNC
+init_SurfaceFactory_Module()
+{
+  SurfaceFactory_module = Py_InitModule3((char*)"GoTools.SurfaceFactory",SurfaceFactory_methods,surface_factory__doc__);
+}
 
 }

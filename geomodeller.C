@@ -124,23 +124,6 @@ PyObject* GeoMod_SetDebugLevel(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-static void WriteSurfaceModel(std::ofstream& g2_file, SurfaceModel* model, bool convert)
-{
-  if (!model->data)
-    return;
-  for (int i=0;i<model->data->nmbEntities();++i) {
-    if (convert) {
-      shared_ptr<Go::SplineSurface> surf = model->data->getSplineSurface(i);
-      surf->writeStandardHeader(g2_file);
-      surf->write(g2_file);
-    } else {
-      shared_ptr<Go::ParamSurface> surf = model->data->getSurface(i);
-      surf->writeStandardHeader(g2_file);
-      surf->write(g2_file);
-    }
-  }
-}
-
 // these statics are needed to handle the dynamic type of the input parameters
 // we may be given a list of objects, or a single object
 static void WriteEntity(std::ofstream& g2_file, PyObject* obj, bool convert)
@@ -284,49 +267,41 @@ PyMethodDef GeoMod_methods[] = {
      {NULL,                       NULL,                                  0,            NULL}
    };
 
-PyMethodDef* allmethods=NULL;
-
 PyMODINIT_FUNC
-InitGeoModTypes()
+InitGoToolsTypes()
 {
   init_Curve_Type();
+  init_CurveFactory_Module();
   init_Point_Type();
   init_Surface_Type();
+  init_SurfaceFactory_Module();
   init_SurfaceModel_Type();
+  init_SurfaceModelFactory_Module();
   init_Volume_Type();
+  init_VolumeFactory_Module();
 }
+
+PyDoc_STRVAR(gotools_module__doc__,"GoTools bindings");
 
 PyMODINIT_FUNC
 registerPythonTypes()
 {
-  InitGeoModTypes();
-  Py_INCREF(&Point_Type);
+  InitGoToolsTypes();
   PyObject* geoModule;
-  std::vector<PyMethodDef> defs;
-  PyMethods_Append(defs,GeoMod_methods);
-  PyMethods_Append(defs,CurveFactory_methods);
-  PyMethods_Append(defs,SurfaceFactory_methods);
-  PyMethods_Append(defs,SurfaceModelFactory_methods);
-  PyMethods_Append(defs,VolumeFactory_methods);
-  defs.push_back({NULL,NULL,0,NULL});
-  allmethods = new PyMethodDef[defs.size()];
-  memcpy(allmethods,&defs[0],defs.size()*sizeof(PyMethodDef));
-  geoModule = Py_InitModule((char*)"GoTools", allmethods);
+  geoModule = Py_InitModule3((char*)"GoTools", GeoMod_methods,gotools_module__doc__);
   if (!geoModule)
     return;
   PyModule_AddObject(geoModule,(char*)"Curve",(PyObject*)&Curve_Type);
+  PyModule_AddObject(geoModule,(char*)"CurveFactory",CurveFactory_module);
   PyModule_AddObject(geoModule,(char*)"Point",(PyObject*)&Point_Type);
   PyModule_AddObject(geoModule,(char*)"Surface",(PyObject*)&Surface_Type);
+  PyModule_AddObject(geoModule,(char*)"SurfaceFactory",SurfaceFactory_module);
   PyModule_AddObject(geoModule,(char*)"SurfaceModel",(PyObject*)&SurfaceModel_Type);
+  PyModule_AddObject(geoModule,(char*)"SurfaceModelFactory",SurfaceModelFactory_module);
   PyModule_AddObject(geoModule,(char*)"Volume",(PyObject*)&Volume_Type);
+  PyModule_AddObject(geoModule,(char*)"VolumeFactory",VolumeFactory_module);
 }
 
-}
-
-// helper functions
-void GeoMod_Deinit()
-{
-  delete[] allmethods;
 }
 
 Go::Point someNormal(const Go::Point& vec)

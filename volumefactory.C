@@ -17,6 +17,7 @@
 #include "GoTools/trivariate/SweepVolumeCreator.h"
 
 extern "C" {
+PyObject* VolumeFactory_module;
 
 PyDoc_STRVAR(generate_box__doc__, "Generate a box\n"
                                   "@param corner: A corner of the box\n"
@@ -363,4 +364,13 @@ PyMethodDef VolumeFactory_methods[] = {
      {(char*)"Torus",                 (PyCFunction)Generate_Torus,                  METH_VARARGS|METH_KEYWORDS, generate_torus__doc__},
      {NULL,                           NULL,                                         0,                          NULL}
    };
+
+PyDoc_STRVAR(volume_factory__doc__,"A module with methods for generating volumes");
+
+PyMODINIT_FUNC
+init_VolumeFactory_Module()
+{
+  VolumeFactory_module = Py_InitModule3((char*)"GoTools.VolumeFactory",VolumeFactory_methods,volume_factory__doc__);
+}
+
 }
