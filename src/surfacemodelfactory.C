@@ -63,6 +63,7 @@ PyMODINIT_FUNC
 init_SurfaceModelFactory_Module()
 {
   SurfaceModelFactory_module = Py_InitModule3((char*)"GoTools.SurfaceModelFactory",SurfaceModelFactory_methods,surface_model_factory__doc__);
+  modState.addInfo(SurfaceModelFactory_module);
 }
 
 }

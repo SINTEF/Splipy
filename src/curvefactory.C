@@ -381,5 +381,6 @@ PyMODINIT_FUNC
 init_CurveFactory_Module()
 {
   CurveFactory_module = Py_InitModule3((char*)"GoTools.CurveFactory",CurveFactory_methods,curve_factory__doc__);
+  modState.addInfo(CurveFactory_module);
 }
 }

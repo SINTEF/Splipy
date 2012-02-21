@@ -299,6 +299,7 @@ initGoTools()
   PyModule_AddObject(geoModule,(char*)"SurfaceModelFactory",SurfaceModelFactory_module);
   PyModule_AddObject(geoModule,(char*)"Volume",(PyObject*)&Volume_Type);
   PyModule_AddObject(geoModule,(char*)"VolumeFactory",VolumeFactory_module);
+  modState.addInfo(geoModule);
 }
 
 }
