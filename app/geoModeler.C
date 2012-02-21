@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     exit(2);
   }
   Py_Initialize();
-  registerPythonTypes();
+  initGoTools();
   PyRun_SimpleFile(f,file);
   fclose(f);
   Py_Finalize();

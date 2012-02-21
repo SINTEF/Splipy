@@ -36,7 +36,7 @@ extern GeoModellerState modState;
 
 extern "C"
 {
-  void registerPythonTypes();
+  void initGoTools();
 }
 
 // helper functions

@@ -163,7 +163,7 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
      surface = surf->data;
    }
 
-   Go::rotateSplineSurf(*axis, angle,
+   Go::GeometryTools::rotateSplineSurf(*axis, angle,
                         *static_pointer_cast<Go::SplineSurface>(surface));
 
    Py_INCREF(Py_None);

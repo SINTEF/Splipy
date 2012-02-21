@@ -267,8 +267,7 @@ PyMethodDef GeoMod_methods[] = {
      {NULL,                       NULL,                                  0,            NULL}
    };
 
-PyMODINIT_FUNC
-InitGoToolsTypes()
+void InitGoToolsTypes()
 {
   init_Curve_Type();
   init_CurveFactory_Module();
@@ -284,7 +283,7 @@ InitGoToolsTypes()
 PyDoc_STRVAR(gotools_module__doc__,"GoTools bindings");
 
 PyMODINIT_FUNC
-registerPythonTypes()
+initGoTools()
 {
   InitGoToolsTypes();
   PyObject* geoModule;
