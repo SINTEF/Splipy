@@ -1,3 +1,17 @@
+//===========================================================================
+//                                                                           
+// File: surface.C
+//                                                                           
+// Created: Mon Feb 20 13:22:00 2012                                         
+//                                                                           
+// Author: Arne Morten Kvarving <arne.morten.kvarving@sintef.no>
+//                                                                           
+// Revision: $Id$
+//                                                                           
+// Description: GoTools.Surface python class implementation
+//                                                                           
+//===========================================================================
+
 #include "surface.h"
 #include "pyutils.h"
 #include "geomodeller.h"
@@ -182,6 +196,9 @@ void init_Surface_Type()
 
 }
 
+//! \brief Check if a surface is a spline surface
+//! \return The surface itself if it s a spline surface,
+//          the surface converted to a spline surface otherwise.
 shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> surface)
 {
   if (surface->instanceType() == Go::Class_SplineSurface)

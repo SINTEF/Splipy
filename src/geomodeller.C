@@ -253,7 +253,7 @@ PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 PyMethodDef GeoMod_methods[] = {
      // setup and general methods
      {(char*)"GetVersion",            (PyCFunction)GeoMod_GetVersion,        METH_VARARGS,               get_go_version__doc__},
-     {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS,               set_tolerance__doc__},
+     {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS|METH_KEYWORDS, set_tolerance__doc__},
      {(char*)"SetDimension",          (PyCFunction)GeoMod_SetDimension,      METH_VARARGS|METH_KEYWORDS, set_dim__doc__},
      {(char*)"SetFinalOutput",        (PyCFunction)GeoMod_SetFinalOutput,    METH_VARARGS|METH_KEYWORDS, set_final_output__doc__},
 
