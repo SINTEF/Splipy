@@ -136,6 +136,7 @@ static void WriteEntity(std::ofstream& g2_file, PyObject* obj, bool convert)
     WriteVolumeG2(g2_file,(Volume*)obj,convert);
   if (PyObject_TypeCheck(obj,&SurfaceModel_Type))
     WriteSurfaceModelG2(g2_file,(SurfaceModel*)obj,convert);
+  g2_file << std::endl;
 }
 
 static void DoWrite(const std::string& fname, PyObject* objectso, bool convert)

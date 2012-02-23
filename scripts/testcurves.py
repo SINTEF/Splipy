@@ -42,10 +42,4 @@ p0 = Point(0,1.1,2.5)
 axis = Point(2,-1,0.7)
 helix = Helix(c,p0,axis,0.6,15)
 
-print infline
-print line
-print circle
-print circleseg
-print ellipse
-print ellipseg
-print helix
+FinalOutput([infline,line,circle,circleseg,ellipse,ellipseg,helix])

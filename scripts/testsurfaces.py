@@ -43,11 +43,4 @@ p1 = Point(-2.1,0.9,0.6)
 normal = Point(0.9,0.6,0.9)
 disc = CircularDisc(p0,p1,normal)
 
-print plane
-print sphere 
-print infcyl
-print cyl
-print infcone
-print cone
-print torus
-print disc
+FinalOutput([plane,sphere,infcyl,cyl,cone,torus,disc])

@@ -6,9 +6,7 @@
 
 #include <sstream>
 
-#define GEOMODELLER_VERSION_MAJOR 0
-#define GEOMODELLER_VERSION_MINOR 1
-#define GEOMODELLER_VERSION_PATCH 0
+#include "geomodversion.h"
 
 class GeoModellerState {
   public:

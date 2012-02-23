@@ -1,0 +1,10 @@
+#!/bin/bash
+
+$1 $2 finaloutput=/tmp/regtest.g2
+echo `md5sum /tmp/regtest.g2 | awk -F ' ' '{print $1}'`> /tmp/regtest.md5
+diff -u /tmp/regtest.md5 $3
+result=$?
+rm -f /tmp/regtest.g2 /tmp/regtest.md5
+
+test $result -eq 0 && exit 0
+exit 1
