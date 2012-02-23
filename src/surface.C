@@ -204,7 +204,9 @@ shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> 
   if (surface->instanceType() == Go::Class_SplineSurface)
     return dynamic_pointer_cast<Go::SplineSurface, Go::ParamSurface>(surface);
   shared_ptr<Go::ElementarySurface> e_surface = dynamic_pointer_cast<Go::ElementarySurface, Go::ParamSurface>(surface);
-  return shared_ptr<Go::SplineSurface>(e_surface->geometrySurface());
+  if (e_surface)
+    return shared_ptr<Go::SplineSurface>(e_surface->geometrySurface());
+  return shared_ptr<Go::SplineSurface>();
 }
 
 void printSurfaceToStream(std::ostream& str, shared_ptr<Go::ParamSurface> surf)
@@ -229,10 +231,14 @@ void printSurfaceToStream(std::ostream& str, shared_ptr<Go::ParamSurface> surf)
 
 void WriteSurfaceG2(std::ofstream& g2_file, Surface* surface, bool convert)
 {
+  if (!surface->data)
+    return;
   if (convert) {
     shared_ptr<Go::SplineSurface> srf = convertSplineSurface(surface->data);
-    srf->writeStandardHeader(g2_file);
-    srf->write(g2_file);
+    if (srf) {
+      srf->writeStandardHeader(g2_file);
+      srf->write(g2_file);
+    }
   } else {
     surface->data->writeStandardHeader(g2_file);
     surface->data->write(g2_file);

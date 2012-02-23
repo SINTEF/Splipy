@@ -95,12 +95,16 @@ void WriteSurfaceModelG2(std::ofstream& g2_file, SurfaceModel* model, bool conve
   for (int i=0;i<model->data->nmbEntities();++i) {
     if (convert) {
       shared_ptr<Go::SplineSurface> surf = model->data->getSplineSurface(i);
-      surf->writeStandardHeader(g2_file);
-      surf->write(g2_file);
+      if (surf) {
+        surf->writeStandardHeader(g2_file);
+        surf->write(g2_file);
+      }
     } else {
       shared_ptr<Go::ParamSurface> surf = model->data->getSurface(i);
-      surf->writeStandardHeader(g2_file);
-      surf->write(g2_file);
+      if (surf) {
+        surf->writeStandardHeader(g2_file);
+        surf->write(g2_file);
+      }
     }
   }
 }
