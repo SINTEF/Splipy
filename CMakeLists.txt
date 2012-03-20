@@ -30,6 +30,11 @@ FIND_PACKAGE(GoTopology REQUIRED)
 FIND_PACKAGE(GoImplicitization REQUIRED)
 FIND_PACKAGE(GoIntersections REQUIRED)
 
+# Mimimum GoTools version
+IF(GoTools_VERSION_MAJOR LESS 4 OR NOT GoTools_VERSION_MAJOR)
+  MESSAGE(FATAL_ERROR "GoTools >= 4.0.0 required. bailing")
+ENDIF(GoTools_VERSION_MAJOR LESS 4 OR NOT GoTools_VERSION_MAJOR)
+
 # Order of GoTools libraries is not random!
 SET(DEPLIBS ${PYTHON_LIBRARIES}
             ${GoCompositeModel_LIBRARIES}
