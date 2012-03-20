@@ -18,6 +18,8 @@
 #include "GoTools/geometry/SplineCurve.h"
 #include "GoTools/geometry/SweepSurfaceCreator.h"
 #include "GoTools/geometry/Torus.h"
+#include "GoTools/geometry/SurfaceInterpolator.h"
+
 
 extern "C" {
 PyObject* SurfaceFactory_module;
@@ -317,6 +319,63 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_nonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline surface\n"
+                                         "@param original: The surface to trim\n"
+                                         "@type original: Surface\n"
+                                         "@return: Non-rational B-spline representation of the surface");
+PyObject* Generate_NonRational(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"original", NULL };
+  PyObject* originalo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&originalo))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(originalo);
+  if (!surf)
+    return NULL;
+
+  shared_ptr<Go::SplineSurface> surf_base = convertSplineSurface(surf);
+
+  // if it's already B-spline, just return itself
+  if(!surf_base->rational()) {
+    Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+    result->data = surf_base;
+
+    return (PyObject*)result;
+  }
+
+  // extract basis functions and evaluation points
+  int dimension = surf_base->dimension();
+  Go::BsplineBasis basis_u = surf_base->basis_u();
+  Go::BsplineBasis basis_v = surf_base->basis_v();
+  std::vector<double> greville_u(basis_u.numCoefs());
+  std::vector<double> greville_v(basis_v.numCoefs());
+  for(int i=0; i<basis_u.numCoefs(); i++)
+    greville_u[i] = basis_u.grevilleParameter(i);
+  for(int i=0; i<basis_v.numCoefs(); i++)
+    greville_v[i] = basis_v.grevilleParameter(i);
+
+  // evaluate original spline at interpolation points
+  std::vector<double> interpolationPoints;
+  std::vector<double> weights(0);
+  surf_base->gridEvaluator(interpolationPoints, greville_u, greville_v);
+
+  Go::SplineSurface *nonrational_surf = Go::SurfaceInterpolator::regularInterpolation(basis_u,
+                                                                                      basis_v,
+                                                                                      greville_u,
+                                                                                      greville_v,
+                                                                                      interpolationPoints,
+                                                                                      dimension,
+                                                                                      false,
+                                                                                      weights);
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data = shared_ptr<Go::SplineSurface>(nonrational_surf);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_plane__doc__,"Generate an infinite plane\n"
                                    "@param p0: A point on the plane\n"
                                    "@type center: Point, list of floats or tuple of floats\n"
@@ -515,6 +574,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"AddLoop",               (PyCFunction)Generate_AddLoop,              METH_VARARGS|METH_KEYWORDS, generate_addloop__doc__},
      {(char*)"CircularDisc",          (PyCFunction)Generate_CircularDisc,         METH_VARARGS|METH_KEYWORDS, generate_circular_disc__doc__},
      {(char*)"ConeSurface",           (PyCFunction)Generate_ConeSurface,          METH_VARARGS|METH_KEYWORDS, generate_cone_surface__doc__},
+     {(char*)"ConvertNonRational",    (PyCFunction)Generate_NonRational,          METH_VARARGS|METH_KEYWORDS, generate_nonrational__doc__},
      {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_surface__doc__},
      {(char*)"LinearCurveSweep",      (PyCFunction)Generate_LinearCurveSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_curve_sweep__doc__},
      {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves,           METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},
