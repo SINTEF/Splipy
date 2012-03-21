@@ -4,6 +4,7 @@
 #include "pyutils.h"
 
 #include "GoTools/geometry/ClassType.h"
+#include "GoTools/geometry/GeometryTools.h"
 
 #include <fstream>
 #include <sstream>
@@ -137,17 +138,71 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
+                                    "@param vector: The vector to translate along\n"
+                                    "@type axis: Point, list of floats or tuple of floats\n"
+                                    "@return: None");
+PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"vector", NULL };
+  PyObject* veco;
+  double angle=0.f;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&veco))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::Point>      vec   = PyObject_AsGoPoint(veco);
+  if (!curve || !vec)
+    return NULL;
+
+   if (curve->geometryCurve() != NULL) {
+     Curve* crv = (Curve*)self;
+     crv->data = convertSplineCurve(curve);
+     curve = crv->data;
+   }
+
+   Go::GeometryTools::translateSplineCurve(*vec, *static_pointer_cast<Go::SplineCurve>(curve));
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+PyObject* Curve_Add(PyObject* o1, PyObject* o2)
+{
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(o1);
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(o2);
+  Curve* result = NULL;
+  if (curve && point) {
+    result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+    if (curve->instanceType() == Go::Class_SplineCurve)
+      result->data = shared_ptr<Go::ParamCurve>(
+          new Go::SplineCurve(*static_pointer_cast<Go::SplineCurve>(curve)));
+    else
+      result->data = convertSplineCurve(curve);
+
+    Go::GeometryTools::translateSplineCurve(*point, 
+                         *static_pointer_cast<Go::SplineCurve>(result->data));
+  }
+
+  return (PyObject*) result;
+}
+
 PyMethodDef Curve_methods[] = {
      {(char*)"GetKnots",   (PyCFunction)Curve_GetKnots,   METH_VARARGS,               curve_get_knots__doc__},
      {(char*)"InsertKnot", (PyCFunction)Curve_InsertKnot, METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Project",    (PyCFunction)Curve_Project,    METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
+     {(char*)"Translate",  (PyCFunction)Curve_Translate,  METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
      {NULL,                NULL,                          0,                          NULL}
    };
+
+PyNumberMethods Curve_operators = {0};
 
 PyDoc_STRVAR(curve__doc__, "A parametric description of a curve");
 void init_Curve_Type()
 {
   InitializeTypeObject(&Curve_Type);
+  Curve_operators.nb_add = Curve_Add;
   Curve_Type.tp_name = "GoTools.Curve";
   Curve_Type.tp_basicsize = sizeof(Curve);
   Curve_Type.tp_dealloc = (destructor)Curve_Dealloc;
@@ -157,6 +212,7 @@ void init_Curve_Type()
   Curve_Type.tp_base = 0;
   Curve_Type.tp_new = Curve_New;
   Curve_Type.tp_str = (reprfunc)Curve_Str;
+  Curve_Type.tp_as_number = &Curve_operators;
   PyType_Ready(&Curve_Type);
 }
 }

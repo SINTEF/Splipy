@@ -254,6 +254,57 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
+PyDoc_STRVAR(surface_translate__doc__,"Translate a surface along a given vector\n"
+                                      "@param vector: The vector to translate along\n"
+                                      "@type axis: Point, list of floats or tuple of floats\n"
+                                      "@return: None");
+PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"vector", NULL };
+  PyObject* veco;
+  double angle=0.f;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&veco))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  shared_ptr<Go::Point>        vec     = PyObject_AsGoPoint(veco);
+  if (!surface || !vec)
+    return NULL;
+
+   if (!surface->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surface);
+     surface = surf->data;
+   }
+
+   Go::GeometryTools::translateSplineSurf(*vec, 
+                              *static_pointer_cast<Go::SplineSurface>(surface));
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+PyObject* Surface_Add(PyObject* o1, PyObject* o2)
+{
+  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(o1);
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(o2);
+  Surface* result = NULL;
+  if (surf && point) {
+    result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+    if (surf->isSpline())
+      result->data = shared_ptr<Go::ParamSurface>(
+          new Go::SplineSurface(*static_pointer_cast<Go::SplineSurface>(surf)));
+    else
+      result->data = convertSplineSurface(surf);
+
+    Go::GeometryTools::translateSplineSurf(*point, 
+                         *static_pointer_cast<Go::SplineSurface>(result->data));
+  }
+
+  return (PyObject*) result;
+}
+
 PyMethodDef Surface_methods[] = {
      {(char*)"GetEdges",   (PyCFunction)Surface_GetEdges,   METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots,   METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
@@ -261,13 +312,17 @@ PyMethodDef Surface_methods[] = {
      {(char*)"Project",    (PyCFunction)Surface_Project,    METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
      {(char*)"RaiseOrder", (PyCFunction)Surface_RaiseOrder, METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
      {(char*)"Rotate",     (PyCFunction)Surface_Rotate,     METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
+     {(char*)"Translate",  (PyCFunction)Surface_Translate,  METH_VARARGS|METH_KEYWORDS, surface_translate__doc__},
      {NULL,           NULL,                     0,            NULL}
    };
+
+PyNumberMethods Surface_operators = {0};
 
 PyDoc_STRVAR(surface__doc__, "A parametric description of a surface");
 void init_Surface_Type()
 {
   InitializeTypeObject(&Surface_Type);
+  Surface_operators.nb_add = Surface_Add;
   Surface_Type.tp_name = "GoTools.Surface";
   Surface_Type.tp_basicsize = sizeof(Surface);
   Surface_Type.tp_dealloc = (destructor)Surface_Dealloc;
@@ -277,6 +332,7 @@ void init_Surface_Type()
   Surface_Type.tp_base = 0;
   Surface_Type.tp_new = Surface_New;
   Surface_Type.tp_str = (reprfunc)Surface_Str;
+  Surface_Type.tp_as_number = &Surface_operators;
   PyType_Ready(&Surface_Type);
 }
 
