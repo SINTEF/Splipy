@@ -13,6 +13,7 @@
 //===========================================================================
 
 #include "surface.h"
+#include "curve.h"
 #include "pyutils.h"
 #include "geomodeller.h"
 
@@ -76,6 +77,39 @@ PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
    Py_INCREF(Py_None);
    return Py_None;
 }
+
+PyDoc_STRVAR(surface_get_edges__doc__,"Return the four edge curves in (parametric) order: bottom, right, top, left\n"
+                                      "@return: A list of the four edge curves");
+PyObject* Surface_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+  if (!surface->isSpline()) {
+    Surface* surf = (Surface*)self;
+    surf->data = convertSplineSurface(surface);
+    surface = surf->data;
+  }
+
+  Go::SplineSurface* ss = surface->asSplineSurface();
+  Curve* curve0 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  Curve* curve1 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  Curve* curve2 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  Curve* curve3 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  curve0->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(0));
+  curve1->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(1));
+  curve2->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(2));
+  curve3->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(3));
+
+  PyObject* result = PyList_New(0);
+  PyList_Append(result, (PyObject*) curve0);
+  PyList_Append(result, (PyObject*) curve1);
+  PyList_Append(result, (PyObject*) curve2);
+  PyList_Append(result, (PyObject*) curve3);
+
+  return result;
+}
+
 
 PyDoc_STRVAR(surface_get_knots__doc__,"Return unique knots for a spline surface\n"
                                       "@return: Tuple with List of float");
@@ -171,6 +205,7 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyMethodDef Surface_methods[] = {
+     {(char*)"GetEdges",   (PyCFunction)Surface_GetEdges,   METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots,   METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"InsertKnot", (PyCFunction)Surface_InsertKnot, METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
      {(char*)"RaiseOrder", (PyCFunction)Surface_RaiseOrder, METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
