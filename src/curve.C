@@ -87,9 +87,60 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along paralell to the cartesian coordinate system\n"
+                                      "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
+                                      "@type axis: string\n"
+                                      "@return: None");
+PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"axis", NULL };
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  char *sAxis;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
+                                   (char**)keyWords,&sAxis) || !curve)
+    return NULL;
+
+  bool bAxis[3];
+  bAxis[0] = true;
+  bAxis[1] = true;
+  bAxis[2] = true;
+  while(*sAxis != 0) {
+    if(*sAxis == 'x' || *sAxis == 'X')
+      bAxis[0] = false;
+    else if(*sAxis == 'y' || *sAxis == 'Y')
+      bAxis[1] = false;
+    else if(*sAxis == 'z' || *sAxis == 'Z')
+      bAxis[2] = false;
+    sAxis++;
+  }
+
+  Curve* crv = (Curve*)self;
+  crv->data = convertSplineCurve(curve);
+
+  shared_ptr<Go::SplineCurve>   scurve   = static_pointer_cast<Go::SplineCurve>(crv->data);
+  bool                          rational = scurve->rational();
+  int                           dim      = scurve->dimension();
+  std::vector<double>::iterator coefs    = (rational) ? scurve->rcoefs_begin() : scurve->coefs_begin();
+  std::vector<double>::iterator coefsEnd = (rational) ? scurve->rcoefs_end()   : scurve->coefs_begin();
+  while(coefs != coefsEnd) {
+    if(bAxis[0] && dim>0)
+      coefs[0] = 0.0;
+    if(bAxis[1] && dim>1)
+      coefs[1] = 0.0;
+    if(bAxis[2] && dim>2)
+      coefs[2] = 0.0;
+    coefs += (dim+rational);
+  }
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyMethodDef Curve_methods[] = {
      {(char*)"GetKnots",   (PyCFunction)Curve_GetKnots,   METH_VARARGS,               curve_get_knots__doc__},
      {(char*)"InsertKnot", (PyCFunction)Curve_InsertKnot, METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
+     {(char*)"Project",    (PyCFunction)Curve_Project,    METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {NULL,                NULL,                          0,                          NULL}
    };
 

@@ -171,6 +171,56 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
+PyDoc_STRVAR(surface_project__doc__,"Project the surface onto an axis or plane parallel to the cartesian coordinate system\n"
+                                    "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a combination of these)\n"
+                                    "@type axis: string\n"
+                                    "@return: None");
+PyObject* Surface_Project(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"axis", NULL };
+  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(self);
+  char *sAxis;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
+                                   (char**)keyWords,&sAxis) || !surf)
+    return NULL;
+
+  bool bAxis[3];
+  bAxis[0] = true;
+  bAxis[1] = true;
+  bAxis[2] = true;
+  while(*sAxis != 0) {
+    if(*sAxis == 'x' || *sAxis == 'X')
+      bAxis[0] = false;
+    else if(*sAxis == 'y' || *sAxis == 'Y')
+      bAxis[1] = false;
+    else if(*sAxis == 'z' || *sAxis == 'Z')
+      bAxis[2] = false;
+    sAxis++;
+  }
+
+  Surface* srf = (Surface*)self;
+  srf->data = convertSplineSurface(surf);
+
+  shared_ptr<Go::SplineSurface> ssurf    = static_pointer_cast<Go::SplineSurface>(srf->data);
+  bool                          rational = ssurf->rational();
+  int                           dim      = ssurf->dimension();
+  std::vector<double>::iterator coefs    = (rational) ? ssurf->rcoefs_begin() : ssurf->coefs_begin();
+  std::vector<double>::iterator coefsEnd = (rational) ? ssurf->rcoefs_end()   : ssurf->coefs_begin();
+  while(coefs != coefsEnd) {
+    if(bAxis[0] && dim>0)
+      coefs[0] = 0.0;
+    if(bAxis[1] && dim>1)
+      coefs[1] = 0.0;
+    if(bAxis[2] && dim>2)
+      coefs[2] = 0.0;
+    coefs += (dim+rational);
+  }
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(surface_rotate__doc__,"Rotate a surface around an axis\n"
                                    "@param axis: The axis to rotate around\n"
                                    "@type axis: Point, list of floats or tuple of floats\n"
@@ -208,6 +258,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"GetEdges",   (PyCFunction)Surface_GetEdges,   METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots,   METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"InsertKnot", (PyCFunction)Surface_InsertKnot, METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
+     {(char*)"Project",    (PyCFunction)Surface_Project,    METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
      {(char*)"RaiseOrder", (PyCFunction)Surface_RaiseOrder, METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
      {(char*)"Rotate",     (PyCFunction)Surface_Rotate,     METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
      {NULL,           NULL,                     0,            NULL}
