@@ -15,6 +15,7 @@
 #include "GoTools/trivariate/SplineVolume.h"
 #include "GoTools/trivariate/TorusVolume.h"
 #include "GoTools/trivariate/SweepVolumeCreator.h"
+#include "GoTools/geometry/GeometryTools.h"
 
 extern "C" {
 PyObject* VolumeFactory_module;
@@ -137,6 +138,53 @@ PyObject* Generate_Cylinder(PyObject* self, PyObject* args, PyObject* kwds)
 
   return (PyObject*)result;
 }
+
+PyDoc_STRVAR(generate_extrude_surface__doc__, "Generate a volume by extruding along a given direction\n"
+                                              "@param surface: The surface to extrude\n"
+                                              "@type surface: Surface\n"
+                                              "@param direction: The direction to extrude\n"
+                                              "@type direction: Point, list of floats or tuple of floats\n"
+                                              "@param amount: Scaling factor of direction\n"
+                                              "@type amount: float\n"
+                                              "@return: Volume describing the extruded volume");
+PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"surface", "direction", "amount", NULL };
+  PyObject* surfo;
+  PyObject* pointo;
+  double amount = 1.0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|d",
+                                   (char**)keyWords,&surfo,&pointo,&amount))
+    return NULL;
+
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
+  if (!point)
+    return NULL;
+
+  Volume* result = NULL;
+  shared_ptr<Go::ParamSurface> s1 = PyObject_AsGoSurface(surfo);
+  if (!s1)
+    s1 = PyObject_AsGoSurface(surfo);
+
+  
+  Go::Point extrude = *point;
+  extrude *= amount;
+  shared_ptr<Go::ParamSurface> s2(s1->clone());
+  Go::GeometryTools::translateSplineSurf(extrude,
+                              *static_pointer_cast<Go::SplineSurface>(s2));
+  
+
+  if (s1 && s2) {
+    std::vector<shared_ptr<Go::SplineSurface> > surfaces;
+    surfaces.push_back(static_pointer_cast<Go::SplineSurface>(s1));
+    surfaces.push_back(static_pointer_cast<Go::SplineSurface>(s2));
+    result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+    result->data.reset(Go::LoftVolumeCreator::loftVolume(surfaces.begin(),surfaces.size()));
+  }
+
+  return (PyObject*)result;
+}
+
 
 PyDoc_STRVAR(generate_loft_surfaces__doc__, "Generate a volume by lofting surfaces\n"
                                             "@param surfaces: The surfaces to loft\n"
@@ -356,6 +404,7 @@ PyMethodDef VolumeFactory_methods[] = {
      {(char*)"Box",                   (PyCFunction)Generate_Box,                    METH_VARARGS|METH_KEYWORDS, generate_box__doc__},
      {(char*)"Cone",                  (PyCFunction)Generate_Cone,                   METH_VARARGS|METH_KEYWORDS, generate_cone__doc__},
      {(char*)"Cylinder",              (PyCFunction)Generate_Cylinder,               METH_VARARGS|METH_KEYWORDS, generate_cylinder__doc__},
+     {(char*)"ExtrudeSurface",        (PyCFunction)Generate_ExtrudeSurface,         METH_VARARGS|METH_KEYWORDS, generate_extrude_surface__doc__},
      {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces,           METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},
      {(char*)"LinearSurfaceSweep",    (PyCFunction)Generate_LinearSurfaceSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_surface_sweep__doc__},
      {(char*)"RotationalSurfaceSweep",(PyCFunction)Generate_RotationalSurfaceSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_surface_sweep__doc__},
