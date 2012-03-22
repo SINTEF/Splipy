@@ -61,6 +61,36 @@ PyObject* Surface_Str(Surface* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyDoc_STRVAR(surface_flip_parametrization__doc__,"Flip surface parametrization\n"
+                                                 "@param direction: The parametric direction to flip (0=u, 1=v)\n"
+                                                 "@type direction: int\n"
+                                                 "@return: None");
+PyObject* Surface_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"direction", NULL };
+  PyObject* axiso;
+  int direction = 0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
+                                   (char**)keyWords,&direction))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+
+   if (!surface->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surface);
+     surface = surf->data;
+   }
+
+   Go::SplineSurface *ssurf = surface->asSplineSurface();
+   ssurf->reverseParameterDirection(direction == 0);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyDoc_STRVAR(surface_raise_order__doc__,"Raise order of a spline surface\n"
                                         "@param raise_u: Raise of order in u\n"
                                         "@type raise_u: int (>= 0)\n"
@@ -265,6 +295,27 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
+PyDoc_STRVAR(surface_swap_parametrization__doc__,"Swaps the two surface parameter directions\n"
+                                                 "@return: None");
+PyObject* Surface_SwapParametrization(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+
+   if (!surface->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surface);
+     surface = surf->data;
+   }
+
+   Go::SplineSurface *ssurf = surface->asSplineSurface();
+   ssurf->swapParameterDirection();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyDoc_STRVAR(surface_translate__doc__,"Translate a surface along a given vector\n"
                                       "@param vector: The vector to translate along\n"
                                       "@type axis: Point, list of floats or tuple of floats\n"
@@ -317,14 +368,16 @@ PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 }
 
 PyMethodDef Surface_methods[] = {
-     {(char*)"Clone",      (PyCFunction)Surface_Clone,      METH_VARARGS,               surface_clone__doc__},
-     {(char*)"GetEdges",   (PyCFunction)Surface_GetEdges,   METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
-     {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots,   METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
-     {(char*)"InsertKnot", (PyCFunction)Surface_InsertKnot, METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
-     {(char*)"Project",    (PyCFunction)Surface_Project,    METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
-     {(char*)"RaiseOrder", (PyCFunction)Surface_RaiseOrder, METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
-     {(char*)"Rotate",     (PyCFunction)Surface_Rotate,     METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
-     {(char*)"Translate",  (PyCFunction)Surface_Translate,  METH_VARARGS|METH_KEYWORDS, surface_translate__doc__},
+     {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
+     {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
+     {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
+     {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
+     {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
+     {(char*)"Project",             (PyCFunction)Surface_Project,               METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
+     {(char*)"RaiseOrder",          (PyCFunction)Surface_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
+     {(char*)"Rotate",              (PyCFunction)Surface_Rotate,                METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
+     {(char*)"SwapParametrization", (PyCFunction)Surface_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, surface_swap_parametrization__doc__},
+     {(char*)"Translate",           (PyCFunction)Surface_Translate,             METH_VARARGS|METH_KEYWORDS, surface_translate__doc__},
      {NULL,           NULL,                     0,            NULL}
    };
 
