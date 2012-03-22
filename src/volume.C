@@ -6,6 +6,7 @@
 
 #include "GoTools/geometry/ClassType.h"
 #include "GoTools/trivariate/ElementaryVolume.h"
+#include "GoTools/geometry/ParamSurface.h"
 
 #include <fstream>
 #include <sstream>
@@ -75,9 +76,50 @@ PyObject* Volume_Sub(PyObject* o1, PyObject* o2)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(volume_get_edges__doc__,"Return the six edge volumes\n"
+                                      "@return: A list of the six edges");
+PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+  if (!volume->isSpline()) {
+    Volume* vol = (Volume*)self;
+    vol->data = convertSplineVolume(volume);
+    volume = vol->data;
+  }
+
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume);
+  std::vector<shared_ptr<Go::ParamSurface> > edges = vol->getAllBoundarySurfaces();
+
+  Surface* surface0 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  Surface* surface1 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  Surface* surface2 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  Surface* surface3 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  Surface* surface4 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  Surface* surface5 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  surface0->data = shared_ptr<Go::ParamSurface>(edges.at(0));
+  surface1->data = shared_ptr<Go::ParamSurface>(edges.at(1));
+  surface2->data = shared_ptr<Go::ParamSurface>(edges.at(2));
+  surface3->data = shared_ptr<Go::ParamSurface>(edges.at(3));
+  surface4->data = shared_ptr<Go::ParamSurface>(edges.at(4));
+  surface5->data = shared_ptr<Go::ParamSurface>(edges.at(5));
+
+  PyObject* result = PyList_New(0);
+  PyList_Append(result, (PyObject*) surface0);
+  PyList_Append(result, (PyObject*) surface1);
+  PyList_Append(result, (PyObject*) surface2);
+  PyList_Append(result, (PyObject*) surface3);
+  PyList_Append(result, (PyObject*) surface4);
+  PyList_Append(result, (PyObject*) surface5);
+
+  return result;
+}
+
 PyMethodDef Volume_methods[] = {
-     {(char*)"Clone", (PyCFunction)Volume_Clone, METH_VARARGS, volume_clone__doc__},
-     {NULL,           NULL,                      0,            NULL}
+     {(char*)"Clone",     (PyCFunction)Volume_Clone,    METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
+     {(char*)"GetEdges",  (PyCFunction)Volume_GetEdges, METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
+     {NULL,             NULL,                       0,                          NULL}
    };
 
 PyNumberMethods Volume_operators = {0};
