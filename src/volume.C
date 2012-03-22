@@ -38,6 +38,17 @@ PyObject* Volume_Str(Volume* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyDoc_STRVAR(volume_clone__doc__,"Clone a volume\n"
+                                 "@return: New copy of volume\n");
+PyObject* Volume_Clone(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  Volume* res = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(self);
+  res->data.reset(vol->clone());
+ 
+  return (PyObject*)res;
+}
+
 PyObject* Volume_Add(PyObject* o1, PyObject* o2)
 {
   Volume* vol = (Volume*)o1;
@@ -65,7 +76,8 @@ PyObject* Volume_Sub(PyObject* o1, PyObject* o2)
 }
 
 PyMethodDef Volume_methods[] = {
-     {NULL,           NULL,                     0,            NULL}
+     {(char*)"Clone", (PyCFunction)Volume_Clone, METH_VARARGS, volume_clone__doc__},
+     {NULL,           NULL,                      0,            NULL}
    };
 
 PyNumberMethods Volume_operators = {0};
