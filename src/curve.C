@@ -27,6 +27,17 @@ void Curve_Dealloc(Curve* self)
   self->ob_type->tp_free((PyObject*)self);
 }
 
+PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
+                                "@return: New copy of curve\n");
+PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  Curve* res = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  shared_ptr<Go::ParamCurve> crv = PyObject_AsGoCurve(self);
+  res->data.reset(crv->clone());
+ 
+  return (PyObject*)res;
+}
+
 PyObject* Curve_Str(Curve* self)
 {
   std::stringstream str;
@@ -189,6 +200,7 @@ PyObject* Curve_Add(PyObject* o1, PyObject* o2)
 }
 
 PyMethodDef Curve_methods[] = {
+     {(char*)"Clone",      (PyCFunction)Curve_Clone,      METH_VARARGS,               curve_clone__doc__},
      {(char*)"GetKnots",   (PyCFunction)Curve_GetKnots,   METH_VARARGS,               curve_get_knots__doc__},
      {(char*)"InsertKnot", (PyCFunction)Curve_InsertKnot, METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Project",    (PyCFunction)Curve_Project,    METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
