@@ -43,6 +43,17 @@ void Surface_Dealloc(Surface* self)
   self->ob_type->tp_free((PyObject*)self);
 }
 
+PyDoc_STRVAR(surface_clone__doc__,"Clone a surface\n"
+                                  "@return: New copy of surface\n");
+PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  Surface* res = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  shared_ptr<Go::ParamSurface> srf = PyObject_AsGoSurface(self);
+  res->data.reset(srf->clone());
+ 
+  return (PyObject*)res;
+}
+
 PyObject* Surface_Str(Surface* self)
 {
   std::stringstream str;
@@ -306,6 +317,7 @@ PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 }
 
 PyMethodDef Surface_methods[] = {
+     {(char*)"Clone",      (PyCFunction)Surface_Clone,      METH_VARARGS,               surface_clone__doc__},
      {(char*)"GetEdges",   (PyCFunction)Surface_GetEdges,   METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",   (PyCFunction)Surface_GetKnots,   METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"InsertKnot", (PyCFunction)Surface_InsertKnot, METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
