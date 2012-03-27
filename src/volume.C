@@ -76,6 +76,36 @@ PyObject* Volume_Sub(PyObject* o1, PyObject* o2)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(volume_flip_parametrization__doc__,"Flip (or reverse) volume parametrization\n"
+                                                "@param direction: The parametric direction to flip (0=u, 1=v, 2=w)\n"
+                                                "@type direction: int\n"
+                                                "@return: None");
+PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"direction", NULL };
+  PyObject* axiso;
+  int direction = 0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
+                                   (char**)keyWords,&direction))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+
+   Volume* vol = (Volume*)self;
+   if (!volume->isSpline()) {
+     vol->data = convertSplineVolume(volume);
+     volume = vol->data;
+   }
+
+   vol->data->reverseParameterDirection(direction);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+
 PyDoc_STRVAR(volume_get_edges__doc__,"Return the six edge volumes\n"
                                       "@return: A list of the six edges");
 PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
@@ -116,10 +146,44 @@ PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(volume_swap_parametrization__doc__,"Swaps two of the parametric directions\n"
+                                                "@param pardir1: The first parametric direction \n"
+                                                "@type pardir1: int\n"
+                                                "@param pardir2: The second parametric direction \n"
+                                                "@type pardir2: int\n"
+                                                "@return: None");
+PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"pardir1", "pardir2", NULL };
+  PyObject* axiso;
+  int pardir1 = 0;
+  int pardir2 = 0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ii",
+                                   (char**)keyWords,&pardir1, &pardir2))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+
+  Volume* vol = (Volume*)self;
+  if (!volume->isSpline()) {
+    vol->data = convertSplineVolume(volume);
+    volume = vol->data;
+  }
+
+  vol->data->swapParameterDirection(pardir1, pardir2);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyMethodDef Volume_methods[] = {
-     {(char*)"Clone",     (PyCFunction)Volume_Clone,    METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
-     {(char*)"GetEdges",  (PyCFunction)Volume_GetEdges, METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
-     {NULL,             NULL,                       0,                          NULL}
+     {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
+     {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
+     {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
+     {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
+     {NULL,                         NULL,                                      0,                          NULL}
    };
 
 PyNumberMethods Volume_operators = {0};
