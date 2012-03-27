@@ -151,7 +151,7 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
   bool                          rational = scurve->rational();
   int                           dim      = scurve->dimension();
   std::vector<double>::iterator coefs    = (rational) ? scurve->rcoefs_begin() : scurve->coefs_begin();
-  std::vector<double>::iterator coefsEnd = (rational) ? scurve->rcoefs_end()   : scurve->coefs_begin();
+  std::vector<double>::iterator coefsEnd = (rational) ? scurve->rcoefs_end()   : scurve->coefs_end();
   while(coefs != coefsEnd) {
     if(bAxis[0] && dim>0)
       coefs[0] = 0.0;

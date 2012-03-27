@@ -247,7 +247,7 @@ PyObject* Surface_Project(PyObject* self, PyObject* args, PyObject* kwds)
   bool                          rational = ssurf->rational();
   int                           dim      = ssurf->dimension();
   std::vector<double>::iterator coefs    = (rational) ? ssurf->rcoefs_begin() : ssurf->coefs_begin();
-  std::vector<double>::iterator coefsEnd = (rational) ? ssurf->rcoefs_end()   : ssurf->coefs_begin();
+  std::vector<double>::iterator coefsEnd = (rational) ? ssurf->rcoefs_end()   : ssurf->coefs_end();
   while(coefs != coefsEnd) {
     if(bAxis[0] && dim>0)
       coefs[0] = 0.0;
