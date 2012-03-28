@@ -30,8 +30,8 @@ int main(int argc, char** argv)
   }
   Py_Initialize();
   initGoTools();
-  PyRun_SimpleFile(f,file);
+  int result=PyRun_SimpleFile(f,file);
   fclose(f);
   Py_Finalize();
-  return 0;
+  return result;
 }
