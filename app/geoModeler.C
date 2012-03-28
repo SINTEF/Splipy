@@ -15,6 +15,8 @@ int main(int argc, char** argv)
       modState.finalOutput = argv[i]+12;
     else if (!strncasecmp(argv[i],"debuglevel=",11))
       modState.debugLevel = -atoi(argv[i]+11);
+    else if (!strncasecmp(argv[i],"tospline=",9))
+      modState.convertSpline = 1+atoi(argv[i]+9);
     else
       file = argv[i];
   }

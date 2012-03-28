@@ -20,6 +20,7 @@ class GeoModellerState {
       credits = "The GoTools authors";
 
       dim = 3;
+      convertSpline = 0;
       // Negative values means it's overridden from command line
       gapTolerance = 1.e-4;
       approxTolerance = 1.e-3;
@@ -39,6 +40,7 @@ class GeoModellerState {
     }
 
     int dim; //!< The dimension of the geometries we will create
+    int convertSpline; //!< Make output convert to splines by default
     int debugLevel; //!< The current debug level
     double gapTolerance; //!< The tolerance of water-tight models
     double approxTolerance; //!< The tolerance of some kind of approximation :)

@@ -244,6 +244,9 @@ PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
   if (modState.finalOutput.empty())
     modState.finalOutput = "result.g2";
 
+  if (modState.convertSpline > 0)
+    convert = modState.convertSpline==1?false:true;
+
   DoWrite(modState.finalOutput,objectso,convert);
 
   Py_INCREF(Py_None);
