@@ -142,6 +142,8 @@ PyObject* Generate_AddLoop(PyObject* self, PyObject* args, PyObject* kwds)
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data.reset(new Go::BoundedSurface(underlying, curves, tolerances));
+
+  return (PyObject*)result;
 }
 
 PyDoc_STRVAR(generate_circular_disc__doc__,"Generate a circular disc\n"
