@@ -339,6 +339,9 @@ PyObject* Generate_NonRational(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::SplineSurface> surf_base = convertSplineSurface(surf);
 
+  if (!surf_base)
+    return NULL;
+
   // if it's already B-spline, just return itself
   if(!surf_base->rational()) {
     Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
