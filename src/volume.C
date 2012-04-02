@@ -146,6 +146,35 @@ PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(volume_insert_knot__doc__,"Insert a knot in a spline volume\n"
+                                       "@param direction: Direction to insert knot in\n"
+                                       "@type direction: int (0, 1 or 2)\n"
+                                       "@param knot: The knot to insert\n"
+                                       "@type knot: float\n"
+                                       "@return: None");
+PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"direction", "knot", NULL };
+  int direction=0;
+  double knot;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"id",
+                                   (char**)keyWords,&direction,&knot))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+  if (!volume->isSpline()) {
+    Volume* vol = (Volume*)self;
+    vol->data = convertSplineVolume(volume);
+    volume = vol->data;
+  }
+  static_pointer_cast<Go::SplineVolume>(volume)->insertKnot(direction, knot);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(volume_raise_order__doc__,"Raise order of a spline volume\n"
                                        "@param raise_u: Raise of order in u\n"
                                        "@type raise_u: int (>= 0)\n"
@@ -212,6 +241,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
+     {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
      {NULL,                         NULL,                                      0,                          NULL}
