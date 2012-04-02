@@ -166,6 +166,29 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_raise_order__doc__,"Raise the order of the curve's b-spline basis without changing the shape of the curve\n"
+                                      "@param n: Specifies how many times the order will be raised\n"
+                                      "@type knot: int\n"
+                                      "@return: None");
+PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"n", NULL };
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  int amount;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
+                                   (char**)keyWords,&amount) || !curve)
+    return NULL;
+
+  Curve* crv = (Curve*)self;
+  crv->data = convertSplineCurve(curve);
+
+  static_pointer_cast<Go::SplineCurve>(crv->data)->raiseOrder(amount);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
                                     "@param vector: The vector to translate along\n"
                                     "@type axis: Point, list of floats or tuple of floats\n"
@@ -222,6 +245,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"InsertKnot", (PyCFunction)Curve_InsertKnot, METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Normalize",  (PyCFunction)Curve_Normalize,  METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",    (PyCFunction)Curve_Project,    METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
+     {(char*)"RaiseOrder", (PyCFunction)Curve_RaiseOrder, METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
      {(char*)"Translate",  (PyCFunction)Curve_Translate,  METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
      {NULL,                NULL,                          0,                          NULL}
    };

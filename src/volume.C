@@ -146,6 +146,36 @@ PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(volume_raise_order__doc__,"Raise order of a spline volume\n"
+                                       "@param raise_u: Raise of order in u\n"
+                                       "@type raise_u: int (>= 0)\n"
+                                       "@param raise_v: Raise of order in v\n"
+                                       "@type raise_v: int (>= 0)\n"
+                                       "@param raise_w: Raise of order in w\n"
+                                       "@type raise_w: int (>= 0)\n"
+                                       "@returns: None");
+PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"raise_u", "raise_v", "raise_w", NULL };
+  int raise_u=0, raise_v=0, raise_w;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"iii",
+                                   (char**)keyWords,&raise_u,&raise_v,&raise_w))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+   if (!volume->isSpline()) {
+     Volume* vol = (Volume*)self;
+     vol->data = convertSplineVolume(volume);
+     volume = vol->data;
+   }
+   static_pointer_cast<Go::SplineVolume>(volume)->raiseOrder(raise_u,raise_v,raise_w);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyDoc_STRVAR(volume_swap_parametrization__doc__,"Swaps two of the parametric directions\n"
                                                 "@param pardir1: The first parametric direction \n"
                                                 "@type pardir1: int\n"
@@ -182,6 +212,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
+     {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
      {NULL,                         NULL,                                      0,                          NULL}
    };
