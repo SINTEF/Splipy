@@ -10,6 +10,7 @@
 #include "GoTools/geometry/BoundedSurface.h"
 #include "GoTools/geometry/BoundedUtils.h"
 #include "GoTools/geometry/Cone.h"
+#include "GoTools/geometry/CurveLoop.h"
 #include "GoTools/geometry/Cylinder.h"
 #include "GoTools/geometry/Disc.h"
 #include "GoTools/geometry/LoopUtils.h"
@@ -221,6 +222,39 @@ PyObject* Generate_ConeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 
   result->data.reset(new Go::Cone(radius,*center,*axis,someNormal(*axis), angle));
   static_pointer_cast<Go::Cylinder>(result->data)->setParameterBounds(0.0,0.0,2.0*M_PI,height);
+
+  return (PyObject*)result;
+}
+
+PyDoc_STRVAR(generate_coons_surface_patch__doc__,"Create a new SplineSurface representing the coons patch defined by a loop of four boundary curves\n"
+                                                 "@param curves: There must be exactly four curves, they must all be of type 'SplineCurve', and they must be nonrational\n"
+                                                 "@type curves: List of Curve\n"
+                                                 "@return: Surface describing the interior of the four curves");
+PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"curves", NULL };
+  PyObject* curveso;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&curveso))
+    return NULL;
+
+  if (!PyObject_TypeCheck(curveso,&PyList_Type))
+    return NULL;
+
+  std::vector<shared_ptr<Go::ParamCurve> > curves;
+  for (int i=0; i < PyList_Size(curveso); ++i) {
+    PyObject* curvo = PyList_GetItem(curveso,i);
+    shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(curvo);
+    if (!curve)
+      continue;
+    curves.push_back(convertSplineCurve(curve));
+  }
+  if (curves.size() != 4)
+    return NULL;
+
+  Go::CurveLoop loop(curves, modState.gapTolerance);
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data.reset(Go::CoonsPatchGen::createCoonsPatch(loop));
 
   return (PyObject*)result;
 }
@@ -580,6 +614,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"CircularDisc",          (PyCFunction)Generate_CircularDisc,         METH_VARARGS|METH_KEYWORDS, generate_circular_disc__doc__},
      {(char*)"ConeSurface",           (PyCFunction)Generate_ConeSurface,          METH_VARARGS|METH_KEYWORDS, generate_cone_surface__doc__},
      {(char*)"ConvertNonRational",    (PyCFunction)Generate_NonRational,          METH_VARARGS|METH_KEYWORDS, generate_nonrational__doc__},
+     {(char*)"CoonsSurfacePatch",     (PyCFunction)Generate_CoonsSurfacePatch,    METH_VARARGS|METH_KEYWORDS, generate_coons_surface_patch__doc__},
      {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_surface__doc__},
      {(char*)"LinearCurveSweep",      (PyCFunction)Generate_LinearCurveSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_curve_sweep__doc__},
      {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves,           METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},
