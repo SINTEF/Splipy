@@ -99,6 +99,23 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_normalize__doc__,"Normalize a curve in the parameter domain\n"
+                                    "@return: None");
+PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  if (!curve)
+    return NULL;
+
+  Curve* crv = (Curve*)self;
+  crv->data = convertSplineCurve(curve);
+
+  crv->data->setParameterInterval(0,1);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along paralell to the cartesian coordinate system\n"
                                       "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
                                       "@type axis: string\n"
@@ -203,6 +220,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Clone",      (PyCFunction)Curve_Clone,      METH_VARARGS,               curve_clone__doc__},
      {(char*)"GetKnots",   (PyCFunction)Curve_GetKnots,   METH_VARARGS,               curve_get_knots__doc__},
      {(char*)"InsertKnot", (PyCFunction)Curve_InsertKnot, METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
+     {(char*)"Normalize",  (PyCFunction)Curve_Normalize,  METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",    (PyCFunction)Curve_Project,    METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"Translate",  (PyCFunction)Curve_Translate,  METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
      {NULL,                NULL,                          0,                          NULL}
