@@ -80,6 +80,17 @@ PyObject* SurfaceModel_Append(PyObject* o1, PyObject* o2)
   return Py_None;
 }
 
+PyDoc_STRVAR(surfacemodel_ctoc__doc__,"Returns whether or not SurfaceModel has a Corner to Corner configuration\n"
+                                      "@return: True/False");
+PyObject* SurfaceModel_CtoC(PyObject* self, Py_ssize_t i)
+{
+  shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
+  if (!sm)
+    return NULL;
+
+  return Py_BuildValue((char*)"b", sm->isCornerToCorner());
+}
+
 PyDoc_STRVAR(surfacemodel_get__doc__,"Returns the i'th Surface of this SurfaceModel\n"
                                      "@param i: index of the surface to return\n"
                                      "@type i: int\n"
@@ -113,7 +124,8 @@ Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
 PySequenceMethods SurfaceModel_seq_operators = {0};
 
 PyMethodDef SurfaceModel_methods[] = {
-     {NULL,           NULL,                     0,            NULL}
+     {"IsCornerToCorner", (PyCFunction)SurfaceModel_CtoC, METH_VARARGS, surfacemodel_ctoc__doc__},
+     {NULL,               NULL,                           0,            NULL}
    };
 
 PyDoc_STRVAR(surface_model__doc__, "A collection of parametric surfaces");
