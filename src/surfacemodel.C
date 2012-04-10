@@ -66,6 +66,38 @@ PyObject* SurfaceModel_Str(SurfaceModel* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyDoc_STRVAR(surfacemodel_get__doc__,"Returns the i'th Surface of this SurfaceModel\n"
+                                     "@param i: index of the surface to return\n"
+                                     "@type i: int\n"
+                                     "@return: The i'th Surface");
+PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
+{
+  shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
+  if (!sm || i < 0 || i >= sm->nmbEntities())
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data = sm->getFace(i)->getUntrimmed(modState.gapTolerance,
+                                              modState.neighbourTolerance,
+                                              modState.kinkTolerance);
+
+  return (PyObject*) result;
+}
+
+
+PyDoc_STRVAR(surfacemodel_nmb_faces__doc__,"Returns the number of simple entities (Surfaces) in this model\n"
+                                           "@return: The number of faces in this model");
+Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
+{
+  shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
+  if (!sm)
+    return 0;
+
+  return sm->nmbEntities();
+}
+
+PySequenceMethods SurfaceModel_seq_operators = {0};
+
 PyMethodDef SurfaceModel_methods[] = {
      {NULL,           NULL,                     0,            NULL}
    };
@@ -73,6 +105,8 @@ PyMethodDef SurfaceModel_methods[] = {
 PyDoc_STRVAR(surface_model__doc__, "A collection of parametric surfaces");
 void init_SurfaceModel_Type()
 {
+  SurfaceModel_seq_operators.sq_item   = SurfaceModel_Get;
+  SurfaceModel_seq_operators.sq_length = SurfaceModel_NmbFaces;
   InitializeTypeObject(&SurfaceModel_Type);
   SurfaceModel_Type.tp_name = "GoTools.SurfaceModel";
   SurfaceModel_Type.tp_basicsize = sizeof(SurfaceModel);
@@ -83,6 +117,7 @@ void init_SurfaceModel_Type()
   SurfaceModel_Type.tp_base = 0;
   SurfaceModel_Type.tp_new = SurfaceModel_New;
   SurfaceModel_Type.tp_str = (reprfunc)SurfaceModel_Str;
+  SurfaceModel_Type.tp_as_sequence = &SurfaceModel_seq_operators;
   PyType_Ready(&SurfaceModel_Type);
 }
 
