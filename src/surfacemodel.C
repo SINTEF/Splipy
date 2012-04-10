@@ -66,6 +66,20 @@ PyObject* SurfaceModel_Str(SurfaceModel* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyObject* SurfaceModel_Append(PyObject* o1, PyObject* o2)
+{
+  shared_ptr<Go::SurfaceModel> model = PyObject_AsGoSurfaceModel(o1);
+  shared_ptr<Go::ParamSurface> surf  = PyObject_AsGoSurface(o2);
+
+  if (!model || !surf)
+    return NULL;
+
+  model->append(shared_ptr<Go::ftSurface>(new Go::ftSurface(surf,-1)));
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(surfacemodel_get__doc__,"Returns the i'th Surface of this SurfaceModel\n"
                                      "@param i: index of the surface to return\n"
                                      "@type i: int\n"
@@ -105,8 +119,9 @@ PyMethodDef SurfaceModel_methods[] = {
 PyDoc_STRVAR(surface_model__doc__, "A collection of parametric surfaces");
 void init_SurfaceModel_Type()
 {
-  SurfaceModel_seq_operators.sq_item   = SurfaceModel_Get;
-  SurfaceModel_seq_operators.sq_length = SurfaceModel_NmbFaces;
+  SurfaceModel_seq_operators.sq_inplace_concat = SurfaceModel_Append;
+  SurfaceModel_seq_operators.sq_item           = SurfaceModel_Get;
+  SurfaceModel_seq_operators.sq_length         = SurfaceModel_NmbFaces;
   InitializeTypeObject(&SurfaceModel_Type);
   SurfaceModel_Type.tp_name = "GoTools.SurfaceModel";
   SurfaceModel_Type.tp_basicsize = sizeof(SurfaceModel);
