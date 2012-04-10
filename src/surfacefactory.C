@@ -299,6 +299,8 @@ PyDoc_STRVAR(generate_linear_curve_sweep__doc__,"Generate a surface by linearly 
                                                 "@type curve1: Curve\n"
                                                 "@param curve2: The curve to sweep along\n"
                                                 "@type curve2: Curve\n"
+                                                "@param point: The start point of the new surface\n"
+                                                "@type point: Point\n"
                                                 "@return: Surface describing the swept area");
 PyObject* Generate_LinearCurveSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
