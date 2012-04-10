@@ -109,6 +109,19 @@ PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
   return (PyObject*) result;
 }
 
+PyDoc_STRVAR(surfacemodel_make_ctoc__doc__,"Force model into a corner to corner configuration\n"
+                                           "@return: None");
+PyObject* SurfaceModel_MakeCtoC(PyObject* self, PyObject* args)
+{
+  shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
+  if (!sm)
+    return NULL;
+
+  sm->makeCornerToCorner();
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 PyDoc_STRVAR(surfacemodel_nmb_faces__doc__,"Returns the number of simple entities (Surfaces) in this model\n"
                                            "@return: The number of faces in this model");
@@ -124,8 +137,9 @@ Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
 PySequenceMethods SurfaceModel_seq_operators = {0};
 
 PyMethodDef SurfaceModel_methods[] = {
-     {"IsCornerToCorner", (PyCFunction)SurfaceModel_CtoC, METH_VARARGS, surfacemodel_ctoc__doc__},
-     {NULL,               NULL,                           0,            NULL}
+     {"IsCornerToCorner",   (PyCFunction)SurfaceModel_CtoC,     METH_VARARGS, surfacemodel_ctoc__doc__},
+     {"MakeCornerToCorner", (PyCFunction)SurfaceModel_MakeCtoC, METH_VARARGS, surfacemodel_make_ctoc__doc__},
+     {NULL,                 NULL,                               0,            NULL}
    };
 
 PyDoc_STRVAR(surface_model__doc__, "A collection of parametric surfaces");
