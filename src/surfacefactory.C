@@ -318,9 +318,11 @@ PyObject* Generate_LinearCurveSweep(PyObject* self, PyObject* args, PyObject* kw
   if (!curve1 || !curve2 || !point)
     return NULL;
 
+  Go::Point pt(*point);
+  pt *= -1;
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data.reset(Go::SweepSurfaceCreator::linearSweptSurface(*convertSplineCurve(curve1),
-                                                                    *convertSplineCurve(curve2),*point));
+                                                                    *convertSplineCurve(curve2),pt));
 
   return (PyObject*)result;
 }
