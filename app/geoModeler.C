@@ -4,7 +4,7 @@
 
 void syntax()
 {
-  std::cout << "Syntax: geomod <script> [finaloutput=] [debuglevel=]" << std::endl;
+  std::cout << "Syntax: geoModeler <script> [finaloutput=] [debuglevel=] [tospline=]" << std::endl;
 }
 
 int main(int argc, char** argv)
