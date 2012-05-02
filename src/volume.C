@@ -175,6 +175,51 @@ PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(volume_split__doc__, "Split the volume into segments\n"
+                                  "@param params: The parameter values to split at\n"
+                                  "@type params: Float or list of floats\n"
+                                  "@param pardir: The direction to split along\n"
+                                  "@type pardir: integer (0,1,2)\n"
+                                  "@return: List of volumes\n");
+PyObject* Volume_Split(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"params", "pardir", NULL };
+  PyObject* params;
+  int pardir=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Oi",
+                                   (char**)keyWords,&params,&pardir) || !params)
+    return NULL;
+
+  if (pardir < 0 || pardir > 2)
+    return NULL;
+
+  std::vector<double> p;
+  if (PyObject_TypeCheck(params,&PyList_Type)) {
+    for (int i=0;i<PyList_Size(params);++i) {
+      PyObject* o = PyList_GetItem(params,i);
+      if (o)
+        p.push_back(PyFloat_AsDouble(o));
+    }
+  } else if (PyObject_TypeCheck(params,&PyFloat_Type) || 
+             PyObject_TypeCheck(params,&PyInt_Type))
+    p.push_back(PyFloat_AsDouble(params));
+
+  if (p.empty())
+    return NULL;
+
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(((Volume*)self)->data);
+  std::vector<shared_ptr<Go::SplineVolume> > volumes = vol->split(p,pardir);
+
+  PyObject* result = PyList_New(0);
+  for (size_t i=0;i<volumes.size();++i) {
+    Volume* part = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+    part->data = volumes[i];
+    PyList_Append(result,(PyObject*)part);
+  }
+
+  return result;
+}
+
 PyDoc_STRVAR(volume_raise_order__doc__,"Raise order of a spline volume\n"
                                        "@param raise_u: Raise of order in u\n"
                                        "@type raise_u: int (>= 0)\n"
@@ -243,6 +288,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
+     {(char*)"Split",               (PyCFunction)Volume_Split,                 METH_VARARGS|METH_KEYWORDS, volume_split__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
      {NULL,                         NULL,                                      0,                          NULL}
    };
