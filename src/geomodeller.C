@@ -231,10 +231,10 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(read3dm__doc__,"Read entities from a 3dm file\n"
+PyDoc_STRVAR(read3dm__doc__,"Read entities from a 3DM file\n"
                             "@param filename: The file to read\n"
                             "@type  filename: string\n"
-                            "@return: Curve, Surface, Volume, SurfaceModel or a list of these");
+                            "@return: Curve, Surface or a list of these");
 PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
 {
 #ifndef ENABLE_OPENNURBS
