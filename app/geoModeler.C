@@ -2,6 +2,10 @@
 
 #include "geomodeller.h"
 
+#ifdef ENABLE_OPENNURBS
+#include <opennurbs.h>
+#endif
+
 void syntax()
 {
   std::cout << "Syntax: geoModeler <script> [finaloutput=] [debuglevel=] [tospline=]" << std::endl;
@@ -31,9 +35,15 @@ int main(int argc, char** argv)
     exit(2);
   }
   Py_Initialize();
+#ifdef ENABLE_OPENNURBS
+  ON::Begin();
+#endif
   initGoTools();
   int result=PyRun_SimpleFile(f,file);
   fclose(f);
   Py_Finalize();
+#ifdef ENABLE_OPENNURBS
+  ON::End();
+#endif
   return result;
 }

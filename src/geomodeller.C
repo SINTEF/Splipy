@@ -19,6 +19,10 @@ GeoModellerState modState;
 #include "volumefactory.h"
 #include "surfacemodelfactory.h"
 
+#ifdef ENABLE_OPENNURBS
+#include "3dmutils.h"
+#endif
+
 extern "C"
 {
 
@@ -227,6 +231,72 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(read3dm__doc__,"Read entities from a 3dm file\n"
+                            "@param filename: The file to read\n"
+                            "@type  filename: string\n"
+                            "@return: Curve, Surface, Volume, SurfaceModel or a list of these");
+PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
+{
+#ifndef ENABLE_OPENNURBS
+  std::cerr << "Compiled without OpenNURBS support, no data read" << std::endl;
+  Py_INCREF(Py_None);
+  return Py_None;
+#else
+  static const char* keyWords[] = {"filename", NULL };
+  PyObject* objectso;
+  char* fname = 0;  
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
+                                   (char**)keyWords,&fname))
+    return NULL;
+
+  FILE* archive_fp = ON::OpenFile(fname,"rb");
+  if (!archive_fp)
+    return NULL;
+
+  ON_BinaryFile archive(ON::read3dm, archive_fp);
+  ONX_Model model;
+
+  ON_TextLog dump_to_stdout;
+  if (!model.Read(archive,&dump_to_stdout)) {
+    std::cerr << "Failed to read 3DM file " << fname << std::endl;
+    return NULL;
+  }
+  ON::CloseFile(archive_fp);
+
+  PyObject* result=NULL;
+  PyObject* curr=NULL;
+  for (int i=0;i<model.m_object_table.Count();++i) {
+    if (curr) {
+      if (!result)
+        result = PyList_New(0);
+      PyList_Append(result,curr);
+    }
+    if (model.m_object_table[i].m_object->ObjectType() == ON::curve_object)
+      curr = (PyObject*)ONCurveToGoCurve((const ON_Curve*)model.m_object_table[i].m_object);
+    if (model.m_object_table[i].m_object->ObjectType() == ON::brep_object) {
+      ON_Brep *brep_obj = (ON_Brep*) model.m_object_table[i].m_object;
+      int sc=0;
+      while (brep_obj->FaceIsSurface(sc)) {
+        if (curr) {
+          if (!result)
+            result = PyList_New(0);
+          PyList_Append(result,curr);
+        }
+        ON_Surface *surf = brep_obj->m_S[sc++];
+        curr = (PyObject*)ONSurfaceToGoSurface(surf);
+      }
+    }
+  }
+  model.Destroy();
+  if (!result)
+    result = curr;
+  if (PyObject_TypeCheck(result,&PyList_Type))
+    PyList_Append(result,curr);
+
+  return result;
+#endif
+}
+
 PyDoc_STRVAR(final_output__doc__,"Write final entities to G2 file\n"
                                  "@param entities: The entities to write to file\n"
                                  "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
@@ -263,6 +333,7 @@ PyMethodDef GeoMod_methods[] = {
 
      // I/O
      {(char*)"FinalOutput",           (PyCFunction)GeoMod_FinalOutput,       METH_VARARGS|METH_KEYWORDS, final_output__doc__},
+     {(char*)"Read3DM",               (PyCFunction)GeoMod_Read3DM,           METH_VARARGS|METH_KEYWORDS, read3dm__doc__},
      {(char*)"ReadG2",                (PyCFunction)GeoMod_ReadG2,            METH_VARARGS|METH_KEYWORDS, readg2__doc__},
      {(char*)"SetDebugLevel",         (PyCFunction)GeoMod_SetDebugLevel,     METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
      {(char*)"WriteG2",               (PyCFunction)GeoMod_WriteG2,           METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
