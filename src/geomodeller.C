@@ -234,6 +234,8 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(read3dm__doc__,"Read entities from a 3DM file\n"
                             "@param filename: The file to read\n"
                             "@type  filename: string\n"
+                            "@param type: Only read objects of this type\n"
+                            "@type type: string (Curves or Surfaces)\n"
                             "@return: Curve, Surface or a list of these");
 PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
 {
@@ -242,11 +244,12 @@ PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
   Py_INCREF(Py_None);
   return Py_None;
 #else
-  static const char* keyWords[] = {"filename", NULL };
+  static const char* keyWords[] = {"filename", "type", NULL };
   PyObject* objectso;
-  char* fname = 0;  
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
-                                   (char**)keyWords,&fname))
+  char* fname = 0;
+  char* type = 0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s|s",
+                                   (char**)keyWords,&fname,&type))
     return NULL;
 
   FILE* archive_fp = ON::OpenFile(fname,"rb");
@@ -263,6 +266,13 @@ PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
   }
   ON::CloseFile(archive_fp);
 
+  bool surfaces(true);
+  bool curves(true);
+  if (type && !strcasecmp(type,"curves"))
+    surfaces = false;
+  if (type && !strcasecmp(type,"surfaces"))
+    curves = false;
+
   PyObject* result=NULL;
   PyObject* curr=NULL;
   for (int i=0;i<model.m_object_table.Count();++i) {
@@ -272,9 +282,9 @@ PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
       PyList_Append(result,curr);
       curr = NULL;
     }
-    if (model.m_object_table[i].m_object->ObjectType() == ON::curve_object)
+    if (curves && model.m_object_table[i].m_object->ObjectType() == ON::curve_object)
       curr = (PyObject*)ONCurveToGoCurve((const ON_Curve*)model.m_object_table[i].m_object);
-    if (model.m_object_table[i].m_object->ObjectType() == ON::brep_object) {
+    if (surfaces && model.m_object_table[i].m_object->ObjectType() == ON::brep_object) {
       ON_Brep *brep_obj = (ON_Brep*) model.m_object_table[i].m_object;
       int sc=0;
       while (brep_obj->FaceIsSurface(sc)) {
