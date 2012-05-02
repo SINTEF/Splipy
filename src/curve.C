@@ -189,6 +189,51 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_split__doc__, "Split the curve into segments\n"
+                                 "@param params: The parameter values to split at\n"
+                                 "@type params: Float or list of floats\n"
+                                 "@return: List of curves\n");
+PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"params", NULL };
+  PyObject* params;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&params) || !params)
+    return NULL;
+
+  std::vector<double> p;
+  if (PyObject_TypeCheck(params,&PyList_Type)) {
+    for (int i=0;i<PyList_Size(params);++i) {
+      PyObject* o = PyList_GetItem(params,i);
+      if (o)
+        p.push_back(PyFloat_AsDouble(o));
+    }
+  } else if (PyObject_TypeCheck(params,&PyFloat_Type) || 
+             PyObject_TypeCheck(params,&PyInt_Type))
+    p.push_back(PyFloat_AsDouble(params));
+
+  if (p.empty())
+    return NULL;
+
+  std::vector<shared_ptr<Go::ParamCurve> > curves;
+  if (p.size() > 1) {
+    shared_ptr<Go::SplineCurve> crv = convertSplineCurve(((Curve*)self)->data);
+    std::vector<shared_ptr<Go::SplineCurve> > curves2 = crv->split(p);
+    for (size_t i=0;i<curves2.size();++i)
+      curves.push_back(static_pointer_cast<Go::ParamCurve,Go::SplineCurve>(curves2[i]));
+  } else
+    curves = ((Curve*)self)->data->split(p[0]);
+
+  PyObject* result = PyList_New(0);
+  for (size_t i=0;i<curves.size();++i) {
+    Curve* crv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+    crv->data = curves[i];
+    PyList_Append(result,(PyObject*)crv);
+  }
+
+  return result;
+}
+
 PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
                                     "@param vector: The vector to translate along\n"
                                     "@type axis: Point, list of floats or tuple of floats\n"
@@ -246,6 +291,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Normalize",  (PyCFunction)Curve_Normalize,  METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",    (PyCFunction)Curve_Project,    METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder", (PyCFunction)Curve_RaiseOrder, METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
+     {(char*)"Split",      (PyCFunction)Curve_Split,      METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
      {(char*)"Translate",  (PyCFunction)Curve_Translate,  METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
      {NULL,                NULL,                          0,                          NULL}
    };
