@@ -270,6 +270,7 @@ PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
       if (!result)
         result = PyList_New(0);
       PyList_Append(result,curr);
+      curr = NULL;
     }
     if (model.m_object_table[i].m_object->ObjectType() == ON::curve_object)
       curr = (PyObject*)ONCurveToGoCurve((const ON_Curve*)model.m_object_table[i].m_object);
