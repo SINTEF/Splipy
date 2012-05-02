@@ -79,8 +79,8 @@ Surface* ONSurfaceToGoSurface(const ON_Surface* surf)
   // then interleave
   double comp[n_surf->m_cv_count[0]*n_surf->m_cv_count[1]*(n_surf->m_is_rat?4:3)];
   k = 0;
-  for(int i=0; i<n_surf->m_cv_count[0]; i++) {
-    for(int j=0; j<n_surf->m_cv_count[1]; j++) {
+  for(int j=0; j<n_surf->m_cv_count[1]; j++) {
+    for(int i=0; i<n_surf->m_cv_count[0]; i++) {
       comp[k++] = x_comp[i][j];
       comp[k++] = y_comp[i][j];
       comp[k++] = z_comp[i][j];
