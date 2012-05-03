@@ -144,7 +144,7 @@ PyDoc_STRVAR(generate_extrude_surface__doc__, "Generate a volume by extruding al
                                               "@type surface: Surface\n"
                                               "@param direction: The direction to extrude\n"
                                               "@type direction: Point, list of floats or tuple of floats\n"
-                                              "@param amount: Scaling factor of direction\n"
+                                              "@param amount: (optional) Scaling factor of direction\n"
                                               "@type amount: float\n"
                                               "@return: Volume describing the extruded volume");
 PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds)

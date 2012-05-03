@@ -152,7 +152,7 @@ PyDoc_STRVAR(generate_circular_disc__doc__,"Generate a circular disc\n"
                                            "@type center: Point, list of floats or tuple of floats\n"
                                            "@param boundarypoint: A point on the boundary of the disc\n"
                                            "@type boundarypoint: Point, list of floats or tuple of floats\n"
-                                           "@param normal: The normal of the disc\n"
+                                           "@param normal: (optional) The normal of the disc\n"
                                            "@type normal: Point, list of floats or tuple of floats\n"
                                            "@return: Surface describing the disc");
 PyObject* Generate_CircularDisc(PyObject* self, PyObject* args, PyObject* kwds)
@@ -360,7 +360,7 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(generate_nonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline surface\n"
-                                         "@param original: The surface to trim\n"
+                                         "@param original: The initial (rational) surface\n"
                                          "@type original: Surface\n"
                                          "@return: Non-rational B-spline representation of the surface");
 PyObject* Generate_NonRational(PyObject* self, PyObject* args, PyObject* kwds)
