@@ -27,6 +27,42 @@ void Curve_Dealloc(Curve* self)
   self->ob_type->tp_free((PyObject*)self);
 }
 
+PyDoc_STRVAR(curve_append_curve__doc__,"Merge another curve with this one, with possible reparametrization\n"
+                                       "@param curve: The curve to append\n"
+                                       "@type curve: Curve\n"
+                                       "@param continuity: (optional) Required continuity\n"
+                                       "@type continuity: int\n"
+                                       "@param dist: (optional) a measure of the local distortion around the transition in order to achieve the specified continuity\n"
+                                       "@type dist: double\n"
+                                       "@param reparam: (optional) Specify whether or not there should be reparametrization\n"
+                                       "@type reparam: bool\n"
+                                       "@return: None");
+PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"curve", "continuity", "dist", "reparam", NULL };
+  int continuity = 0;
+  double dist    = -1.0;
+  bool reparam   = true;
+  PyObject *oCrv;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|idb",
+                                   (char**)keyWords, &oCrv, &continuity, &dist, &reparam))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> crv      = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> otherCrv = PyObject_AsGoCurve(oCrv);
+  if(!crv || !otherCrv)
+    return NULL;
+
+  if(dist < 0.0)
+    crv->appendCurve(otherCrv.get(), reparam);
+  else
+    crv->appendCurve(otherCrv.get(), continuity, dist, reparam);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
                                 "@return: New copy of curve\n");
 PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
@@ -54,6 +90,20 @@ PyObject* Curve_Str(Curve* self)
   } else
     str << "(empty)";
   return PyString_FromString(str.str().c_str());
+}
+
+PyDoc_STRVAR(curve_flip_parametrization__doc__,"Flip curve parametrization\n"
+                                               "@return: None");
+PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  if (!curve)
+    return NULL;
+
+  curve->reverseParameterDirection();
+
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 PyDoc_STRVAR(curve_get_knots__doc__,"Get the unique knots of a spline curve\n"
@@ -285,15 +335,17 @@ PyObject* Curve_Add(PyObject* o1, PyObject* o2)
 }
 
 PyMethodDef Curve_methods[] = {
-     {(char*)"Clone",      (PyCFunction)Curve_Clone,      METH_VARARGS,               curve_clone__doc__},
-     {(char*)"GetKnots",   (PyCFunction)Curve_GetKnots,   METH_VARARGS,               curve_get_knots__doc__},
-     {(char*)"InsertKnot", (PyCFunction)Curve_InsertKnot, METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
-     {(char*)"Normalize",  (PyCFunction)Curve_Normalize,  METH_VARARGS,               curve_normalize__doc__},
-     {(char*)"Project",    (PyCFunction)Curve_Project,    METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
-     {(char*)"RaiseOrder", (PyCFunction)Curve_RaiseOrder, METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
-     {(char*)"Split",      (PyCFunction)Curve_Split,      METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
-     {(char*)"Translate",  (PyCFunction)Curve_Translate,  METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
-     {NULL,                NULL,                          0,                          NULL}
+     {(char*)"AppendCurve",         (PyCFunction)Curve_AppendCurve,         METH_VARARGS|METH_KEYWORDS, curve_append_curve__doc__},
+     {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS,               curve_clone__doc__},
+     {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
+     {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS,               curve_get_knots__doc__},
+     {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
+     {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
+     {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
+     {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
+     {(char*)"Split",               (PyCFunction)Curve_Split,               METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
+     {(char*)"Translate",           (PyCFunction)Curve_Translate,           METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
+     {NULL,                         NULL,                                   0,                          NULL}
    };
 
 PyNumberMethods Curve_operators = {0};
