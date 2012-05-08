@@ -219,8 +219,13 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
       curr = ReadG2<Surface, Go::SplineSurface>(f,Surface_Type);
     if (header.classType() == Go::SplineVolume::classType())
       curr = ReadG2<Volume, Go::SplineVolume>(f,Volume_Type);
-    char temp[1024];
-    f.getline(temp,1024); // read padding lines
+    char c;
+    while (f.get(c)) {
+      if (!isspace(c)) {
+        f.putback(c);
+        break;
+      }
+    }
     f.peek(); // and peek next byte to update flags
   }
   if (!result)
