@@ -175,6 +175,29 @@ PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(volume_make_rhs__doc__,"Make sure volume has a right-hand coordinate system\n"
+                                    "@return: None");
+PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
+{
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+
+  // evaluate jacobian in mid point
+  Go::Array<double,6> params = volume->parameterSpan();
+  double u = (params[0] + params[1]) / 2;
+  double v = (params[2] + params[3]) / 2;
+  double w = (params[4] + params[5]) / 2;
+  vector<Go::Point> results(4); // one position and three derivatives
+  volume->point(results, u, v, w, 1);
+  double jacobian = (results[1] % results[2])*results[3];
+  if (jacobian < 0)
+    volume->reverseParameterDirection(2);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(volume_split__doc__, "Split the volume into segments\n"
                                   "@param params: The parameter values to split at\n"
                                   "@type params: Float or list of floats\n"
@@ -287,6 +310,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
+     {(char*)"MakeRHS",             (PyCFunction)Volume_MakeRHS,               METH_VARARGS,               volume_make_rhs__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
      {(char*)"Split",               (PyCFunction)Volume_Split,                 METH_VARARGS|METH_KEYWORDS, volume_split__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
