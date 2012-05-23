@@ -230,8 +230,11 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
   }
   if (!result)
     result = curr;
-  if (PyObject_TypeCheck(result,&PyList_Type))
+  if (result && PyObject_TypeCheck(result,&PyList_Type))
     PyList_Append(result,curr);
+
+  if (!result)
+    std::cerr << "Failed to load " << fname << std::endl;
 
   return result;
 }
