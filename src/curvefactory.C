@@ -7,6 +7,7 @@
 
 #include "GoTools/creators/ApproxCurve.h"
 #include "GoTools/geometry/Circle.h"
+#include "GoTools/geometry/CurveInterpolator.h"
 #include "GoTools/geometry/Ellipse.h"
 #include "GoTools/geometry/Line.h"
 #include "GoTools/geometry/SISLconversion.h"
@@ -363,6 +364,61 @@ PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_crvnonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline curve\n"
+                                            "@param original: The initial (rational) curve\n"
+                                            "@type original: Curve\n"
+                                            "@return: Non-rational B-spline representation of the curve");
+PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"original", NULL };
+  PyObject* originalo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&originalo))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> crv = PyObject_AsGoCurve(originalo);
+  if (!crv)
+    return NULL;
+
+  shared_ptr<Go::SplineCurve> crv_base = convertSplineCurve(crv);
+
+  if (!crv_base)
+    return NULL;
+
+  // if it's already B-spline, just return itself
+  if(!crv_base->rational()) {
+    Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+    result->data = crv_base;
+
+    return (PyObject*)result;
+  }
+
+  // extract basis functions and evaluation points
+  int dimension = crv_base->dimension();
+  Go::BsplineBasis basis = crv_base->basis();
+  std::vector<double> greville(basis.numCoefs());
+  for(int i=0; i<basis.numCoefs(); i++)
+    greville[i] = basis.grevilleParameter(i);
+
+  // evaluate original spline at interpolation points
+  std::vector<double> interpolationPoints;
+  std::vector<double> weights(0);
+  crv_base->gridEvaluator(interpolationPoints, greville);
+
+  Go::SplineCurve *nonrational_crv = 
+        Go::CurveInterpolator::regularInterpolation(basis,
+                                                    greville,
+                                                    interpolationPoints,
+                                                    dimension,
+                                                    false,
+                                                    weights);
+
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  result->data = shared_ptr<Go::SplineCurve>(nonrational_crv);
+
+  return (PyObject*)result;
+}
+
   PyMethodDef CurveFactory_methods[] = {
      {(char*)"Circle",                (PyCFunction)Generate_Circle,           METH_VARARGS|METH_KEYWORDS, generate_circle__doc__},
      {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment,    METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
@@ -372,6 +428,7 @@ PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
      {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve, METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
      {(char*)"Line",                  (PyCFunction)Generate_Line,             METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
      {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,      METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
+     {(char*)"NonRational",           (PyCFunction)Generate_CrvNonRational,   METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
      {NULL,                           NULL,                                   0,                          NULL}
   };
 
