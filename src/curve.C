@@ -46,9 +46,17 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords, &oCrv, &continuity, &reparam))
     return NULL;
 
-  shared_ptr<Go::ParamCurve> crv      = PyObject_AsGoCurve(self);
-  shared_ptr<Go::ParamCurve> otherCrv = PyObject_AsGoCurve(oCrv);
-  if(!crv || !otherCrv)
+  shared_ptr<Go::ParamCurve> crv2 = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> crv;
+  if (crv2->instanceType() != Go::Class_SplineCurve) {
+    std::cerr << "Converting param curve to a spline curve (append not implemented for param curves)" << std::endl;
+    crv = ((Curve*)self)->data = convertSplineCurve(crv2);
+  }
+  else
+    crv = dynamic_pointer_cast<Go::SplineCurve,Go::ParamCurve>(crv);
+
+  shared_ptr<Go::SplineCurve> otherCrv = convertSplineCurve(PyObject_AsGoCurve(oCrv));
+  if (!crv || !otherCrv)
     return NULL;
 
   double dist;
