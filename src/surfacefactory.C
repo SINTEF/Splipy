@@ -247,6 +247,14 @@ PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* k
     shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(curvo);
     if (!curve)
       continue;
+    if (curve->instanceType() == Go::Class_SplineCurve) {
+      shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve);
+      if (crv->rational()) {
+        std::cerr << "Cannot generate a coons-surface for rational curves." << std::endl
+                  << "Consider CurveFactory.ConvertNonRational()" << std::endl;
+        return NULL;
+      }
+    }
     curves.push_back(convertSplineCurve(curve));
   }
   if (curves.size() != 4)
@@ -380,6 +388,15 @@ PyObject* Generate_MirrorSurface(PyObject* self, PyObject* args, PyObject* kwds)
 
   if (!surface || !point || !normal)
     return NULL;
+
+  if (surface->instanceType() == Go::Class_SplineSurface) {
+    shared_ptr<Go::SplineSurface> srf = convertSplineSurface(surface);
+    if (srf->rational()) {
+      std::cerr << "Cannot mirror a rational surface.\n"
+                   "Consider SurfaceFactory.ConvertNonRational" << std::endl;
+      return NULL;
+    }
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data.reset(surface->mirrorSurface(*point,*normal));
