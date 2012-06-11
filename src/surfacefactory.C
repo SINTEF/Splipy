@@ -359,6 +359,34 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_mirror_surface__doc__,"Generate a surface by mirroring a surface\n"
+                                            "@param original: The surface to mirror\n"
+                                            "@type original: Surface\n"
+                                            "@param point: A point on the plane to mirror around\n"
+                                            "@type point: Point, list of floats or tuple of floats\n"
+                                            "@param normal: The normal of the plane to mirror around\n"
+                                            "@type normal: Point, list of floats or tuple of floats");
+PyObject* Generate_MirrorSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"surface", "point", "normal", NULL };
+  PyObject* surfaceo, *pointo, *normalo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO",
+                                   (char**)keyWords,&surfaceo,&pointo,&normalo))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(surfaceo);
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
+  shared_ptr<Go::Point> normal = PyObject_AsGoPoint(normalo);
+
+  if (!surface || !point || !normal)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data.reset(surface->mirrorSurface(*point,*normal));
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_nonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline surface\n"
                                          "@param original: The initial (rational) surface\n"
                                          "@type original: Surface\n"
@@ -622,6 +650,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_surface__doc__},
      {(char*)"LinearCurveSweep",      (PyCFunction)Generate_LinearCurveSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_curve_sweep__doc__},
      {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves,           METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},
+     {(char*)"MirrorSurface",         (PyCFunction)Generate_MirrorSurface,        METH_VARARGS|METH_KEYWORDS, generate_mirror_surface__doc__},
      {(char*)"Plane",                 (PyCFunction)Generate_Plane,                METH_VARARGS|METH_KEYWORDS, generate_plane__doc__},
      {(char*)"Rectangle",             (PyCFunction)Generate_Rectangle,            METH_VARARGS|METH_KEYWORDS, generate_rectangle__doc__},
      {(char*)"RotationalCurveSweep",  (PyCFunction)Generate_RotationalCurveSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_curve_sweep__doc__},
