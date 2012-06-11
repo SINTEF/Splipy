@@ -32,21 +32,18 @@ PyDoc_STRVAR(curve_append_curve__doc__,"Merge another curve with this one, with 
                                        "@type curve: Curve\n"
                                        "@param continuity: (optional) Required continuity\n"
                                        "@type continuity: int\n"
-                                       "@param dist: (optional) a measure of the local distortion around the transition in order to achieve the specified continuity\n"
-                                       "@type dist: double\n"
                                        "@param reparam: (optional) Specify whether or not there should be reparametrization\n"
                                        "@type reparam: bool\n"
                                        "@return: None");
 PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"curve", "continuity", "dist", "reparam", NULL };
+  static const char* keyWords[] = {"curve", "continuity", "reparam", NULL };
   int continuity = 0;
-  double dist    = -1.0;
   bool reparam   = true;
   PyObject *oCrv;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|idb",
-                                   (char**)keyWords, &oCrv, &continuity, &dist, &reparam))
+                                   (char**)keyWords, &oCrv, &continuity, &reparam))
     return NULL;
 
   shared_ptr<Go::ParamCurve> crv      = PyObject_AsGoCurve(self);
@@ -54,10 +51,8 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
   if(!crv || !otherCrv)
     return NULL;
 
-  if(dist < 0.0)
-    crv->appendCurve(otherCrv.get(), reparam);
-  else
-    crv->appendCurve(otherCrv.get(), continuity, dist, reparam);
+  double dist;
+  crv->appendCurve(otherCrv.get(), continuity, dist, reparam);
 
   Py_INCREF(Py_None);
   return Py_None;
