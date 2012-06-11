@@ -15,6 +15,7 @@
 #include "GoTools/trivariate/SplineVolume.h"
 #include "GoTools/trivariate/TorusVolume.h"
 #include "GoTools/trivariate/SweepVolumeCreator.h"
+#include "GoTools/trivariate/VolumeInterpolator.h"
 #include "GoTools/geometry/GeometryTools.h"
 
 extern "C" {
@@ -257,6 +258,74 @@ PyObject* Generate_LinearSurfaceSweep(PyObject* self, PyObject* args, PyObject* 
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_volnonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline volume\n"
+                                            "@param original: The initial (rational) volume\n"
+                                            "@type original: Volume\n"
+                                            "@return: Non-rational B-spline representation of the volume");
+PyObject* Generate_VolNonRational(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"original", NULL };
+  PyObject* originalo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&originalo))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(originalo);
+  if (!vol)
+    return NULL;
+
+  shared_ptr<Go::SplineVolume> vol_base = convertSplineVolume(vol);
+
+  if (!vol_base)
+    return NULL;
+
+  // if it's already B-spline, just return itself
+  if(!vol_base->rational()) {
+    Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+    result->data = vol_base;
+
+    return (PyObject*)result;
+  }
+
+  // extract basis functions and evaluation points
+  int dimension = vol_base->dimension();
+  Go::BsplineBasis basis_u = vol_base->basis(0);
+  Go::BsplineBasis basis_v = vol_base->basis(1);
+  Go::BsplineBasis basis_w = vol_base->basis(2);
+  std::vector<double> greville_u(basis_u.numCoefs());
+  std::vector<double> greville_v(basis_v.numCoefs());
+  std::vector<double> greville_w(basis_w.numCoefs());
+  for(int i=0; i<basis_u.numCoefs(); i++)
+    greville_u[i] = basis_u.grevilleParameter(i);
+  for(int i=0; i<basis_v.numCoefs(); i++)
+    greville_v[i] = basis_v.grevilleParameter(i);
+  for(int i=0; i<basis_w.numCoefs(); i++)
+    greville_w[i] = basis_w.grevilleParameter(i);
+
+  // evaluate original spline at interpolation points
+  std::vector<double> interpolationPoints;
+  std::vector<double> weights(0);
+  vol_base->gridEvaluator(interpolationPoints, greville_u,
+                          greville_v, greville_w);
+
+  Go::SplineVolume *nonrational_vol = 
+    Go::VolumeInterpolator::regularInterpolation(basis_u,
+                                                 basis_v,
+                                                 basis_w,
+                                                 greville_u,
+                                                 greville_v,
+                                                 greville_w,
+                                                 interpolationPoints,
+                                                 dimension,
+                                                 false,
+                                                 weights);
+
+  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+  result->data = shared_ptr<Go::SplineVolume>(nonrational_vol);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_rotational_surface_sweep__doc__, "Generate a volume by rotating a surface\n"
                                                        "@param surface: The surface to rotate\n"
                                                        "@type surface: Surface\n"
@@ -407,6 +476,7 @@ PyMethodDef VolumeFactory_methods[] = {
      {(char*)"ExtrudeSurface",        (PyCFunction)Generate_ExtrudeSurface,         METH_VARARGS|METH_KEYWORDS, generate_extrude_surface__doc__},
      {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces,           METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},
      {(char*)"LinearSurfaceSweep",    (PyCFunction)Generate_LinearSurfaceSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_surface_sweep__doc__},
+     {(char*)"NonRational",           (PyCFunction)Generate_VolNonRational,         METH_VARARGS|METH_KEYWORDS, generate_volnonrational__doc__},
      {(char*)"RotationalSurfaceSweep",(PyCFunction)Generate_RotationalSurfaceSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_surface_sweep__doc__},
      {(char*)"Parallelepiped",        (PyCFunction)Generate_Parallelepiped,         METH_VARARGS|METH_KEYWORDS, generate_parallelepiped__doc__},
      {(char*)"Sphere",                (PyCFunction)Generate_Sphere,                 METH_VARARGS|METH_KEYWORDS, generate_sphere__doc__},
