@@ -100,6 +100,56 @@ PyObject* Generate_Cone(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_contract_surf_to__doc__,"Generate a volume by contracting a surface to a point\n"
+                                              "@param surface: The surface\n"
+                                              "@type surface: Surface\n"
+                                              "@param point: The point to contract to\n"
+                                              "@type point: Point, list of floats or tuple of floats\n"
+                                              "@return: Volume with resulting geometry");
+PyObject* Generate_ContractSurfaceTo(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"surface", "point", NULL };
+  PyObject* surfaceo;
+  PyObject* pointo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&surfaceo,&pointo))
+    return NULL;
+
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(PyObject_AsGoSurface(surfaceo));
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
+  if (!surf || !point)
+    return NULL;
+
+  // create "basis" for the point
+  double knots[] = {0,0,1,1};
+
+  int dim = surf->dimension()+surf->rational();
+  int n1  = surf->numCoefs_u();
+  int n2  = surf->numCoefs_v();
+  int p1  = surf->order_u();
+  int p2  = surf->order_v();
+
+  std::vector<double> coefs(n1*n2*dim*2);
+  std::copy(surf->ctrl_begin(),surf->ctrl_end(),coefs.begin());
+
+  int j=n1*n2*dim;
+  for (size_t i=0; i<n1*n2; i++) {
+    coefs[j++] = (*point)[0];
+    coefs[j++] = (*point)[1];
+    if (surf->dimension() > 2)
+      coefs[j++] = (*point)[2];
+    if (surf->rational())
+      coefs[j++] = 1; 
+  }
+
+  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+  result->data.reset(new Go::SplineVolume(n1, n2, 2, p1, p2, 2,
+                                          surf->basis_u().begin(), surf->basis_v().begin(), knots,
+                                          coefs.begin(), surf->dimension(),
+                                          surf->rational()));
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_cylinder__doc__, "Generate a cylinder\n"
                                        "@param center: The center of the cylinder\n"
                                        "@type center: Point, list of floats or tuple of floats\n"
@@ -472,6 +522,7 @@ PyObject* Generate_Torus(PyObject* self, PyObject* args, PyObject* kwds)
 PyMethodDef VolumeFactory_methods[] = {
      {(char*)"Box",                   (PyCFunction)Generate_Box,                    METH_VARARGS|METH_KEYWORDS, generate_box__doc__},
      {(char*)"Cone",                  (PyCFunction)Generate_Cone,                   METH_VARARGS|METH_KEYWORDS, generate_cone__doc__},
+     {(char*)"ContractSurfaceTo",     (PyCFunction)Generate_ContractSurfaceTo,      METH_VARARGS|METH_KEYWORDS, generate_contract_surf_to__doc__},
      {(char*)"Cylinder",              (PyCFunction)Generate_Cylinder,               METH_VARARGS|METH_KEYWORDS, generate_cylinder__doc__},
      {(char*)"ExtrudeSurface",        (PyCFunction)Generate_ExtrudeSurface,         METH_VARARGS|METH_KEYWORDS, generate_extrude_surface__doc__},
      {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces,           METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},

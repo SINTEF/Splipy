@@ -267,13 +267,13 @@ PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* k
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_contract_to__doc__,"Generate a surface by contracting a curve to a point\n"
-                                         "@param curve: The curve\n"
-                                         "@type curve: Curve\n"
-                                         "@param point: The point to contract to\n"
-                                         "@type point: Point, list of floats or tuple of floats\n"
-                                         "@return: Surface with resulting geometry");
-PyObject* Generate_ContractTo(PyObject* self, PyObject* args, PyObject* kwds)
+PyDoc_STRVAR(generate_contract_curve_to__doc__,"Generate a surface by contracting a curve to a point\n"
+                                               "@param curve: The curve\n"
+                                               "@type curve: Curve\n"
+                                               "@param point: The point to contract to\n"
+                                               "@type point: Point, list of floats or tuple of floats\n"
+                                               "@return: Surface with resulting geometry");
+PyObject* Generate_ContractCurveTo(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve", "point", NULL };
   PyObject* curveo;
@@ -715,7 +715,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"ConeSurface",           (PyCFunction)Generate_ConeSurface,          METH_VARARGS|METH_KEYWORDS, generate_cone_surface__doc__},
      {(char*)"NonRationalSurface",    (PyCFunction)Generate_SrfNonRational,       METH_VARARGS|METH_KEYWORDS, generate_nonrational__doc__},
      {(char*)"CoonsSurfacePatch",     (PyCFunction)Generate_CoonsSurfacePatch,    METH_VARARGS|METH_KEYWORDS, generate_coons_surface_patch__doc__},
-     {(char*)"ContractTo",            (PyCFunction)Generate_ContractTo,           METH_VARARGS|METH_KEYWORDS, generate_contract_to__doc__},
+     {(char*)"ContractCurveTo",       (PyCFunction)Generate_ContractCurveTo,      METH_VARARGS|METH_KEYWORDS, generate_contract_curve_to__doc__},
      {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_surface__doc__},
      {(char*)"LinearCurveSweep",      (PyCFunction)Generate_LinearCurveSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_curve_sweep__doc__},
      {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves,           METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},

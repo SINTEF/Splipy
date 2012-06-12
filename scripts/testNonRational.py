@@ -18,7 +18,7 @@ vol  = Sphere(      [0,0,3],    1)
 # since convertion from Disc to NURBS is not implemented, we need to create
 # surf in a different way:
 
-surf = ContractTo(crv, origin)
+surf = ContractCurveTo(crv, origin)
 surf.Translate(z_axis)
 
 # convert them all to non-rational representations
