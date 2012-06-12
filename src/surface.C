@@ -318,7 +318,7 @@ PyObject* Surface_SwapParametrization(PyObject* self, PyObject* args, PyObject* 
 
 PyDoc_STRVAR(surface_translate__doc__,"Translate a surface along a given vector\n"
                                       "@param vector: The vector to translate along\n"
-                                      "@type axis: Point, list of floats or tuple of floats\n"
+                                      "@type vector: Point, list of floats or tuple of floats\n"
                                       "@return: None");
 PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 {

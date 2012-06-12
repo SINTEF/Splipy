@@ -169,10 +169,10 @@ PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
-PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along paralell to the cartesian coordinate system\n"
-                                      "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
-                                      "@type axis: string\n"
-                                      "@return: None");
+PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along parallel to the cartesian coordinate system\n"
+                                  "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
+                                  "@type axis: string\n"
+                                  "@return: None");
 PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", NULL };
@@ -219,7 +219,7 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-PyDoc_STRVAR(curve_raise_order__doc__,"Raise the order of the curve's b-spline basis without changing the shape of the curve\n"
+PyDoc_STRVAR(curve_raise_order__doc__,"Raise the order of the curve's B-spline basis without changing the shape of the curve\n"
                                       "@param n: Specifies how many times the order will be raised\n"
                                       "@type knot: int\n"
                                       "@return: None");

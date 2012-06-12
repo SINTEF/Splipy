@@ -255,7 +255,7 @@ PyDoc_STRVAR(generate_interpolate_curve__doc__, "Construct a spline curve from a
                                                 "@type points: List of (Point, list of floats or tuple of floats)\n"
                                                 "@param parvals: The parameter values for the points\n"
                                                 "@type parvals: List of floats\n"
-                                                "@param order: (optional) The order of the spline curve\n"
+                                                "@param order: (optional) The order of the spline curve (p+1)\n"
                                                 "@type order: int >= 1\n"
                                                 "@param maxiter: (optional) The maxium number of iterations in interpolation scheme\n"
                                                 "@type maxiter: int >= 1\n"
