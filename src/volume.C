@@ -305,6 +305,36 @@ PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* k
   return Py_None;
 }
 
+PyDoc_STRVAR(volume_translate__doc__,"Translate a volume along a given vector\n"
+                                     "@param vector: The vector to translate along\n"
+                                     "@type vector: Point, list of floats or tuple of floats\n"
+                                     "@return: None");
+PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"vector", NULL };
+  PyObject* veco;
+  double angle=0.f;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&veco))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(self);
+  shared_ptr<Go::Point>       vec = PyObject_AsGoPoint(veco);
+  if (!vol || !vec)
+    return NULL;
+
+   if (!vol->isSpline()) {
+     Volume* volum = (Volume*)self;
+     volum->data = convertSplineVolume(vol);
+     vol = volum->data;
+   }
+
+   vol->translate(*vec);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
@@ -314,6 +344,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
      {(char*)"Split",               (PyCFunction)Volume_Split,                 METH_VARARGS|METH_KEYWORDS, volume_split__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
+     {(char*)"Translate",           (PyCFunction)Volume_Translate,             METH_VARARGS|METH_KEYWORDS, volume_translate__doc__},
      {NULL,                         NULL,                                      0,                          NULL}
    };
 
