@@ -76,6 +76,32 @@ PyObject* Volume_Sub(PyObject* o1, PyObject* o2)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(volume_evaluate__doc__,"Evaluate volume at given parameter values\n"
+                                     "@param value_u: The u parameter value\n"
+                                     "@type value_u: float\n"
+                                     "@param value_v: The v parameter value\n"
+                                     "@type value_v: float\n"
+                                     "@param value_w: The w parameter value\n"
+                                     "@type value_w: float\n"
+                                     "@return: The value of the surface\n"
+                                     "@rtype: Point");
+PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"value_u", "value_v", "value_w", NULL };
+  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(self);
+  double value_u=0, value_v=0, value_w=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd",
+                                   (char**)keyWords,&value_u,&value_v,
+                                                    &value_w) || !vol)
+    return NULL;
+
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  result->data.reset(new Go::Point(vol->dimension()));
+  vol->point(*result->data, value_u, value_v, value_w);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(volume_flip_parametrization__doc__,"Flip (or reverse) volume parametrization\n"
                                                 "@param direction: The parametric direction to flip (0=u, 1=v, 2=w)\n"
                                                 "@type direction: int\n"
@@ -337,6 +363,7 @@ PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
+     {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
