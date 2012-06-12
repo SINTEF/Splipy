@@ -95,6 +95,27 @@ PyObject* Curve_Str(Curve* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyDoc_STRVAR(curve_evaluate__doc__,"Evaluate curve at a parameter value\n"
+                                   "@param value: The parameter value\n"
+                                   "@type value: float\n"
+                                   "@return: The value of the curve\n"
+                                   "@rtype: Point");
+PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"value", NULL };
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  double value=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
+                                   (char**)keyWords,&value) || !curve)
+    return NULL;
+
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  result->data.reset(new Go::Point(curve->dimension()));
+  curve->point(*result->data,value);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(curve_flip_parametrization__doc__,"Flip curve parametrization\n"
                                                "@return: None");
 PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
@@ -340,6 +361,7 @@ PyObject* Curve_Add(PyObject* o1, PyObject* o2)
 PyMethodDef Curve_methods[] = {
      {(char*)"AppendCurve",         (PyCFunction)Curve_AppendCurve,         METH_VARARGS|METH_KEYWORDS, curve_append_curve__doc__},
      {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS,               curve_clone__doc__},
+     {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS,               curve_get_knots__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
