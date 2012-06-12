@@ -305,8 +305,8 @@ PyObject* Generate_VolNonRational(PyObject* self, PyObject* args, PyObject* kwds
   // evaluate original spline at interpolation points
   std::vector<double> interpolationPoints;
   std::vector<double> weights(0);
-  vol_base->gridEvaluator(interpolationPoints, greville_u,
-                          greville_v, greville_w);
+  vol_base->gridEvaluator(greville_u, greville_v, greville_w,
+                          interpolationPoints);
 
   Go::SplineVolume *nonrational_vol = 
     Go::VolumeInterpolator::regularInterpolation(basis_u,
@@ -476,7 +476,7 @@ PyMethodDef VolumeFactory_methods[] = {
      {(char*)"ExtrudeSurface",        (PyCFunction)Generate_ExtrudeSurface,         METH_VARARGS|METH_KEYWORDS, generate_extrude_surface__doc__},
      {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces,           METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},
      {(char*)"LinearSurfaceSweep",    (PyCFunction)Generate_LinearSurfaceSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_surface_sweep__doc__},
-     {(char*)"NonRational",           (PyCFunction)Generate_VolNonRational,         METH_VARARGS|METH_KEYWORDS, generate_volnonrational__doc__},
+     {(char*)"NonRationalVolume",     (PyCFunction)Generate_VolNonRational,         METH_VARARGS|METH_KEYWORDS, generate_volnonrational__doc__},
      {(char*)"RotationalSurfaceSweep",(PyCFunction)Generate_RotationalSurfaceSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_surface_sweep__doc__},
      {(char*)"Parallelepiped",        (PyCFunction)Generate_Parallelepiped,         METH_VARARGS|METH_KEYWORDS, generate_parallelepiped__doc__},
      {(char*)"Sphere",                (PyCFunction)Generate_Sphere,                 METH_VARARGS|METH_KEYWORDS, generate_sphere__doc__},

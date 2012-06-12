@@ -26,7 +26,7 @@ rs1 = RotationalCurveSweep(rc1,    # rotating curve
                            x_axis, # rotational axis
                            pi)     # angle
 
-surf  = ConvertNonRational(rs1);
+surf  = NonRationalSurface(rs1);
 surf2 = MirrorSurface(surf,  [0, 0, -1] , [0,0,1]);
 surf3 = MirrorSurface(surf,  [0, 1, 0]  , [0,1,0]);
 surf4 = MirrorSurface(surf2, [0, 1, 0]  , [0,1,0]);

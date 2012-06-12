@@ -251,7 +251,7 @@ PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* k
       shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve);
       if (crv->rational()) {
         std::cerr << "Cannot generate a coons-surface for rational curves." << std::endl
-                  << "Consider CurveFactory.ConvertNonRational()" << std::endl;
+                  << "Consider CurveFactory.NonRationalCurve()" << std::endl;
         return NULL;
       }
     }
@@ -444,7 +444,7 @@ PyObject* Generate_MirrorSurface(PyObject* self, PyObject* args, PyObject* kwds)
     shared_ptr<Go::SplineSurface> srf = convertSplineSurface(surface);
     if (srf->rational()) {
       std::cerr << "Cannot mirror a rational surface.\n"
-                   "Consider SurfaceFactory.ConvertNonRational" << std::endl;
+                   "Consider SurfaceFactory.NonRationalSurface" << std::endl;
       return NULL;
     }
   }
@@ -459,7 +459,7 @@ PyDoc_STRVAR(generate_nonrational__doc__,"Generate a non-rational representation
                                          "@param original: The initial (rational) surface\n"
                                          "@type original: Surface\n"
                                          "@return: Non-rational B-spline representation of the surface");
-PyObject* Generate_NonRational(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* Generate_SrfNonRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", NULL };
   PyObject* originalo;
@@ -713,7 +713,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"AddLoop",               (PyCFunction)Generate_AddLoop,              METH_VARARGS|METH_KEYWORDS, generate_addloop__doc__},
      {(char*)"CircularDisc",          (PyCFunction)Generate_CircularDisc,         METH_VARARGS|METH_KEYWORDS, generate_circular_disc__doc__},
      {(char*)"ConeSurface",           (PyCFunction)Generate_ConeSurface,          METH_VARARGS|METH_KEYWORDS, generate_cone_surface__doc__},
-     {(char*)"ConvertNonRational",    (PyCFunction)Generate_NonRational,          METH_VARARGS|METH_KEYWORDS, generate_nonrational__doc__},
+     {(char*)"NonRationalSurface",    (PyCFunction)Generate_SrfNonRational,       METH_VARARGS|METH_KEYWORDS, generate_nonrational__doc__},
      {(char*)"CoonsSurfacePatch",     (PyCFunction)Generate_CoonsSurfacePatch,    METH_VARARGS|METH_KEYWORDS, generate_coons_surface_patch__doc__},
      {(char*)"ContractTo",            (PyCFunction)Generate_ContractTo,           METH_VARARGS|METH_KEYWORDS, generate_contract_to__doc__},
      {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_surface__doc__},

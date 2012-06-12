@@ -428,7 +428,7 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
      {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve, METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
      {(char*)"Line",                  (PyCFunction)Generate_Line,             METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
      {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,      METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
-     {(char*)"NonRational",           (PyCFunction)Generate_CrvNonRational,   METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
+     {(char*)"NonRationalCurve",  (PyCFunction)Generate_CrvNonRational,   METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
      {NULL,                           NULL,                                   0,                          NULL}
   };
 
