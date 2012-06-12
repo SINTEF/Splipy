@@ -262,6 +262,34 @@ PyObject* Surface_Project(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(surface_reparametrize__doc__,"Re-parametrize a surface\n"
+                                          "@param umin: The minimum u value\n"
+                                          "@type umin: float\n"
+                                          "@param umax: The maximum u value\n"
+                                          "@type umax: float\n"
+                                          "@param vmin: The minimum v value\n"
+                                          "@type vmin: float\n"
+                                          "@return: None");
+PyObject* Surface_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"umin", "umax", "vmin", "vmax", NULL };
+  double umin=0, umax=1, vmin=0, vmax=1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|dddd",
+                                   (char**)keyWords,&umin,&umax,&vmin,&vmax))
+    return NULL;
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (surface) {
+    std::shared_ptr<Go::SplineSurface> surf = convertSplineSurface(surface);
+    if (!surface->isSpline())
+      ((Surface*)self)->data = surf;
+    surf->setParameterDomain(umin, umax, vmin, vmax);
+  }
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
 PyDoc_STRVAR(surface_rotate__doc__,"Rotate a surface around an axis\n"
                                    "@param axis: The axis to rotate around\n"
                                    "@type axis: Point, list of floats or tuple of floats\n"
@@ -375,6 +403,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
      {(char*)"Project",             (PyCFunction)Surface_Project,               METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Surface_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
+     {(char*)"ReParametrize",       (PyCFunction)Surface_ReParametrize,         METH_VARARGS|METH_KEYWORDS, surface_reparametrize__doc__},
      {(char*)"Rotate",              (PyCFunction)Surface_Rotate,                METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Surface_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, surface_swap_parametrization__doc__},
      {(char*)"Translate",           (PyCFunction)Surface_Translate,             METH_VARARGS|METH_KEYWORDS, surface_translate__doc__},
