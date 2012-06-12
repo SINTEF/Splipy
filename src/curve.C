@@ -374,6 +374,9 @@ void init_Curve_Type()
 
 shared_ptr<Go::SplineCurve> convertSplineCurve(shared_ptr<Go::ParamCurve> curve)
 {
+  if (!curve)
+    return shared_ptr<Go::SplineCurve>();
+
   if (curve->instanceType() == Go::Class_SplineCurve)
     return dynamic_pointer_cast<Go::SplineCurve, Go::ParamCurve>(curve);
   return shared_ptr<Go::SplineCurve>(curve->geometryCurve());
