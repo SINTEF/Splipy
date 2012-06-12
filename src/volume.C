@@ -352,8 +352,7 @@ void WriteVolumeG2(std::ofstream& g2_file, Volume* volume, bool convert)
 {
   if (convert) {
     shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume->data);
-    if (!vol->isLeftHanded())
-    {
+    if (vol->isLeftHanded()) {
       vol = shared_ptr<Go::SplineVolume>(vol->clone());
       vol->reverseParameterDirection(2);
     }
