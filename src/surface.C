@@ -61,6 +61,29 @@ PyObject* Surface_Str(Surface* self)
   return PyString_FromString(str.str().c_str());
 }
 
+PyDoc_STRVAR(surface_evaluate__doc__,"Evaluate surface at given parameter values\n"
+                                     "@param value_u: The u parameter value\n"
+                                     "@type value_u: float\n"
+                                     "@param value_v: The v parameter value\n"
+                                     "@type value_v: float\n"
+                                     "@return: The value of the surface at the given parameters\n"
+                                     "@rtype: Point");
+PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"value_u", "value_v", NULL };
+  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(self);
+  double value_u=0, value_v=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd",
+                                   (char**)keyWords,&value_u,&value_v) || !surf)
+    return NULL;
+
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  result->data.reset(new Go::Point(surf->dimension()));
+  surf->point(*result->data,value_u,value_v);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(surface_flip_parametrization__doc__,"Flip surface parametrization\n"
                                                  "@param direction: The parametric direction to flip (0=u, 1=v)\n"
                                                  "@type direction: int\n"
@@ -397,6 +420,7 @@ PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 
 PyMethodDef Surface_methods[] = {
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
+     {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
