@@ -2,8 +2,9 @@
 
 #include "curve.h"
 #include "surface.h"
-#include <GoTools/geometry/SplineSurface.h>
+#include "pyutils.h"
 
+#include <GoTools/geometry/SplineSurface.h>
 #include <opennurbs.h>
 
 Curve* ONCurveToGoCurve(const ON_Curve* curve)
@@ -43,6 +44,39 @@ Curve* ONCurveToGoCurve(const ON_Curve* curve)
 
   if (n_curve->IsRational())
     delete[] coefs;
+
+  return result;
+}
+
+ON_NurbsCurve* GoCurveToONCurve(PyObject* curve)
+{
+  shared_ptr<Go::SplineCurve> crv = 
+        convertSplineCurve(PyObject_AsGoCurve(curve));
+  if (!crv)
+    return NULL;
+
+  ON_NurbsCurve* result = new ON_NurbsCurve(crv->dimension(), crv->rational(),
+                                            crv->order(), crv->numCoefs());
+
+  for (int j=1;j<crv->numCoefs()+crv->order()-1;++j)
+    result->SetKnot(j-1,(*crv->knotsBegin()+j));
+
+  // WARNING: assuming dim=3 atm
+  if (crv->rational()) {
+    std::vector<double>::const_iterator cit = crv->rcoefs_begin();
+    for (int i=0;i<crv->numCoefs();++i) {
+      double w = *(cit+crv->dimension());
+      ON_4dPoint p(*cit++/w, *cit++/w, *cit++/w, w);
+      result->SetCV(i,p);
+      cit++;
+    }
+  } else {
+    std::vector<double>::const_iterator cit = crv->coefs_begin();
+    for (int i=0;i<crv->numCoefs();++i) {
+      ON_3dPoint p(*cit++, *cit++, *cit++);
+      result->SetCV(i,p);
+    }
+  }
 
   return result;
 }
@@ -112,4 +146,41 @@ Surface* ONSurfaceToGoSurface(const ON_Surface* surf)
 
   return result;
 }
+
+ON_NurbsSurface* GoSurfaceToONSurface(PyObject* surf)
+{
+  shared_ptr<Go::SplineSurface> srf = 
+        convertSplineSurface(PyObject_AsGoSurface(surf));
+  if (!srf)
+    return NULL;
+
+  ON_NurbsSurface* result = new ON_NurbsSurface(srf->dimension(),
+                                                srf->rational(),
+                                                srf->order_u(),
+                                                srf->order_v(),
+                                                srf->numCoefs_u(),
+                                                srf->numCoefs_v());
+
+  for (int j=1;j<srf->numCoefs_u()+srf->order_u()-1;++j)
+    result->SetKnot(0,j-1,(*srf->basis_u().begin()+j));
+  for (int j=1;j<srf->numCoefs_v()+srf->order_v()-1;++j)
+    result->SetKnot(1,j-1,(*srf->basis_v().begin()+j));
+  
+  // WARNING: Assuming dim = 3
+  std::vector<double>::iterator cit = srf->ctrl_begin();
+  for (int i=0;i<srf->numCoefs_u();++i) {
+    for (int j=0;j<srf->numCoefs_v();++j) {
+      if (srf->rational()) {
+        ON_4dPoint p(*cit++,*cit++,*cit++,*cit++);
+        result->SetCV(i,j,p);
+      } else {
+        ON_3dPoint p(*cit++,*cit++,*cit++);
+        result->SetCV(i,j,p);
+      }
+    }
+  }
+
+  return result;
+}
+
 #endif

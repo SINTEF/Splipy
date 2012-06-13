@@ -161,6 +161,82 @@ static void DoWrite(const std::string& fname, PyObject* objectso, bool convert)
     WriteEntity(g2_file,objectso,convert);
 }
 
+static void WriteEntity3DM(ONX_Model& model, PyObject* obj)
+{
+  if (PyObject_TypeCheck(obj,&Curve_Type)) {
+    ONX_Model_Object& mo = model.m_object_table.AppendNew();
+    mo.m_object = GoCurveToONCurve(obj);
+    mo.m_bDeleteObject = true;
+    mo.m_attributes.m_layer_index = 0;
+  }
+  if (PyObject_TypeCheck(obj,&Surface_Type)) {
+    ONX_Model_Object& mo = model.m_object_table.AppendNew();
+    mo.m_object = GoSurfaceToONSurface(obj);
+    mo.m_bDeleteObject = true;
+    mo.m_attributes.m_layer_index = 0;
+  }
+}
+
+static void DoWrite3DM(const std::string& fname, PyObject* objectso)
+{
+  ONX_Model model; 
+  model.m_properties.m_RevisionHistory.NewRevision();
+  model.m_properties.m_Application.m_application_name = "GeoModeller";
+  model.m_properties.m_Application.m_application_URL = "http://sintef.no";
+  model.m_properties.m_Application.m_application_details = "The SINTEF ICT GoTools/OpenNURBS based python bindings";
+  
+  model.m_settings.m_ModelUnitsAndTolerances.m_unit_system = ON::inches;
+  model.m_settings.m_ModelUnitsAndTolerances.m_absolute_tolerance = 0.001;
+  model.m_settings.m_ModelUnitsAndTolerances.m_angle_tolerance = ON_PI/180.0;
+  model.m_settings.m_ModelUnitsAndTolerances.m_relative_tolerance = 0.01;
+
+  if (PyObject_TypeCheck(objectso,&PyList_Type)) {
+    for (int i=0; i < PyList_Size(objectso); ++i) {
+      PyObject* obj = PyList_GetItem(objectso,i);
+      WriteEntity3DM(model,obj);
+    }
+  } else if (PyObject_TypeCheck(objectso,&PyTuple_Type)) {
+    for (int i=0;i < PyTuple_Size(objectso); ++i) {
+      PyObject* obj = PyTuple_GetItem(objectso,i);
+      WriteEntity3DM(model,obj);
+    }
+    PyTuple_GetItem(objectso,0);
+  } else
+    WriteEntity3DM(model,objectso);
+
+  FILE* fp = ON::OpenFile(fname.c_str(), "wb");
+  ON_BinaryFile archive(ON::write3dm, fp);
+  ON_TextLog error_log;
+  model.Polish();
+  model.Write(archive,4,"",&error_log);
+  ON::CloseFile(fp);
+}
+
+PyDoc_STRVAR(write3dm__doc__,"Write entities to 3DM file\n"
+                             "@param filename: The file to write\n"
+                             "@type  filename: string\n"
+                             "@param entities: The entities to write to file\n"
+                             "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
+                             "@param    level: Debug level to store file at\n"
+                             "@type     level: int >= 1\n"
+                             "@return: None");
+PyObject* GeoMod_Write3DM(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"filename", "entities", "level", NULL };
+  PyObject* objectso;
+  char* fname = 0;  
+  int level=1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"sO|i",
+                             (char**)keyWords,&fname,&objectso,&level))
+    return NULL;
+
+  if (level <= abs(modState.debugLevel))
+    DoWrite3DM(fname,objectso);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(writeg2__doc__,"Write entities to G2 file\n"
                             "@param filename: The file to write\n"
                             "@type  filename: string\n"
@@ -356,6 +432,7 @@ PyMethodDef GeoMod_methods[] = {
      {(char*)"ReadG2",                (PyCFunction)GeoMod_ReadG2,            METH_VARARGS|METH_KEYWORDS, readg2__doc__},
      {(char*)"SetDebugLevel",         (PyCFunction)GeoMod_SetDebugLevel,     METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
      {(char*)"WriteG2",               (PyCFunction)GeoMod_WriteG2,           METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
+     {(char*)"Write3DM",              (PyCFunction)GeoMod_Write3DM,          METH_VARARGS|METH_KEYWORDS, write3dm__doc__},
      
      // done - need a null entry for termination
      {NULL,                       NULL,                                  0,            NULL}
