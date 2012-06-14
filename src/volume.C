@@ -333,6 +333,28 @@ PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* k
   return Py_None;
 }
 
+PyObject* Volume_Scale(PyObject* o1, PyObject* o2)
+{
+  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(o1);
+  double scale = PyFloat_AsDouble(o2);
+  if (vol && scale > 0) {
+    if (!vol->isSpline())
+      ((Volume*)o1)->data = convertSplineVolume(vol);
+    shared_ptr<Go::SplineVolume> svol = 
+      dynamic_pointer_cast<Go::SplineVolume,
+                           Go::ParamVolume>(((Volume*)o1)->data);
+    for (std::vector<double>::iterator it  = svol->ctrl_begin(); 
+                                       it != svol->ctrl_end(); ) {
+      for (int i=0;i<vol->dimension();++i)
+        *it++ *= scale;
+      if (svol->rational())
+        it++;
+    }
+  }
+
+  return o1;
+}
+
 PyDoc_STRVAR(volume_translate__doc__,"Translate a volume along a given vector\n"
                                      "@param vector: The vector to translate along\n"
                                      "@type vector: Point, list of floats or tuple of floats\n"
@@ -385,6 +407,7 @@ void init_Volume_Type()
   InitializeTypeObject(&Volume_Type);
   Volume_operators.nb_add      = Volume_Add;
   Volume_operators.nb_subtract = Volume_Sub;
+  Volume_operators.nb_inplace_multiply = Volume_Scale;
   Volume_Type.tp_name = "GoTools.Volume";
   Volume_Type.tp_basicsize = sizeof(Volume);
   Volume_Type.tp_dealloc = (destructor)Volume_Dealloc;

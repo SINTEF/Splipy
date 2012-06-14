@@ -420,6 +420,28 @@ PyObject* Surface_Add(PyObject* o1, PyObject* o2)
   return (PyObject*) result;
 }
 
+PyObject* Surface_Scale(PyObject* o1, PyObject* o2)
+{
+  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(o1);
+  double scale = PyFloat_AsDouble(o2);
+  if (surf && scale > 0) {
+    if (!surf->isSpline())
+      ((Surface*)o1)->data = convertSplineSurface(surf);
+    shared_ptr<Go::SplineSurface> ssurf = 
+      dynamic_pointer_cast<Go::SplineSurface,
+                           Go::ParamSurface>(((Surface*)o1)->data);
+    for (std::vector<double>::iterator it  = ssurf->ctrl_begin(); 
+                                       it != ssurf->ctrl_end(); ) {
+      for (int i=0;i<surf->dimension();++i)
+        *it++ *= scale;
+      if (ssurf->rational())
+        it++;
+    }
+  }
+
+  return o1;
+}
+
 PyMethodDef Surface_methods[] = {
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
@@ -443,6 +465,7 @@ void init_Surface_Type()
 {
   InitializeTypeObject(&Surface_Type);
   Surface_operators.nb_add = Surface_Add;
+  Surface_operators.nb_inplace_multiply = Surface_Scale;
   Surface_Type.tp_name = "GoTools.Surface";
   Surface_Type.tp_basicsize = sizeof(Surface);
   Surface_Type.tp_dealloc = (destructor)Surface_Dealloc;
