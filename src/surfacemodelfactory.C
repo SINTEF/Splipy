@@ -15,7 +15,8 @@ PyObject* SurfaceModelFactory_module;
 PyDoc_STRVAR(generate_regularize_surface__doc__, "Regularize a surface\n"
                                                  "@param surface: Surface to regularize\n"
                                                  "@type surface: Surface\n"
-                                                 "@return: SurfaceModel with the resulting multi-surface model");
+                                                 "@return: The resulting multi-surface model\n"
+                                                 "@rtype: SurfaceModel");
 PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", NULL };

@@ -27,7 +27,8 @@ extern "C"
 {
 
 PyDoc_STRVAR(get_go_version__doc__, "Get GoTools version\n"
-                                    "@return: String with version in format major.minor.patch");
+                                    "@return: Version in format major.minor.patch\n"
+                                    "@rtype: string");
 PyObject* GeoMod_GetVersion(PyObject* self)
 {
   char tmp[24];
@@ -268,7 +269,8 @@ PyObject* GeoMod_WriteG2(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(readg2__doc__,"Read entities from G2 file\n"
                             "@param filename: The file to read\n"
                             "@type  filename: string\n"
-                            "@return: Curve, Surface, Volume, SurfaceModel or a list of these");
+                            "@return: The requested entities\n"
+                            "@rtype: Curve, Surface, Volume, SurfaceModel or a list of these");
 PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"filename", NULL };
@@ -320,7 +322,8 @@ PyDoc_STRVAR(read3dm__doc__,"Read entities from a 3DM file\n"
                             "@type  filename: string\n"
                             "@param type: Only read objects of this type\n"
                             "@type type: string (Curves or Surfaces)\n"
-                            "@return: Curve, Surface or a list of these");
+                            "@return: The requested entities\n"
+                            "@rtype: Curve, Surface or a list of these");
 PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
 {
 #ifndef ENABLE_OPENNURBS

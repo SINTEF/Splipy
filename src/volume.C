@@ -83,7 +83,7 @@ PyDoc_STRVAR(volume_evaluate__doc__,"Evaluate volume at given parameter values\n
                                      "@type value_v: float\n"
                                      "@param value_w: The w parameter value\n"
                                      "@type value_w: float\n"
-                                     "@return: The value of the surface\n"
+                                     "@return: The value of the volume\n"
                                      "@rtype: Point");
 PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
@@ -133,7 +133,8 @@ PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* k
 
 
 PyDoc_STRVAR(volume_get_edges__doc__,"Return the six edge volumes\n"
-                                      "@return: A list of the six edges");
+                                     "@return: A list of the six edges\n"
+                                     "@rtype: List of Surface");
 PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
@@ -229,7 +230,8 @@ PyDoc_STRVAR(volume_split__doc__, "Split the volume into segments\n"
                                   "@type params: Float or list of floats\n"
                                   "@param pardir: The direction to split along\n"
                                   "@type pardir: integer (0,1,2)\n"
-                                  "@return: List of volumes\n");
+                                  "@return: The resulting volumes\n"
+                                  "@rtype: List of Volume");
 PyObject* Volume_Split(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"params", "pardir", NULL };

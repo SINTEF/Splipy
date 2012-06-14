@@ -67,7 +67,8 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
-                                "@return: New copy of curve\n");
+                                "@return: New copy of curve\n"
+                                "@rtype: Curve\n");
 PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   Curve* res = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
@@ -131,7 +132,8 @@ PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kw
 }
 
 PyDoc_STRVAR(curve_get_knots__doc__,"Get the unique knots of a spline curve\n"
-                                    "@return: List of float\n");
+                                    "@return: List with the knot values\n"
+                                    "@rtype: List of float");
 PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
@@ -266,7 +268,8 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(curve_split__doc__, "Split the curve into segments\n"
                                  "@param params: The parameter values to split at\n"
                                  "@type params: Float or list of floats\n"
-                                 "@return: List of curves\n");
+                                 "@return: The resulting curves\n"
+                                 "@rtype: List of Curve");
 PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"params", NULL };

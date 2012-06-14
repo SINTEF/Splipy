@@ -143,7 +143,8 @@ PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(surface_get_edges__doc__,"Return the four edge curves in (parametric) order: bottom, right, top, left\n"
-                                      "@return: A list of the four edge curves");
+                                      "@return: The four edges\n"
+                                      "@rtype: List of Curve");
 PyObject* Surface_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
@@ -176,7 +177,8 @@ PyObject* Surface_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
 
 
 PyDoc_STRVAR(surface_get_knots__doc__,"Return unique knots for a spline surface\n"
-                                      "@return: Tuple with List of float");
+                                      "@return: The unique knots\n"
+                                      "@rtype: Tuple with List of float");
 PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);

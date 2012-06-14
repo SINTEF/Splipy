@@ -81,7 +81,8 @@ PyObject* SurfaceModel_Append(PyObject* o1, PyObject* o2)
 }
 
 PyDoc_STRVAR(surfacemodel_ctoc__doc__,"Returns whether or not SurfaceModel has a Corner to Corner configuration\n"
-                                      "@return: True/False");
+                                      "@return: True/False\n"
+                                      "@rtype: Bool");
 PyObject* SurfaceModel_CtoC(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
@@ -94,7 +95,8 @@ PyObject* SurfaceModel_CtoC(PyObject* self, Py_ssize_t i)
 PyDoc_STRVAR(surfacemodel_get__doc__,"Returns the i'th Surface of this SurfaceModel\n"
                                      "@param i: index of the surface to return\n"
                                      "@type i: int\n"
-                                     "@return: The i'th Surface");
+                                     "@return: The i'th Surface\n"
+                                     "@rtype: Surface");
 PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
@@ -138,7 +140,8 @@ PyObject* SurfaceModel_MakeCtoC(PyObject* self, PyObject* args)
 }
 
 PyDoc_STRVAR(surfacemodel_nmb_faces__doc__,"Returns the number of simple entities (Surfaces) in this model\n"
-                                           "@return: The number of faces in this model");
+                                           "@return: The number of faces in this model\n"
+                                           "@rtype: integer");
 Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);

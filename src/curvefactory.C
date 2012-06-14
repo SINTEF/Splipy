@@ -23,7 +23,8 @@ PyDoc_STRVAR(generate_circle__doc__, "Generate a circle\n"
                                      "@type radius: float\n"
                                      "@param normal: The normal of the circle\n"
                                      "@type normal: Point, list of floats or tuple of floats\n"
-                                     "@return: Curve describing the circle");
+                                     "@return: The circle\n"
+                                     "@rtype: Curve");
 PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "radius", "normal", NULL };
@@ -74,7 +75,8 @@ PyDoc_STRVAR(generate_circle_segment__doc__, "Generate a circle segment\n"
                                              "@type angle: float\n"
                                              "@param normal: The normal of the circle\n"
                                              "@type normal: Point, list of floats or tuple of floats\n"
-                                             "@return: Curve describing the circle segment");
+                                             "@return: The circle segment\n"
+                                             "@rtype: Curve");
 PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "angle", "normal", NULL };
@@ -120,7 +122,8 @@ PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse\n"
                                       "@type radius2: float\n"
                                       "@param normal: Normal of ellipse\n"
                                       "@type normal: Point, list of floats or tuple of floats\n"
-                                      "@return: Curve describing the ellipse");
+                                      "@return: The ellipse\n"
+                                      "@rtype: Curve");
 PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2", "normal", NULL };
@@ -173,7 +176,8 @@ PyDoc_STRVAR(generate_elliptic_segment__doc__, "Generate an elliptic segment\n"
                                                "@type endangle: float\n"
                                                "@param normal: Normal of ellipse\n"
                                                "@type normal: Point, list of floats or tuple of floats\n"
-                                               "@return: Curve describing the ellipse");
+                                               "@return: The ellipse\n"
+                                               "@rtype: Curve");
 PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2",
@@ -219,7 +223,8 @@ PyDoc_STRVAR(generate_helix__doc__, "Generate a helix\n"
                                     "@type frequency: float\n"
                                     "@param quadrants: Number of quadrants in helix\n"
                                     "@type quadrants: 1 <= int <= 4\n"
-                                    "@return: Curve describing the helix");
+                                    "@return: The helix\n"
+                                    "@rtype: Curve");
 PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "axis", "frequency", "quadrants", NULL };
@@ -259,7 +264,8 @@ PyDoc_STRVAR(generate_interpolate_curve__doc__, "Construct a spline curve from a
                                                 "@type order: int >= 1\n"
                                                 "@param maxiter: (optional) The maxium number of iterations in interpolation scheme\n"
                                                 "@type maxiter: int >= 1\n"
-                                                "@return: Spline curve interpolating the point cloud\n");
+                                                "@return: Spline interpolating the point cloud\n"
+                                                "@rtype: Curve");
 PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"points", "parvals", "order", "maxiter", NULL };
@@ -310,7 +316,8 @@ PyDoc_STRVAR(generate_line__doc__, "Generate an infinite line\n"
                                    "@type p0: Point, list of floats or tuple of floats\n"
                                    "@param direction: The direction of the line\n"
                                    "@type direction: Point, list of floats or tuple of floats\n"
-                                   "@return: Curve describing the line");
+                                   "@return: The line\n"
+                                   "@rtype: Curve");
 PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "dir", NULL };
@@ -338,7 +345,8 @@ PyDoc_STRVAR(generate_line_segment__doc__, "Generate a line segment\n"
                                            "@type p1: Point, list of floats or tuple of floats\n"
                                            "@param relative: (optional) p1 is relative to p0\n"
                                            "@type relative: bool\n"
-                                           "@return: Curve describing the line segment");
+                                           "@return: The line segment\n"
+                                           "@rtype: Curve");
 PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "p1", "relative", NULL };
@@ -367,7 +375,8 @@ PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(generate_crvnonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline curve\n"
                                             "@param original: The initial (rational) curve\n"
                                             "@type original: Curve\n"
-                                            "@return: Non-rational B-spline representation of the curve");
+                                            "@return: Non-rational B-spline representation\n"
+                                            "@rtype: Curve");
 PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", NULL };
