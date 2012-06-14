@@ -42,7 +42,7 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
   bool reparam   = true;
   PyObject *oCrv;
 
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|idb",
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|ib",
                                    (char**)keyWords, &oCrv, &continuity, &reparam))
     return NULL;
 
