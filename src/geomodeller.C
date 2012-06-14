@@ -216,7 +216,7 @@ PyDoc_STRVAR(write3dm__doc__,"Write entities to 3DM file\n"
                              "@param filename: The file to write\n"
                              "@type  filename: string\n"
                              "@param entities: The entities to write to file\n"
-                             "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
+                             "@type  entities: Curve, Surface or a list of these\n"
                              "@param    level: Debug level to store file at\n"
                              "@type     level: int >= 1\n"
                              "@return: None");
