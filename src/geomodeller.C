@@ -162,6 +162,7 @@ static void DoWrite(const std::string& fname, PyObject* objectso, bool convert)
     WriteEntity(g2_file,objectso,convert);
 }
 
+#ifdef ENABLE_OPENNURBS
 static void WriteEntity3DM(ONX_Model& model, PyObject* obj)
 {
   if (PyObject_TypeCheck(obj,&Curve_Type)) {
@@ -212,6 +213,7 @@ static void DoWrite3DM(const std::string& fname, PyObject* objectso)
   model.Write(archive,4,"",&error_log);
   ON::CloseFile(fp);
 }
+#endif
 
 PyDoc_STRVAR(write3dm__doc__,"Write entities to 3DM file\n"
                              "@param filename: The file to write\n"
@@ -223,6 +225,11 @@ PyDoc_STRVAR(write3dm__doc__,"Write entities to 3DM file\n"
                              "@return: None");
 PyObject* GeoMod_Write3DM(PyObject* self, PyObject* args, PyObject* kwds)
 {
+#ifndef ENABLE_OPENNURBS
+  std::cerr << "Compiled without OpenNURBS support, no data written" << std::endl;
+  Py_INCREF(Py_None);
+  return Py_None;
+#else
   static const char* keyWords[] = {"filename", "entities", "level", NULL };
   PyObject* objectso;
   char* fname = 0;  
@@ -236,6 +243,7 @@ PyObject* GeoMod_Write3DM(PyObject* self, PyObject* args, PyObject* kwds)
 
   Py_INCREF(Py_None);
   return Py_None;
+#endif
 }
 
 PyDoc_STRVAR(writeg2__doc__,"Write entities to G2 file\n"
