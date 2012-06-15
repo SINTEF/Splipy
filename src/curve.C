@@ -265,6 +265,37 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_rotate__doc__,"Rotate a curve around an axis\n"
+                                 "@param axis: The axis to rotate around\n"
+                                 "@type axis: Point, list of floats or tuple of floats\n"
+                                 "@param angle: Angle to rotate curve with in radians\n"
+                                 "@type angle: float\n"
+                                 "@return: None");
+PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"axis", "angle", NULL };
+  PyObject* axiso;
+  double angle=0.f;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Od",
+                                   (char**)keyWords,&axiso,&angle))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> crv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
+  if (!crv || !axis)
+    return NULL;
+
+   Curve* curve = (Curve*)self;
+   curve->data = convertSplineCurve(crv);
+   crv = curve->data;
+
+   Go::GeometryTools::rotateSplineCurve(*axis, angle,
+                        *static_pointer_cast<Go::SplineCurve>(crv));
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyDoc_STRVAR(curve_split__doc__, "Split the curve into segments\n"
                                  "@param params: The parameter values to split at\n"
                                  "@type params: Float or list of floats\n"
@@ -371,6 +402,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
+     {(char*)"Rotate",              (PyCFunction)Curve_Rotate,              METH_VARARGS|METH_KEYWORDS, curve_rotate__doc__},
      {(char*)"Split",               (PyCFunction)Curve_Split,               METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
      {(char*)"Translate",           (PyCFunction)Curve_Translate,           METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
      {NULL,                         NULL,                                   0,                          NULL}
