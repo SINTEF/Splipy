@@ -428,6 +428,68 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_spline_curve__doc__, "Generate a spline curve\n"
+                                           "@param params: The parameter values\n"
+                                           "@type params: List of float\n"
+                                           "@param knots: The knot values\n"
+                                           "@type knots: List of float\n"
+                                           "@param coeffs: The coefficients\n"
+                                           "@type coeffs: List of float\n"
+                                           "@param order: The order of the curve (1+p)\n"
+                                           "@type order: integer\n"
+                                           "@param rational: Is the curve rational?\n"
+                                           "@type rational: Boolean\n"
+                                           "@return: The spline curve\n"
+                                           "@rtype: Curve");
+PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"params", "knots", "coeffs", "order", "rational", NULL };
+  PyObject* paramso = 0;
+  PyObject* knotso  = 0;
+  PyObject* coeffso = 0;
+  bool rational=false;
+  int order=1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOOi|b",
+                                   (char**)keyWords,&paramso, &knotso,
+                                                    &coeffso,&order,&rational))
+    return NULL;
+
+  if (!PyObject_TypeCheck(paramso,&PyList_Type) || 
+      !PyObject_TypeCheck(knotso,&PyList_Type) ||
+      !PyObject_TypeCheck(coeffso,&PyList_Type))
+    return NULL;
+
+  // get parameters
+  std::vector<double> params;
+  for (int i=0; i < PyList_Size(paramso); ++i)
+    params.push_back(PyFloat_AsDouble(PyList_GetItem(paramso,i)));
+
+  // get knots
+  std::vector<double> knots;
+  for (int i=0; i < PyList_Size(knotso); ++i)
+    knots.push_back(PyFloat_AsDouble(PyList_GetItem(knotso,i)));
+
+  // get coeffs
+  std::vector<double> coeffs;
+  for (int i=0; i < PyList_Size(knotso); ++i)
+    coeffs.push_back(PyFloat_AsDouble(PyList_GetItem(coeffso,i)));
+
+  if (params.size() != knots.size() ||
+       knots.size() != coeffs.size()*(rational?1+modState.dim:
+                                                 modState.dim)) {
+    std::cerr << "Error constructing spline curve" << std::endl;
+    return NULL;
+  }
+
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  result->data.reset(new Go::SplineCurve(params.size(), order,
+                                         knots.begin(), coeffs.begin(),
+                                         modState.dim, rational));
+
+  return (PyObject*)result;
+}
+
+
   PyMethodDef CurveFactory_methods[] = {
      {(char*)"Circle",                (PyCFunction)Generate_Circle,           METH_VARARGS|METH_KEYWORDS, generate_circle__doc__},
      {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment,    METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
@@ -437,7 +499,8 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
      {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve, METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
      {(char*)"Line",                  (PyCFunction)Generate_Line,             METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
      {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,      METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
-     {(char*)"NonRationalCurve",  (PyCFunction)Generate_CrvNonRational,   METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
+     {(char*)"NonRationalCurve",      (PyCFunction)Generate_CrvNonRational,   METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
+     {(char*)"SplineCurve",           (PyCFunction)Generate_SplineCurve,      METH_VARARGS|METH_KEYWORDS, generate_spline_curve__doc__},
      {NULL,                           NULL,                                   0,                          NULL}
   };
 
