@@ -183,4 +183,113 @@ ON_NurbsSurface* GoSurfaceToONSurface(PyObject* surf)
   return result;
 }
 
+static void WriteEntity3DM(ONX_Model& model, PyObject* obj)
+{
+  if (PyObject_TypeCheck(obj,&Curve_Type)) {
+    ONX_Model_Object& mo = model.m_object_table.AppendNew();
+    mo.m_object = GoCurveToONCurve(obj);
+    mo.m_bDeleteObject = true;
+    mo.m_attributes.m_layer_index = 0;
+  }
+  if (PyObject_TypeCheck(obj,&Surface_Type)) {
+    ONX_Model_Object& mo = model.m_object_table.AppendNew();
+    mo.m_object = GoSurfaceToONSurface(obj);
+    mo.m_bDeleteObject = true;
+    mo.m_attributes.m_layer_index = 0;
+  }
+}
+
+void DoWrite3DM(const std::string& fname, PyObject* objectso)
+{
+  ONX_Model model; 
+  model.m_properties.m_RevisionHistory.NewRevision();
+  model.m_properties.m_Application.m_application_name = "GeoModeller";
+  model.m_properties.m_Application.m_application_URL = "http://sintef.no";
+  model.m_properties.m_Application.m_application_details = "The SINTEF ICT GoTools/OpenNURBS based python bindings";
+  
+  model.m_settings.m_ModelUnitsAndTolerances.m_unit_system = ON::inches;
+  model.m_settings.m_ModelUnitsAndTolerances.m_absolute_tolerance = 0.001;
+  model.m_settings.m_ModelUnitsAndTolerances.m_angle_tolerance = ON_PI/180.0;
+  model.m_settings.m_ModelUnitsAndTolerances.m_relative_tolerance = 0.01;
+
+  if (PyObject_TypeCheck(objectso,&PyList_Type)) {
+    for (int i=0; i < PyList_Size(objectso); ++i) {
+      PyObject* obj = PyList_GetItem(objectso,i);
+      WriteEntity3DM(model,obj);
+    }
+  } else if (PyObject_TypeCheck(objectso,&PyTuple_Type)) {
+    for (int i=0;i < PyTuple_Size(objectso); ++i) {
+      PyObject* obj = PyTuple_GetItem(objectso,i);
+      WriteEntity3DM(model,obj);
+    }
+    PyTuple_GetItem(objectso,0);
+  } else
+    WriteEntity3DM(model,objectso);
+
+  FILE* fp = ON::OpenFile(fname.c_str(), "wb");
+  ON_BinaryFile archive(ON::write3dm, fp);
+  ON_TextLog error_log;
+  model.Polish();
+  model.Write(archive,4,"",&error_log);
+  ON::CloseFile(fp);
+}
+
+PyObject* DoRead3DM(const std::string& fname, const std::string& type)
+{
+  FILE* archive_fp = ON::OpenFile(fname.c_str(),"rb");
+  if (!archive_fp)
+    return NULL;
+
+  ON_BinaryFile archive(ON::read3dm, archive_fp);
+  ONX_Model model;
+
+  ON_TextLog dump_to_stdout;
+  if (!model.Read(archive,&dump_to_stdout)) {
+    std::cerr << "Failed to read 3DM file " << fname << std::endl;
+    return NULL;
+  }
+  ON::CloseFile(archive_fp);
+
+  bool surfaces(true);
+  bool curves(true);
+  if (!type.empty() && type == "curves")
+    surfaces = false;
+  if (type == "surfaces")
+    curves = false;
+
+  PyObject* result=NULL;
+  PyObject* curr=NULL;
+  for (int i=0;i<model.m_object_table.Count();++i) {
+    if (curr) {
+      if (!result)
+        result = PyList_New(0);
+      PyList_Append(result,curr);
+      curr = NULL;
+    }
+    if (curves && model.m_object_table[i].m_object->ObjectType() == ON::curve_object)
+      curr = (PyObject*)ONCurveToGoCurve((const ON_Curve*)model.m_object_table[i].m_object);
+    if (surfaces && model.m_object_table[i].m_object->ObjectType() == ON::brep_object) {
+      ON_Brep *brep_obj = (ON_Brep*) model.m_object_table[i].m_object;
+      int sc=0;
+      while (brep_obj->FaceIsSurface(sc)) {
+        if (curr) {
+          if (!result)
+            result = PyList_New(0);
+          PyList_Append(result,curr);
+        }
+        ON_Surface *surf = brep_obj->m_S[sc++];
+        curr = (PyObject*)ONSurfaceToGoSurface(surf);
+      }
+    }
+  }
+  model.Destroy();
+  if (!result)
+    result = curr;
+  if (PyObject_TypeCheck(result,&PyList_Type))
+    PyList_Append(result,curr);
+
+  return result;
+}
+
+
 #endif
