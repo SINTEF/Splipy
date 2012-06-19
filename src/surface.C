@@ -294,6 +294,8 @@ PyDoc_STRVAR(surface_reparametrize__doc__,"Re-parametrize a surface\n"
                                           "@type umax: float\n"
                                           "@param vmin: The minimum v value\n"
                                           "@type vmin: float\n"
+                                          "@param vmax: The maximum v value\n"
+                                          "@type vmax: float\n"
                                           "@return: None");
 PyObject* Surface_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 {
