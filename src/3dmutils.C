@@ -65,15 +65,21 @@ ON_NurbsCurve* GoCurveToONCurve(PyObject* curve)
   if (crv->rational()) {
     std::vector<double>::const_iterator cit = crv->rcoefs_begin();
     for (int i=0;i<crv->numCoefs();++i) {
-      double w = *(cit+crv->dimension());
-      ON_4dPoint p(*cit++/w, *cit++/w, *cit++/w, w);
+      double x = *cit++;
+      double y = *cit++;
+      double z = *cit++;
+      double w = *cit++;
+      ON_4dPoint p(x/w, y/w, z/w, w);
       result->SetCV(i,p);
       cit++;
     }
   } else {
     std::vector<double>::const_iterator cit = crv->coefs_begin();
     for (int i=0;i<crv->numCoefs();++i) {
-      ON_3dPoint p(*cit++, *cit++, *cit++);
+      double x=*cit++;
+      double y=*cit++;
+      double z=*cit++;
+      ON_3dPoint p(x,y,z);
       result->SetCV(i,p);
     }
   }
@@ -171,10 +177,17 @@ ON_NurbsSurface* GoSurfaceToONSurface(PyObject* surf)
   for (int i=0;i<srf->numCoefs_u();++i) {
     for (int j=0;j<srf->numCoefs_v();++j) {
       if (srf->rational()) {
-        ON_4dPoint p(*cit++,*cit++,*cit++,*cit++);
+        double x = *cit++;
+        double y = *cit++;
+        double z = *cit++;
+        double w = *cit++;
+        ON_4dPoint p(x/w, y/w, z/w, w);
         result->SetCV(i,j,p);
       } else {
-        ON_3dPoint p(*cit++,*cit++,*cit++);
+        double x = *cit++;
+        double y = *cit++;
+        double z = *cit++;
+        ON_3dPoint p(x,y,z);
         result->SetCV(i,j,p);
       }
     }
