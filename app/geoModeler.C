@@ -11,6 +11,45 @@ void syntax()
   std::cout << "Syntax: geoModeler <script> [finaloutput=] [debuglevel=] [tospline=]" << std::endl;
 }
 
+std::string getexepath()
+{
+  char result[ PATH_MAX ];
+  ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+  return std::string( result, (count > 0) ? count : 0 );
+}
+
+void addPath()
+{
+  std::string path = getexepath();
+  path.erase(path.rfind('/'));
+  path += ':';
+  // we want to use sys.path so it includes site-packages
+  // if this fails, default to using Py_GetPath
+  PyObject *sysMod(PyImport_ImportModule((char*)"sys")); // must call Py_DECREF 
+  PyObject *sysModDict(PyModule_GetDict(sysMod)); // borrowed ref, no need to de
+  PyObject *pathObj(PyDict_GetItemString(sysModDict, "path")); // borrowed ref, 
+
+  if( pathObj && PyList_Check(pathObj) )
+  {
+    for( int i = 0; i < PyList_Size(pathObj); i++ )
+    {
+      PyObject *e = PyList_GetItem(pathObj, i); // borrowed ref, no need to dele
+      if( e && PyString_Check(e) )
+      {
+          path += PyString_AsString(e); // returns internal data, don't delete o
+          path += ':';
+      }
+    }
+  }
+  else
+  {
+    path += Py_GetPath();
+  }
+  Py_DECREF(sysMod); // release ref to sysMod
+
+  PySys_SetPath((char *)path.c_str());
+}
+
 int main(int argc, char** argv)
 {
   const char* file=NULL;
@@ -35,6 +74,7 @@ int main(int argc, char** argv)
     exit(2);
   }
   Py_Initialize();
+  addPath();
 #ifdef ENABLE_OPENNURBS
   ON::Begin();
 #endif
