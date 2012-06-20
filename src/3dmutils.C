@@ -59,7 +59,7 @@ ON_NurbsCurve* GoCurveToONCurve(PyObject* curve)
                                             crv->order(), crv->numCoefs());
 
   for (int j=1;j<crv->numCoefs()+crv->order()-1;++j)
-    result->SetKnot(j-1,(*crv->knotsBegin()+j));
+    result->SetKnot(j-1,(*(crv->knotsBegin()+j)));
 
   // WARNING: assuming dim=3 atm
   if (crv->rational()) {
