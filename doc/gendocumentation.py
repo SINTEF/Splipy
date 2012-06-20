@@ -11,6 +11,7 @@ doxy = build_doc_index(['GoTools', \
                         'GoTools.CurveFactory', \
                         'GoTools.SurfaceFactory', \
                         'GoTools.SurfaceModelFactory', \
+                        'GeoUtils.Interpolate', \
                         'GeoUtils.Refinement'],introspect=True,parse=True)
 l = LatexWriter(doxy)
 l.write('doc/latex/')
