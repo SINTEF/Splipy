@@ -1,3 +1,5 @@
+__doc__ = 'Implementation of various refinement schemes.'
+
 def UniformCurve(curve):
   """Uniformly refine a curve by halfing each knot interval
   @param curve: The curve to refine
