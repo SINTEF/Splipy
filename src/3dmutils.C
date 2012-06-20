@@ -203,12 +203,14 @@ static void WriteEntity3DM(ONX_Model& model, PyObject* obj)
     mo.m_object = GoCurveToONCurve(obj);
     mo.m_bDeleteObject = true;
     mo.m_attributes.m_layer_index = 0;
+    mo.m_attributes.m_uuid = ON_rhino4_id;
   }
   if (PyObject_TypeCheck(obj,&Surface_Type)) {
     ONX_Model_Object& mo = model.m_object_table.AppendNew();
     mo.m_object = GoSurfaceToONSurface(obj);
     mo.m_bDeleteObject = true;
     mo.m_attributes.m_layer_index = 0;
+    mo.m_attributes.m_uuid = ON_rhino4_id;
   }
 }
 
