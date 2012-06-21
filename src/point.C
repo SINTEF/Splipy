@@ -141,15 +141,36 @@ PyObject* Point_Abs(PyObject* o1)
   return (PyObject*)result;
 }
 
+Py_ssize_t Point_NmbComponent(PyObject* self)
+{
+  shared_ptr<Go::Point> sm = PyObject_AsGoPoint(self);
+  if (!sm)
+    return 0;
+
+  return sm->size();
+}
+
+PyObject* Point_GetComponent(PyObject* self, Py_ssize_t i)
+{
+  shared_ptr<Go::Point> sm = PyObject_AsGoPoint(self);
+  if (!sm || i < 0 || i >= sm->size())
+    return NULL;
+
+  return PyFloat_FromDouble((*sm)[i]);
+}
+
 PyMethodDef Point_methods[] = {
      {NULL,           NULL,                     0,            NULL}
    };
 
 PyNumberMethods Point_operators = {0};
+PySequenceMethods Point_seq_operators = {0};
 
 PyDoc_STRVAR(point__doc__, "A point");
 void init_Point_Type()
 {
+  Point_seq_operators.sq_item = Point_GetComponent;
+  Point_seq_operators.sq_length = Point_NmbComponent;
   InitializeTypeObject(&Point_Type);
   Point_operators.nb_add = Point_Add;
   Point_operators.nb_subtract = Point_Sub;
@@ -165,6 +186,7 @@ void init_Point_Type()
   Point_Type.tp_doc = point__doc__;
   Point_Type.tp_methods = Point_methods;
   Point_Type.tp_as_number = &Point_operators;
+  Point_Type.tp_as_sequence = &Point_seq_operators;
   Point_Type.tp_base = 0;
   Point_Type.tp_new = Point_New;
   Point_Type.tp_str = (reprfunc)Point_Str;
