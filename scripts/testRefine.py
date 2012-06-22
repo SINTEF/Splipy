@@ -15,7 +15,7 @@ pList = list()
 for i in range(0,10):
 	x = i*2.0*pi/9
 	pList.append(Point(x,sin(x), 0))
-c1 = InterpolateCurve(pList, range(0,10))
+c1 = ApproximateCurve(pList, range(0,10))
 c2 = c1.Clone()
 # c1 should still be equal to c2 after refinement
 c2.InsertKnot(0.5)

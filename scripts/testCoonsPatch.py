@@ -36,10 +36,10 @@ for i in range(0,N):
 	p_right.append(Point( xMax + y*xMax/yMax, y, 0))
 
 # interpolate the four boundary curves
-bottom = InterpolateCurve(p_bottom, range(0,N))
-top    = InterpolateCurve(p_top,    range(0,N))
-right  = InterpolateCurve(p_right,  range(0,N))
-left   = InterpolateCurve(p_left,   range(0,N))
+bottom = ApproximateCurve(p_bottom, range(0,N))
+top    = ApproximateCurve(p_top,    range(0,N))
+right  = ApproximateCurve(p_right,  range(0,N))
+left   = ApproximateCurve(p_left,   range(0,N))
 
 # make coons patch for the geometry interior
 surface = CoonsSurfacePatch([bottom, top, left, right])

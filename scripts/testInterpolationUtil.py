@@ -30,7 +30,7 @@ for i in range(N):
 
 
 # test the GoTools entry point for linear interpolation
-crv[0]  = InterpolateCurve(pts, xi, 2)
+crv[0]  = ApproximateCurve(pts, xi, 2)
 
 # test the Interpolate entry points and optional parameters
 crv[1] = Linear(range(10))
