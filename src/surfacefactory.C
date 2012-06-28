@@ -593,6 +593,89 @@ PyObject* Generate_Rectangle(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_resample_surface__doc__,"Generate a surface by sampling another\n"
+                                              "@param surface: The surface to sample\n"
+                                              "@type surface: Surface\n"
+                                              "@param n1: The number of points to sample in the first direction\n"
+                                              "@type n1: integer\n"
+                                              "@param p1: The order in the first direction\n"
+                                              "@type p1: integer\n"
+                                              "@param n2: The number of points to sample in the first direction\n"
+                                              "@type n2: integer\n"
+                                              "@param p2: The order in the first direction\n"
+                                              "@type p2: integer\n"
+                                              "@return: The resampled surface\n"
+                                              "@rtype: Surface");
+PyObject* Generate_ResampleSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"surface", "n1", "p1", "n2", "p2", NULL };
+  PyObject* surfaceo;
+  int n1, n2, p1, p2;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Oiiii",
+                                   (char**)keyWords,&surfaceo,&n1,&p1,&n2,&p2))
+    return NULL;
+
+  shared_ptr<Go::SplineSurface> surface = convertSplineSurface(PyObject_AsGoSurface(surfaceo));
+
+  if (!surface || n1 < 1 || p1 < 1 || n2 < 1 || p2 < 1)
+    return NULL;
+
+  // create basis functions and evaluation points
+  int dimension = surface->dimension();
+  // repeated knot at start
+
+  int k=1;
+  std::vector<double> knot_u;
+  for (int i=0;i<p1;++i)
+    knot_u.push_back(0);
+  for (int i=0;i<n1-p1;++i)
+    knot_u.push_back(k++);
+  for (int i=0;i<p1;++i)
+    knot_u.push_back(k);
+
+  k=1;
+  std::vector<double> knot_v;
+  for (int i=0;i<p1;++i)
+    knot_v.push_back(0);
+  for (int i=0;i<n1-p2;++i)
+    knot_v.push_back(k++);
+  for (int i=0;i<p2;++i)
+    knot_v.push_back(k);
+
+  Go::BsplineBasis basis_u(n1,p1,knot_u.begin());
+  Go::BsplineBasis basis_v(n2,p2,knot_v.begin());
+
+  basis_u.rescale(surface->basis_u().startparam(), surface->basis_u().endparam());
+  basis_v.rescale(surface->basis_v().startparam(), surface->basis_v().endparam());
+
+  std::vector<double> greville_u(basis_u.numCoefs());
+  std::vector<double> greville_v(basis_v.numCoefs());
+  for(int i=0; i<basis_u.numCoefs(); i++)
+    greville_u[i] = basis_u.grevilleParameter(i);
+  for(int i=0; i<basis_v.numCoefs(); i++)
+    greville_v[i] = basis_v.grevilleParameter(i);
+
+  // evaluate original spline at interpolation points
+  std::vector<double> interpolationPoints;
+  std::vector<double> weights(0);
+  surface->gridEvaluator(interpolationPoints, greville_u, greville_v);
+
+  Go::SplineSurface *res = 
+        Go::SurfaceInterpolator::regularInterpolation(basis_u,
+                                                      basis_v,
+                                                      greville_u,
+                                                      greville_v,
+                                                      interpolationPoints,
+                                                      dimension,
+                                                      false,
+                                                      weights);
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data.reset(res);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_rotational_curve_sweep__doc__,"Generate a surface by rotating a curve\n"
                                                     "@param curve: The curve to rotate\n"
                                                     "@type curve: Curve\n"
@@ -739,6 +822,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"MirrorSurface",         (PyCFunction)Generate_MirrorSurface,        METH_VARARGS|METH_KEYWORDS, generate_mirror_surface__doc__},
      {(char*)"Plane",                 (PyCFunction)Generate_Plane,                METH_VARARGS|METH_KEYWORDS, generate_plane__doc__},
      {(char*)"Rectangle",             (PyCFunction)Generate_Rectangle,            METH_VARARGS|METH_KEYWORDS, generate_rectangle__doc__},
+     {(char*)"ResampleSurface",       (PyCFunction)Generate_ResampleSurface,      METH_VARARGS|METH_KEYWORDS, generate_resample_surface__doc__},
      {(char*)"RotationalCurveSweep",  (PyCFunction)Generate_RotationalCurveSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_curve_sweep__doc__},
      {(char*)"SphereSurface",         (PyCFunction)Generate_SphereSurface,        METH_VARARGS|METH_KEYWORDS, generate_sphere_surface__doc__},
      {(char*)"TorusSurface",          (PyCFunction)Generate_TorusSurface,         METH_VARARGS|METH_KEYWORDS, generate_torus_surface__doc__},
