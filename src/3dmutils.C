@@ -168,25 +168,27 @@ ON_NurbsSurface* GoSurfaceToONSurface(PyObject* surf)
                                                 srf->numCoefs_v());
 
   for (int j=1;j<srf->numCoefs_u()+srf->order_u()-1;++j)
-    result->SetKnot(0,j-1,(*srf->basis_u().begin()+j));
+    result->SetKnot(0,j-1,*(srf->basis_u().begin()+j));
   for (int j=1;j<srf->numCoefs_v()+srf->order_v()-1;++j)
-    result->SetKnot(1,j-1,(*srf->basis_v().begin()+j));
+    result->SetKnot(1,j-1,*(srf->basis_v().begin()+j));
   
   // WARNING: Assuming dim = 3
   std::vector<double>::iterator cit = srf->ctrl_begin();
-  for (int i=0;i<srf->numCoefs_u();++i) {
-    for (int j=0;j<srf->numCoefs_v();++j) {
+  for (int j=0;j<srf->numCoefs_v();++j) {
+    for (int i=0;i<srf->numCoefs_u();++i) {
       if (srf->rational()) {
-        double x = *cit++;
-        double y = *cit++;
-        double z = *cit++;
-        double w = *cit++;
+        double x = *cit;
+        double y = *(cit+1);
+        double z = *(cit+2);
+        double w = *(cit+3);
+        cit += 4;
         ON_4dPoint p(x/w, y/w, z/w, w);
         result->SetCV(i,j,p);
       } else {
-        double x = *cit++;
-        double y = *cit++;
-        double z = *cit++;
+        double x = *cit;
+        double y = *(cit+1);
+        double z = *(cit+2);
+        cit += 3;
         ON_3dPoint p(x,y,z);
         result->SetCV(i,j,p);
       }
@@ -243,7 +245,7 @@ void DoWrite3DM(const std::string& fname, PyObject* objectso)
 
   FILE* fp = ON::OpenFile(fname.c_str(), "wb");
   ON_BinaryFile archive(ON::write3dm, fp);
-  ON_TextLog error_log;
+  ON_TextLog error_log(stdout);
   model.Polish();
   model.Write(archive,4,"",&error_log);
   ON::CloseFile(fp);
@@ -283,24 +285,15 @@ PyObject* DoRead3DM(const std::string& fname, const std::string& type)
     }
     if (curves && model.m_object_table[i].m_object->ObjectType() == ON::curve_object)
       curr = (PyObject*)ONCurveToGoCurve((const ON_Curve*)model.m_object_table[i].m_object);
-    if (surfaces && model.m_object_table[i].m_object->ObjectType() == ON::brep_object) {
-      ON_Brep *brep_obj = (ON_Brep*) model.m_object_table[i].m_object;
-      int sc=0;
-      while (brep_obj->FaceIsSurface(sc)) {
-        if (curr) {
-          if (!result)
-            result = PyList_New(0);
-          PyList_Append(result,curr);
-        }
-        ON_Surface *surf = brep_obj->m_S[sc++];
-        curr = (PyObject*)ONSurfaceToGoSurface(surf);
-      }
+    if (surfaces && model.m_object_table[i].m_object->ObjectType() == ON::surface_object) {
+      ON_Surface *surf = (ON_Surface*)model.m_object_table[i].m_object;
+      curr = (PyObject*)ONSurfaceToGoSurface(surf);
     }
   }
   model.Destroy();
   if (!result)
     result = curr;
-  if (PyObject_TypeCheck(result,&PyList_Type))
+  if (result && PyObject_TypeCheck(result,&PyList_Type))
     PyList_Append(result,curr);
 
   return result;
