@@ -244,7 +244,7 @@ PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds
 
 PyDoc_STRVAR(generate_loft_surfaces__doc__, "Generate a volume by lofting surfaces\n"
                                             "@param surfaces: The surfaces to loft\n"
-                                            "@type center: List of Surface\n"
+                                            "@type surfaces: List of Surface\n"
                                             "@return: The lofted surfaces\n"
                                             "@rtype: Volume");
 PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
