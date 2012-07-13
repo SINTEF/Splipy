@@ -480,6 +480,69 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_resample_curve__doc__,"Generate a surface by sampling another\n"
+                                            "@param surface: The surface to sample\n"
+                                            "@type surface: Surface\n"
+                                            "@param n: The number of points to sample in the first direction\n"
+                                            "@type n: integer\n"
+                                            "@param p: The order of the curve\n"
+                                            "@type p: integer\n"
+                                            "@return: The resampled curve\n"
+                                            "@rtype: Curve");
+PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"curve", "n", "p", NULL };
+  PyObject* curveo;
+  int n, p;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Oii",
+                                   (char**)keyWords,&curveo,&n,&p))
+    return NULL;
+
+  shared_ptr<Go::SplineCurve> curve = convertSplineCurve(PyObject_AsGoCurve(curveo));
+
+  if (!curve || n < 1 || p < 1)
+    return NULL;
+
+  // create basis functions and evaluation points
+  int dimension = curve->dimension();
+  // repeated knot at start
+
+  int k=1;
+  std::vector<double> knot;
+  for (int i=0;i<p;++i)
+    knot.push_back(0);
+  for (int i=0;i<n-p;++i)
+    knot.push_back(k++);
+  for (int i=0;i<p;++i)
+    knot.push_back(k);
+
+  Go::BsplineBasis basis(n,p,knot.begin());
+
+  basis.rescale(curve->basis().startparam(), curve->basis().endparam());
+
+  std::vector<double> greville(basis.numCoefs());
+  for(int i=0; i<basis.numCoefs(); i++)
+    greville[i] = basis.grevilleParameter(i);
+
+  // evaluate original spline at interpolation points
+  std::vector<double> interpolationPoints;
+  std::vector<double> weights(0);
+  curve->gridEvaluator(interpolationPoints, greville);
+
+  Go::SplineCurve *res = 
+        Go::CurveInterpolator::regularInterpolation(basis,
+                                                    greville,
+                                                    interpolationPoints,
+                                                    dimension,
+                                                    false,
+                                                    weights);
+
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  result->data.reset(res);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_spline_curve__doc__, "Generate a spline curve\n"
                                            "@param params: The parameter values\n"
                                            "@type params: List of float\n"
@@ -553,6 +616,7 @@ PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
      {(char*)"Line",                  (PyCFunction)Generate_Line,             METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
      {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,      METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
      {(char*)"NonRationalCurve",      (PyCFunction)Generate_CrvNonRational,   METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
+     {(char*)"ResampleCurve",         (PyCFunction)Generate_ResampleCurve,    METH_VARARGS|METH_KEYWORDS, generate_resample_curve__doc__},
      {(char*)"SplineCurve",           (PyCFunction)Generate_SplineCurve,      METH_VARARGS|METH_KEYWORDS, generate_spline_curve__doc__},
      {NULL,                           NULL,                                   0,                          NULL}
   };
