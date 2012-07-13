@@ -325,7 +325,7 @@ PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kw
   static const char* keyWords[] = {"points", "parvals", NULL };
   PyObject* pointso;
   PyObject* parvals;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|ii",
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
                                    (char**)keyWords,&pointso,&parvals))
     return NULL;
 
