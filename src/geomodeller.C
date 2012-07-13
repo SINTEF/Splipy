@@ -144,9 +144,14 @@ static void WriteEntity(std::ofstream& g2_file, PyObject* obj, bool convert)
   g2_file << std::endl;
 }
 
-static void DoWrite(const std::string& fname, PyObject* objectso, bool convert)
+static void DoWrite(std::string fname, PyObject* objectso, bool convert)
 {
-  std::ofstream g2_file(fname);
+  std::ios_base::openmode mode = std::ios_base::out;
+  if (fname == "splinegui") {
+    fname = "/tmp/sgui.fifo";
+    mode = std::ios_base::out|std::ios_base::app;
+  }
+  std::ofstream g2_file(fname,mode);
   if (PyObject_TypeCheck(objectso,&PyList_Type)) {
     for (int i=0; i < PyList_Size(objectso); ++i) {
       PyObject* obj = PyList_GetItem(objectso,i);
