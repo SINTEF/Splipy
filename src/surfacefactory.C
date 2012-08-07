@@ -359,6 +359,80 @@ PyObject* Generate_CylinderSurface(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_interpolate_surface__doc__, "Construct a spline surface which interpolates a (structured) point cloud\n"
+                                                  "@param points: The point cloud\n"
+                                                  "@type points: List of (Point, list of floats or tuple of floats)\n"
+                                                  "@param parvalsu: The parameter values for the points\n"
+                                                  "@type parvalsu: List of floats\n"
+                                                  "@param parvalsv: The parameter values for the points\n"
+                                                  "@type parvalsv: List of floats\n"
+                                                  "@return: Spline surface interpolating the point cloud\n"
+                                                  "@rtype: Surface");
+PyObject* Generate_InterpolateSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"points", "parvalsu", "parvalsv", NULL };
+  PyObject* pointso;
+  PyObject* parvalsu;
+  PyObject* parvalsv;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO",
+                                   (char**)keyWords,&pointso,&parvalsu,&parvalsv))
+    return NULL;
+
+  if (!PyObject_TypeCheck(pointso,&PyList_Type) || 
+      !PyObject_TypeCheck(parvalsu,&PyList_Type) ||
+      !PyObject_TypeCheck(parvalsv,&PyList_Type))
+    return NULL;
+
+  // get points
+  std::vector<double> points;
+  for (int i=0; i < PyList_Size(pointso); ++i) {
+    PyObject* entryo = PyList_GetItem(pointso,i);
+    shared_ptr<Go::Point> entry = PyObject_AsGoPoint(entryo);
+    if (entry) {
+      points.push_back((*entry)[0]);
+      points.push_back((*entry)[1]);
+      if (modState.dim == 3)
+        points.push_back((*entry)[2]);
+    }
+  }
+
+  // get parameters
+  std::vector<double> paramsu;
+  std::vector<double> paramsv;
+  for (int i=0; i < PyList_Size(parvalsu); ++i)
+    paramsu.push_back(PyFloat_AsDouble(PyList_GetItem(parvalsu,i)));
+  std::vector<double> paramsy;
+  for (int i=0; i < PyList_Size(parvalsv); ++i)
+    paramsv.push_back(PyFloat_AsDouble(PyList_GetItem(parvalsv,i)));
+
+  std::vector<double> knot_u;
+  for (int i=0;i<3;++i)
+    knot_u.push_back(paramsu[0]);
+  for (int i=1;i<paramsu.size()-1;++i)
+    knot_u.push_back(paramsu[i]);
+  for (int i=0;i<3;++i)
+    knot_u.push_back(paramsu.back());
+
+  std::vector<double> knot_v;
+  for (int i=0;i<3;++i)
+    knot_v.push_back(paramsv[0]);
+  for (int i=1;i<paramsv.size()-1;++i)
+    knot_v.push_back(paramsv[i]);
+  for (int i=0;i<3;++i)
+    knot_v.push_back(paramsv.back());
+
+  Go::BsplineBasis basis_u(paramsu.size(),4,knot_u.begin());
+  Go::BsplineBasis basis_v(paramsv.size(),4,knot_v.begin());
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  std::vector<double> weights;
+  result->data.reset(Go::SurfaceInterpolator::regularInterpolation(basis_u, basis_v,
+                                                                   paramsu, paramsv, points,
+                                                                   3, false, weights));
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_linear_curve_sweep__doc__,"Generate a surface by linearly sweeping a curve along a curve\n"
                                                 "@param curve1: The curve to sweep\n"
                                                 "@type curve1: Curve\n"
@@ -817,6 +891,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"CoonsSurfacePatch",     (PyCFunction)Generate_CoonsSurfacePatch,    METH_VARARGS|METH_KEYWORDS, generate_coons_surface_patch__doc__},
      {(char*)"ContractCurveTo",       (PyCFunction)Generate_ContractCurveTo,      METH_VARARGS|METH_KEYWORDS, generate_contract_curve_to__doc__},
      {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_surface__doc__},
+     {(char*)"InterpolateSurface",    (PyCFunction)Generate_InterpolateSurface,   METH_VARARGS|METH_KEYWORDS, generate_interpolate_surface__doc__},
      {(char*)"LinearCurveSweep",      (PyCFunction)Generate_LinearCurveSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_curve_sweep__doc__},
      {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves,           METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},
      {(char*)"MirrorSurface",         (PyCFunction)Generate_MirrorSurface,        METH_VARARGS|METH_KEYWORDS, generate_mirror_surface__doc__},
