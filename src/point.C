@@ -92,6 +92,10 @@ PyObject* Point_Mul(PyObject* o1, PyObject* o2)
     double res = *p1*(*p2);
     result = (Point*)Py_BuildValue((char*)"d",res);
   }
+  else if (PyObject_TypeCheck(o2r,&PyInt_Type)) {
+    result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+    result->data.reset(new Go::Point(*p1*PyInt_AsLong(o2r)));
+  }
 
   return (PyObject*)result;
 }
