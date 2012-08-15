@@ -364,6 +364,102 @@ PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kw
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_intersect_curve__doc__,"Generate the intersection points between two curves\n"
+                                             "Set the 'gap' tolerance for more accurate results\n"
+                                             "@param curve1: the first curve\n"
+                                             "@type curve1: Curve\n"
+                                             "@param curve2: the second curve\n"
+                                             "@type curve2: Curve\n"
+                                             "@return: The intersection curves and/or points\n"
+                                             "@rtype: A tuple with a List of Curves and a List of Points");
+PyObject* Generate_IntersectCurve(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"curve1", "curve2", NULL };
+  PyObject* curve1o;
+  PyObject* curve2o;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,
+                                   &curve1o,&curve2o))
+    return NULL;
+
+  // get ParamCurve from Python object
+  shared_ptr<Go::ParamCurve> curve1p = PyObject_AsGoCurve(curve1o);
+  shared_ptr<Go::ParamCurve> curve2p = PyObject_AsGoCurve(curve2o);
+  if (!curve1p || !curve2p)
+    return NULL;
+
+  // get SplineCurve from ParamCurve
+  shared_ptr<Go::SplineCurve> curve1s = convertSplineCurve(curve1p);
+  shared_ptr<Go::SplineCurve> curve2s = convertSplineCurve(curve2p);
+  if (!curve1s || !curve2s)
+    return NULL;
+
+  // get SISL curve from SplineCurve
+  SISLCurve *crv1 = Curve2SISL(*curve1s, true);
+  SISLCurve *crv2 = Curve2SISL(*curve2s, true);
+  if (!crv1 || !crv2)
+    return NULL;
+
+  // setup SISL parameters
+  double epsco = 0.0;                   // Computational resolution (not used)
+  double epsge = modState.gapTolerance; // Geometry resolution
+  int    numPts;          // number of intersection points
+  int    numCrv;          // number of intersection curves
+  double *parCrv1;        // array of parameter-values at intersection points (curve1)
+  double *parCrv2;        // array of parameter-values at intersection points (curve2)
+  int    status;          // errors/warnings from evaluation
+  SISLIntcurve **intCrvs; // array of intersection curves (invalid pointers before sXXXX)
+
+
+  s1857(crv1, crv2, epsco, epsge,    // input arguments
+        &numPts, &parCrv1, &parCrv2, // output points
+        &numCrv, &intCrvs,           // output curves
+        &status);                    // output errors
+
+  // error handling
+  if (status > 0) { // warning
+    std::cerr << "Warning from curve intersection algorithm\n";
+  } else if (status < 0) { // error
+    std::cerr << "Error intersecting curves\n";
+    return NULL;
+  }
+
+  PyObject* result    = PyTuple_New(2);
+  PyObject* curveList = PyList_New(0);
+  PyObject* pointList = PyList_New(0);
+
+  // store all resulting points
+  for (int i=0; i<numPts; i++) {
+    Go::Point *intersectPt = new Go::Point();;
+    Point     *pyPoint     = (Point*) Point_Type.tp_alloc(&Point_Type, 0);
+
+    // evaluate the returned parameter point to get the physical coordinates
+    curve1s->point(*intersectPt, parCrv1[i]); 
+
+    pyPoint->data = shared_ptr<Go::Point>(intersectPt);
+    PyList_Append(pointList, (PyObject*) pyPoint);
+  }
+
+  // store all resulting curves
+  for (int i=0; i<numCrv; i++) {
+    double startPar = intCrvs[i]->epar1[0]; // start parameter for overlapping curves
+    double endPar   = intCrvs[i]->epar1[1]; // end parameter
+    Curve  *pyCurve = (Curve*) Curve_Type.tp_alloc(&Curve_Type, 0);
+
+    // evaluate the returned parameter points to get the physical curve
+    shared_ptr<Go::SplineCurve> intCurve(curve1s->subCurve(startPar, endPar));
+
+    pyCurve->data = intCurve;
+    PyList_Append(curveList, (PyObject*) pyCurve);
+  }
+
+  // return result as python tuple
+  PyTuple_SetItem(result, 0, (PyObject*) curveList);
+  PyTuple_SetItem(result, 1, (PyObject*) pointList);
+
+  return result;
+}
+
 PyDoc_STRVAR(generate_intersect_cylinder__doc__,"Generate the intersection curve between a surface and the infinite extension of a cylinder\n"
                                                 "Set the gap tolerance for more accurate results\n"
                                                 "@param surface: a surface to intersect with\n"
@@ -725,6 +821,7 @@ PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
      {(char*)"EllipticSegment",       (PyCFunction)Generate_EllipticSegment,   METH_VARARGS|METH_KEYWORDS, generate_elliptic_segment__doc__},
      {(char*)"Helix",                 (PyCFunction)Generate_Helix,             METH_VARARGS|METH_KEYWORDS, generate_helix__doc__},
      {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve,  METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
+     {(char*)"IntersectCurve",        (PyCFunction)Generate_IntersectCurve,    METH_VARARGS|METH_KEYWORDS, generate_intersect_curve__doc__},
      {(char*)"IntersectCylinder",     (PyCFunction)Generate_IntersectCylinder, METH_VARARGS|METH_KEYWORDS, generate_intersect_cylinder__doc__},
      {(char*)"Line",                  (PyCFunction)Generate_Line,              METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
      {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,       METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
