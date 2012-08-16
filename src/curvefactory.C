@@ -12,6 +12,7 @@
 #include "GoTools/geometry/Line.h"
 #include "GoTools/geometry/SISLconversion.h"
 #include "GoTools/geometry/SplineInterpolator.h"
+#include "GoTools/geometry/GeometryTools.h"
 #include "sislP.h"
 // #include "GoTools/geometry/SISL_code.h"
 
@@ -160,14 +161,60 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   }
 
   Go::Point x_axis = *start-*center;
-  Go::Point normal2 = normal-((x_axis*normal)/x_axis.length2())*x_axis;
   double radius = x_axis.length();
+#define BUG_365_FIXED 0
+#if BUG_365_FIXED 
+  Go::Point normal2 = normal-((x_axis*normal)/x_axis.length2())*x_axis;
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   result->data.reset(new Go::Circle(radius,*center,normal2,x_axis));
   static_pointer_cast<Go::Circle>(result->data)->setParamBounds(0.0,angle);
 
   return (PyObject*)result;
+#else
+  // declare variables
+  double angleEpsilon = 1e-5;
+  int knotSpans = (int) ( fabs(angle-angleEpsilon) / (2*M_PI/3) + 1);
+  int p = 3;                 // polynomial order (degree + 1)
+  int n = (knotSpans-1)*2+3; // number of controlpoints/basis functions
+  std::vector<double> knots(n+p);
+  std::vector<double> cp(4*n); // control point values (x,y,z,w)
+  bool rational = true;
+
+  // build the knot vector
+  int k=0;
+  knots[k++] = 0;
+  knots[k++] = 0;
+  knots[k++] = 0;
+  for(int i=0; i<knotSpans; i++) {
+    knots[k++] = i+1;
+    knots[k++] = i+1;
+  }
+  knots[k++] = knotSpans;
+
+  // build the control points by rotating the x_axis-Point around the circle
+  double dt = angle / knotSpans / 2.0;;
+  const double *origo = center->begin();
+  k=0;
+  for(int i=0; i<n; i++) {
+    double w = (i%2==0) ? 1.0 : cos(dt); // control point weight
+    cp[k++] = (x_axis[0] + origo[0])*w;
+    cp[k++] = (x_axis[1] + origo[1])*w;
+    cp[k++] = (x_axis[2] + origo[2])*w;
+    cp[k++] = w;
+    Go::GeometryTools::rotatePoint(normal, dt, x_axis.begin());
+    if(i%2 == 0) 
+      x_axis /= cos(dt);
+    else
+      x_axis *= cos(dt);
+  }
+  shared_ptr<Go::ParamCurve> curve(new Go::SplineCurve(n, p, knots.begin(), cp.begin(), 3, rational));
+  curve->setParameterInterval(0, fabs(angle));
+
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  result->data = curve;
+  return (PyObject*) result;
+#endif
 }
 
 PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse\n"
