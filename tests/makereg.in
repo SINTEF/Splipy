@@ -1,0 +1,5 @@
+#!/bin/bash
+
+@GEOMOD_BINARY@ $1 finaloutput=/tmp/regtest.g2
+
+echo `cat /tmp/regtest.g2 | awk -F ' ' '{printf "%5.5g\n", $1}' | md5sum | awk -F ' ' '{print $1}'`

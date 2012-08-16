@@ -104,6 +104,11 @@ INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/)
 INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools)
 INSTALL(TARGETS geoModeler DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
+# Add correct path to the geomod binary for convenience
+SET(GEOMOD_BINARY ${CMAKE_BINARY_DIR}/geoModeler)
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/tests/makereg.in
+               ${PROJECT_SOURCE_DIR}/tests/makereg)
+
 FILE(GLOB GEOUTILS_SRCS RELATIVE ${PROJECT_SOURCE_DIR} GeoUtils/*.py)
 INSTALL(FILES ${GEOUTILS_SRCS} DESTINATION lib/python${PYTHON_VERSION}/dist-packages/GeoUtils)
 
