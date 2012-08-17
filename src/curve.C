@@ -17,8 +17,45 @@ PyObject* Curve_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
   Curve* self;
   self = (Curve*)type->tp_alloc(type,0);
+  static const char* keyWords[] = {"order", "knots", "coefs", "rational", NULL };
+  PyObject* knotso=0;
+  PyObject* coefso=0;
+  bool rational=false;
+  int order=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|iOOb",
+                                   (char**)keyWords, &order, &knotso, &coefso, &rational))
+    return NULL;
 
-  // only generators allocate the paramcurve!
+  // curve is specified
+  if (knotso && coefso) {
+    std::vector<double> knots;
+    std::vector<double> coefs;
+    if (PyObject_TypeCheck(knotso,&PyList_Type)) {
+      for (int i=0;i<PyList_Size(knotso);++i) {
+        PyObject* o = PyList_GetItem(knotso,i);
+        if (o && PyObject_TypeCheck(o,&PyFloat_Type))
+          knots.push_back(PyFloat_AsDouble(o));
+        else if (o && PyObject_TypeCheck(o,&PyInt_Type))
+          knots.push_back(PyInt_AsLong(o));
+      }
+    }
+    if (PyObject_TypeCheck(coefso,&PyList_Type)) {
+      for (int i=0;i<PyList_Size(coefso);++i) {
+        PyObject* o = PyList_GetItem(coefso,i);
+        shared_ptr<Go::Point> p1 = PyObject_AsGoPoint(o); 
+        if (p1) {
+          for (double* p = p1->begin(); p != p1->end(); ++p)
+            coefs.push_back(*p);
+        } else if (o && PyObject_TypeCheck(o,&PyFloat_Type))
+          coefs.push_back(PyFloat_AsDouble(o));
+        else if (o && PyObject_TypeCheck(o,&PyInt_Type))
+          coefs.push_back(PyInt_AsLong(o));
+      }
+    }
+    ((Curve*)self)->data.reset(new Go::SplineCurve(knots.size()-order, order, knots.begin(),
+                                                   coefs.begin(), modState.dim, rational));
+  }
+
   return (PyObject*)self;
 }
 
