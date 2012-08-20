@@ -13,6 +13,7 @@
 #include "GoTools/geometry/SISLconversion.h"
 #include "GoTools/geometry/SplineInterpolator.h"
 #include "sislP.h"
+// #include "GoTools/geometry/SISL_code.h"
 
 extern "C" {
 PyObject* CurveFactory_module;
@@ -363,6 +364,117 @@ PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kw
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_intersect_cylinder__doc__,"Generate the intersection curve between a surface and the infinite extension of a cylinder\n"
+                                                "Set the gap tolerance for more accurate results\n"
+                                                "@param surface: a surface to intersect with\n"
+                                                "@type surface: Surface\n"
+                                                "@param cylinder: the cylinder to intersect with \n"
+                                                "@type cylinder: Cylinder\n"
+                                                "@return: The intersection curves and/or points\n"
+                                                "@rtype: A tuple with a List of Curves and a List of Points");
+PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"surface", "cylinder", NULL };
+  PyObject* surfo;
+  PyObject* cylindero;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,
+                                   &surfo,&cylindero))
+    return NULL;
+
+  // get ParamSurfaces from Python objects
+  shared_ptr<Go::ParamSurface> cyl_ps    = PyObject_AsGoSurface(cylindero);
+  shared_ptr<Go::ParamSurface> param_srf = PyObject_AsGoSurface(surfo);
+  if (!cyl_ps || !param_srf)
+    return NULL;
+ 
+  // check for Cylinder and SplineSurface from ParamSurfaces
+  if (cyl_ps->instanceType() != Go::Class_Cylinder) {
+    std::cerr << "argument not a cylinder\n";
+    return NULL;
+  }
+  shared_ptr<Go::SplineSurface> srf = convertSplineSurface(param_srf);
+  shared_ptr<Go::Cylinder>      cyl = static_pointer_cast<Go::Cylinder>(cyl_ps);
+  if (!srf || !cyl)
+    return NULL;
+
+  // get SISL surface from SplineSurface
+  SISLSurf* sisl_srf = GoSurf2SISL(*srf, true);
+  if (!sisl_srf)
+    return NULL;
+
+  // SISL input arguments
+  Go::Point x_ax, y_ax, z_ax, pt;
+  pt   = cyl->getLocation();
+  cyl->getCoordinateAxes(x_ax, y_ax, z_ax);
+  double radius = cyl->getRadius();
+  double center[] = {pt[0],   pt[1],   pt[2]  };
+  double axis[]   = {z_ax[0], z_ax[1], z_ax[2]};
+  int dim = cyl->dimension();
+
+  // SISL output arguments
+  int num_of_curves, num_of_pts; // note that intersections may be at single-points
+  double      *pts;
+  SISLIntcurve **curves;
+  int stat;
+  
+  // SISL surface intersect cylinder (generating points and curves)
+  s1853(sisl_srf, center, axis, radius, dim, 0, modState.gapTolerance, // input arguments
+        &num_of_pts, &pts, &num_of_curves, &curves, &stat);            // output arguments
+  if (stat < 0) {
+    std::cerr << __FUNCTION__ << " ERROR: " << stat << std::endl;
+    return NULL;
+  } else if (stat > 0)
+    std::cerr << __FUNCTION__ << " WARNING: " << stat << std::endl;
+
+  PyObject* result    = PyTuple_New(2);
+  PyObject* curveList = PyList_New(0);
+  PyObject* pointList = PyList_New(0);
+
+  // store all resulting points
+  for (int i=0; i<num_of_pts; i++) {
+    Go::Point *intersectPt = new Go::Point();;
+    srf->point(*intersectPt, pts[2*i], pts[2*i+1]);
+    Point* pyPoint = (Point*) Point_Type.tp_alloc(&Point_Type, 0);
+    pyPoint->data = shared_ptr<Go::Point>(intersectPt);
+    PyList_Append(pointList, (PyObject*) pyPoint);
+  }
+
+  // generate the cylinder intersection curves by SISL s1316
+  for (int i=0; i<num_of_curves; i++) {
+    double maxStep = 0; // "If maxstep <= gapTolerance, maxstep is neglected. mastep=0 is recommended"
+    int makeCrv = 1;    // "1: Make only a geometric curve"
+    int graphic = 0;    // "0: Don't draw the curve"
+    s1316(sisl_srf, center, axis, radius, dim, 0, modState.gapTolerance, maxStep, // input arguments
+          curves[i], makeCrv, graphic, &stat);
+  
+    if (stat == 3) {
+      // ERROR
+      std::cerr << "Iteration stopped due to singular point or\n"
+                << "degenerate surface. A part of an intersec-\n"
+                << "tion curve may have been traced out. If no\n"
+                << "curve is traced out, the curve pointers in\n"
+                << "the SISLIntcurve object point to NULL.\n";
+      return NULL;
+    } else if (stat < 0) {
+      // ERROR
+      std::cerr << __FUNCTION__ << " ERROR " << stat << std::endl;
+      return NULL;
+    }
+
+    Go::SplineCurve *crv = Go::SISLCurve2Go(curves[i]->pgeom);
+
+    Curve* pyCurve = (Curve*) Curve_Type.tp_alloc(&Curve_Type, 0);
+    pyCurve->data = shared_ptr<Go::SplineCurve>(crv);
+    PyList_Append(curveList, (PyObject*) pyCurve);
+  }
+
+  PyTuple_SetItem(result, 0, (PyObject*) curveList);
+  PyTuple_SetItem(result, 1, (PyObject*) pointList);
+
+  return result;
+}
+
 PyDoc_STRVAR(generate_line__doc__, "Generate an infinite line\n"
                                    "@param p0: The starting point of the line\n"
                                    "@type p0: Point, list of floats or tuple of floats\n"
@@ -606,19 +718,20 @@ PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
 
 
   PyMethodDef CurveFactory_methods[] = {
-     {(char*)"ApproximateCurve",      (PyCFunction)Generate_ApproximateCurve, METH_VARARGS|METH_KEYWORDS, generate_approximate_curve__doc__},
-     {(char*)"Circle",                (PyCFunction)Generate_Circle,           METH_VARARGS|METH_KEYWORDS, generate_circle__doc__},
-     {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment,    METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
-     {(char*)"Ellipse",               (PyCFunction)Generate_Ellipse,          METH_VARARGS|METH_KEYWORDS, generate_ellipse__doc__},
-     {(char*)"EllipticSegment",       (PyCFunction)Generate_EllipticSegment,  METH_VARARGS|METH_KEYWORDS, generate_elliptic_segment__doc__},
-     {(char*)"Helix",                 (PyCFunction)Generate_Helix,            METH_VARARGS|METH_KEYWORDS, generate_helix__doc__},
-     {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve, METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
-     {(char*)"Line",                  (PyCFunction)Generate_Line,             METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
-     {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,      METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
-     {(char*)"NonRationalCurve",      (PyCFunction)Generate_CrvNonRational,   METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
-     {(char*)"ResampleCurve",         (PyCFunction)Generate_ResampleCurve,    METH_VARARGS|METH_KEYWORDS, generate_resample_curve__doc__},
-     {(char*)"SplineCurve",           (PyCFunction)Generate_SplineCurve,      METH_VARARGS|METH_KEYWORDS, generate_spline_curve__doc__},
-     {NULL,                           NULL,                                   0,                          NULL}
+     {(char*)"ApproximateCurve",      (PyCFunction)Generate_ApproximateCurve,  METH_VARARGS|METH_KEYWORDS, generate_approximate_curve__doc__},
+     {(char*)"Circle",                (PyCFunction)Generate_Circle,            METH_VARARGS|METH_KEYWORDS, generate_circle__doc__},
+     {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment,     METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
+     {(char*)"Ellipse",               (PyCFunction)Generate_Ellipse,           METH_VARARGS|METH_KEYWORDS, generate_ellipse__doc__},
+     {(char*)"EllipticSegment",       (PyCFunction)Generate_EllipticSegment,   METH_VARARGS|METH_KEYWORDS, generate_elliptic_segment__doc__},
+     {(char*)"Helix",                 (PyCFunction)Generate_Helix,             METH_VARARGS|METH_KEYWORDS, generate_helix__doc__},
+     {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve,  METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
+     {(char*)"IntersectCylinder",     (PyCFunction)Generate_IntersectCylinder, METH_VARARGS|METH_KEYWORDS, generate_intersect_cylinder__doc__},
+     {(char*)"Line",                  (PyCFunction)Generate_Line,              METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
+     {(char*)"LineSegment",           (PyCFunction)Generate_LineSegment,       METH_VARARGS|METH_KEYWORDS, generate_line_segment__doc__},
+     {(char*)"NonRationalCurve",      (PyCFunction)Generate_CrvNonRational,    METH_VARARGS|METH_KEYWORDS, generate_crvnonrational__doc__},
+     {(char*)"ResampleCurve",         (PyCFunction)Generate_ResampleCurve,     METH_VARARGS|METH_KEYWORDS, generate_resample_curve__doc__},
+     {(char*)"SplineCurve",           (PyCFunction)Generate_SplineCurve,       METH_VARARGS|METH_KEYWORDS, generate_spline_curve__doc__},
+     {NULL,                           NULL,                                    0,                          NULL}
   };
 
 PyDoc_STRVAR(curve_factory__doc__,"A module with methods for generating curves");
