@@ -429,6 +429,53 @@ PyObject* Curve_Add(PyObject* o1, PyObject* o2)
   return (PyObject*) result;
 }
 
+Py_ssize_t Curve_NmbComponent(PyObject* self)
+{
+  shared_ptr<Go::ParamCurve> pc = PyObject_AsGoCurve(self);
+  if (!pc)
+    return 0;
+
+  shared_ptr<Go::SplineCurve> sc = convertSplineCurve(pc);
+  if(!sc)
+    return 0;
+
+  return sc->numCoefs();
+}
+
+PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
+{
+  shared_ptr<Go::ParamCurve> pc = PyObject_AsGoCurve(self);
+  if (!pc)
+    return NULL;
+
+  if(pc->dimension() != 3) 
+    return NULL;
+
+  shared_ptr<Go::SplineCurve> sc = convertSplineCurve(pc);
+  if(!sc)
+    return NULL;
+  
+  if(i < 0 || i >= sc->numCoefs())
+    return NULL;
+
+  double x,y,z,w;
+  if(sc->rational()) {
+    w = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+3)    ;
+    x = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+0) / w;
+    y = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+1) / w;
+    z = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+2) / w;
+  } else {
+    x = *(sc->coefs_begin() + i*(sc->dimension() )+0) / w;
+    y = *(sc->coefs_begin() + i*(sc->dimension() )+1) / w;
+    z = *(sc->coefs_begin() + i*(sc->dimension() )+2) / w;
+  }
+  
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  result->data.reset(new Go::Point(x,y,z));
+
+  return (PyObject*) result;
+}
+
 PyMethodDef Curve_methods[] = {
      {(char*)"AppendCurve",         (PyCFunction)Curve_AppendCurve,         METH_VARARGS|METH_KEYWORDS, curve_append_curve__doc__},
      {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS,               curve_clone__doc__},
@@ -446,10 +493,13 @@ PyMethodDef Curve_methods[] = {
    };
 
 PyNumberMethods Curve_operators = {0};
+PySequenceMethods Curve_seq_operators = {0};
 
 PyDoc_STRVAR(curve__doc__, "A parametric description of a curve");
 void init_Curve_Type()
 {
+  Curve_seq_operators.sq_item = Curve_GetComponent;
+  Curve_seq_operators.sq_length = Curve_NmbComponent;
   InitializeTypeObject(&Curve_Type);
   Curve_operators.nb_add = Curve_Add;
   Curve_Type.tp_name = "GoTools.Curve";
@@ -462,6 +512,7 @@ void init_Curve_Type()
   Curve_Type.tp_new = Curve_New;
   Curve_Type.tp_str = (reprfunc)Curve_Str;
   Curve_Type.tp_as_number = &Curve_operators;
+  Curve_Type.tp_as_sequence = &Curve_seq_operators;
   PyType_Ready(&Curve_Type);
 }
 }
