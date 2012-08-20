@@ -480,9 +480,9 @@ PyObject* Generate_IntersectCurve(PyObject* self, PyObject* args, PyObject* kwds
 
   // error handling
   if (status > 0) { // warning
-    std::cerr << "Warning from curve intersection algorithm\n";
+    std::cerr << __FUNCTION__ << " WARNING: " << status << std::endl;
   } else if (status < 0) { // error
-    std::cerr << "Error intersecting curves\n";
+    std::cerr << __FUNCTION__ << " ERROR: " << status << std::endl;
     return NULL;
   }
 
