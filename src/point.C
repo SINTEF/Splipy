@@ -1,6 +1,7 @@
 #include "point.h"
 #include "pyutils.h"
 #include "geomodeller.h"
+#include "GoTools/geometry/GeometryTools.h"
 
 #include <sstream>
 
@@ -32,6 +33,46 @@ PyObject* Point_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 void Point_Dealloc(Point* self)
 {
   self->ob_type->tp_free((PyObject*)self);
+}
+
+PyDoc_STRVAR(point_normalize__doc__,"Normalize a point (vector) to have eucledian length one\n"
+                                    "@return: None");
+PyObject* Point_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(self);
+  if (!point)
+    return NULL;
+
+  point->normalize();
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+PyDoc_STRVAR(point_rotate__doc__,"Rotate a point around an axis\n"
+                                 "@param axis: The axis to rotate around\n"
+                                 "@type axis: Point, list of floats or tuple of floats\n"
+                                 "@param angle: Angle to rotate point with in radians\n"
+                                 "@type angle: float\n"
+                                 "@return: None");
+PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"axis", "angle", NULL };
+  PyObject* axiso;
+  double angle=0.f;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Od",
+                                   (char**)keyWords,&axiso,&angle))
+    return NULL;
+
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(self);
+  shared_ptr<Go::Point> axis  = PyObject_AsGoPoint(axiso);
+  if (!point || !axis)
+    return NULL;
+
+  Go::GeometryTools::rotatePoint(*axis, angle, point->begin());
+
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 PyObject* Point_Str(Point* self)
@@ -164,7 +205,9 @@ PyObject* Point_GetComponent(PyObject* self, Py_ssize_t i)
 }
 
 PyMethodDef Point_methods[] = {
-     {NULL,           NULL,                     0,            NULL}
+     {(char*)"Normalize", (PyCFunction)Point_Normalize, METH_VARARGS,               point_rotate__doc__},
+     {(char*)"Rotate",    (PyCFunction)Point_Rotate,    METH_VARARGS|METH_KEYWORDS, point_normalize__doc__},
+     {NULL,               NULL,                         0,                          NULL}
    };
 
 PyNumberMethods Point_operators = {0};
