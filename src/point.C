@@ -49,6 +49,18 @@ PyObject* Point_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(point_clone__doc__,"Clone a point\n"
+                                "@return: New copy of point\n"
+                                "@rtype: Point\n");
+PyObject* Point_Clone(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  Point* res = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  shared_ptr<Go::Point> pt = PyObject_AsGoPoint(self);
+  res->data.reset(new Go::Point(*pt));
+ 
+  return (PyObject*)res;
+}
+
 PyDoc_STRVAR(point_rotate__doc__,"Rotate a point around an axis\n"
                                  "@param axis: The axis to rotate around\n"
                                  "@type axis: Point, list of floats or tuple of floats\n"
@@ -205,6 +217,7 @@ PyObject* Point_GetComponent(PyObject* self, Py_ssize_t i)
 }
 
 PyMethodDef Point_methods[] = {
+     {(char*)"Clone",     (PyCFunction)Point_Clone,     METH_VARARGS,               point_clone__doc__},
      {(char*)"Normalize", (PyCFunction)Point_Normalize, METH_VARARGS,               point_rotate__doc__},
      {(char*)"Rotate",    (PyCFunction)Point_Rotate,    METH_VARARGS|METH_KEYWORDS, point_normalize__doc__},
      {NULL,               NULL,                         0,                          NULL}
