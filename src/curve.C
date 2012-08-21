@@ -154,6 +154,29 @@ PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(curve_evaluate_tangent__doc__,"Evaluate the curve tangent at a parameter value\n"
+                                           "@param value: The parameter value\n"
+                                           "@type value: float\n"
+                                           "@return: The tangent of the curve\n"
+                                           "@rtype: Point");
+PyObject* Curve_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"value", NULL };
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  double value=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
+                                   (char**)keyWords,&value) || !curve)
+    return NULL;
+
+  std::vector<Go::Point> pts(2);
+  curve->point(pts, value, 1);
+
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  result->data.reset(new Go::Point(pts[1]));
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(curve_flip_parametrization__doc__,"Flip curve parametrization\n"
                                                "@return: None");
 PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
@@ -507,6 +530,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"AppendCurve",         (PyCFunction)Curve_AppendCurve,         METH_VARARGS|METH_KEYWORDS, curve_append_curve__doc__},
      {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS,               curve_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
+     {(char*)"EvaluateTangent",     (PyCFunction)Curve_EvaluateTangent,     METH_VARARGS|METH_KEYWORDS, curve_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS,               curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
