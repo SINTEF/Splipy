@@ -137,6 +137,49 @@ PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(surface_evaluate_tangent__doc__,"Evaluate the two tangent vectors of the surface at given parameter values\n"
+                                             "@param value_u: The u parameter value\n"
+                                             "@type value_u: float\n"
+                                             "@param value_v: The v parameter value\n"
+                                             "@type value_v: float\n"
+                                             "@param from_right_u: Evaluate u in the limit from positive direction (Optional) \n"
+                                             "@type from_right_u: bool\n"
+                                             "@param from_right_v: Evaluate v in the limit from positive direction (Optional) \n"
+                                             "@type from_right_v: bool\n"
+                                             "@return: The value of the two tangents at the given parameters\n"
+                                             "@rtype: Tuple of two Point");
+PyObject* Surface_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"value_u", "value_v", "from_right_u", "from_right_v", NULL };
+  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(self);
+  bool from_right_u=true;
+  bool from_right_v=true;
+  double value_u=0, value_v=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd|bb",
+                                   (char**)keyWords,&value_u,&value_v,
+                                   &from_right_u, &from_right_v) || !surf)
+    return NULL;
+
+  // evaluate the surface and two tangent vectors
+  std::vector<Go::Point> tangents(3);
+  surf->point(tangents, value_u, value_v, from_right_u, from_right_v);
+
+  // make the python Point objects
+  Point* du = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  du->data.reset(new Go::Point(tangents[1]));
+
+  Point* dv = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  dv->data.reset(new Go::Point(tangents[2]));
+
+  // return a tuple of the two results
+  PyObject* result = PyTuple_New(2);
+
+  PyTuple_SetItem( result, 0, (PyObject*) du);
+  PyTuple_SetItem( result, 1, (PyObject*) dv);
+
+  return result;
+}
+
 PyDoc_STRVAR(surface_flip_parametrization__doc__,"Flip surface parametrization\n"
                                                  "@param direction: The parametric direction to flip (0=u, 1=v)\n"
                                                  "@type direction: int\n"
@@ -500,6 +543,7 @@ PyObject* Surface_Scale(PyObject* o1, PyObject* o2)
 PyMethodDef Surface_methods[] = {
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
+     {(char*)"EvaluateTangent",     (PyCFunction)Surface_EvaluateTangent,       METH_VARARGS|METH_KEYWORDS, surface_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
