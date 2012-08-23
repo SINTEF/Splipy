@@ -108,9 +108,10 @@ PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
 PyObject* Point_Str(Point* self)
 {
   std::stringstream str;
-  str << self->data->size() << "D point: " << (*self->data)[0] << " " << (*self->data)[1];
-  if (self->data->size() == 3)
-    str << " " << (*self->data)[2];
+  int dim = self->data->size();
+  str << dim << "D point:" ;
+  for(int i=0; i<dim; ++i) 
+    str << " " << (*self->data)[i];
   return PyString_FromString(str.str().c_str());
 }
 
