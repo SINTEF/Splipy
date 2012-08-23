@@ -508,20 +508,17 @@ PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
   if(i < 0 || i >= sc->numCoefs())
     return NULL;
 
-  double x,y,z,w;
-  if(sc->rational()) {
-    w = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+3)    ;
-    x = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+0) / w;
-    y = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+1) / w;
-    z = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+2) / w;
-  } else {
-    x = *(sc->coefs_begin() + i*(sc->dimension() )+0);
-    y = *(sc->coefs_begin() + i*(sc->dimension() )+1);
-    z = *(sc->coefs_begin() + i*(sc->dimension() )+2);
-  }
-  
+  int dim = sc->dimension();
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(x,y,z));
+  if (sc->rational()) {
+    vector<double>::const_iterator cp = sc->rcoefs_begin() + i*(dim+1);
+    result->data.reset(new Go::Point(cp, cp+(dim+1)));
+  } else {
+    double x = *(sc->coefs_begin() + i*dim + 0);
+    double y = *(sc->coefs_begin() + i*dim + 1);
+    double z = *(sc->coefs_begin() + i*dim + 2);
+    result->data.reset(new Go::Point(x,y,z));
+  }
 
   return (PyObject*) result;
 }
