@@ -81,7 +81,25 @@ PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
   if (!point || !axis)
     return NULL;
 
+  // special case 4D points as rational control points with weights
+  if(point->dimension() == 4) { 
+    double w = (*point)[3];
+    (*point)[0] /= w;
+    (*point)[1] /= w;
+    (*point)[2] /= w;
+  } else if(point->dimension() != 3)
+    return NULL;
+
   Go::GeometryTools::rotatePoint(*axis, angle, point->begin());
+
+  if(point->dimension() == 4) { 
+    // GeometryTools::rotatePoint only uses the three first components of double* argument
+    // now projecting control points back into 4D space
+    double w = (*point)[3];
+    (*point)[0] *= w;
+    (*point)[1] *= w;
+    (*point)[2] *= w;
+  }
 
   Py_INCREF(Py_None);
   return Py_None;
