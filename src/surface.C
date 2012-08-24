@@ -21,6 +21,7 @@
 #include "GoTools/geometry/ElementarySurface.h"
 #include "GoTools/geometry/GeometryTools.h"
 #include "GoTools/geometry/SplineSurface.h"
+#include "GoTools/geometry/RectDomain.h"
 
 #include <fstream>
 #include <sstream>
@@ -472,14 +473,37 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
   if (!surface || !axis)
     return NULL;
 
-   if (!surface->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surface);
-     surface = surf->data;
-   }
+  if (surface->instanceType() == Go::Class_Cylinder) { 
+    // since we can't move cylinders, we have to create a new one and trash the old one
+    shared_ptr<Go::Cylinder> cyl = static_pointer_cast<Go::Cylinder>(surface);
+    Go::Point x, y, z, c; // x,y,z-axis and center point
+    double r = cyl->getRadius();
+    cyl->getCoordinateAxes(x,y,z);
+    c = cyl->getLocation();
 
-   Go::GeometryTools::rotateSplineSurf(*axis, angle,
-                        *static_pointer_cast<Go::SplineSurface>(surface));
+    Go::GeometryTools::rotatePoint(*axis, angle, c.begin());
+    Go::GeometryTools::rotatePoint(*axis, angle, x.begin());
+    Go::GeometryTools::rotatePoint(*axis, angle, y.begin());
+    Go::GeometryTools::rotatePoint(*axis, angle, z.begin());
+
+    Go::Cylinder *result = new Go::Cylinder(r, c, z, x);
+    if(cyl->isBounded()) {
+      Go::RectDomain domain = cyl->containingDomain();
+      result->setParameterBounds(domain.umin(), domain.vmin(), domain.umax(), domain.vmax());
+    }
+    ((Surface*)self)->data.reset(result);
+
+  } else if (!surface->isSpline()) {
+    // for all other elementary surfaces, we convert to SplineSurface and work on with that
+    Surface* surf = (Surface*)self;
+    surf->data = convertSplineSurface(surface);
+    surface = surf->data;
+    Go::GeometryTools::rotateSplineSurf(*axis, angle,
+                       *static_pointer_cast<Go::SplineSurface>(surface));
+  } else {
+    Go::GeometryTools::rotateSplineSurf(*axis, angle,
+                       *static_pointer_cast<Go::SplineSurface>(surface));
+  }
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -524,17 +548,36 @@ PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
   if (!surface || !vec)
     return NULL;
 
-   if (!surface->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surface);
-     surface = surf->data;
-   }
+  if (surface->instanceType() == Go::Class_Cylinder) { 
+    // since we can't move cylinders, we have to create a new one and trash the old one
+    shared_ptr<Go::Cylinder> cyl = static_pointer_cast<Go::Cylinder>(surface);
+    Go::Point x, y, z, c; // x,y,z-axis and center point
+    double r = cyl->getRadius();
+    cyl->getCoordinateAxes(x,y,z);
+    c = cyl->getLocation();
 
-   Go::GeometryTools::translateSplineSurf(*vec, 
+    Go::Cylinder *result = new Go::Cylinder(r, c + (*vec), z, x);
+    if(cyl->isBounded()) {
+      Go::RectDomain domain = cyl->containingDomain();
+      result->setParameterBounds(domain.umin(), domain.vmin(), domain.umax(), domain.vmax());
+    }
+    ((Surface*)self)->data.reset(result);
+
+  } else if (!surface->isSpline()) {
+    // for all other elementary surfaces, we convert to SplineSurface and work on with that
+    Surface* surf = (Surface*)self;
+    surf->data = convertSplineSurface(surface);
+    surface = surf->data;
+    Go::GeometryTools::translateSplineSurf(*vec, 
                               *static_pointer_cast<Go::SplineSurface>(surface));
+  } else {
+    Go::GeometryTools::translateSplineSurf(*vec, 
+                              *static_pointer_cast<Go::SplineSurface>(surface));
+  }
 
-   Py_INCREF(Py_None);
-   return Py_None;
+
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 PyObject* Surface_Add(PyObject* o1, PyObject* o2)
