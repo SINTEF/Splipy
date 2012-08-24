@@ -5,6 +5,11 @@
 
 #include "GoTools/geometry/ClassType.h"
 #include "GoTools/geometry/GeometryTools.h"
+#include "GoTools/geometry/SplineInterpolator.h"
+#include "GoTools/utils/LUDecomp.h"
+#include "GoTools/utils/LUDecomp_implementation.h"
+#include "GoTools/geometry/SISLconversion.h"
+#include "sislP.h"
 
 #include <fstream>
 #include <sstream>
@@ -237,6 +242,75 @@ PyObject* Curve_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   return Py_BuildValue((char*)"i",sc->order());
+}
+
+PyDoc_STRVAR(curve_get_parameter_at_point__doc__,"Get all Curve parameter values at a geometric Point\n"
+                                                 "@param point: The geometric point to intersect \n"
+                                                 "@type point: Point, list of floats or tuple of floats\n"
+                                                 "@return: Parameter values of all intersection points\n"
+                                                 "@rtype: List of float");
+PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"point", NULL };
+  PyObject* pointo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,
+                                   &pointo))
+    return NULL;
+
+  // get Point from Python object
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
+  if(!point)
+    return NULL;
+
+  // get ParamCurve from Python object
+  shared_ptr<Go::ParamCurve> curvep = PyObject_AsGoCurve(self);
+  if (!curvep)
+    return NULL;
+
+  // get SplineCurve from ParamCurve
+  shared_ptr<Go::SplineCurve> curves = convertSplineCurve(curvep);
+  if (!curves)
+    return NULL;
+
+  // get SISL curve from SplineCurve
+  SISLCurve *crv = Curve2SISL(*curves, true);
+  if (!crv) 
+    return NULL;
+
+  // setup SISL parameters
+  double *pt      = &((*point)[0]);        // pointer to the data of the geometric point
+  int    pointDim = point->dimension();    // dimension of the geometric point
+  double epsge    = modState.gapTolerance; // Geometry resolution
+  int    numPts;          // number of intersection points
+  int    numCrv;          // number of intersection curves (Wait, what? intersection CURVES?)
+  double *parCrv;         // array of parameter-values at intersection points
+  SISLIntcurve **intCrvs; // array of intersection curves  (I have no idea how you get these guys.
+                          // We're silently ignoring and hoping for the best)
+  int    status;          // errors/warnings from evaluation
+
+
+  s1871(crv, pt, pointDim, epsge, // input arguments
+        &numPts, &parCrv,         // output points
+        &numCrv, &intCrvs,        // output curves
+        &status);                 // output errors
+
+  // error handling
+  if (status > 0) { // warning
+    std::cerr << __FUNCTION__ << " WARNING: " << status << std::endl;
+  } else if (status < 0) { // error
+    std::cerr << __FUNCTION__ << " ERROR: " << status << std::endl;
+    return NULL;
+  }
+
+  // return results
+  PyObject* result = PyList_New(0);
+  std::vector<double> knots;
+  for (int i=0; i<numPts; i++) {
+    PyList_Append(result,Py_BuildValue((char*)"d",parCrv[i]));
+  }
+                
+  return result;
 }
 
 PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve\n"
@@ -531,6 +605,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS,               curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
+     {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
