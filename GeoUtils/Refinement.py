@@ -55,11 +55,8 @@ def UniformSurface(surface, direction=0):
   """
   knots_u, knots_v = surface.GetKnots()
   if direction == 0 or direction == 1:
-    for i in range(0,len(knots_u)-2):
+    for i in range(0,len(knots_u)-1):
       surface.InsertKnot(0,(knots_u[i]+knots_u[i+1])/2)
   if direction == 0 or direction == 2:
-    end = len(knots_v)-2
-    if end == 0:
-      end = 1;
-    for i in range(0,end):
+    for i in range(0,len(knots_v)-1):
       surface.InsertKnot(1,(knots_v[i]+knots_v[i+1])/2)
