@@ -11,7 +11,9 @@ ENABLE_LANGUAGE(CXX)
 
 # Generate header with version info
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/geomodversion.h.in
-               ${PROJECT_SOURCE_DIR}/include/geomodversion.h)
+               ${PROJECT_SOURCE_DIR}/include/geomodversion.h @ONLY)
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh.in
+               ${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh @ONLY)
 
 # Add local modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
@@ -101,9 +103,10 @@ ADD_CUSTOM_TARGET(dist tar jcvf ${TAR_BALL} ${DIST_SRCS} > /dev/null
 SET_DIRECTORY_PROPERTIES(${PROJECT_SOURCE_DIR} ADDITIONAL_MAKE_CLEAN_FILES ${TAR_BALL})
 SET_DIRECTORY_PROPERTIES(${PROJECT_SOURCE_DIR}/doc ADDITIONAL_MAKE_CLEAN_DIRECTORIES html)
 
-INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/)
-INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools)
-INSTALL(TARGETS geoModeler DESTINATION bin)
+INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools
+        COMPONENT doc)
+INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/ COMPONENT bin)
+INSTALL(TARGETS geoModeler DESTINATION bin COMPONENT bin)
 
 # Add correct path to the geomod binary for convenience
 SET(GEOMOD_BINARY ${CMAKE_BINARY_DIR}/geoModeler)
@@ -111,7 +114,8 @@ CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/tests/makereg.in
                ${PROJECT_SOURCE_DIR}/tests/makereg)
 
 FILE(GLOB GEOUTILS_SRCS RELATIVE ${PROJECT_SOURCE_DIR} GeoUtils/*.py)
-INSTALL(FILES ${GEOUTILS_SRCS} DESTINATION lib/python${PYTHON_VERSION}/dist-packages/GeoUtils)
+INSTALL(FILES ${GEOUTILS_SRCS} DESTINATION lib/python${PYTHON_VERSION}/dist-packages/GeoUtils
+        COMPONENT bin)
 
 ENABLE_TESTING()
 FILE(GLOB_RECURSE GEOMOD_TESTFILES RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*.reg)
@@ -119,6 +123,10 @@ FOREACH(TESTFILE ${GEOMOD_TESTFILES})
   STRING(REGEX REPLACE ".reg" ".py" TESTSCRIPT ${TESTFILE})
   ADD_TEST(${TESTFILE} ${PROJECT_SOURCE_DIR}/tests/dotest ${CMAKE_BINARY_DIR}/geoModeler ${PROJECT_SOURCE_DIR}/scripts/${TESTSCRIPT} ${PROJECT_SOURCE_DIR}/tests/${TESTFILE})
 ENDFOREACH()
+
+# 'install' target
+# Make install force doc build
+INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${CMAKE_BUILD_TOOL} doc WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")" COMPONENT doc)
 
 # Packaging
 EXECUTE_PROCESS(COMMAND lsb_release "-sc" OUTPUT_VARIABLE CODENAME)
@@ -132,7 +140,7 @@ IF (SYSTEM_VENDOR STREQUAL "Ubuntu" OR SYSTEM_VENDOR STREQUAL "Debian")
   SET(SYSTEM_ARCHITECTURE ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE})
   SET(CPACK_GENERATOR "DEB")
   SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Arne Morten Kvarving <arne.morten.kvarving@sintef.no>")
-  SET(CPACK_DEBIAN_PACKAGE_DEPENDS "python, libgotools-core, libgotools-trivariate, libgotools-compositemodel, libgotools-parametrization, libsisl, libttl, libnewmat, libgotools-igeslib, libgotools-topology, libgotools-implicitization, libgotools-intersections, libopennurbs")
+  SET(CPACK_DEB_COMPONENT_INSTALL ON)
 ENDIF (SYSTEM_VENDOR STREQUAL "Ubuntu" OR SYSTEM_VENDOR STREQUAL "Debian")
 
 SET(CPACK_PACKAGE_NAME "libifem-geomodeler")
@@ -149,8 +157,6 @@ INCLUDE(CPack)
 
 ADD_CUSTOM_TARGET(ubuntu 
                   COMMAND make package
-                  COMMAND rm -rf UbuntuDebs
-                  COMMAND mkdir -p UbuntuDebs
-                  COMMAND mv libifem-geomodeler_${CPACK_PACKAGE_VERSION}_${SYSTEM_ARCHITECTURE}-${SYSTEM_CODENAME}.deb UbuntuDebs
+                  COMMAND ${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh
                   COMMAND echo "All done. Packages are in UbuntuDebs/"
                   COMMENT "Generating and fixing up Ubuntu packages" VERBATIM)

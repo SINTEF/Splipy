@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# This script helps workaround current CPack (2.8.8) limitations
+# 1) Fix the main deb to drop the postfix
+# 2) Fix -dev dependencies and descriptions
+#
+# It expects to be run with debs in the cwd
+
+function Unpack() {
+  mkdir tmp
+  dpkg-deb -R $1 tmp
+  cd tmp/DEBIAN
+}
+
+function Pack() {
+  sed '/^$/d' -i control
+  cd ../..
+  dpkg-deb -b tmp $1
+  rm tmp -rf
+}
+
+path=`pwd`
+mkdir -p UbuntuDebs
+rm -f UbuntuDebs/*
+arch=`dpkg --print-architecture`
+code=`lsb_release -sc`
+version=@GEOMODELLER_VERSION_MAJOR@.@GEOMODELLER_VERSION_MINOR@.@GEOMODELLER_VERSION_PATCH@
+mkdir -p /tmp/debfixer
+cd /tmp/debfixer
+
+# Step 1
+Unpack $path/libifem-geomodeler_${version}_$arch-$code-bin.deb
+sed -i control -e 's/Package:.*$/Package: libifem-geomodeler/g'
+echo "Depends: python, libgotools-core, libgotools-trivariate, libgotools-compositemodel, libgotools-parametrization, libsisl, libttl, libnewmat, libgotools-igeslib, libgotools-topology, libgotools-implicitization, libgotools-intersections, libopennurbs" >> control
+Pack $path/UbuntuDebs/libifem-geomodeler_${version}_$arch-$code.deb
+rm -f $path/libifem-geomodeler_${version}_$arch-$code-bin.deb
+
+# Step 2
+Unpack $path/libifem-geomodeler_${version}_$arch-$code-doc.deb
+sed -i control -e 's/Package:.*$/Package: libifem-geomodeler-doc/g'
+sed -i control -e 's/\(Description: .*$\)/\1 - documentation/g'
+sed -i control -e 's/\(Architecture: .*$\)/Architecture: all/g'
+echo "Suggests: libifem-geomodeler" >> control
+Pack $path/UbuntuDebs/libifem-geomodeler-doc_${version}_all-$code.deb
+rm -f $path/libifem-geomodeler-doc_${version}_$arch-$code-doc.deb
+
+rmdir /tmp/debfixer
