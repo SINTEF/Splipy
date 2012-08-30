@@ -308,12 +308,27 @@ PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwd
       return NULL;
     normal = *norm;
   }
+  double startangle_mod(startangle);
+  // ensure angles are positive
+  while (startangle_mod < 0)
+    startangle_mod += 2*M_PI;
+  double endangle_mod(endangle);
+  while (endangle_mod < 0)
+    endangle_mod += 2*M_PI;
+
+  // sanity check to avoid segments on both sides of the seam
+  if (startangle > endangle && startangle_mod > endangle_mod) {
+    std::cerr << "Cannot construct elliptic segments crossing the seam" << std::endl;
+    return NULL;
+  }
+  if (startangle_mod > endangle_mod)
+    std::swap(startangle_mod, endangle_mod);
 
   Go::Point normal2 = normal-((*axis*normal)/axis->length2())*(*axis);
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   result->data.reset(new Go::Ellipse(*center,*axis,normal2,radius1,radius2));
-  static_pointer_cast<Go::Ellipse>(result->data)->setParamBounds(startangle,endangle);
+  static_pointer_cast<Go::Ellipse>(result->data)->setParamBounds(startangle_mod,endangle_mod);
 
   return (PyObject*)result;
 }
