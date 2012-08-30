@@ -189,6 +189,22 @@ PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(curve_get_order__doc__,"Get the curve order (polynomial degree + 1)\n"
+                                    "@return: Order\n"
+                                    "@rtype: int");
+PyObject* Curve_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  if (!curve)
+    return NULL;
+
+  shared_ptr<Go::SplineCurve> sc = convertSplineCurve(curve);
+  if(!sc)
+    return NULL;
+
+  return Py_BuildValue((char*)"i",sc->order());
+}
+
 PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve\n"
                                       "@param knot: The knot to insert\n"
                                       "@type knot: float\n"
@@ -482,6 +498,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS,               curve_get_knots__doc__},
+     {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
