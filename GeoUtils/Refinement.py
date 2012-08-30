@@ -60,3 +60,65 @@ def UniformSurface(surface, direction=0):
   if direction == 0 or direction == 2:
     for i in range(0,len(knots_v)-1):
       surface.InsertKnot(1,(knots_v[i]+knots_v[i+1])/2)
+
+# Geometric distribution of knots
+def GeometricRefineSurface(surface, direction, alpha, n):
+	"""Refine a surface by making a geometric distribution of element sizes
+	Consider FlipParametrization if you need refinement towards the other edge
+	@param surface: The surface to refine
+	@type surface: Surface 
+	@param direction: The direction to refine in (u=1 or v=2) 
+	@type direction: int
+	@param alpha: The ratio between two sequential knot segments
+	@type alpha: float
+	@param n: The number of knots to insert
+	@type n: int
+	@return: None
+	"""
+	
+	# some error tests on input
+	if n<=0:
+		print 'n should be greater than 0'
+		return None
+
+	flipBack = False
+	if direction < 0:
+		surface.FlipParametrization(-direction-1)
+		direction = -direction
+		flipBack = True
+
+	# fetch knots
+	knots_u, knots_v = surface.GetKnots()
+	if direction == 1:
+		knotStart = knots_u[0]
+		knotEnd   = knots_u[-1]
+	elif direction == 2:
+		knotStart = knots_v[0]
+		knotEnd   = knots_v[-1]
+	else:
+		print 'Direction should be 1 or 2'
+		return None
+	dk = knotEnd - knotStart
+
+	# evaluate the factors
+	n = n+1 # redefine n to be knot spans instead of new internal knots
+	totProd = 1.0
+	totSum  = 0.0
+	for i in range(n):
+		totSum  += totProd
+		totProd *= alpha
+	d1 = 1.0 / totSum
+	knot = d1
+
+	quack = []
+	# do the actual knot insertion
+	for i in range(n-1):
+		quack.append( knotStart + knot*dk )
+		surface.InsertKnot(direction-1, knotStart + knot*dk)
+		knot += alpha*d1
+		d1   *= alpha
+
+	if flipBack:
+		surface.FlipParametrization(direction-1)
+
+
