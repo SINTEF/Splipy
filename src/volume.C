@@ -243,6 +243,31 @@ PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(volume_get_order__doc__,"Return spline volume order (polynomial degree + 1) in all parametric directions\n"
+                                     "@return: B-Spline order \n"
+                                     "@rtype: List of three integers");
+PyObject* Volume_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+  if (!volume->isSpline()) {
+    Volume* vol = (Volume*)self;
+    vol->data = convertSplineVolume(volume);
+    volume = vol->data;
+  }
+
+  shared_ptr<Go::SplineVolume> spline = static_pointer_cast<Go::SplineVolume>(volume);
+
+  PyObject* result = PyList_New(0);
+
+  PyList_Append(result, Py_BuildValue((char*) "i", spline->order(0)));
+  PyList_Append(result, Py_BuildValue((char*) "i", spline->order(1)));
+  PyList_Append(result, Py_BuildValue((char*) "i", spline->order(2)));
+
+  return result;
+}
+
 PyDoc_STRVAR(volume_insert_knot__doc__,"Insert a knot in a spline volume\n"
                                        "@param direction: Direction to insert knot in\n"
                                        "@type direction: int (0, 1 or 2)\n"
@@ -460,6 +485,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
+     {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"MakeRHS",             (PyCFunction)Volume_MakeRHS,               METH_VARARGS,               volume_make_rhs__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
