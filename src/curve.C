@@ -492,9 +492,9 @@ PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
     y = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+1) / w;
     z = *(sc->rcoefs_begin() + i*(sc->dimension()+1)+2) / w;
   } else {
-    x = *(sc->coefs_begin() + i*(sc->dimension() )+0) / w;
-    y = *(sc->coefs_begin() + i*(sc->dimension() )+1) / w;
-    z = *(sc->coefs_begin() + i*(sc->dimension() )+2) / w;
+    x = *(sc->coefs_begin() + i*(sc->dimension() )+0);
+    y = *(sc->coefs_begin() + i*(sc->dimension() )+1);
+    z = *(sc->coefs_begin() + i*(sc->dimension() )+2);
   }
   
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
