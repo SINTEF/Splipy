@@ -196,7 +196,7 @@ PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kw
   return Py_None;
 }
 
-PyDoc_STRVAR(curve_get_knots__doc__,"Get the unique knots of a spline curve\n"
+PyDoc_STRVAR(curve_get_knots__doc__,"Get the knots of a spline curve\n"
                                     "@param with_multiplicities: (optional) Set to true to obtain the knot vector with multiplicities\n"
                                     "@type with_multiplicities: Boolean\n"
                                     "@return: List with the knot values\n"
@@ -230,7 +230,7 @@ PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyDoc_STRVAR(curve_get_order__doc__,"Get the curve order (polynomial degree + 1)\n"
                                     "@return: Order\n"
-                                    "@rtype: int");
+                                    "@rtype: Integer");
 PyObject* Curve_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
