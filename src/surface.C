@@ -597,11 +597,60 @@ PyMethodDef Surface_methods[] = {
      {NULL,           NULL,                     0,            NULL}
    };
 
+Py_ssize_t Surface_NmbComponent(PyObject* self)
+{
+  shared_ptr<Go::ParamSurface> ps = PyObject_AsGoSurface(self);
+  if (!ps)
+    return 0;
+
+  shared_ptr<Go::SplineSurface> ss = convertSplineSurface(ps);
+  if(!ss)
+    return 0;
+
+  return ss->numCoefs_u() * ss->numCoefs_v();
+}
+
+PyObject* Surface_GetComponent(PyObject* self, Py_ssize_t i)
+{
+  shared_ptr<Go::ParamSurface> ps = PyObject_AsGoSurface(self);
+  if (!ps)
+    return NULL;
+
+  if(ps->dimension() != 3) 
+    return NULL;
+
+  shared_ptr<Go::SplineSurface> ss = convertSplineSurface(ps);
+  if(!ss)
+    return NULL;
+  
+  int nCoefs = ss->numCoefs_u() * ss->numCoefs_v();
+  if(i < 0 || i >= nCoefs)
+    return NULL;
+
+  double x,y,z,w;
+  int dim = ss->dimension();
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  if(ss->rational()) {
+    vector<double>::const_iterator cp = ss->rcoefs_begin() + i*(dim+1);
+    result->data.reset(new Go::Point(cp, cp+(dim+1)));
+  } else {
+    x = *(ss->coefs_begin() + i*(ss->dimension() )+0) ;
+    y = *(ss->coefs_begin() + i*(ss->dimension() )+1) ;
+    z = *(ss->coefs_begin() + i*(ss->dimension() )+2) ;
+    result->data.reset(new Go::Point(x,y,z));
+  }
+
+  return (PyObject*) result;
+}
+
 PyNumberMethods Surface_operators = {0};
+PySequenceMethods Surface_seq_operators = {0};
 
 PyDoc_STRVAR(surface__doc__, "A parametric description of a surface");
 void init_Surface_Type()
 {
+  Surface_seq_operators.sq_item = Surface_GetComponent;
+  Surface_seq_operators.sq_length = Surface_NmbComponent;
   InitializeTypeObject(&Surface_Type);
   Surface_operators.nb_add = Surface_Add;
   Surface_operators.nb_inplace_multiply = Surface_Scale;
@@ -615,6 +664,7 @@ void init_Surface_Type()
   Surface_Type.tp_new = Surface_New;
   Surface_Type.tp_str = (reprfunc)Surface_Str;
   Surface_Type.tp_as_number = &Surface_operators;
+  Surface_Type.tp_as_sequence = &Surface_seq_operators;
   PyType_Ready(&Surface_Type);
 }
 
