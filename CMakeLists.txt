@@ -15,10 +15,6 @@ CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/geomodversion.h.in
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh.in
                ${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh @ONLY)
 
-# Add local modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-                      ${CMAKE_SOURCE_DIR}/cmake/Modules)
-
 FIND_PACKAGE(PythonLibs REQUIRED)
 FIND_PACKAGE(PythonInterp REQUIRED)
 FIND_PACKAGE(GoTools REQUIRED)
