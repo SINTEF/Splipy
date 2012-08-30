@@ -243,6 +243,47 @@ PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(volume_get_knots__doc__,"Return knots for a spline volume\n"
+                                     "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
+                                     "@type with_multiplicities: Boolean\n"
+                                     "@return: List with the knot values\n"
+                                     "@rtype: Tuple with List of float");
+PyObject* Volume_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"with_multiplicities", NULL };
+  bool withmult=false;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|b",
+                                   (char**)keyWords, &withmult))
+    return NULL;
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+  if (!volume->isSpline()) {
+    Volume* vol = (Volume*)self;
+    vol->data = convertSplineVolume(volume);
+    volume = vol->data;
+  }
+  PyObject* result = PyTuple_New(3);
+
+  shared_ptr<Go::SplineVolume> vol = static_pointer_cast<Go::SplineVolume>(volume);
+  for (int i=0;i<3;++i) {
+    PyObject* list = PyList_New(0);
+    std::vector<double> knots;
+    if (withmult)
+      knots = const_cast<Go::BsplineBasis&>(vol->basis(i)).getKnots();
+    else
+      vol->basis(i).knotsSimple(knots);
+
+    for (std::vector<double>::iterator it  = knots.begin();
+                                       it != knots.end();++it) {
+      PyList_Append(list,Py_BuildValue((char*)"d",*it));
+    }
+    PyTuple_SetItem(result,i,list);
+  }
+
+  return result;
+}
+
 PyDoc_STRVAR(volume_get_order__doc__,"Return spline volume order (polynomial degree + 1) in all parametric directions\n"
                                      "@return: B-Spline order \n"
                                      "@rtype: List of three integers");
@@ -485,6 +526,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
+     {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"MakeRHS",             (PyCFunction)Volume_MakeRHS,               METH_VARARGS,               volume_make_rhs__doc__},
