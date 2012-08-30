@@ -314,6 +314,32 @@ PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(surface_get_order__doc__,"Return spline surface order (polynomial degree + 1) in all parametric directions\n"
+                                      "@return: B-Spline order\n"
+                                      "@rtype: List of two integers");
+PyObject* Surface_GetOrder(PyObject* self, PyObject* args)
+{
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+  if (!surface->isSpline()) {
+    Surface* surf = (Surface*)self;
+    surf->data = convertSplineSurface(surface);
+    surface = surf->data;
+  }
+
+  shared_ptr<Go::SplineSurface> spline = static_pointer_cast<Go::SplineSurface>(surface);
+  if(!spline)
+    return NULL;
+
+  PyObject* result = PyList_New(0);
+
+  PyList_Append(result, Py_BuildValue((char*) "i", spline->order_u()));
+  PyList_Append(result, Py_BuildValue((char*) "i", spline->order_v()));
+
+  return result;
+}
+
 PyDoc_STRVAR(surface_insert_knot__doc__,"Insert a knot in a spline surface\n"
                                         "@param direction: Direction to insert knot in\n"
                                         "@type direction: int (0 or 1)\n"
@@ -560,6 +586,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
      {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
+     {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
      {(char*)"Project",             (PyCFunction)Surface_Project,               METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Surface_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
