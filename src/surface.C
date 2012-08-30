@@ -272,11 +272,19 @@ PyObject* Surface_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 
-PyDoc_STRVAR(surface_get_knots__doc__,"Return unique knots for a spline surface\n"
-                                      "@return: The unique knots\n"
+PyDoc_STRVAR(surface_get_knots__doc__,"Return knots for a spline surface\n"
+                                      "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
+                                      "@type with_multiplicities: Boolean\n"
+                                      "@return: List with the knot values\n"
                                       "@rtype: Tuple with List of float");
 PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  static const char* keyWords[] = {"with_multiplicities", NULL };
+  bool withmult=false;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|b",
+                                   (char**)keyWords, &withmult))
+    return NULL;
+
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
   if (!surface)
     return NULL;
@@ -287,10 +295,15 @@ PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   }
 
   PyObject* result = PyTuple_New(2);
+  shared_ptr<Go::SplineSurface> surf = static_pointer_cast<Go::SplineSurface>(surface);
   for (int i=0;i<2;++i) {
     PyObject* list = PyList_New(0);
     std::vector<double> knots;
-    static_pointer_cast<Go::SplineSurface>(surface)->basis(i).knotsSimple(knots);
+    if (withmult) {
+      Go::BsplineBasis& basis = (i==0?surf->basis_u():surf->basis_v());
+      knots = basis.getKnots();
+    } else
+      surf->basis(i).knotsSimple(knots);
     for (std::vector<double>::iterator it  = knots.begin();
                                        it != knots.end();++it) {
       PyList_Append(list,Py_BuildValue((char*)"d",*it));
