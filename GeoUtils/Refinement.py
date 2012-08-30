@@ -1,5 +1,8 @@
 __doc__ = 'Implementation of various refinement schemes.'
 
+from math import atan
+from math import pi
+
 def UniformCurve(curve):
   """Uniformly refine a curve by halfing each knot interval
   @param curve: The curve to refine
@@ -110,15 +113,58 @@ def GeometricRefineSurface(surface, direction, alpha, n):
 	d1 = 1.0 / totSum
 	knot = d1
 
-	quack = []
 	# do the actual knot insertion
 	for i in range(n-1):
-		quack.append( knotStart + knot*dk )
 		surface.InsertKnot(direction-1, knotStart + knot*dk)
 		knot += alpha*d1
 		d1   *= alpha
 
 	if flipBack:
 		surface.FlipParametrization(direction-1)
+
+
+# Edge refinement
+def EdgeRefineSurface(surface, direction, S, n):
+	"""Refine a surface by both edges, by sampling a atan-function
+	@param surface: The surface to refine
+	@type surface: Surface 
+	@param direction: The direction to refine in (u=1 or v=2) 
+	@type direction: int
+	@param S: The slope of the atan-function
+	@type S: float
+	@param n: The number of knots to insert
+	@type n: int
+	@return: None
+	"""
+	
+	# some error tests on input
+	if n<=0:
+		print 'n should be greater than 0'
+		return None
+
+	# fetch knots
+	knots_u, knots_v = surface.GetKnots()
+	if direction == 1:
+		knotStart = knots_u[0]
+		knotEnd   = knots_u[-1]
+	elif direction == 2:
+		knotStart = knots_v[0]
+		knotEnd   = knots_v[-1]
+	else:
+		print 'Direction should be 1 or 2'
+		return None
+	dk = knotEnd - knotStart
+
+	# evaluate the factors
+	newKnots = []
+	maxAtan  = atan(S)
+	for i in range(1,n+1):
+		xi  = -1.0 + 2.0*i/(n+1)
+		xi *= S
+		newKnots.append(knotStart + (atan(xi)+maxAtan)/2/maxAtan*dk)
+
+	# do the actual knot insertion
+	for x in newKnots:
+		surface.InsertKnot(direction-1, x)
 
 
