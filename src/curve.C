@@ -169,10 +169,17 @@ PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kw
 }
 
 PyDoc_STRVAR(curve_get_knots__doc__,"Get the unique knots of a spline curve\n"
+                                    "@param with_multiplicities: (optional) Set to true to obtain the knot vector with multiplicities\n"
+                                    "@type with_multiplicities: Boolean\n"
                                     "@return: List with the knot values\n"
                                     "@rtype: List of float");
 PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  static const char* keyWords[] = {"with_multiplicities", NULL };
+  bool withmult=false;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|b",
+                                   (char**)keyWords, &withmult))
+    return NULL;
   shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
   if (!curve)
     return NULL;
@@ -180,7 +187,11 @@ PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   crv->data = convertSplineCurve(curve);
   PyObject* result = PyList_New(0);
   std::vector<double> knots;
-  static_pointer_cast<Go::SplineCurve>(crv->data)->basis().knotsSimple(knots);
+  shared_ptr<Go::SplineCurve> scrv = static_pointer_cast<Go::SplineCurve>(crv->data);
+  if (withmult) 
+    knots = scrv->basis().getKnots();
+  else
+    scrv->basis().knotsSimple(knots);
   for (std::vector<double>::iterator it  = knots.begin();
                                      it != knots.end();++it) {
     PyList_Append(result,Py_BuildValue((char*)"d",*it));
