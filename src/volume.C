@@ -537,11 +537,61 @@ PyMethodDef Volume_methods[] = {
      {NULL,                         NULL,                                      0,                          NULL}
    };
 
+ 
+Py_ssize_t Volume_NmbComponent(PyObject* self)
+{
+  shared_ptr<Go::ParamVolume> pv = PyObject_AsGoVolume(self);
+  if (!pv)
+    return 0;
+
+  shared_ptr<Go::SplineVolume> sv = convertSplineVolume(pv);
+  if(!sv)
+    return 0;
+
+  return sv->numCoefs(0)*sv->numCoefs(1)*sv->numCoefs(2);
+}
+
+PyObject* Volume_GetComponent(PyObject* self, Py_ssize_t i)
+{
+  shared_ptr<Go::ParamVolume> pv = PyObject_AsGoVolume(self);
+  if (!pv)
+    return NULL;
+
+  if(pv->dimension() != 3) 
+    return NULL;
+
+  shared_ptr<Go::SplineVolume> sv = convertSplineVolume(pv);
+  if(!sv)
+    return NULL;
+  
+  int nComp =  sv->numCoefs(0)*sv->numCoefs(1)*sv->numCoefs(2);
+  if(i < 0 || i >= nComp) 
+    return NULL;
+
+  double x,y,z,w;
+  int dim = sv->dimension();
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  if(sv->rational()) {
+    vector<double>::const_iterator cp = sv->rcoefs_begin() + i*(dim+1);
+    result->data.reset(new Go::Point(cp, cp+(dim+1)));
+  } else {
+    x = *(sv->coefs_begin() + i*(sv->dimension() )+0) ;
+    y = *(sv->coefs_begin() + i*(sv->dimension() )+1) ;
+    z = *(sv->coefs_begin() + i*(sv->dimension() )+2) ;
+    result->data.reset(new Go::Point(x,y,z));
+  }
+
+  return (PyObject*) result;
+}
+
 PyNumberMethods Volume_operators = {0};
+PySequenceMethods Volume_seq_operators = {0};
 
 PyDoc_STRVAR(volume__doc__, "A parametric description of a volume");
 void init_Volume_Type()
 {
+  Volume_seq_operators.sq_item = Volume_GetComponent;
+  Volume_seq_operators.sq_length = Volume_NmbComponent;
   InitializeTypeObject(&Volume_Type);
   Volume_operators.nb_add      = Volume_Add;
   Volume_operators.nb_subtract = Volume_Sub;
@@ -553,6 +603,7 @@ void init_Volume_Type()
   Volume_Type.tp_doc = volume__doc__;
   Volume_Type.tp_methods = Volume_methods;
   Volume_Type.tp_as_number = &Volume_operators;
+  Volume_Type.tp_as_sequence = &Volume_seq_operators;
   Volume_Type.tp_base = 0;
   Volume_Type.tp_new = Volume_New;
   Volume_Type.tp_str = (reprfunc)Volume_Str;
