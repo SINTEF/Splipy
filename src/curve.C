@@ -426,6 +426,129 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_rebuild__doc__,"Rebuild the curve by resampling it to a given order and number of control points\n"
+                                  "The rebuilt curve will match the old one at the end-points, the end tangents and \n"
+                                  "n-4 internal uniformly distributed points \n"
+                                  "@param n: Specifies how many control points the resulting curve should have\n"
+                                  "@type n: int\n"
+                                  "@param p: Specifies the resulting order (polynomial degree +1) of the curve\n"
+                                  "@type p: int\n"
+                                  "@return: Rebuilt curve\n"
+                                  "@rtype: Curve");
+PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"n", "p", NULL };
+  int n,p;
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  int amount;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ii",
+                                   (char**)keyWords, &n, &p))
+    return NULL;
+
+  if(n < p || p < 1 || n-4 < 0)
+    return NULL;
+  
+  // get a few needed curve values
+  int    dim = curve->dimension();
+  double u0  = curve->startparam();
+  double u1  = curve->endparam();
+
+  // set boundary conditions (match tangent at start/end)
+  std::vector<Go::Point> ptsStart(2);
+  std::vector<Go::Point> ptsStop(2);
+  curve->point(ptsStart, u0, 1, true );
+  curve->point(ptsStop,  u1, 1, false);
+  shared_ptr<Go::Point> p0(new Go::Point(ptsStart[1]));
+  shared_ptr<Go::Point> p1(new Go::Point(ptsStop[1]));
+  *p0 *= (u1-u0)/(n-p+1); // scale tangents to new parameterization
+  *p1 *= (u1-u0)/(n-p+1);
+
+
+  // build the uniform knot vector
+  std::vector<double> knots(n+p);
+  int k = 0;
+  for(int i=0; i<p; i++) 
+    knots[k++] = 0;
+  for(int i=0; i<n-p; i++) 
+    knots[k++] = i+1;
+  for(int i=0; i<p; i++) 
+    knots[k++] = n-p+1;
+  Go::BsplineBasis basis(n, p, knots.begin());
+
+  // generate the parametric interpolation points
+  int nPts = n;
+  if(p0 != NULL) nPts--; // keeping backward compatible if one doesn't want 
+  if(p1 != NULL) nPts--; // derivatives specified at start/end
+  std::vector<double> paramOld(nPts);  // parameter values as seen from *curve
+  std::vector<double> paramNew(nPts);  // interpolation points of rebuilt curve 
+  for(int i=0; i<nPts; i++) {
+    paramOld[i] = u0 + i*(u1-u0)/(nPts-1);
+    paramNew[i] = i*((double) n-p+1)/(nPts-1);
+  }
+
+  // set up to solve the interpolation problem
+  std::vector<std::vector<double> > A(n, std::vector<double>(n, 0));
+  std::vector<std::vector<double> > b(n, std::vector<double>(dim, 0));
+  
+  // assembling up interpolation matrix A
+  std::vector<double> tmp(2*p);
+  k=0; // row iterator over matrix A
+  if(p0 != NULL) {
+      basis.computeBasisValues(paramNew[0], &tmp[0], 1);
+      for (int j = 0; j < p; ++j)
+        A[k][j] = tmp[2*j+1];
+      k++;
+  }
+  for (int i = 0; i < nPts; ++i, ++k) {
+      double par = paramNew[i];
+      int    ki  = basis.knotIntervalFuzzy(par); // knot-interval of param.
+      basis.computeBasisValues(paramNew[i], &tmp[0], 0);
+
+      for (int j = 0; j < p; ++j)
+          if ((ki-p+1+j>=0) && (ki-p+1+j<=n))
+              A[k][ki-p+1+j] = tmp[j];
+  }
+  if(p1 != NULL) {
+      basis.computeBasisValues(paramNew.back(), &tmp[0], 1);
+      for (int j = 0; j < p; ++j)
+        A[k][n-p+j] = tmp[2*j+1];
+  }
+
+  // generating right-hand side b by sampling interpolation points
+  Go::Point evalPt;
+  k = 0;
+  if(p0 != NULL) {
+    for(int j=0; j<dim; j++)
+      b[k][j] = (*p0)[j];
+    k++;
+  }
+  for(int i=0; i<nPts; i++, k++) {
+    evalPt = curve->point(paramOld[i]);
+    for(int j=0; j<dim; j++)
+      b[k][j] = evalPt[j];
+  }
+  if(p1 != NULL)
+    for(int j=0; j<dim; j++)
+      b[k][j] = (*p1)[j];
+
+
+  // Now we are ready to solve Ac = b.  b will be overwritten by solution
+  Go::LUsolveSystem(A, n, &b[0]);
+
+  // copy results
+  std::vector<double> coefs(n*dim);
+  for (int i = 0; i < n; ++i) {
+      std::copy(b[i].begin(), b[i].end(), &coefs[i * dim]);
+  }
+
+  // wrap results in a python object and return
+  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  result->data.reset(new Go::SplineCurve(basis, coefs.begin(), dim));
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(curve_rotate__doc__,"Rotate a curve around an axis\n"
                                  "@param axis: The axis to rotate around\n"
                                  "@type axis: Point, list of floats or tuple of floats\n"
@@ -610,6 +733,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
+     {(char*)"Rebuild",             (PyCFunction)Curve_Rebuild,             METH_VARARGS|METH_KEYWORDS, curve_rebuild__doc__},
      {(char*)"Rotate",              (PyCFunction)Curve_Rotate,              METH_VARARGS|METH_KEYWORDS, curve_rotate__doc__},
      {(char*)"Split",               (PyCFunction)Curve_Split,               METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
      {(char*)"Translate",           (PyCFunction)Curve_Translate,           METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
