@@ -20,8 +20,9 @@
 #include "GoTools/geometry/ClassType.h"
 #include "GoTools/geometry/ElementarySurface.h"
 #include "GoTools/geometry/GeometryTools.h"
-#include "GoTools/geometry/SplineSurface.h"
 #include "GoTools/geometry/RectDomain.h"
+#include "GoTools/geometry/SplineSurface.h"
+#include "GoTools/geometry/SurfaceInterpolator.h"
 
 #include <fstream>
 #include <sstream>
@@ -206,6 +207,65 @@ PyObject* Surface_FlipParametrization(PyObject* self, PyObject* args, PyObject* 
 
    Go::SplineSurface *ssurf = surface->asSplineSurface();
    ssurf->reverseParameterDirection(direction == 0);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
+PyDoc_STRVAR(surface_lower_order__doc__,"Lower the order of a spline surface (need full continuity)\n"
+                                        "@param lower_u: Lower of order in u\n"
+                                        "@type lower_u: int (>= 0)\n"
+                                        "@param lower_v: Lower of order in v\n"
+                                        "@type lower_v: int (>= 0)\n"
+                                        "@returns: None");
+PyObject* Surface_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"lower_u", "lower_v", NULL };
+  int lower_u=0, lower_v=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ii",
+                                   (char**)keyWords,&lower_u,&lower_v))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> surf2 = PyObject_AsGoSurface(self);
+  if (!surf2)
+    return NULL;
+   if (!surf2->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surf2);
+     surf2 = surf->data;
+   }
+   shared_ptr<Go::SplineSurface> surface = 
+                        static_pointer_cast<Go::SplineSurface>(surf2);
+   std::vector<double>::const_iterator first =  surface->basis(0).begin()+lower_u;
+   std::vector<double>::const_iterator last  =  surface->basis(0).end()-lower_u;
+   Go::BsplineBasis b1 = Go::BsplineBasis(surface->order_u()-lower_u,first,last);
+   first =  surface->basis(1).begin()+lower_v;
+   last  =  surface->basis(1).end()-lower_v;
+   Go::BsplineBasis b2 = Go::BsplineBasis(surface->order_v()-lower_v,first,last);
+
+   if (surface->rational())
+     std::cout << "WARNING: The geometry basis is rational (using NURBS)\n."
+               << "         The basis for the unknown fields of one degree"
+               << "         higher will however be non-rational.\n"
+               << "         This may affect accuracy.\n"<< std::endl;
+
+   std::vector<double> ug(b1.numCoefs()), vg(b2.numCoefs());
+   for (size_t i = 0; i < ug.size(); i++)
+     ug[i] = b1.grevilleParameter(i);
+   for (size_t i = 0; i < vg.size(); i++)
+     vg[i] = b2.grevilleParameter(i);
+
+   // Evaluate the spline surface at all points
+   std::vector<double> XYZ(surface->dimension()*ug.size()*vg.size());
+   surface->gridEvaluator(XYZ,ug,vg);
+
+   // Project the coordinates onto the new basis (the 2nd XYZ is dummy here)
+   Surface* surf = (Surface*)self;
+   surf->data = convertSplineSurface(surf2);
+   surf->data.reset(Go::SurfaceInterpolator::regularInterpolation(b1, b2, ug,
+                                                                  vg, XYZ,
+                                                          surface->dimension(),
+                                                                  false, XYZ));
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -631,6 +691,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
+     {(char*)"LowerOrder",          (PyCFunction)Surface_LowerOrder,            METH_VARARGS|METH_KEYWORDS, surface_lower_order__doc__},
      {(char*)"Project",             (PyCFunction)Surface_Project,               METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Surface_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
      {(char*)"ReParametrize",       (PyCFunction)Surface_ReParametrize,         METH_VARARGS|METH_KEYWORDS, surface_reparametrize__doc__},
