@@ -603,7 +603,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Curve_EvaluateTangent,     METH_VARARGS|METH_KEYWORDS, curve_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
-     {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS,               curve_get_knots__doc__},
+     {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS|METH_KEYWORDS, curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
