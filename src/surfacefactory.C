@@ -750,6 +750,81 @@ PyObject* Generate_ResampleSurface(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_project_surface__doc__,"Generate a surface by projecting a surface onto the basis of another\n"
+                                             "@param src: The surface to sample\n"
+                                             "@type src: Surface\n"
+                                             "@param dst: The surface with the basis we want for the new surface\n"
+                                             "@type dst: Surface\n"
+                                             "@return: The interpolated surface\n"
+                                             "@rtype: Surface");
+PyObject* Generate_ProjectSurface(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"src", "dst", NULL };
+  PyObject* srco;
+  PyObject* dsto;
+  int n1, n2, p1, p2;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&srco,&dsto))
+    return NULL;
+
+  shared_ptr<Go::SplineSurface> src = convertSplineSurface(PyObject_AsGoSurface(srco));
+  shared_ptr<Go::SplineSurface> dst = convertSplineSurface(PyObject_AsGoSurface(dsto));
+
+  if (!src || !dst)
+    return NULL;
+
+  // clone and project
+  shared_ptr<Go::SplineSurface> srcp = shared_ptr<Go::SplineSurface>(new Go::SplineSurface(*src));
+  bool                          rational = srcp->rational();
+  int                           dim      = srcp->dimension();
+  std::vector<double>::iterator coefs    = (rational) ? srcp->rcoefs_begin() : srcp->coefs_begin();
+  std::vector<double>::iterator coefsEnd = (rational) ? srcp->rcoefs_end()   : srcp->coefs_end();
+  while (coefs != coefsEnd) {
+    coefs[2] = 0.0;
+    coefs += (dim+rational);
+  }
+
+  std::vector<double> greville_u(dst->basis_u().numCoefs());
+  std::vector<double> greville_v(dst->basis_v().numCoefs());
+  for(int i=0; i<dst->basis_u().numCoefs(); i++)
+    greville_u[i] = dst->basis_u().grevilleParameter(i);
+  for(int i=0; i<dst->basis_v().numCoefs(); i++)
+    greville_v[i] = dst->basis_v().grevilleParameter(i);
+
+  // now find the physical coordinates of the greville points
+  // then evaluate the src surface
+  std::vector<double> coords_src, weights(0);
+  std::vector<double> interpolationPoints;
+  for (size_t i=0;i<greville_v.size();++i)
+    for (size_t j=0;j<greville_u.size();++j) {
+      Go::Point pt(3), clo_pt;
+      dst->point(pt, greville_u[j], greville_v[i]);
+      pt[2] = 0.0;
+      double clo_u, clo_v, clo_dist;
+      srcp->closestPoint(pt, clo_u, clo_v, clo_pt, clo_dist, 1.e-10);
+      src->point(pt, clo_u, clo_v);
+      interpolationPoints.push_back(pt[0]);
+      interpolationPoints.push_back(pt[1]);
+      interpolationPoints.push_back(pt[2]);
+    }
+
+  // evaluate original spline at interpolation points
+  Go::SplineSurface *res = 
+        Go::SurfaceInterpolator::regularInterpolation(dst->basis_u(),
+                                                      dst->basis_v(),
+                                                      greville_u,
+                                                      greville_v,
+                                                      interpolationPoints,
+                                                      dst->dimension(),
+                                                      false,
+                                                      weights);
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data.reset(res);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_rotational_curve_sweep__doc__,"Generate a surface by rotating a curve\n"
                                                     "@param curve: The curve to rotate\n"
                                                     "@type curve: Curve\n"
@@ -899,6 +974,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"Rectangle",             (PyCFunction)Generate_Rectangle,            METH_VARARGS|METH_KEYWORDS, generate_rectangle__doc__},
      {(char*)"ResampleSurface",       (PyCFunction)Generate_ResampleSurface,      METH_VARARGS|METH_KEYWORDS, generate_resample_surface__doc__},
      {(char*)"RotationalCurveSweep",  (PyCFunction)Generate_RotationalCurveSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_curve_sweep__doc__},
+     {(char*)"ProjectSurface",        (PyCFunction)Generate_ProjectSurface,       METH_VARARGS|METH_KEYWORDS, generate_project_surface__doc__},
      {(char*)"SphereSurface",         (PyCFunction)Generate_SphereSurface,        METH_VARARGS|METH_KEYWORDS, generate_sphere_surface__doc__},
      {(char*)"TorusSurface",          (PyCFunction)Generate_TorusSurface,         METH_VARARGS|METH_KEYWORDS, generate_torus_surface__doc__},
      {(char*)"TrimSurface",           (PyCFunction)Generate_TrimSurface,          METH_VARARGS|METH_KEYWORDS, generate_trim_surface__doc__},
