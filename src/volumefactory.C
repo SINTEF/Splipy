@@ -384,6 +384,70 @@ PyObject* Generate_VolNonRational(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_resample_volume__doc__,"Generate a volume by sampling another with a given w-parametrization\n"
+                                             "@param volume: The volume to sample\n"
+                                             "@type volume: Volume\n"
+                                             "@param curve: Curve to sample in w\n"
+                                             "@type curve: Curve\n"
+                                             "@return: The resampled volume\n"
+                                              "@rtype: Volume");
+PyObject* Generate_ResampleVolume(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"volume", "curve", NULL };
+  PyObject* volumeo;
+  PyObject* curveo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&volumeo,&curveo))
+    return NULL;
+
+  shared_ptr<Go::SplineVolume> volume = 
+                convertSplineVolume(PyObject_AsGoVolume(volumeo));
+
+  shared_ptr<Go::SplineCurve> curve= 
+                convertSplineCurve(PyObject_AsGoCurve(curveo));
+
+  if (!volume || !curve)
+    return NULL;
+
+  const Go::BsplineBasis& basis_u = volume->basis(0);
+  const Go::BsplineBasis& basis_v = volume->basis(1);
+  const Go::BsplineBasis& basis_w = curve->basis();
+
+  std::vector<double> greville_u(basis_u.numCoefs());
+  std::vector<double> greville_v(basis_v.numCoefs());
+  std::vector<double> greville_w(basis_w.numCoefs());
+
+  for(int i=0; i<basis_u.numCoefs(); i++)
+    greville_u[i] = basis_u.grevilleParameter(i);
+  for(int i=0; i<basis_v.numCoefs(); i++)
+    greville_v[i] = basis_v.grevilleParameter(i);
+  for(int i=0; i<basis_w.numCoefs(); i++)
+    greville_w[i] = basis_w.grevilleParameter(i);
+
+  // evaluate original spline at interpolation points
+  std::vector<double> interpolationPoints;
+  std::vector<double> weights(0);
+  volume->gridEvaluator(greville_u, greville_v, 
+                        greville_w, interpolationPoints);
+
+  Go::SplineVolume *res = 
+        Go::VolumeInterpolator::regularInterpolation(basis_u,
+                                                     basis_v,
+                                                     basis_w,
+                                                     greville_u,
+                                                     greville_v,
+                                                     greville_w,
+                                                     interpolationPoints,
+                                                     3,
+                                                     false,
+                                                     weights);
+
+  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+  result->data.reset(res);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_rotational_surface_sweep__doc__, "Generate a volume by rotating a surface\n"
                                                        "@param surface: The surface to rotate\n"
                                                        "@type surface: Surface\n"
@@ -540,6 +604,7 @@ PyMethodDef VolumeFactory_methods[] = {
      {(char*)"LoftSurfaces",          (PyCFunction)Generate_LoftSurfaces,           METH_VARARGS|METH_KEYWORDS, generate_loft_surfaces__doc__},
      {(char*)"LinearSurfaceSweep",    (PyCFunction)Generate_LinearSurfaceSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_surface_sweep__doc__},
      {(char*)"NonRationalVolume",     (PyCFunction)Generate_VolNonRational,         METH_VARARGS|METH_KEYWORDS, generate_volnonrational__doc__},
+     {(char*)"ResampleVolume"         ,(PyCFunction)Generate_ResampleVolume,        METH_VARARGS|METH_KEYWORDS, generate_resample_volume__doc__},
      {(char*)"RotationalSurfaceSweep",(PyCFunction)Generate_RotationalSurfaceSweep, METH_VARARGS|METH_KEYWORDS, generate_rotational_surface_sweep__doc__},
      {(char*)"Parallelepiped",        (PyCFunction)Generate_Parallelepiped,         METH_VARARGS|METH_KEYWORDS, generate_parallelepiped__doc__},
      {(char*)"Sphere",                (PyCFunction)Generate_Sphere,                 METH_VARARGS|METH_KEYWORDS, generate_sphere__doc__},
