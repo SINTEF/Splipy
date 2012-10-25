@@ -254,8 +254,10 @@ void DoWrite3DM(const std::string& fname, PyObject* objectso)
 PyObject* DoRead3DM(const std::string& fname, const std::string& type)
 {
   FILE* archive_fp = ON::OpenFile(fname.c_str(),"rb");
-  if (!archive_fp)
+  if (!archive_fp) {
+    std::cerr << "Cannot open file " << fname << std::endl;
     return NULL;
+  }
 
   ON_BinaryFile archive(ON::read3dm, archive_fp);
   ONX_Model model;
