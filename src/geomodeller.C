@@ -19,6 +19,10 @@ GeoModellerState modState;
 #include "volumefactory.h"
 #include "surfacemodelfactory.h"
 
+#ifdef ENABLE_HDF5
+#include "hdf5utils.h"
+#endif
+
 #ifdef ENABLE_OPENNURBS
 #include "3dmutils.h"
 #endif
@@ -303,6 +307,155 @@ PyObject* GeoMod_Read3DM(PyObject* self, PyObject* args, PyObject* kwds)
 #endif
 }
 
+PyDoc_STRVAR(read_hdf5field__doc__,"Read a field from a HDF5 file\n"
+                                   "@param filename: The file to read\n"
+                                   "@type  filename: string\n"
+                                   "@param fieldname: Field name\n"
+                                   "@type fieldname: string \n"
+                                   "@param patch: patch number\n"
+                                   "@type patch: integer (>= 1)\n"
+                                   "@param level: time level\n"
+                                   "@type level: integer\n"
+                                   "@return: The requested field\n"
+                                   "@rtype: List of float");
+PyObject* GeoMod_ReadHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
+{
+#ifndef ENABLE_HDF5
+  std::cerr << "Compiled without HDF5 support, no data read" << std::endl;
+  Py_INCREF(Py_None);
+  return Py_None;
+#else
+  static const char* keyWords[] = {"filename", "fieldname", "patch", "level", NULL };
+  char* fname = 0;
+  char* fldname = 0;
+  int patch=1;
+  int level=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ssii",
+                                   (char**)keyWords,&fname,&fldname,&patch,&level))
+    return NULL;
+
+  if (!fname || !fldname || patch < 1)
+    return NULL;
+
+  return DoReadHDF5Field(fname, fldname, patch, level);
+#endif
+}
+
+PyDoc_STRVAR(read_hdf5geometry__doc__,"Read a geometry from a HDF5 file\n"
+                                      "@param filename: The file to read\n"
+                                      "@type  filename: string\n"
+                                      "@param fieldname: Geometry name\n"
+                                      "@type fieldname: string \n"
+                                      "@param patch: patch number\n"
+                                      "@type patch: integer (>= 1)\n"
+                                      "@param level: time level\n"
+                                      "@type level: integer\n"
+                                      "@return: The requested geometry\n"
+                                      "@rtype: Curve, Surface or Volume");
+PyObject* GeoMod_ReadHDF5Geometry(PyObject* self, PyObject* args, PyObject* kwds)
+{
+#ifndef ENABLE_HDF5
+  std::cerr << "Compiled without HDF5 support, no data read" << std::endl;
+  Py_INCREF(Py_None);
+  return Py_None;
+#else
+  static const char* keyWords[] = {"filename", "geometry", "patch", "level", NULL };
+  char* fname = 0;
+  char* geoname = 0;
+  int patch=1;
+  int level=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ssii",
+                                   (char**)keyWords,&fname,&geoname,&patch,&level))
+    return NULL;
+
+  if (!fname || !geoname || patch < 1)
+    return NULL;
+
+  return DoReadHDF5Geometry(fname, geoname, patch, level);
+#endif
+}
+
+PyDoc_STRVAR(write_hdf5field__doc__,"Write a field to a HDF5 file\n"
+                                    "@param filename: The file to read\n"
+                                    "@type  filename: string\n"
+                                    "@param fieldname: Field name\n"
+                                    "@type fieldname: string \n"
+                                    "@param patch: patch number\n"
+                                    "@type patch: integer (>= 1)\n"
+                                    "@param level: time level\n"
+                                    "@type level: integer\n"
+                                    "@param coefs: Field coefficients\n"
+                                    "@type coefs: List of float\n"
+                                    "@param truncate: Truncate hdf5 file?\n"
+                                    "@type truncate: Boolean\n"
+                                    "@return: None\n");
+PyObject* GeoMod_WriteHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
+{
+#ifndef ENABLE_HDF5
+  std::cerr << "Compiled without HDF5 support, no data written" << std::endl;
+#else
+  static const char* keyWords[] = {"filename", "fieldname", "patch", "level", "coefs", "truncate", NULL };
+  char* fname = 0;
+  char* fldname = 0;
+  int patch=1;
+  int level=0;
+  PyObject* coefso;
+  bool truncate=false;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ssiiO|b",
+                                   (char**)keyWords,&fname,&fldname,&patch,
+                                                    &level,&coefso,&truncate))
+    return NULL;
+
+  if (!coefso || !PyObject_TypeCheck(coefso, &PyList_Type) ||
+      !fname || !fldname || patch < 1)
+    return NULL;
+
+  DoWriteHDF5Field(fname, fldname, patch, level, coefso, truncate);
+#endif
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+PyDoc_STRVAR(write_hdf5geometry__doc__,"Write a geometry to a HDF5 file\n"
+                                       "@param filename: The file to read\n"
+                                       "@type  filename: string\n"
+                                       "@param geometry: Geometry name\n"
+                                       "@type geometry: string \n"
+                                       "@param patch: patch number\n"
+                                       "@type patch: integer (>= 1)\n"
+                                       "@param level: time level\n"
+                                       "@type level: integer\n"
+                                       "@param Object: Object\n"
+                                       "@type Object: Curve, Surface or Volume\n"
+                                       "@param truncate: Truncate hdf5 file?\n"
+                                       "@type truncate: Boolean\n"
+                                       "@return: None\n");
+PyObject* GeoMod_WriteHDF5Geometry(PyObject* self, PyObject* args, PyObject* kwds)
+{
+#ifndef ENABLE_HDF5
+  std::cerr << "Compiled without HDF5 support, no data written" << std::endl;
+#else
+  static const char* keyWords[] = {"filename", "geometry", "patch", "level", "object", "truncate", NULL };
+  char* fname = 0;
+  char* geoname = 0;
+  int patch=1;
+  int level=0;
+  PyObject* objecto;
+  bool truncate=false;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ssiiO|b",
+                                   (char**)keyWords,&fname,&geoname,&patch,
+                                                    &level,&objecto,&truncate))
+    return NULL;
+
+  if (!objecto || !fname || !geoname || patch < 1)
+    return NULL;
+
+  DoWriteHDF5Geometry(fname, geoname, patch, level, objecto, truncate);
+#endif
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(final_output__doc__,"Write final entities to G2 file\n"
                                  "@param entities: The entities to write to file\n"
                                  "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
@@ -341,9 +494,13 @@ PyMethodDef GeoMod_methods[] = {
      {(char*)"FinalOutput",           (PyCFunction)GeoMod_FinalOutput,       METH_VARARGS|METH_KEYWORDS, final_output__doc__},
      {(char*)"Read3DM",               (PyCFunction)GeoMod_Read3DM,           METH_VARARGS|METH_KEYWORDS, read3dm__doc__},
      {(char*)"ReadG2",                (PyCFunction)GeoMod_ReadG2,            METH_VARARGS|METH_KEYWORDS, readg2__doc__},
+     {(char*)"ReadHDF5Field",         (PyCFunction)GeoMod_ReadHDF5Field,     METH_VARARGS|METH_KEYWORDS, read_hdf5field__doc__},
+     {(char*)"ReadHDF5Geometry",      (PyCFunction)GeoMod_ReadHDF5Geometry,  METH_VARARGS|METH_KEYWORDS, read_hdf5geometry__doc__},
      {(char*)"SetDebugLevel",         (PyCFunction)GeoMod_SetDebugLevel,     METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
      {(char*)"WriteG2",               (PyCFunction)GeoMod_WriteG2,           METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
      {(char*)"Write3DM",              (PyCFunction)GeoMod_Write3DM,          METH_VARARGS|METH_KEYWORDS, write3dm__doc__},
+     {(char*)"WriteHDF5Field",        (PyCFunction)GeoMod_WriteHDF5Field,    METH_VARARGS|METH_KEYWORDS, write_hdf5field__doc__},
+     {(char*)"WriteHDF5Geometry",     (PyCFunction)GeoMod_WriteHDF5Geometry, METH_VARARGS|METH_KEYWORDS, write_hdf5geometry__doc__},
      
      // done - need a null entry for termination
      {NULL,                       NULL,                                  0,            NULL}

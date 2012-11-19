@@ -406,19 +406,19 @@ PyObject* Generate_InterpolateSurface(PyObject* self, PyObject* args, PyObject* 
     paramsv.push_back(PyFloat_AsDouble(PyList_GetItem(parvalsv,i)));
 
   std::vector<double> knot_u;
-  for (int i=0;i<4;++i)
+  for (int i=0;i<3;++i)
     knot_u.push_back(paramsu[0]);
   for (int i=1;i<paramsu.size()-1;++i)
     knot_u.push_back(paramsu[i]);
-  for (int i=0;i<4;++i)
+  for (int i=0;i<3;++i)
     knot_u.push_back(paramsu.back());
 
   std::vector<double> knot_v;
-  for (int i=0;i<4;++i)
+  for (int i=0;i<3;++i)
     knot_v.push_back(paramsv[0]);
   for (int i=1;i<paramsv.size()-1;++i)
     knot_v.push_back(paramsv[i]);
-  for (int i=0;i<4;++i)
+  for (int i=0;i<3;++i)
     knot_v.push_back(paramsv.back());
 
   Go::BsplineBasis basis_u(paramsu.size(),4,knot_u.begin());
