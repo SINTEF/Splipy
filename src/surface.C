@@ -663,7 +663,11 @@ PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 PyObject* Surface_Scale(PyObject* o1, PyObject* o2)
 {
   shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(o1);
-  double scale = PyFloat_AsDouble(o2);
+  double scale = 1.0;
+  if (PyObject_TypeCheck(o2,&PyFloat_Type))
+    scale = PyFloat_AsDouble(o2);
+  if (PyObject_TypeCheck(o2,&PyInt_Type))
+    scale = PyInt_AsLong(o2);
   if (surf && scale > 0) {
     if (!surf->isSpline())
       ((Surface*)o1)->data = convertSplineSurface(surf);
