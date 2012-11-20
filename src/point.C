@@ -179,7 +179,7 @@ PyObject* Point_Div(PyObject* o1, PyObject* o2)
   if (PyObject_TypeCheck(o2,&PyFloat_Type)) {
     result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
     result->data.reset(new Go::Point(*p1/PyFloat_AsDouble(o2)));
-  } else if (PyObject_TypeCheck(o2r,&PyInt_Type)) {
+  } else if (PyObject_TypeCheck(o2,&PyInt_Type)) {
     result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
     result->data.reset(new Go::Point(*p1/PyInt_AsLong(o2)));
   }
