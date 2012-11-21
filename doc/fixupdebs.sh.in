@@ -31,7 +31,7 @@ cd /tmp/debfixer
 # Step 1
 Unpack $path/libifem-geomodeler_${version}_$arch-$code-bin.deb
 sed -i control -e 's/Package:.*$/Package: libifem-geomodeler/g'
-echo "Depends: python, libgotools-core, libgotools-trivariate, libgotools-compositemodel, libgotools-parametrization, libsisl, libttl, libnewmat, libgotools-igeslib, libgotools-topology, libgotools-implicitization, libgotools-intersections, libopennurbs" >> control
+echo "Depends: python, libgotools-core, libgotools-trivariate, libgotools-compositemodel, libgotools-parametrization, libsisl, libttl, libnewmat, libgotools-igeslib, libgotools-topology, libgotools-implicitization, libgotools-intersections, libopennurbs, libhdf5-serial-1.8.4" >> control
 Pack $path/UbuntuDebs/libifem-geomodeler_${version}_$arch-$code.deb
 rm -f $path/libifem-geomodeler_${version}_$arch-$code-bin.deb
 
