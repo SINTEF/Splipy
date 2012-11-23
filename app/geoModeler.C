@@ -53,6 +53,8 @@ void addPath()
 int main(int argc, char** argv)
 {
   const char* file=NULL;
+  char* argv_[9];
+  int argc_=1;
   for (int i=1;i<argc;++i) {
     if (!strncasecmp(argv[i],"finaloutput=",12))
       modState.finalOutput = argv[i]+12;
@@ -60,9 +62,12 @@ int main(int argc, char** argv)
       modState.debugLevel = -atoi(argv[i]+11);
     else if (!strncasecmp(argv[i],"tospline=",9))
       modState.convertSpline = 1+atoi(argv[i]+9);
-    else
+    else if (!file)
       file = argv[i];
+    else if (argc_ < 9)
+      argv_[argc_++] = argv[i];
   }
+  argv_[0] = (char*)file;
   if (!file) {
     syntax();
     exit(1);
@@ -79,6 +84,7 @@ int main(int argc, char** argv)
   ON::Begin();
 #endif
   initGoTools();
+  PySys_SetArgv(argc_, argv_);
   int result=PyRun_SimpleFile(f,file);
   fclose(f);
   Py_Finalize();
