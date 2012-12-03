@@ -9,12 +9,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 ENABLE_LANGUAGE(CXX)
 
-# Generate header with version info
-CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/geomodversion.h.in
-               ${PROJECT_SOURCE_DIR}/include/geomodversion.h @ONLY)
-CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh.in
-               ${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh @ONLY)
-
 FIND_PACKAGE(PythonLibs REQUIRED)
 FIND_PACKAGE(PythonInterp REQUIRED)
 FIND_PACKAGE(GoTools REQUIRED)
@@ -30,6 +24,12 @@ FIND_PACKAGE(GoImplicitization REQUIRED)
 FIND_PACKAGE(GoIntersections REQUIRED)
 FIND_PACKAGE(OpenNURBS)
 FIND_PACKAGE(HDF5)
+
+# Generate header with version info
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/geomodversion.h.in
+               ${PROJECT_SOURCE_DIR}/include/geomodversion.h @ONLY)
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh.in
+               ${PROJECT_SOURCE_DIR}/doc/fixupdebs.sh @ONLY)
 
 # Mimimum GoTools version
 IF(GoTools_VERSION_MAJOR LESS 4 OR NOT GoTools_VERSION_MAJOR)

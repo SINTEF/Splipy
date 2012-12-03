@@ -131,7 +131,13 @@ PyObject* Generate_AddLoop(PyObject* self, PyObject* args, PyObject* kwds)
     new_loop.push_back(cos2);
 
     // Reverse if curve is counter-clockwise in parameter space
+    // Quirked in 4.0.1, signature changed but bump happened later..
+#if GOTOOLS_QUIRK_PARAM_IS_CCW || (GO_VERSION_MAJOR > 4 || GO_VERSION_MINOR >= 1)
+    if (Go::LoopUtils::paramIsCCW(new_loop, fabs(modState.gapTolerance),
+                                  fabs(modState.neighbourTolerance)))
+#else
     if (Go::LoopUtils::paramIsCCW(new_loop, fabs(modState.gapTolerance)))
+#endif
     {
       cos1->reverseParameterDirection();
       cos2->reverseParameterDirection();
