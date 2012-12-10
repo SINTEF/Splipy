@@ -240,8 +240,8 @@ PyObject* Point_GetComponent(PyObject* self, Py_ssize_t i)
 
 PyMethodDef Point_methods[] = {
      {(char*)"Clone",     (PyCFunction)Point_Clone,     METH_VARARGS,               point_clone__doc__},
-     {(char*)"Normalize", (PyCFunction)Point_Normalize, METH_VARARGS,               point_rotate__doc__},
-     {(char*)"Rotate",    (PyCFunction)Point_Rotate,    METH_VARARGS|METH_KEYWORDS, point_normalize__doc__},
+     {(char*)"Normalize", (PyCFunction)Point_Normalize, METH_VARARGS,               point_normalize__doc__},
+     {(char*)"Rotate",    (PyCFunction)Point_Rotate,    METH_VARARGS|METH_KEYWORDS, point_rotate__doc__},
      {NULL,               NULL,                         0,                          NULL}
    };
 
