@@ -14,6 +14,44 @@ def UniformCurve(curve):
   for i in range(0,len(knots)-2):
     curve.InsertKnot((knots[i]+knots[i+1])/2)
 
+# Chop each knot span in half
+def UniformSurface(surface, direction=0):
+  """Uniformly refine a surface by halfing each knot interval
+  @param surface: The surface to refine
+  @type surface: Surface 
+  @param direction: The direction to refine in (0 = both, 1, 2)
+  @type direction: integer
+  @return: None
+  """
+  knots_u, knots_v = surface.GetKnots()
+  if direction == 0 or direction == 1:
+    for i in range(0,len(knots_u)-1):
+      surface.InsertKnot(0,(knots_u[i]+knots_u[i+1])/2)
+  if direction == 0 or direction == 2:
+    for i in range(0,len(knots_v)-1):
+      surface.InsertKnot(1,(knots_v[i]+knots_v[i+1])/2)
+
+# Chop each knot span in half
+def UniformVolume(volume, direction=0):
+  """Uniformly refine a volume by halfing each knot interval
+  @param volume: The volume to refine
+  @type volume: Volume 
+  @param direction: The direction to refine in (0 = both, 1, 2, 3)
+  @type direction: integer
+  @return: None
+  """
+  knots_u, knots_v, knots_w = volume.GetKnots()
+  if direction == 0 or direction == 1:
+    for i in range(0,len(knots_u)-1):
+      volume.InsertKnot(0,(knots_u[i]+knots_u[i+1])/2)
+  if direction == 0 or direction == 2:
+    for i in range(0,len(knots_v)-1):
+      volume.InsertKnot(1,(knots_v[i]+knots_v[i+1])/2)
+  if direction == 0 or direction == 3:
+    for i in range(0,len(knots_w)-1):
+      volume.InsertKnot(2,(knots_w[i]+knots_w[i+1])/2)
+
+
 def BoundaryLayerCurve(curve, start, scale, n):
   """Refine a curve with geometric grading
   @param curve: The curve to refine
@@ -47,27 +85,10 @@ def BoundaryLayerCurve(curve, start, scale, n):
     pwr *= scale
     curve.InsertKnot(smm*major+(1.0-smm)*minor)
 
-# Chop each knot span in half
-def UniformSurface(surface, direction=0):
-  """Uniformly refine a surface by halfing each knot interval
-  @param surface: The surface to refine
-  @type surface: Surface 
-  @param direction: The direction to refine in (0 = both, 1, 2)
-  @type direction: integer
-  @return: None
-  """
-  knots_u, knots_v = surface.GetKnots()
-  if direction == 0 or direction == 1:
-    for i in range(0,len(knots_u)-1):
-      surface.InsertKnot(0,(knots_u[i]+knots_u[i+1])/2)
-  if direction == 0 or direction == 2:
-    for i in range(0,len(knots_v)-1):
-      surface.InsertKnot(1,(knots_v[i]+knots_v[i+1])/2)
-
 # Geometric distribution of knots
 def GeometricRefineSurface(surface, direction, alpha, n):
 	"""Refine a surface by making a geometric distribution of element sizes
-	Consider FlipParametrization if you need refinement towards the other edge
+	Consider Surface.FlipParametrization if you need refinement towards the other edge
 	@param surface: The surface to refine
 	@type surface: Surface 
 	@param direction: The direction to refine in (u=1 or v=2) 

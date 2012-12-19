@@ -115,8 +115,11 @@ INSTALL(TARGETS geoModeler DESTINATION bin COMPONENT bin)
 
 # Add correct path to the geomod binary for convenience
 SET(GEOMOD_BINARY ${CMAKE_BINARY_DIR}/geoModeler)
+SET(PROJECT_PATH ${PROJECT_SOURCE_DIR})
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/tests/makereg.in
                ${PROJECT_SOURCE_DIR}/tests/makereg)
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/tests/dotest.in
+               ${PROJECT_SOURCE_DIR}/tests/dotest)
 
 FILE(GLOB GEOUTILS_SRCS RELATIVE ${PROJECT_SOURCE_DIR} GeoUtils/*.py)
 INSTALL(FILES ${GEOUTILS_SRCS} DESTINATION lib/python${PYTHON_VERSION}/dist-packages/GeoUtils
