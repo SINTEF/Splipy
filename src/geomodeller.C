@@ -11,6 +11,7 @@
 #include "GoTools/geometry/ObjectHeader.h"
 
 #include <fstream>
+#include <iostream>
 
 GeoModellerState modState;
 
@@ -171,6 +172,57 @@ static void DoWrite(std::string fname, PyObject* objectso, bool convert)
     WriteEntity(g2_file,objectso,convert);
 }
 
+static int WriteSTLEntity(std::ofstream& stl_file, bool ascii, PyObject* obj, int resolution[3])
+{
+  if (PyObject_TypeCheck(obj,&Surface_Type))
+    return WriteSurfaceSTL(stl_file, (Surface*)obj, ascii, resolution);
+  if (PyObject_TypeCheck(obj,&Volume_Type))
+    return WriteVolumeSTL(stl_file, (Volume*)obj, ascii, resolution);
+}
+
+static void DoWriteSTL(std::string fname, bool ascii, PyObject* objectso, int resolution[3])
+{
+  // open file for writing
+  std::ios_base::openmode mode = std::ios_base::out;
+  if (!ascii)
+    mode = std::ios_base::out|std::ios_base::binary;
+  std::ofstream stl_file(fname,mode);
+  unsigned int nTriangles = 0;
+
+  // write header
+  if(ascii) {
+    stl_file << "solid MadeByGeomodeller" << std::endl;
+    stl_file << std::setprecision(15)     << std::endl;
+  } else {
+    char header[80];
+    for(int i=0; i<80; i++) header[i] = 0;
+    sprintf(header, "BINARY STL BY GEOMODELER");
+    stl_file.write(header, 80);
+    // make room for nTriangles here, insert it later
+    stl_file.write((char*) &nTriangles, sizeof(unsigned int)) ; 
+  }
+
+  if (PyObject_TypeCheck(objectso,&PyList_Type)) {
+    for (int i=0; i < PyList_Size(objectso); ++i) {
+      PyObject* obj = PyList_GetItem(objectso,i);
+      nTriangles += WriteSTLEntity(stl_file, ascii, obj, resolution);
+    }
+  } else if (PyObject_TypeCheck(objectso,&PyTuple_Type)) {
+    for (int i=0;i < PyTuple_Size(objectso); ++i) {
+      PyObject* obj = PyTuple_GetItem(objectso,i);
+      nTriangles += WriteSTLEntity(stl_file, ascii, obj, resolution);
+    }
+    PyTuple_GetItem(objectso,0);
+  } else
+    nTriangles += WriteSTLEntity(stl_file, ascii, objectso, resolution);
+
+  // fill the last part of the header
+  if(!ascii) {
+    stl_file.seekp(80, std::ios_base::beg);
+    stl_file.write((char*) &nTriangles, sizeof(unsigned int)) ; 
+  }
+}
+
 PyDoc_STRVAR(write3dm__doc__,"Write entities to 3DM file\n"
                              "@param filename: The file to write\n"
                              "@type  filename: string\n"
@@ -225,6 +277,55 @@ PyObject* GeoMod_WriteG2(PyObject* self, PyObject* args, PyObject* kwds)
 
   if (level <= abs(modState.debugLevel))
     DoWrite(fname,objectso,convert);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+PyDoc_STRVAR(writestl__doc__,"Write entities to STL file\n"
+                             "@param filename   : The file to write\n"
+                             "@type  filename   : string\n"
+                             "@param entities   : The entities to write to file\n"
+                             "@type  entities   : Surface, Volume or a list of these\n"
+                             "@param resolution : Number of tesselation points used for triangles\n"
+                             "@type  resolution : int or list of int\n"
+                             "@param ascii      : True to store ascii file instead of binary\n"
+                             "@type  ascii      : bool\n"
+                             "@return: None");
+PyObject* GeoMod_WriteSTL(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"filename", "entities", "resolution", "ascii", NULL };
+  PyObject* objectso, *objectRes;
+  char* fname = 0;  
+  bool ascii=false;
+  int resolution[] = {10,10,10};
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"sO|Ob",
+                             (char**)keyWords,&fname,&objectso,&objectRes,&ascii))
+    return NULL;
+  if (PyObject_TypeCheck(objectRes, &PyList_Type)) {
+    for (int i=0; i < PyList_Size(objectRes); ++i) {
+      PyObject* obj = PyList_GetItem(objectRes,i);
+      if(PyObject_TypeCheck(obj, &PyInt_Type) ) {
+	resolution[i] = PyInt_AsLong(obj);
+      } else if(PyObject_TypeCheck(obj, &PyFloat_Type) ) {
+	resolution[i] = PyFloat_AsDouble(obj);
+      } else {
+	std::cerr << "Invalid resolution. No file written" << std::endl;
+	return Py_None;
+      }
+    }
+  } else if(PyObject_TypeCheck(objectRes, &PyInt_Type) ) {
+    for(int i=0; i<3; i++)
+      resolution[i] = PyInt_AsLong(objectRes);
+  } else if(PyObject_TypeCheck(objectRes, &PyFloat_Type) ) {
+    for(int i=0; i<3; i++)
+      resolution[i] = PyFloat_AsDouble(objectRes);
+  } else {
+    std::cerr << "Invalid resolution. No file written" << std::endl;
+    return Py_None;
+  }
+
+  DoWriteSTL(fname,ascii,objectso,resolution);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -498,6 +599,7 @@ PyMethodDef GeoMod_methods[] = {
      {(char*)"ReadHDF5Geometry",      (PyCFunction)GeoMod_ReadHDF5Geometry,  METH_VARARGS|METH_KEYWORDS, read_hdf5geometry__doc__},
      {(char*)"SetDebugLevel",         (PyCFunction)GeoMod_SetDebugLevel,     METH_VARARGS|METH_KEYWORDS, set_debug_level__doc__},
      {(char*)"WriteG2",               (PyCFunction)GeoMod_WriteG2,           METH_VARARGS|METH_KEYWORDS, writeg2__doc__},
+     {(char*)"WriteSTL",              (PyCFunction)GeoMod_WriteSTL,          METH_VARARGS|METH_KEYWORDS, writestl__doc__},
      {(char*)"Write3DM",              (PyCFunction)GeoMod_Write3DM,          METH_VARARGS|METH_KEYWORDS, write3dm__doc__},
      {(char*)"WriteHDF5Field",        (PyCFunction)GeoMod_WriteHDF5Field,    METH_VARARGS|METH_KEYWORDS, write_hdf5field__doc__},
      {(char*)"WriteHDF5Geometry",     (PyCFunction)GeoMod_WriteHDF5Geometry, METH_VARARGS|METH_KEYWORDS, write_hdf5geometry__doc__},

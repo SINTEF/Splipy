@@ -635,3 +635,28 @@ void WriteVolumeG2(std::ofstream& g2_file, Volume* volume, bool convert)
     volume->data->write(g2_file);
   }
 }
+
+int WriteVolumeSTL(std::ofstream& stl_file, Volume* volume, bool ascii, int res[3])
+{
+  int nTriangles = 0;
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume->data);
+  if (vol->isLeftHanded()) {
+    vol = shared_ptr<Go::SplineVolume>(vol->clone());
+    vol->reverseParameterDirection(2);
+  }
+
+  std::vector<shared_ptr<Go::ParamSurface> > edges = vol->getAllBoundarySurfaces();
+
+  edges[1]->reverseParameterDirection(true);
+  edges[2]->reverseParameterDirection(true);
+  edges[5]->reverseParameterDirection(true);
+  
+  for(int i=0; i<6; i++) {
+    Surface* surface = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+    surface->data = shared_ptr<Go::ParamSurface>(edges.at(i));
+
+    int surfRes[] = { res[i/2==0], res[2-(i/2==2)] };
+    nTriangles += WriteSurfaceSTL(stl_file, surface, ascii, surfRes);
+  }
+  return nTriangles;
+}
