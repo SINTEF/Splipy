@@ -401,6 +401,43 @@ PyObject* Surface_GetOrder(PyObject* self, PyObject* args)
   return result;
 }
 
+PyDoc_STRVAR(surface_get_sub_surf__doc__,"Get a Spline Surface which represent a part of 'this' Surface\n"
+                                         "@param from_par: The parametric lower left corner of the sub surface\n"
+                                         "@type  from_par: Point, list of floats or tuple of floats\n"
+                                         "@param to_par:   The parametric upper right corner of the sub surface\n"
+                                         "@type  to_par:   Point, list of floats or tuple of floats\n"
+                                         "@return: A parametric rectangular subregion of this Surface represented as a Spline Surface\n"
+                                         "@rtype: Surface");
+PyObject* Surface_GetSubSurf(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  static const char* keyWords[] = {"from_par", "to_par", NULL };
+  PyObject *lowerLefto, *upperRighto;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords, &lowerLefto, &upperRighto) || !surface)
+    return NULL;
+
+  if (!surface->isSpline()) {
+    Surface* surf = (Surface*)self;
+    surf->data = convertSplineSurface(surface);
+    surface = surf->data;
+  }
+  shared_ptr<Go::SplineSurface> spline = static_pointer_cast<Go::SplineSurface>(surface);
+  if(!spline)
+    return NULL;
+
+  shared_ptr<Go::Point> lowerLeft  = PyObject_AsGoPoint(lowerLefto);
+  shared_ptr<Go::Point> upperRight = PyObject_AsGoPoint(upperRighto);
+
+  Go::SplineSurface *subSurf = spline->subSurface((*lowerLeft)[0], (*lowerLeft)[1], (*upperRight)[0], (*upperRight)[1]);
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data = shared_ptr<Go::ParamSurface>(subSurf);
+
+  return (PyObject*) result;
+}
+
 PyDoc_STRVAR(surface_insert_knot__doc__,"Insert a knot in a spline surface\n"
                                         "@param direction: Direction to insert knot in\n"
                                         "@type direction: int (0 or 1)\n"
@@ -694,6 +731,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
+     {(char*)"GetSubSurf",          (PyCFunction)Surface_GetSubSurf,            METH_VARARGS|METH_KEYWORDS, surface_get_sub_surf__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
      {(char*)"LowerOrder",          (PyCFunction)Surface_LowerOrder,            METH_VARARGS|METH_KEYWORDS, surface_lower_order__doc__},
      {(char*)"Project",             (PyCFunction)Surface_Project,               METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
