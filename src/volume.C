@@ -201,6 +201,38 @@ PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* k
    return Py_None;
 }
 
+PyDoc_STRVAR(volume_get_const_par_surf__doc__,"Generate and return a SplineSurface that represents a constant parameter surface on the volume\n"
+                                              "@param parameter: Value of the fixed parameter\n"
+                                              "@type parameter: float\n"
+                                              "@param pardir: 0 for constant u-parameter, 1 for v and 2 for w-parameter\n"
+                                              "@type pardir: int\n"
+                                              "@return: A newly constructed SplineSurface representing the specified constant parameter surface\n"
+                                              "@rtype: Surface");
+PyObject* Volume_GetConstParSurf(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  int    parDir    = 0;
+  double parameter = 0;
+
+  static const char* keyWords[] = {"parameter", "pardir", NULL };
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"di",
+                                   (char**)keyWords,&parameter,&parDir) || !volume)
+    return NULL;
+                                                    
+  if (!volume->isSpline()) {
+    Volume* vol = (Volume*)self;
+    vol->data = convertSplineVolume(volume);
+    volume = vol->data;
+  }
+
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume);
+  Go::SplineSurface *surf = vol->constParamSurface(parameter, parDir);
+
+  Surface* surface = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  surface->data = shared_ptr<Go::ParamSurface>(surf);
+
+  return (PyObject*) surface;
+}
 
 PyDoc_STRVAR(volume_get_edges__doc__,"Return the six edge volumes\n"
                                      "@return: A list of the six edges\n"
@@ -525,6 +557,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
+     {(char*)"GetConstParSurf",     (PyCFunction)Volume_GetConstParSurf,       METH_VARARGS|METH_KEYWORDS, volume_get_const_par_surf__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
