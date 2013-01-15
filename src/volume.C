@@ -201,6 +201,37 @@ PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* k
    return Py_None;
 }
 
+PyDoc_STRVAR(volume_get_bounding_box__doc__,"Generate and return the Spline Volume bounding box\n"
+                                            "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,..."
+                                            "@rtype: List of floats");
+PyObject* Volume_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (!volume)
+    return NULL;
+  if (!volume->isSpline()) {
+    Volume* vol = (Volume*)self;
+    vol->data = convertSplineVolume(volume);
+    volume = vol->data;
+  }
+
+  shared_ptr<Go::SplineVolume> spline = static_pointer_cast<Go::SplineVolume>(volume);
+  Go::BoundingBox box = spline->boundingBox();
+  Go::Point low  = box.low();
+  Go::Point high = box.high();
+
+  PyObject* result = PyList_New(0);
+
+  PyList_Append(result, Py_BuildValue((char*) "d", low [0]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", high[0]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", low [1]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", high[1]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", low [2]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", high[2]) );
+
+  return result;
+}
+
 PyDoc_STRVAR(volume_get_const_par_surf__doc__,"Generate and return a SplineSurface that represents a constant parameter surface on the volume\n"
                                               "@param parameter: Value of the fixed parameter\n"
                                               "@type parameter: float\n"
@@ -557,6 +588,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
+     {(char*)"GetBoundingBox",      (PyCFunction)Volume_GetBoundingBox,        METH_VARARGS              , volume_get_bounding_box__doc__},
      {(char*)"GetConstParSurf",     (PyCFunction)Volume_GetConstParSurf,       METH_VARARGS|METH_KEYWORDS, volume_get_const_par_surf__doc__},
      {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
