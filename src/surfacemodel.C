@@ -111,6 +111,31 @@ PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
   return (PyObject*) result;
 }
 
+PyDoc_STRVAR(surfacemodel_get_bounding_box__doc__,"Generate and return the Surfacemodel bounding box\n"
+                                                  "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,..."
+                                                  "@rtype: List of floats");
+PyObject* SurfaceModel_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::SurfaceModel> surfacemodel = PyObject_AsGoSurfaceModel(self);
+  if (!surfacemodel)
+    return NULL;
+
+  Go::BoundingBox box = surfacemodel->boundingBox();
+  Go::Point low  = box.low();
+  Go::Point high = box.high();
+
+  PyObject* result = PyList_New(0);
+
+  PyList_Append(result, Py_BuildValue((char*) "d", low [0]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", high[0]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", low [1]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", high[1]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", low [2]) );
+  PyList_Append(result, Py_BuildValue((char*) "d", high[2]) );
+
+  return result;
+}
+
 PyDoc_STRVAR(surfacemodel_make_common_spline__doc__,"Make sure all surfaces in model share the same spline space\n"
                                                     "@return: None");
 PyObject* SurfaceModel_MakeCommonSpline(PyObject* self, PyObject* args)
@@ -154,6 +179,7 @@ Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
 PySequenceMethods SurfaceModel_seq_operators = {0};
 
 PyMethodDef SurfaceModel_methods[] = {
+     {"GetBoundingBox",        (PyCFunction)SurfaceModel_GetBoundingBox,   METH_VARARGS, surfacemodel_get_bounding_box__doc__},
      {"IsCornerToCorner",      (PyCFunction)SurfaceModel_CtoC,             METH_VARARGS, surfacemodel_ctoc__doc__},
      {"MakeCommonSplineSpace", (PyCFunction)SurfaceModel_MakeCommonSpline, METH_VARARGS, surfacemodel_make_common_spline__doc__},
      {"MakeCornerToCorner",    (PyCFunction)SurfaceModel_MakeCtoC,         METH_VARARGS, surfacemodel_make_ctoc__doc__},
