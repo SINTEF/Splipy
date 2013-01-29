@@ -1,0 +1,4 @@
+This repository contains the GeoModeller module for the IFEM project.
+
+It is basically python bindings for the GoTools library, available
+at http://www.sintef.no/Projectweb/Geometry-Toolkits/GoTools/
