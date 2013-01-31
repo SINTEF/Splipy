@@ -291,6 +291,19 @@ PyObject* DoRead3DM(const std::string& fname, const std::string& type)
       ON_Surface *surf = (ON_Surface*)model.m_object_table[i].m_object;
       curr = (PyObject*)ONSurfaceToGoSurface(surf);
     }
+    if (surfaces && model.m_object_table[i].m_object->ObjectType() == ON::brep_object) {
+      ON_Brep *brep_obj = (ON_Brep*) model.m_object_table[i].m_object;
+      int sc=0;
+      while (brep_obj->FaceIsSurface(sc)) {
+        if (curr) {
+          if (!result)
+            result = PyList_New(0);
+          PyList_Append(result,curr);
+        }
+        ON_Surface *surf = brep_obj->m_S[sc++];
+        curr = (PyObject*)ONSurfaceToGoSurface(surf);
+      }
+    }
   }
   model.Destroy();
   if (!result)
