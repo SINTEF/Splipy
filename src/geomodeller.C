@@ -5,6 +5,7 @@
 #include "pyutils.h"
 #include "surface.h"
 #include "surfacemodel.h"
+#include "stlutils.h"
 #include "volume.h"
 
 #include "GoTools/geometry/GoTools.h"
