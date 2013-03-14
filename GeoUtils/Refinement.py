@@ -3,53 +3,71 @@ __doc__ = 'Implementation of various refinement schemes.'
 from math import atan
 from math import pi
 
-def UniformCurve(curve):
-  """Uniformly refine a curve by halfing each knot interval
-  @param curve: The curve to refine
-  @type curve: Curve
-  @return: None
-  """
-
-  knots = curve.GetKnots()
-  for i in range(0,len(knots)-2):
-    curve.InsertKnot((knots[i]+knots[i+1])/2)
-
-# Chop each knot span in half
-def UniformSurface(surface, direction=0):
-  """Uniformly refine a surface by halfing each knot interval
-  @param surface: The surface to refine
-  @type surface: Surface 
-  @param direction: The direction to refine in (0 = both, 1, 2)
-  @type direction: integer
-  @return: None
-  """
-  knots_u, knots_v = surface.GetKnots()
-  if direction == 0 or direction == 1:
-    for i in range(0,len(knots_u)-1):
-      surface.InsertKnot(0,(knots_u[i]+knots_u[i+1])/2)
-  if direction == 0 or direction == 2:
-    for i in range(0,len(knots_v)-1):
-      surface.InsertKnot(1,(knots_v[i]+knots_v[i+1])/2)
+def UniformCurve(curve, n=1):
+	"""Uniformly refine a curve by halfing each knot interval
+	@param curve: The curve to refine
+	@type curve: Curve
+	@param n: number of new knots in each interval
+	@type n: Int
+	@return: None
+	"""
+	
+	knots = curve.GetKnots()
+	for i in range(0,len(knots)-1):
+		for j in range(n):
+			newKnot = knots[i] + 1.0*(knots[i+1]-knots[i])/(n+1)*(j+1)
+			curve.InsertKnot(newKnot);
 
 # Chop each knot span in half
-def UniformVolume(volume, direction=0):
-  """Uniformly refine a volume by halfing each knot interval
-  @param volume: The volume to refine
-  @type volume: Volume 
-  @param direction: The direction to refine in (0 = both, 1, 2, 3)
-  @type direction: integer
-  @return: None
-  """
-  knots_u, knots_v, knots_w = volume.GetKnots()
-  if direction == 0 or direction == 1:
-    for i in range(0,len(knots_u)-1):
-      volume.InsertKnot(0,(knots_u[i]+knots_u[i+1])/2)
-  if direction == 0 or direction == 2:
-    for i in range(0,len(knots_v)-1):
-      volume.InsertKnot(1,(knots_v[i]+knots_v[i+1])/2)
-  if direction == 0 or direction == 3:
-    for i in range(0,len(knots_w)-1):
-      volume.InsertKnot(2,(knots_w[i]+knots_w[i+1])/2)
+def UniformSurface(surface, direction=0, n=1):
+	"""Uniformly refine a surface by halfing each knot interval
+	@param surface: The surface to refine
+	@type surface: Surface 
+	@param direction: The direction to refine in (0 = both, 1, 2)
+	@type direction: integer
+	@param n: number of new knots in each interval
+	@type n: Int
+	@return: None
+	"""
+	knots_u, knots_v = surface.GetKnots()
+	if direction == 0 or direction == 1:
+		for i in range(0,len(knots_u)-1):
+			for j in range(n):
+				newKnot = knots_u[i] + 1.0*(knots_u[i+1]-knots_u[i])/(n+1)*(j+1)
+				surface.InsertKnot(0, newKnot);
+	if direction == 0 or direction == 2:
+		for i in range(0,len(knots_v)-1):
+			for j in range(n):
+				newKnot = knots_v[i] + 1.0*(knots_v[i+1]-knots_v[i])/(n+1)*(j+1)
+				surface.InsertKnot(1, newKnot);
+
+# Chop each knot span in half
+def UniformVolume(volume, direction=0, n=1):
+	"""Uniformly refine a volume by halfing each knot interval
+	@param volume: The volume to refine
+	@type volume: Volume 
+	@param direction: The direction to refine in (0 = both, 1, 2, 3)
+	@type direction: integer
+	@param n: number of new knots in each interval
+	@type n: Int
+	@return: None
+	"""
+	knots_u, knots_v, knots_w = volume.GetKnots()
+	if direction == 0 or direction == 1:
+		for i in range(0,len(knots_u)-1):
+			for j in range(n):
+				newKnot = knots_u[i] + 1.0*(knots_u[i+1]-knots_u[i])/(n+1)*(j+1)
+				volume.InsertKnot(0, newKnot);
+	if direction == 0 or direction == 2:
+		for i in range(0,len(knots_v)-1):
+			for j in range(n):
+				newKnot = knots_v[i] + 1.0*(knots_v[i+1]-knots_v[i])/(n+1)*(j+1)
+				volume.InsertKnot(1, newKnot);
+	if direction == 0 or direction == 3:
+		for i in range(0,len(knots_w)-1):
+			for j in range(n):
+				newKnot = knots_w[i] + 1.0*(knots_w[i+1]-knots_w[i])/(n+1)*(j+1)
+				volume.InsertKnot(2, newKnot);
 
 
 def BoundaryLayerCurve(curve, start, scale, n):
