@@ -405,7 +405,7 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyDoc_STRVAR(curve_raise_order__doc__,"Raise the order of the curve's B-spline basis without changing the shape of the curve\n"
                                       "@param n: Specifies how many times the order will be raised\n"
-                                      "@type knot: int\n"
+                                      "@type n: int\n"
                                       "@return: None");
 PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
