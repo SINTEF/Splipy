@@ -750,45 +750,42 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_resample_curve__doc__,"Generate a surface by sampling another\n"
-                                            "@param surface: The surface to sample\n"
-                                            "@type surface: Surface\n"
-                                            "@param n: The number of points to sample in the first direction\n"
-                                            "@type n: integer\n"
-                                            "@param p: The order of the curve\n"
-                                            "@type p: integer\n"
+PyDoc_STRVAR(generate_resample_curve__doc__,"Generate a curve by sampling another\n"
+                                            "@param curve : The curve to sample\n"
+                                            "@type curve: Curve\n"
+                                            "@param knots: The knot vector for the new curve\n"
+                                            "@type knots: List of float"
+                                            "@param order: The order of the new curve\n"
+                                            "@type order: Integer"
                                             "@return: The resampled curve\n"
                                             "@rtype: Curve");
 PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"curve", "n", "p", NULL };
+  static const char* keyWords[] = {"curve", "knots", "order", NULL };
   PyObject* curveo;
-  int n, p;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Oii",
-                                   (char**)keyWords,&curveo,&n,&p))
+  PyObject* knotso;
+  int order=2;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|i",
+                                   (char**)keyWords,&curveo,&knotso,&order))
     return NULL;
 
   shared_ptr<Go::SplineCurve> curve = convertSplineCurve(PyObject_AsGoCurve(curveo));
 
-  if (!curve || n < 1 || p < 1)
+  if (!curve || !knotso)
     return NULL;
 
-  // create basis functions and evaluation points
-  int dimension = curve->dimension();
-  // repeated knot at start
+  std::vector<double> knots;
+  if (PyObject_TypeCheck(knotso,&PyList_Type)) {
+    for (int i=0;i<PyList_Size(knotso);++i) {
+      PyObject* o = PyList_GetItem(knotso,i);
+      if (o && PyObject_TypeCheck(o,&PyFloat_Type))
+        knots.push_back(PyFloat_AsDouble(o));
+      else if (o && PyObject_TypeCheck(o,&PyInt_Type))
+        knots.push_back(PyInt_AsLong(o));
+    }
+  }
 
-  int k=1;
-  std::vector<double> knot;
-  for (int i=0;i<p;++i)
-    knot.push_back(0);
-  for (int i=0;i<n-p;++i)
-    knot.push_back(k++);
-  for (int i=0;i<p;++i)
-    knot.push_back(k);
-
-  Go::BsplineBasis basis(n,p,knot.begin());
-
-  basis.rescale(curve->basis().startparam(), curve->basis().endparam());
+  Go::BsplineBasis basis(knots.size()-order,order,knots.begin());
 
   std::vector<double> greville(basis.numCoefs());
   for(int i=0; i<basis.numCoefs(); i++)
@@ -803,7 +800,7 @@ PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)
         Go::CurveInterpolator::regularInterpolation(basis,
                                                     greville,
                                                     interpolationPoints,
-                                                    dimension,
+                                                    curve->dimension(),
                                                     false,
                                                     weights);
 
