@@ -41,14 +41,9 @@ class InputFile:
           if not result.has_key(patch):
             result[patch] = InputFile.PatchInfo([], [], [])
           if typ == 'edge':
+            remap = [4,2,1,3]
             ed = int(item.childNodes[0].nodeValue)
-            if ed == 1:
-              ed = 4
-            if ed == 3:
-              ed = 1
-            if ed == 4:
-              ed = 3
-            result[patch].edge.append(ed)
+            result[patch].edge.append(remap[ed-1])
           elif topset.type == 'face':
             result[int(item.patch)].face.append(int(item.childNodes[0].nodeValue))
           else:
