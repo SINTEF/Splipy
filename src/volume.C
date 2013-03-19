@@ -265,10 +265,10 @@ PyObject* Volume_GetConstParSurf(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) surface;
 }
 
-PyDoc_STRVAR(volume_get_edges__doc__,"Return the six edge volumes\n"
-                                     "@return: A list of the six edges\n"
+PyDoc_STRVAR(volume_get_faces__doc__,"Return the six faces\n"
+                                     "@return: A list of the six faces\n"
                                      "@rtype: List of Surface");
-PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* Volume_GetFaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
   if (!volume)
@@ -282,26 +282,13 @@ PyObject* Volume_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume);
   std::vector<shared_ptr<Go::ParamSurface> > edges = vol->getAllBoundarySurfaces();
 
-  Surface* surface0 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  Surface* surface1 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  Surface* surface2 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  Surface* surface3 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  Surface* surface4 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  Surface* surface5 = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  surface0->data = shared_ptr<Go::ParamSurface>(edges.at(0));
-  surface1->data = shared_ptr<Go::ParamSurface>(edges.at(1));
-  surface2->data = shared_ptr<Go::ParamSurface>(edges.at(2));
-  surface3->data = shared_ptr<Go::ParamSurface>(edges.at(3));
-  surface4->data = shared_ptr<Go::ParamSurface>(edges.at(4));
-  surface5->data = shared_ptr<Go::ParamSurface>(edges.at(5));
-
+  std::vector<Surface*> vec(6);
   PyObject* result = PyList_New(0);
-  PyList_Append(result, (PyObject*) surface0);
-  PyList_Append(result, (PyObject*) surface1);
-  PyList_Append(result, (PyObject*) surface2);
-  PyList_Append(result, (PyObject*) surface3);
-  PyList_Append(result, (PyObject*) surface4);
-  PyList_Append(result, (PyObject*) surface5);
+  for (int i=0;i<6;++i) {
+    Surface* srf = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+    srf->data = shared_ptr<Go::ParamSurface>(edges.at(i));
+    PyList_Append(result, (PyObject*) srf);
+  }
 
   return result;
 }
@@ -590,7 +577,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetBoundingBox",      (PyCFunction)Volume_GetBoundingBox,        METH_VARARGS              , volume_get_bounding_box__doc__},
      {(char*)"GetConstParSurf",     (PyCFunction)Volume_GetConstParSurf,       METH_VARARGS|METH_KEYWORDS, volume_get_const_par_surf__doc__},
-     {(char*)"GetEdges",            (PyCFunction)Volume_GetEdges,              METH_VARARGS|METH_KEYWORDS, volume_get_edges__doc__},
+     {(char*)"GetFaces",            (PyCFunction)Volume_GetFaces,              METH_VARARGS|METH_KEYWORDS, volume_get_faces__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
