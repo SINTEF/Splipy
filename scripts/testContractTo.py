@@ -15,7 +15,7 @@ surf = ContractCurveTo(crv, origin)
 
 # create a unit ball by contracting unit shell to the origin
 ball  = Sphere(origin, 1)
-edges = ball.GetEdges()
+edges = ball.GetFaces()
 shell = edges[1]
 
 shell.Translate([0,0,2]) # move up for displaying purposes
