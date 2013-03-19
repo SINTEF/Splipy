@@ -13,6 +13,16 @@ class InputFile:
   def __init__(self, path):
     self.dom = xml.dom.minidom.parse(path)
 
+  def GetGeometryFile(self):
+    """Extract the geometry definition (.g2 file)
+       @return: The file name
+       @rtype: String
+    """
+    geometry = self.dom.getElementsByTagName('geometry')[0]
+    result = geometry.getElementsByTagName('patchfile')[0]
+    return result.childNodes[0].nodeValue
+
+
   def GetTopologySet(self, name):
     """ Extract a topology set from the input file.
         @param name: Name of topology set
@@ -31,7 +41,14 @@ class InputFile:
           if not result.has_key(patch):
             result[patch] = InputFile.PatchInfo([], [], [])
           if typ == 'edge':
-            result[patch].edge.append(int(item.childNodes[0].nodeValue))
+            ed = int(item.childNodes[0].nodeValue)
+            if ed == 1:
+              ed = 4
+            if ed == 3:
+              ed = 1
+            if ed == 4:
+              ed = 3
+            result[patch].edge.append(ed)
           elif topset.type == 'face':
             result[int(item.patch)].face.append(int(item.childNodes[0].nodeValue))
           else:
@@ -84,7 +101,7 @@ class HDF5File:
        @return: None
      """
     WriteHDF5Geometry(self.prefix+'.hdf5', name, patch, level, data, self.create)
-    self.Create = False
+    self.create = False
 
   def AddField(self, basis, name, patch, level, components, data):
     """Add a field to the HDF5 file.
@@ -103,7 +120,7 @@ class HDF5File:
        @type data: List of float
        @return: None
      """
-    WriteHDF5Field(self.prefix+'.hdf5', name, patch, level, data)
+    WriteHDF5Field(self.prefix+'.hdf5', name, patch, level, data, self.create)
     if not self.basismap.has_key(name):
       self.basismap[name] = HDF5File.FieldInfo('', 0, 1)
     self.basismap[name] = HDF5File.FieldInfo(basis, max(self.basismap[name].patches, patch), components)
