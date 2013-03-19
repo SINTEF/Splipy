@@ -381,15 +381,23 @@ PyDoc_STRVAR(generate_interpolate_curve__doc__, "Construct a cubic spline that i
                                                 "@type points: List of (Point, list of floats or tuple of floats)\n"
                                                 "@param parvals: The parameter values for the points\n"
                                                 "@type parvals: List of floats\n"
+                                                "@param start_tangent: (optional) The left tangent\n"
+                                                "@type start_tangent: Point\n"
+                                                "@param end_tangent: (optional) The right tangent\n"
+                                                "@type end_tangent: Point\n"
                                                 "@return: Cubic spline interpolating the point cloud\n"
                                                 "@rtype: Curve");
 PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"points", "parvals", NULL };
+  static const char* keyWords[] = {"points", "parvals", "start_tangent",
+                                   "end_tangent", NULL };
   PyObject* pointso;
   PyObject* parvals;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
-                                   (char**)keyWords,&pointso,&parvals))
+  PyObject* tangent1o=0;
+  PyObject* tangent2o=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|OO",
+                                   (char**)keyWords,&pointso,&parvals,
+                                   &tangent1o, &tangent2o))
     return NULL;
 
   if (!PyObject_TypeCheck(pointso,&PyList_Type) || 
@@ -414,9 +422,17 @@ PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kw
   for (int i=0; i < PyList_Size(parvals); ++i)
     params.push_back(PyFloat_AsDouble(PyList_GetItem(parvals,i)));
 
+  // get tangents
+  shared_ptr<Go::Point> t1;
+  shared_ptr<Go::Point> t2;
+  if (tangent1o)
+    t1 = PyObject_AsGoPoint(tangent1o);
+  if (tangent2o)
+    t2 = PyObject_AsGoPoint(tangent2o);
+    
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   Go::SplineInterpolator interp;
-  interp.setNaturalConditions();
+  interp.setEndTangents(t1, t2);
   std::vector<double> coefs;
   interp.interpolate(params.size(),modState.dim,&params[0],&points[0],coefs);
 
