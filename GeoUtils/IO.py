@@ -45,7 +45,9 @@ class InputFile:
             ed = int(item.childNodes[0].nodeValue)
             result[patch].edge.append(remap[ed-1])
           elif topset.type == 'face':
-            result[int(item.patch)].face.append(int(item.childNodes[0].nodeValue))
+            remap = [1,2,5,6,3,4]
+            fa = int(item.childNodes[0].nodeValue)
+            result[int(item.patch)].face.append(remap[fa-1])
           else:
             result[int(item.patch)].vertex.append(int(item.childNodes[0].nodeValue))
     return result
