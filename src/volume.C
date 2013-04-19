@@ -487,6 +487,40 @@ PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
+PyDoc_STRVAR(volume_reparametrize__doc__,"Re-parametrize a volume\n"
+                                         "@param umin: The minimum u value\n"
+                                         "@type umin: float\n"
+                                         "@param umax: The maximum u value\n"
+                                         "@type umax: float\n"
+                                         "@param vmin: The minimum v value\n"
+                                         "@type vmin: float\n"
+                                         "@param vmax: The maximum v value\n"
+                                         "@type vmax: float\n"
+                                         "@param wmin: The minimum w value\n"
+                                         "@type wmin: float\n"
+                                         "@param wmax: The maximum w value\n"
+                                         "@type wmax: float\n"
+                                         "@return: None");
+PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"umin", "umax", "vmin", "vmax", "wmin", "wmax", NULL };
+  double umin=0, umax=1, vmin=0, vmax=1, wmin=0, wmax=1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|dddddd",
+                                   (char**)keyWords,&umin,&umax,&vmin,&vmax,
+                                                    &wmin,&wmax))
+    return NULL;
+  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  if (volume) {
+    std::shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume);
+    if (!volume->isSpline())
+      ((Volume*)self)->data = vol;
+    vol->setParameterDomain(umin, umax, vmin, vmax, wmin, wmax);
+  }
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(volume_swap_parametrization__doc__,"Swaps two of the parametric directions\n"
                                                 "@param pardir1: The first parametric direction \n"
                                                 "@type pardir1: int\n"
@@ -583,6 +617,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"MakeRHS",             (PyCFunction)Volume_MakeRHS,               METH_VARARGS,               volume_make_rhs__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
+     {(char*)"ReParametrize",       (PyCFunction)Volume_ReParametrize,         METH_VARARGS|METH_KEYWORDS, volume_reparametrize__doc__},
      {(char*)"Split",               (PyCFunction)Volume_Split,                 METH_VARARGS|METH_KEYWORDS, volume_split__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
      {(char*)"Translate",           (PyCFunction)Volume_Translate,             METH_VARARGS|METH_KEYWORDS, volume_translate__doc__},
