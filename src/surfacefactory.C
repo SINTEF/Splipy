@@ -365,6 +365,47 @@ PyObject* Generate_CylinderSurface(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(generate_cylinder_section__doc__,"Generate a section of a cylinder surface\n"
+                                              "@param center: The center of the cylinder\n"
+                                              "@type center: Point, list of floats or tuple of floats\n"
+                                              "@param axis: The axis of the cylinder\n"
+                                              "@type axis: Point, list of floats or tuple of floats\n"
+                                              "@param radius: The radius of the cylinder\n"
+                                              "@type radius: float\n"
+                                              "@param height: The height of the cylinder\n"
+                                              "@type height: float\n"
+                                              "@param startAngle: The starting angle for the cylinder section\n"
+                                              "@type startAngle: float\n"
+                                              "@param angle: The circular segment angle of the cylinder section\n"
+                                              "@type angle: float\n"
+                                              "@return: The cylinder surface\n"
+                                              "@rtype: Surface");
+PyObject* Generate_CylinderSection(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"center", "axis", "radius", "height", "startAngle", "angle", NULL };
+  PyObject* centero;
+  PyObject* axiso;
+  double radius;
+  double height;
+  double angle ;
+  double startAngle ;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOdddd",
+                                   (char**)keyWords,&centero,
+                                   &axiso,&radius,&height,&startAngle,&angle))
+    return NULL;
+
+  shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
+  shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
+  if (!center || !axis)
+    return NULL;
+
+  Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  result->data.reset(new Go::Cylinder(radius,*center,*axis,someNormal(*axis)));
+  static_pointer_cast<Go::Cylinder>(result->data)->setParameterBounds(startAngle,0.0,startAngle+angle,height);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(generate_interpolate_surface__doc__, "Construct a spline surface which interpolates a (structured) point cloud\n"
                                                   "@param points: The point cloud\n"
                                                   "@type points: List of (Point, list of floats or tuple of floats)\n"
@@ -972,6 +1013,7 @@ PyMethodDef SurfaceFactory_methods[] = {
      {(char*)"CoonsSurfacePatch",     (PyCFunction)Generate_CoonsSurfacePatch,    METH_VARARGS|METH_KEYWORDS, generate_coons_surface_patch__doc__},
      {(char*)"ContractCurveTo",       (PyCFunction)Generate_ContractCurveTo,      METH_VARARGS|METH_KEYWORDS, generate_contract_curve_to__doc__},
      {(char*)"CylinderSurface",       (PyCFunction)Generate_CylinderSurface,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_surface__doc__},
+     {(char*)"CylinderSection",       (PyCFunction)Generate_CylinderSection,      METH_VARARGS|METH_KEYWORDS, generate_cylinder_section__doc__},
      {(char*)"InterpolateSurface",    (PyCFunction)Generate_InterpolateSurface,   METH_VARARGS|METH_KEYWORDS, generate_interpolate_surface__doc__},
      {(char*)"LinearCurveSweep",      (PyCFunction)Generate_LinearCurveSweep,     METH_VARARGS|METH_KEYWORDS, generate_linear_curve_sweep__doc__},
      {(char*)"LoftCurves",            (PyCFunction)Generate_LoftCurves,           METH_VARARGS|METH_KEYWORDS, generate_loft_curves__doc__},
