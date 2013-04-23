@@ -212,6 +212,27 @@ PyObject* Surface_FlipParametrization(PyObject* self, PyObject* args, PyObject* 
    return Py_None;
 }
 
+PyDoc_STRVAR(surface_force_rational__doc__,"Enforce a rational representation of the spline surface\n"
+                                           "@return: None");
+PyObject* Surface_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  if (!surface)
+    return NULL;
+
+   if (!surface->isSpline()) {
+     Surface* surf = (Surface*)self;
+     surf->data = convertSplineSurface(surface);
+     surface = surf->data;
+   }
+
+   Go::SplineSurface *ssurf = surface->asSplineSurface();
+   ssurf->representAsRational();
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 PyDoc_STRVAR(surface_lower_order__doc__,"Lower the order of a spline surface (need full continuity)\n"
                                         "@param lower_u: Lower of order in u\n"
                                         "@type lower_u: int (>= 0)\n"
@@ -728,6 +749,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Surface_EvaluateTangent,       METH_VARARGS|METH_KEYWORDS, surface_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
+     {(char*)"ForceRational",       (PyCFunction)Surface_ForceRational,         METH_VARARGS,               surface_force_rational__doc__},
      {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
