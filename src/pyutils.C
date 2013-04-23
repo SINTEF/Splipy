@@ -74,6 +74,14 @@ shared_ptr<Go::SurfaceModel> PyObject_AsGoSurfaceModel(PyObject* obj)
   return shared_ptr<Go::SurfaceModel>();
 }
 
+shared_ptr<Go::VolumeModel> PyObject_AsGoVolumeModel(PyObject* obj)
+{
+  if (PyObject_TypeCheck(obj,&VolumeModel_Type))
+    return ((VolumeModel*)obj)->data;
+
+  return shared_ptr<Go::VolumeModel>();
+}
+
 void PyMethods_Append(std::vector<PyMethodDef>& defs, PyMethodDef* start)
 {
   while (start && start->ml_name) {

@@ -18,4 +18,5 @@ extern "C" {
 
 // helpers
 shared_ptr<Go::SplineVolume> convertSplineVolume(shared_ptr<Go::ParamVolume> volume);
+void printVolumeToStream(std::ostream& str, shared_ptr<Go::ParamVolume> vol);
 void WriteVolumeG2(std::ofstream& g2_file, Volume* volume, bool convert);

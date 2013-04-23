@@ -707,6 +707,24 @@ shared_ptr<Go::SplineVolume> convertSplineVolume(shared_ptr<Go::ParamVolume> vol
   return shared_ptr<Go::SplineVolume>(e_volume->geometryVolume());
 }
 
+void printVolumeToStream(std::ostream& str, shared_ptr<Go::ParamVolume> vol)
+{
+  if (vol) {
+    if (vol->instanceType() == Go::Class_Parallelepiped)
+      str << "Paralellepiped:" << std::endl;
+    if (vol->instanceType() == Go::Class_SphereVolume)
+      str << "Sphere volume:" << std::endl;
+    if (vol->instanceType() == Go::Class_CylinderVolume)
+      str << "Cylinder volume:" << std::endl;
+    if (vol->instanceType() == Go::Class_ConeVolume)
+      str << "Cone volume:" << std::endl;
+    if (vol->instanceType() == Go::Class_TorusVolume)
+      str << "Torus volume:" << std::endl;
+    str << *vol;
+  } else
+    str << "(empty)";
+}
+
 void WriteVolumeG2(std::ofstream& g2_file, Volume* volume, bool convert)
 {
   if (convert) {

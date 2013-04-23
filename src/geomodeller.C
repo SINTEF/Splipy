@@ -5,6 +5,7 @@
 #include "pyutils.h"
 #include "surface.h"
 #include "surfacemodel.h"
+#include "volumemodel.h"
 #include "stlutils.h"
 #include "volume.h"
 
@@ -147,6 +148,8 @@ static void WriteEntity(std::ofstream& g2_file, PyObject* obj, bool convert)
     WriteVolumeG2(g2_file,(Volume*)obj,convert);
   if (PyObject_TypeCheck(obj,&SurfaceModel_Type))
     WriteSurfaceModelG2(g2_file,(SurfaceModel*)obj,convert);
+  if (PyObject_TypeCheck(obj,&VolumeModel_Type))
+    WriteVolumeModelG2(g2_file,(VolumeModel*)obj,convert);
   g2_file << std::endl;
 }
 
@@ -259,7 +262,7 @@ PyDoc_STRVAR(writeg2__doc__,"Write entities to G2 file\n"
                             "@param filename: The file to write\n"
                             "@type  filename: string\n"
                             "@param entities: The entities to write to file\n"
-                            "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
+                            "@type  entities: Curve, Surface, Volume, SurfaceModel, VolumeModel or a list of these\n"
                             "@param  convert: Convert to a spline entity before saving\n"
                             "@type   convert: bool\n"
                             "@param    level: Debug level to store file at\n"
@@ -336,7 +339,7 @@ PyDoc_STRVAR(readg2__doc__,"Read entities from G2 file\n"
                             "@param filename: The file to read\n"
                             "@type  filename: string\n"
                             "@return: The requested entities\n"
-                            "@rtype: Curve, Surface, Volume, SurfaceModel or a list of these");
+                            "@rtype: Curve, Surface, Volume, SurfaceModel, VolumeModel or a list of these");
 PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"filename", NULL };
@@ -560,7 +563,7 @@ PyObject* GeoMod_WriteHDF5Geometry(PyObject* self, PyObject* args, PyObject* kwd
 
 PyDoc_STRVAR(final_output__doc__,"Write final entities to G2 file\n"
                                  "@param entities: The entities to write to file\n"
-                                 "@type  entities: Curve, Surface, Volume, SurfaceModel or a list of these\n"
+                                 "@type  entities: Curve, Surface, Volume, SurfaceModel, VolumeModel or a list of these\n"
                                  "@param  convert: Convert to a spline entity before saving\n"
                                  "@type   convert: bool\n"
                                  "@return: None");
@@ -617,6 +620,7 @@ void InitGoToolsTypes()
   init_Surface_Type();
   init_SurfaceFactory_Module();
   init_SurfaceModel_Type();
+  init_VolumeModel_Type();
   init_SurfaceModelFactory_Module();
   init_Volume_Type();
   init_VolumeFactory_Module();
@@ -641,6 +645,7 @@ initGoTools()
   PyModule_AddObject(geoModule,(char*)"SurfaceModelFactory",SurfaceModelFactory_module);
   PyModule_AddObject(geoModule,(char*)"Volume",(PyObject*)&Volume_Type);
   PyModule_AddObject(geoModule,(char*)"VolumeFactory",VolumeFactory_module);
+  PyModule_AddObject(geoModule,(char*)"VolumeModel",(PyObject*)&VolumeModel_Type);
   modState.addInfo(geoModule);
 }
 

@@ -26,7 +26,6 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
 	listAxis[axis] = 1.0;
 	nAxis = Point(list=listAxis)
 	
-	print 'numel crv1 = ', len(crv1)
 	for i in range(len(crv1)):
 
 #                   A   

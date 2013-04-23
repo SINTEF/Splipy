@@ -168,7 +168,6 @@ def Rotate(obj, normal, degrees):
 
 	rotatedCP = []
 	theta = degrees / 360.0 * 2 * pi;
-	print 'theta = ', theta
 
 	if isinstance(normal, list):
 		normal = Point(list=normal)
