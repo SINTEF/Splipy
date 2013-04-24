@@ -114,19 +114,19 @@ PyDoc_STRVAR(volume_clone__doc__,"Clone a volume\n"
 PyObject* Volume_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   Volume* res = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
-  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(self);
-  res->data.reset(vol->clone());
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  res->data.reset(parVol->clone());
  
   return (PyObject*)res;
 }
 
 PyObject* Volume_Add(PyObject* o1, PyObject* o2)
 {
-  Volume* vol = (Volume*)o1;
+  Volume* pyVol = (Volume*)o1;
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   shared_ptr<Go::Point> p = PyObject_AsGoPoint(o2);
   if (p) {
-    result->data.reset(vol->data->clone());
+    result->data.reset(pyVol->data->clone());
     result->data->translate(*p);
   }
 
@@ -135,11 +135,11 @@ PyObject* Volume_Add(PyObject* o1, PyObject* o2)
 
 PyObject* Volume_Sub(PyObject* o1, PyObject* o2)
 {
-  Volume* vol = (Volume*)o1;
+  Volume* pyVol = (Volume*)o1;
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   shared_ptr<Go::Point> p = PyObject_AsGoPoint(o2);
   if (p) {
-    result->data.reset(vol->data->clone());
+    result->data.reset(pyVol->data->clone());
     result->data->translate(-(*p));
   }
 
@@ -158,16 +158,16 @@ PyDoc_STRVAR(volume_evaluate__doc__,"Evaluate volume at given parameter values\n
 PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value_u", "value_v", "value_w", NULL };
-  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(self);
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   double value_u=0, value_v=0, value_w=0;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd",
                                    (char**)keyWords,&value_u,&value_v,
-                                                    &value_w) || !vol)
+                                                    &value_w) || !parVol)
     return NULL;
 
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(vol->dimension()));
-  vol->point(*result->data, value_u, value_v, value_w);
+  result->data.reset(new Go::Point(parVol->dimension()));
+  parVol->point(*result->data, value_u, value_v, value_w);
 
   return (PyObject*)result;
 }
@@ -185,17 +185,17 @@ PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* k
                                    (char**)keyWords,&direction))
     return NULL;
 
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
 
-   Volume* vol = (Volume*)self;
-   if (!volume->isSpline()) {
-     vol->data = convertSplineVolume(volume);
-     volume = vol->data;
+   Volume* pyVol = (Volume*)self;
+   if (!parVol->isSpline()) {
+     pyVol->data = convertSplineVolume(parVol);
+     parVol = pyVol->data;
    }
 
-   vol->data->reverseParameterDirection(direction);
+   pyVol->data->reverseParameterDirection(direction);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -206,17 +206,17 @@ PyDoc_STRVAR(volume_get_bounding_box__doc__,"Generate and return the Spline Volu
                                             "@rtype: List of floats");
 PyObject* Volume_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
-  if (!volume->isSpline()) {
-    Volume* vol = (Volume*)self;
-    vol->data = convertSplineVolume(volume);
-    volume = vol->data;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
   }
 
-  shared_ptr<Go::SplineVolume> spline = static_pointer_cast<Go::SplineVolume>(volume);
-  Go::BoundingBox box = spline->boundingBox();
+  shared_ptr<Go::SplineVolume> spVol = static_pointer_cast<Go::SplineVolume>(parVol);
+  Go::BoundingBox box = spVol->boundingBox();
   Go::Point low  = box.low();
   Go::Point high = box.high();
 
@@ -245,24 +245,24 @@ PyObject* Volume_GetConstParSurf(PyObject* self, PyObject* args, PyObject* kwds)
   double parameter = 0;
 
   static const char* keyWords[] = {"parameter", "pardir", NULL };
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"di",
-                                   (char**)keyWords,&parameter,&parDir) || !volume)
+                                   (char**)keyWords,&parameter,&parDir) || !parVol)
     return NULL;
                                                     
-  if (!volume->isSpline()) {
-    Volume* vol = (Volume*)self;
-    vol->data = convertSplineVolume(volume);
-    volume = vol->data;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
   }
 
-  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume);
-  Go::SplineSurface *surf = vol->constParamSurface(parameter, parDir);
+  shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+  Go::SplineSurface *spSurf = spVol->constParamSurface(parameter, parDir);
 
-  Surface* surface = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  surface->data = shared_ptr<Go::ParamSurface>(surf);
+  Surface* pySurf = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  pySurf->data = shared_ptr<Go::ParamSurface>(spSurf);
 
-  return (PyObject*) surface;
+  return (PyObject*) pySurf;
 }
 
 PyDoc_STRVAR(volume_get_faces__doc__,"Return the six faces\n"
@@ -270,17 +270,17 @@ PyDoc_STRVAR(volume_get_faces__doc__,"Return the six faces\n"
                                      "@rtype: List of Surface");
 PyObject* Volume_GetFaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
-  if (!volume->isSpline()) {
-    Volume* vol = (Volume*)self;
-    vol->data = convertSplineVolume(volume);
-    volume = vol->data;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
   }
 
-  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume);
-  std::vector<shared_ptr<Go::ParamSurface> > edges = vol->getAllBoundarySurfaces();
+  shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+  std::vector<shared_ptr<Go::ParamSurface> > edges = spVol->getAllBoundarySurfaces();
 
   std::vector<Surface*> vec(6);
   PyObject* result = PyList_New(0);
@@ -305,24 +305,24 @@ PyObject* Volume_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|b",
                                    (char**)keyWords, &withmult))
     return NULL;
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
-  if (!volume->isSpline()) {
-    Volume* vol = (Volume*)self;
-    vol->data = convertSplineVolume(volume);
-    volume = vol->data;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
   }
   PyObject* result = PyTuple_New(3);
 
-  shared_ptr<Go::SplineVolume> vol = static_pointer_cast<Go::SplineVolume>(volume);
+  shared_ptr<Go::SplineVolume> spVol = static_pointer_cast<Go::SplineVolume>(parVol);
   for (int i=0;i<3;++i) {
     PyObject* list = PyList_New(0);
     std::vector<double> knots;
     if (withmult)
-      knots = const_cast<Go::BsplineBasis&>(vol->basis(i)).getKnots();
+      knots = const_cast<Go::BsplineBasis&>(spVol->basis(i)).getKnots();
     else
-      vol->basis(i).knotsSimple(knots);
+      spVol->basis(i).knotsSimple(knots);
 
     for (std::vector<double>::iterator it  = knots.begin();
                                        it != knots.end();++it) {
@@ -339,22 +339,22 @@ PyDoc_STRVAR(volume_get_order__doc__,"Return spline volume order (polynomial deg
                                      "@rtype: List of three integers");
 PyObject* Volume_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
-  if (!volume->isSpline()) {
-    Volume* vol = (Volume*)self;
-    vol->data = convertSplineVolume(volume);
-    volume = vol->data;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
   }
 
-  shared_ptr<Go::SplineVolume> spline = static_pointer_cast<Go::SplineVolume>(volume);
+  shared_ptr<Go::SplineVolume> spVol = static_pointer_cast<Go::SplineVolume>(parVol);
 
   PyObject* result = PyList_New(0);
 
-  PyList_Append(result, Py_BuildValue((char*) "i", spline->order(0)));
-  PyList_Append(result, Py_BuildValue((char*) "i", spline->order(1)));
-  PyList_Append(result, Py_BuildValue((char*) "i", spline->order(2)));
+  PyList_Append(result, Py_BuildValue((char*) "i", spVol->order(0)));
+  PyList_Append(result, Py_BuildValue((char*) "i", spVol->order(1)));
+  PyList_Append(result, Py_BuildValue((char*) "i", spVol->order(2)));
 
   return result;
 }
@@ -374,15 +374,15 @@ PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&direction,&knot))
     return NULL;
 
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
-  if (!volume->isSpline()) {
-    Volume* vol = (Volume*)self;
-    vol->data = convertSplineVolume(volume);
-    volume = vol->data;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
   }
-  static_pointer_cast<Go::SplineVolume>(volume)->insertKnot(direction, knot);
+  static_pointer_cast<Go::SplineVolume>(parVol)->insertKnot(direction, knot);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -392,20 +392,20 @@ PyDoc_STRVAR(volume_make_rhs__doc__,"Make sure volume has a right-hand coordinat
                                     "@return: None");
 PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
 {
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
 
   // evaluate jacobian in mid point
-  Go::Array<double,6> params = volume->parameterSpan();
+  Go::Array<double,6> params = parVol->parameterSpan();
   double u = (params[0] + params[1]) / 2;
   double v = (params[2] + params[3]) / 2;
   double w = (params[4] + params[5]) / 2;
   vector<Go::Point> results(4); // one position and three derivatives
-  volume->point(results, u, v, w, 1);
+  parVol->point(results, u, v, w, 1);
   double jacobian = (results[1] % results[2])*results[3];
   if (jacobian < 0)
-    volume->reverseParameterDirection(2);
+    parVol->reverseParameterDirection(2);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -444,14 +444,14 @@ PyObject* Volume_Split(PyObject* self, PyObject* args, PyObject* kwds)
   if (p.empty())
     return NULL;
 
-  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(((Volume*)self)->data);
-  std::vector<shared_ptr<Go::SplineVolume> > volumes = vol->split(p,pardir);
+  shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(((Volume*)self)->data);
+  std::vector<shared_ptr<Go::SplineVolume> > volumes = spVol->split(p,pardir);
 
   PyObject* result = PyList_New(0);
   for (size_t i=0;i<volumes.size();++i) {
-    Volume* part = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
-    part->data = volumes[i];
-    PyList_Append(result,(PyObject*)part);
+    Volume* pyVol = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+    pyVol->data = volumes[i];
+    PyList_Append(result,(PyObject*)pyVol);
   }
 
   return result;
@@ -473,15 +473,15 @@ PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&raise_u,&raise_v,&raise_w))
     return NULL;
 
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
-   if (!volume->isSpline()) {
-     Volume* vol = (Volume*)self;
-     vol->data = convertSplineVolume(volume);
-     volume = vol->data;
+   if (!parVol->isSpline()) {
+     Volume* pyVol = (Volume*)self;
+     pyVol->data = convertSplineVolume(parVol);
+     parVol = pyVol->data;
    }
-   static_pointer_cast<Go::SplineVolume>(volume)->raiseOrder(raise_u,raise_v,raise_w);
+   static_pointer_cast<Go::SplineVolume>(parVol)->raiseOrder(raise_u,raise_v,raise_w);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -509,12 +509,12 @@ PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&umin,&umax,&vmin,&vmax,
                                                     &wmin,&wmax))
     return NULL;
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (volume) {
-    std::shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume);
-    if (!volume->isSpline())
-      ((Volume*)self)->data = vol;
-    vol->setParameterDomain(umin, umax, vmin, vmax, wmin, wmax);
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (parVol) {
+    std::shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+    if (!parVol->isSpline())
+      ((Volume*)self)->data = spVol;
+    spVol->setParameterDomain(umin, umax, vmin, vmax, wmin, wmax);
   }
 
   Py_INCREF(Py_None);
@@ -537,17 +537,17 @@ PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* k
                                    (char**)keyWords,&pardir1, &pardir2))
     return NULL;
 
-  shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(self);
-  if (!volume)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
 
-  Volume* vol = (Volume*)self;
-  if (!volume->isSpline()) {
-    vol->data = convertSplineVolume(volume);
-    volume = vol->data;
+  Volume* pyVol = (Volume*)self;
+  if (!parVol->isSpline()) {
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
   }
 
-  vol->data->swapParameterDirection(pardir1, pardir2);
+  pyVol->data->swapParameterDirection(pardir1, pardir2);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -588,18 +588,18 @@ PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&veco))
     return NULL;
 
-  shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(self);
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   shared_ptr<Go::Point>       vec = PyObject_AsGoPoint(veco);
-  if (!vol || !vec)
+  if (!parVol || !vec)
     return NULL;
 
-   if (!vol->isSpline()) {
+   if (!parVol->isSpline()) {
      Volume* volum = (Volume*)self;
-     volum->data = convertSplineVolume(vol);
-     vol = volum->data;
+     volum->data = convertSplineVolume(parVol);
+     parVol = volum->data;
    }
 
-   vol->translate(*vec);
+   parVol->translate(*vec);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -627,44 +627,44 @@ PyMethodDef Volume_methods[] = {
  
 Py_ssize_t Volume_NmbComponent(PyObject* self)
 {
-  shared_ptr<Go::ParamVolume> pv = PyObject_AsGoVolume(self);
-  if (!pv)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return 0;
 
-  shared_ptr<Go::SplineVolume> sv = convertSplineVolume(pv);
-  if(!sv)
+  shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+  if(!spVol)
     return 0;
 
-  return sv->numCoefs(0)*sv->numCoefs(1)*sv->numCoefs(2);
+  return spVol->numCoefs(0)*spVol->numCoefs(1)*spVol->numCoefs(2);
 }
 
 PyObject* Volume_GetComponent(PyObject* self, Py_ssize_t i)
 {
-  shared_ptr<Go::ParamVolume> pv = PyObject_AsGoVolume(self);
-  if (!pv)
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
     return NULL;
 
-  if(pv->dimension() != 3) 
+  if(parVol->dimension() != 3) 
     return NULL;
 
-  shared_ptr<Go::SplineVolume> sv = convertSplineVolume(pv);
-  if(!sv)
+  shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+  if(!spVol)
     return NULL;
   
-  int nComp =  sv->numCoefs(0)*sv->numCoefs(1)*sv->numCoefs(2);
+  int nComp =  spVol->numCoefs(0)*spVol->numCoefs(1)*spVol->numCoefs(2);
   if(i < 0 || i >= nComp) 
     return NULL;
 
   double x,y,z,w;
-  int dim = sv->dimension();
+  int dim = spVol->dimension();
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  if(sv->rational()) {
-    vector<double>::const_iterator cp = sv->rcoefs_begin() + i*(dim+1);
+  if(spVol->rational()) {
+    vector<double>::const_iterator cp = spVol->rcoefs_begin() + i*(dim+1);
     result->data.reset(new Go::Point(cp, cp+(dim+1)));
   } else {
-    x = *(sv->coefs_begin() + i*(sv->dimension() )+0) ;
-    y = *(sv->coefs_begin() + i*(sv->dimension() )+1) ;
-    z = *(sv->coefs_begin() + i*(sv->dimension() )+2) ;
+    x = *(spVol->coefs_begin() + i*(spVol->dimension() )+0) ;
+    y = *(spVol->coefs_begin() + i*(spVol->dimension() )+1) ;
+    z = *(spVol->coefs_begin() + i*(spVol->dimension() )+2) ;
     result->data.reset(new Go::Point(x,y,z));
   }
 
@@ -699,45 +699,45 @@ void init_Volume_Type()
 
 }
 
-shared_ptr<Go::SplineVolume> convertSplineVolume(shared_ptr<Go::ParamVolume> volume)
+shared_ptr<Go::SplineVolume> convertSplineVolume(shared_ptr<Go::ParamVolume> parVol)
 {
-  if (volume->instanceType() == Go::Class_SplineVolume)
-    return dynamic_pointer_cast<Go::SplineVolume, Go::ParamVolume>(volume);
-  shared_ptr<Go::ElementaryVolume> e_volume = dynamic_pointer_cast<Go::ElementaryVolume, Go::ParamVolume>(volume);
+  if (parVol->instanceType() == Go::Class_SplineVolume)
+    return dynamic_pointer_cast<Go::SplineVolume, Go::ParamVolume>(parVol);
+  shared_ptr<Go::ElementaryVolume> e_volume = dynamic_pointer_cast<Go::ElementaryVolume, Go::ParamVolume>(parVol);
   return shared_ptr<Go::SplineVolume>(e_volume->geometryVolume());
 }
 
-void printVolumeToStream(std::ostream& str, shared_ptr<Go::ParamVolume> vol)
+void printVolumeToStream(std::ostream& str, shared_ptr<Go::ParamVolume> parVol)
 {
-  if (vol) {
-    if (vol->instanceType() == Go::Class_Parallelepiped)
+  if (parVol) {
+    if (parVol->instanceType() == Go::Class_Parallelepiped)
       str << "Paralellepiped:" << std::endl;
-    if (vol->instanceType() == Go::Class_SphereVolume)
+    if (parVol->instanceType() == Go::Class_SphereVolume)
       str << "Sphere volume:" << std::endl;
-    if (vol->instanceType() == Go::Class_CylinderVolume)
+    if (parVol->instanceType() == Go::Class_CylinderVolume)
       str << "Cylinder volume:" << std::endl;
-    if (vol->instanceType() == Go::Class_ConeVolume)
+    if (parVol->instanceType() == Go::Class_ConeVolume)
       str << "Cone volume:" << std::endl;
-    if (vol->instanceType() == Go::Class_TorusVolume)
+    if (parVol->instanceType() == Go::Class_TorusVolume)
       str << "Torus volume:" << std::endl;
-    str << *vol;
+    str << *parVol;
   } else
     str << "(empty)";
 }
 
-void WriteVolumeG2(std::ofstream& g2_file, Volume* volume, bool convert)
+void WriteVolumeG2(std::ofstream& g2_file, Volume* pyVol, bool convert)
 {
   if (convert) {
-    shared_ptr<Go::SplineVolume> vol = convertSplineVolume(volume->data);
-    if (vol->isLeftHanded()) {
-      vol = shared_ptr<Go::SplineVolume>(vol->clone());
-      vol->reverseParameterDirection(2);
+    shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(pyVol->data);
+    if (spVol->isLeftHanded()) {
+      spVol = shared_ptr<Go::SplineVolume>(spVol->clone());
+      spVol->reverseParameterDirection(2);
     }
-    vol->writeStandardHeader(g2_file);
-    vol->write(g2_file);
+    spVol->writeStandardHeader(g2_file);
+    spVol->write(g2_file);
   } else {
-    volume->data->writeStandardHeader(g2_file);
-    volume->data->write(g2_file);
+    pyVol->data->writeStandardHeader(g2_file);
+    pyVol->data->write(g2_file);
   }
 }
 

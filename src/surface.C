@@ -103,8 +103,8 @@ PyDoc_STRVAR(surface_clone__doc__,"Clone a surface\n"
 PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   Surface* res = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  shared_ptr<Go::ParamSurface> srf = PyObject_AsGoSurface(self);
-  res->data.reset(srf->clone());
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  res->data.reset(parSurf->clone());
  
   return (PyObject*)res;
 }
@@ -126,15 +126,15 @@ PyDoc_STRVAR(surface_evaluate__doc__,"Evaluate surface at given parameter values
 PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value_u", "value_v", NULL };
-  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
   double value_u=0, value_v=0;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd",
-                                   (char**)keyWords,&value_u,&value_v) || !surf)
+                                   (char**)keyWords,&value_u,&value_v) || !parSurf)
     return NULL;
 
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(surf->dimension()));
-  surf->point(*result->data,value_u,value_v);
+  result->data.reset(new Go::Point(parSurf->dimension()));
+  parSurf->point(*result->data,value_u,value_v);
 
   return (PyObject*)result;
 }
@@ -153,18 +153,18 @@ PyDoc_STRVAR(surface_evaluate_tangent__doc__,"Evaluate the two tangent vectors o
 PyObject* Surface_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value_u", "value_v", "from_right_u", "from_right_v", NULL };
-  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
   bool from_right_u=true;
   bool from_right_v=true;
   double value_u=0, value_v=0;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd|bb",
                                    (char**)keyWords,&value_u,&value_v,
-                                   &from_right_u, &from_right_v) || !surf)
+                                   &from_right_u, &from_right_v) || !parSurf)
     return NULL;
 
   // evaluate the surface and two tangent vectors
   std::vector<Go::Point> tangents(3);
-  surf->point(tangents, value_u, value_v, from_right_u, from_right_v);
+  parSurf->point(tangents, value_u, value_v, from_right_u, from_right_v);
 
   // make the python Point objects
   Point* du = (Point*)Point_Type.tp_alloc(&Point_Type,0);
@@ -195,18 +195,18 @@ PyObject* Surface_FlipParametrization(PyObject* self, PyObject* args, PyObject* 
                                    (char**)keyWords,&direction))
     return NULL;
 
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
 
-   if (!surface->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surface);
-     surface = surf->data;
+   if (!parSurf->isSpline()) {
+     Surface* pySurf = (Surface*)self;
+     pySurf->data = convertSplineSurface(parSurf);
+     parSurf = pySurf->data;
    }
 
-   Go::SplineSurface *ssurf = surface->asSplineSurface();
-   ssurf->reverseParameterDirection(direction == 0);
+   Go::SplineSurface *spSurf = parSurf->asSplineSurface();
+   spSurf->reverseParameterDirection(direction == 0);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -216,18 +216,18 @@ PyDoc_STRVAR(surface_force_rational__doc__,"Enforce a rational representation of
                                            "@return: None");
 PyObject* Surface_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
 
-   if (!surface->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surface);
-     surface = surf->data;
+   if (!parSurf->isSpline()) {
+     Surface* pySurf = (Surface*)self;
+     pySurf->data = convertSplineSurface(parSurf);
+     parSurf = pySurf->data;
    }
 
-   Go::SplineSurface *ssurf = surface->asSplineSurface();
-   ssurf->representAsRational();
+   Go::SplineSurface *spSurf = parSurf->asSplineSurface();
+   spSurf->representAsRational();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -247,24 +247,24 @@ PyObject* Surface_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&lower_u,&lower_v))
     return NULL;
 
-  shared_ptr<Go::ParamSurface> surf2 = PyObject_AsGoSurface(self);
-  if (!surf2)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
-   if (!surf2->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surf2);
-     surf2 = surf->data;
+   if (!parSurf->isSpline()) {
+     Surface* pySurf = (Surface*)self;
+     pySurf->data = convertSplineSurface(parSurf);
+     parSurf = pySurf->data;
    }
-   shared_ptr<Go::SplineSurface> surface = 
-                        static_pointer_cast<Go::SplineSurface>(surf2);
-   std::vector<double>::const_iterator first =  surface->basis(0).begin()+lower_u;
-   std::vector<double>::const_iterator last  =  surface->basis(0).end()-lower_u;
-   Go::BsplineBasis b1 = Go::BsplineBasis(surface->order_u()-lower_u,first,last);
-   first =  surface->basis(1).begin()+lower_v;
-   last  =  surface->basis(1).end()-lower_v;
-   Go::BsplineBasis b2 = Go::BsplineBasis(surface->order_v()-lower_v,first,last);
+   shared_ptr<Go::SplineSurface> spSurf = 
+                        static_pointer_cast<Go::SplineSurface>(parSurf);
+   std::vector<double>::const_iterator first =  spSurf->basis(0).begin()+lower_u;
+   std::vector<double>::const_iterator last  =  spSurf->basis(0).end()-lower_u;
+   Go::BsplineBasis b1 = Go::BsplineBasis(spSurf->order_u()-lower_u,first,last);
+   first =  spSurf->basis(1).begin()+lower_v;
+   last  =  spSurf->basis(1).end()-lower_v;
+   Go::BsplineBasis b2 = Go::BsplineBasis(spSurf->order_v()-lower_v,first,last);
 
-   if (surface->rational())
+   if (spSurf->rational())
      std::cout << "WARNING: The geometry basis is rational (using NURBS)\n."
                << "         The basis for the unknown fields of one degree"
                << "         higher will however be non-rational.\n"
@@ -277,16 +277,16 @@ PyObject* Surface_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
      vg[i] = b2.grevilleParameter(i);
 
    // Evaluate the spline surface at all points
-   std::vector<double> XYZ(surface->dimension()*ug.size()*vg.size());
-   surface->gridEvaluator(XYZ,ug,vg);
+   std::vector<double> XYZ(spSurf->dimension()*ug.size()*vg.size());
+   spSurf->gridEvaluator(XYZ,ug,vg);
 
    // Project the coordinates onto the new basis (the 2nd XYZ is dummy here)
-   Surface* surf = (Surface*)self;
-   surf->data = convertSplineSurface(surf2);
-   surf->data.reset(Go::SurfaceInterpolator::regularInterpolation(b1, b2, ug,
-                                                                  vg, XYZ,
-                                                          surface->dimension(),
-                                                                  false, XYZ));
+   Surface* pySurf = (Surface*)self;
+   pySurf->data = convertSplineSurface(parSurf);
+   pySurf->data.reset(Go::SurfaceInterpolator::regularInterpolation(b1, b2, ug,
+                                                                    vg, XYZ,
+                                                                    spSurf->dimension(),
+                                                                    false, XYZ));
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -306,15 +306,15 @@ PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&raise_u,&raise_v))
     return NULL;
 
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
-   if (!surface->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surface);
-     surface = surf->data;
+   if (!parSurf->isSpline()) {
+     Surface* pySurf = (Surface*)self;
+     pySurf->data = convertSplineSurface(parSurf);
+     parSurf = pySurf->data;
    }
-   static_pointer_cast<Go::SplineSurface>(surface)->raiseOrder(raise_u,raise_v);
+   static_pointer_cast<Go::SplineSurface>(parSurf)->raiseOrder(raise_u,raise_v);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -325,24 +325,24 @@ PyDoc_STRVAR(surface_get_edges__doc__,"Return the four edge curves in (parametri
                                       "@rtype: List of Curve");
 PyObject* Surface_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
-  if (!surface->isSpline()) {
-    Surface* surf = (Surface*)self;
-    surf->data = convertSplineSurface(surface);
-    surface = surf->data;
+  if (!parSurf->isSpline()) {
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
   }
 
-  Go::SplineSurface* ss = surface->asSplineSurface();
+  Go::SplineSurface* spSurf = parSurf->asSplineSurface();
   Curve* curve0 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   Curve* curve1 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   Curve* curve2 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   Curve* curve3 = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-  curve0->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(0));
-  curve1->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(1));
-  curve2->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(2));
-  curve3->data = shared_ptr<Go::SplineCurve>(ss->edgeCurve(3));
+  curve0->data = shared_ptr<Go::SplineCurve>(spSurf->edgeCurve(0));
+  curve1->data = shared_ptr<Go::SplineCurve>(spSurf->edgeCurve(1));
+  curve2->data = shared_ptr<Go::SplineCurve>(spSurf->edgeCurve(2));
+  curve3->data = shared_ptr<Go::SplineCurve>(spSurf->edgeCurve(3));
 
   PyObject* result = PyList_New(0);
   PyList_Append(result, (PyObject*) curve0);
@@ -367,25 +367,25 @@ PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords, &withmult))
     return NULL;
 
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
-  if (!surface->isSpline()) {
-    Surface* surf = (Surface*)self;
-    surf->data = convertSplineSurface(surface);
-    surface = surf->data;
+  if (!parSurf->isSpline()) {
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
   }
 
   PyObject* result = PyTuple_New(2);
-  shared_ptr<Go::SplineSurface> surf = static_pointer_cast<Go::SplineSurface>(surface);
+  shared_ptr<Go::SplineSurface> spSurf = static_pointer_cast<Go::SplineSurface>(parSurf);
   for (int i=0;i<2;++i) {
     PyObject* list = PyList_New(0);
     std::vector<double> knots;
     if (withmult) {
-      Go::BsplineBasis& basis = (i==0?surf->basis_u():surf->basis_v());
+      Go::BsplineBasis& basis = (i==0?spSurf->basis_u():spSurf->basis_v());
       knots = basis.getKnots();
     } else
-      surf->basis(i).knotsSimple(knots);
+      spSurf->basis(i).knotsSimple(knots);
     for (std::vector<double>::iterator it  = knots.begin();
                                        it != knots.end();++it) {
       PyList_Append(list,Py_BuildValue((char*)"d",*it));
@@ -401,16 +401,16 @@ PyDoc_STRVAR(surface_get_order__doc__,"Return spline surface order (polynomial d
                                       "@rtype: List of two integers");
 PyObject* Surface_GetOrder(PyObject* self, PyObject* args)
 {
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
-  if (!surface->isSpline()) {
-    Surface* surf = (Surface*)self;
-    surf->data = convertSplineSurface(surface);
-    surface = surf->data;
+  if (!parSurf->isSpline()) {
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
   }
 
-  shared_ptr<Go::SplineSurface> spline = static_pointer_cast<Go::SplineSurface>(surface);
+  shared_ptr<Go::SplineSurface> spline = static_pointer_cast<Go::SplineSurface>(parSurf);
   if(!spline)
     return NULL;
 
@@ -431,27 +431,27 @@ PyDoc_STRVAR(surface_get_sub_surf__doc__,"Get a Spline Surface which represent a
                                          "@rtype: Surface");
 PyObject* Surface_GetSubSurf(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
   static const char* keyWords[] = {"from_par", "to_par", NULL };
   PyObject *lowerLefto, *upperRighto;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
-                                   (char**)keyWords, &lowerLefto, &upperRighto) || !surface)
+                                   (char**)keyWords, &lowerLefto, &upperRighto) || !parSurf)
     return NULL;
 
-  if (!surface->isSpline()) {
-    Surface* surf = (Surface*)self;
-    surf->data = convertSplineSurface(surface);
-    surface = surf->data;
+  if (!parSurf->isSpline()) {
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
   }
-  shared_ptr<Go::SplineSurface> spline = static_pointer_cast<Go::SplineSurface>(surface);
-  if(!spline)
+  shared_ptr<Go::SplineSurface> spSurf = static_pointer_cast<Go::SplineSurface>(parSurf);
+  if(!spSurf)
     return NULL;
 
   shared_ptr<Go::Point> lowerLeft  = PyObject_AsGoPoint(lowerLefto);
   shared_ptr<Go::Point> upperRight = PyObject_AsGoPoint(upperRighto);
 
-  Go::SplineSurface *subSurf = spline->subSurface((*lowerLeft)[0], (*lowerLeft)[1], (*upperRight)[0], (*upperRight)[1]);
+  Go::SplineSurface *subSurf = spSurf->subSurface((*lowerLeft)[0], (*lowerLeft)[1], (*upperRight)[0], (*upperRight)[1]);
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data = shared_ptr<Go::ParamSurface>(subSurf);
@@ -474,18 +474,18 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&direction,&knot))
     return NULL;
 
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
-   if (!surface->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surface);
-     surface = surf->data;
+   if (!parSurf->isSpline()) {
+     Surface* pySurf = (Surface*)self;
+     pySurf->data = convertSplineSurface(parSurf);
+     parSurf = pySurf->data;
    }
    if (direction == 0)
-     static_pointer_cast<Go::SplineSurface>(surface)->insertKnot_u(knot);
+     static_pointer_cast<Go::SplineSurface>(parSurf)->insertKnot_u(knot);
    else
-     static_pointer_cast<Go::SplineSurface>(surface)->insertKnot_v(knot);
+     static_pointer_cast<Go::SplineSurface>(parSurf)->insertKnot_v(knot);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -498,11 +498,11 @@ PyDoc_STRVAR(surface_project__doc__,"Project the surface onto an axis or plane p
 PyObject* Surface_Project(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", NULL };
-  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
   char *sAxis;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
-                                   (char**)keyWords,&sAxis) || !surf)
+                                   (char**)keyWords,&sAxis) || !parSurf)
     return NULL;
 
   bool bAxis[3];
@@ -519,14 +519,14 @@ PyObject* Surface_Project(PyObject* self, PyObject* args, PyObject* kwds)
     sAxis++;
   }
 
-  Surface* srf = (Surface*)self;
-  srf->data = convertSplineSurface(surf);
+  Surface* pySurf = (Surface*)self;
+  pySurf->data = convertSplineSurface(parSurf);
 
-  shared_ptr<Go::SplineSurface> ssurf    = static_pointer_cast<Go::SplineSurface>(srf->data);
-  bool                          rational = ssurf->rational();
-  int                           dim      = ssurf->dimension();
-  std::vector<double>::iterator coefs    = (rational) ? ssurf->rcoefs_begin() : ssurf->coefs_begin();
-  std::vector<double>::iterator coefsEnd = (rational) ? ssurf->rcoefs_end()   : ssurf->coefs_end();
+  shared_ptr<Go::SplineSurface> spSurf   = static_pointer_cast<Go::SplineSurface>(pySurf->data);
+  bool                          rational = spSurf->rational();
+  int                           dim      = spSurf->dimension();
+  std::vector<double>::iterator coefs    = (rational) ? spSurf->rcoefs_begin() : spSurf->coefs_begin();
+  std::vector<double>::iterator coefsEnd = (rational) ? spSurf->rcoefs_end()   : spSurf->coefs_end();
   while(coefs != coefsEnd) {
     if(bAxis[0] && dim>0)
       coefs[0] = 0.0;
@@ -560,10 +560,10 @@ PyObject* Surface_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
   if (surface) {
-    std::shared_ptr<Go::SplineSurface> surf = convertSplineSurface(surface);
+    std::shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(surface);
     if (!surface->isSpline())
-      ((Surface*)self)->data = surf;
-    surf->setParameterDomain(umin, umax, vmin, vmax);
+      ((Surface*)self)->data = spSurf;
+    spSurf->setParameterDomain(umin, umax, vmin, vmax);
   }
 
   Py_INCREF(Py_None);
@@ -586,14 +586,14 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&axiso,&angle))
     return NULL;
 
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
   shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
-  if (!surface || !axis)
+  if (!parSurf || !axis)
     return NULL;
 
-  if (surface->instanceType() == Go::Class_Cylinder) { 
+  if (parSurf->instanceType() == Go::Class_Cylinder) { 
     // since we can't move cylinders, we have to create a new one and trash the old one
-    shared_ptr<Go::Cylinder> cyl = static_pointer_cast<Go::Cylinder>(surface);
+    shared_ptr<Go::Cylinder> cyl = static_pointer_cast<Go::Cylinder>(parSurf);
     Go::Point x, y, z, c; // x,y,z-axis and center point
     double r = cyl->getRadius();
     cyl->getCoordinateAxes(x,y,z);
@@ -611,16 +611,16 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
     }
     ((Surface*)self)->data.reset(result);
 
-  } else if (!surface->isSpline()) {
+  } else if (!parSurf->isSpline()) {
     // for all other elementary surfaces, we convert to SplineSurface and work on with that
-    Surface* surf = (Surface*)self;
-    surf->data = convertSplineSurface(surface);
-    surface = surf->data;
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
     Go::GeometryTools::rotateSplineSurf(*axis, angle,
-                       *static_pointer_cast<Go::SplineSurface>(surface));
+                       *static_pointer_cast<Go::SplineSurface>(parSurf));
   } else {
     Go::GeometryTools::rotateSplineSurf(*axis, angle,
-                       *static_pointer_cast<Go::SplineSurface>(surface));
+                       *static_pointer_cast<Go::SplineSurface>(parSurf));
   }
 
    Py_INCREF(Py_None);
@@ -631,18 +631,18 @@ PyDoc_STRVAR(surface_swap_parametrization__doc__,"Swaps the two surface paramete
                                                  "@return: None");
 PyObject* Surface_SwapParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
-  if (!surface)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
 
-   if (!surface->isSpline()) {
-     Surface* surf = (Surface*)self;
-     surf->data = convertSplineSurface(surface);
-     surface = surf->data;
+   if (!parSurf->isSpline()) {
+     Surface* pySurf = (Surface*)self;
+     pySurf->data = convertSplineSurface(parSurf);
+     parSurf = pySurf->data;
    }
 
-   Go::SplineSurface *ssurf = surface->asSplineSurface();
-   ssurf->swapParameterDirection();
+   Go::SplineSurface *spSurf = parSurf->asSplineSurface();
+   spSurf->swapParameterDirection();
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -661,14 +661,14 @@ PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&veco))
     return NULL;
 
-  shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
   shared_ptr<Go::Point>        vec     = PyObject_AsGoPoint(veco);
-  if (!surface || !vec)
+  if (!parSurf || !vec)
     return NULL;
 
-  if (surface->instanceType() == Go::Class_Cylinder) { 
+  if (parSurf->instanceType() == Go::Class_Cylinder) { 
     // since we can't move cylinders, we have to create a new one and trash the old one
-    shared_ptr<Go::Cylinder> cyl = static_pointer_cast<Go::Cylinder>(surface);
+    shared_ptr<Go::Cylinder> cyl = static_pointer_cast<Go::Cylinder>(parSurf);
     Go::Point x, y, z, c; // x,y,z-axis and center point
     double r = cyl->getRadius();
     cyl->getCoordinateAxes(x,y,z);
@@ -681,16 +681,16 @@ PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
     }
     ((Surface*)self)->data.reset(result);
 
-  } else if (!surface->isSpline()) {
+  } else if (!parSurf->isSpline()) {
     // for all other elementary surfaces, we convert to SplineSurface and work on with that
-    Surface* surf = (Surface*)self;
-    surf->data = convertSplineSurface(surface);
-    surface = surf->data;
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
     Go::GeometryTools::translateSplineSurf(*vec, 
-                              *static_pointer_cast<Go::SplineSurface>(surface));
+                              *static_pointer_cast<Go::SplineSurface>(parSurf));
   } else {
     Go::GeometryTools::translateSplineSurf(*vec, 
-                              *static_pointer_cast<Go::SplineSurface>(surface));
+                              *static_pointer_cast<Go::SplineSurface>(parSurf));
   }
 
 
@@ -700,16 +700,16 @@ PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 {
-  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(o1);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(o1);
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(o2);
   Surface* result = NULL;
-  if (surf && point) {
+  if (parSurf && point) {
     result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-    if (surf->isSpline())
+    if (parSurf->isSpline())
       result->data = shared_ptr<Go::ParamSurface>(
-          new Go::SplineSurface(*static_pointer_cast<Go::SplineSurface>(surf)));
+          new Go::SplineSurface(*static_pointer_cast<Go::SplineSurface>(parSurf)));
     else
-      result->data = convertSplineSurface(surf);
+      result->data = convertSplineSurface(parSurf);
 
     Go::GeometryTools::translateSplineSurf(*point, 
                          *static_pointer_cast<Go::SplineSurface>(result->data));
@@ -720,23 +720,23 @@ PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 
 PyObject* Surface_Scale(PyObject* o1, PyObject* o2)
 {
-  shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(o1);
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(o1);
   double scale = 1.0;
   if (PyObject_TypeCheck(o2,&PyFloat_Type))
     scale = PyFloat_AsDouble(o2);
   if (PyObject_TypeCheck(o2,&PyInt_Type))
     scale = PyInt_AsLong(o2);
-  if (surf && scale > 0) {
-    if (!surf->isSpline())
-      ((Surface*)o1)->data = convertSplineSurface(surf);
-    shared_ptr<Go::SplineSurface> ssurf = 
+  if (parSurf && scale > 0) {
+    if (!parSurf->isSpline())
+      ((Surface*)o1)->data = convertSplineSurface(parSurf);
+    shared_ptr<Go::SplineSurface> spSurf = 
       dynamic_pointer_cast<Go::SplineSurface,
                            Go::ParamSurface>(((Surface*)o1)->data);
-    for (std::vector<double>::iterator it  = ssurf->ctrl_begin(); 
-                                       it != ssurf->ctrl_end(); ) {
-      for (int i=0;i<surf->dimension();++i)
+    for (std::vector<double>::iterator it  = spSurf->ctrl_begin(); 
+                                       it != spSurf->ctrl_end(); ) {
+      for (int i=0;i<parSurf->dimension();++i)
         *it++ *= scale;
-      if (ssurf->rational())
+      if (spSurf->rational())
         it++;
     }
   }
@@ -767,44 +767,44 @@ PyMethodDef Surface_methods[] = {
 
 Py_ssize_t Surface_NmbComponent(PyObject* self)
 {
-  shared_ptr<Go::ParamSurface> ps = PyObject_AsGoSurface(self);
-  if (!ps)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return 0;
 
-  shared_ptr<Go::SplineSurface> ss = convertSplineSurface(ps);
-  if(!ss)
+  shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
+  if(!spSurf)
     return 0;
 
-  return ss->numCoefs_u() * ss->numCoefs_v();
+  return spSurf->numCoefs_u() * spSurf->numCoefs_v();
 }
 
 PyObject* Surface_GetComponent(PyObject* self, Py_ssize_t i)
 {
-  shared_ptr<Go::ParamSurface> ps = PyObject_AsGoSurface(self);
-  if (!ps)
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
     return NULL;
 
-  if(ps->dimension() != 3) 
+  if(parSurf->dimension() != 3) 
     return NULL;
 
-  shared_ptr<Go::SplineSurface> ss = convertSplineSurface(ps);
-  if(!ss)
+  shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
+  if(!spSurf)
     return NULL;
   
-  int nCoefs = ss->numCoefs_u() * ss->numCoefs_v();
+  int nCoefs = spSurf->numCoefs_u() * spSurf->numCoefs_v();
   if(i < 0 || i >= nCoefs)
     return NULL;
 
   double x,y,z,w;
-  int dim = ss->dimension();
+  int dim = spSurf->dimension();
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  if(ss->rational()) {
-    vector<double>::const_iterator cp = ss->rcoefs_begin() + i*(dim+1);
+  if(spSurf->rational()) {
+    vector<double>::const_iterator cp = spSurf->rcoefs_begin() + i*(dim+1);
     result->data.reset(new Go::Point(cp, cp+(dim+1)));
   } else {
-    x = *(ss->coefs_begin() + i*(ss->dimension() )+0) ;
-    y = *(ss->coefs_begin() + i*(ss->dimension() )+1) ;
-    z = *(ss->coefs_begin() + i*(ss->dimension() )+2) ;
+    x = *(spSurf->coefs_begin() + i*(spSurf->dimension() )+0) ;
+    y = *(spSurf->coefs_begin() + i*(spSurf->dimension() )+1) ;
+    z = *(spSurf->coefs_begin() + i*(spSurf->dimension() )+2) ;
     result->data.reset(new Go::Point(x,y,z));
   }
 
@@ -841,48 +841,48 @@ void init_Surface_Type()
 //! \brief Check if a surface is a spline surface
 //! \return The surface itself if it s a spline surface,
 //          the surface converted to a spline surface otherwise.
-shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> surface)
+shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> parSurf)
 {
-  if (surface->instanceType() == Go::Class_SplineSurface)
-    return dynamic_pointer_cast<Go::SplineSurface, Go::ParamSurface>(surface);
-  shared_ptr<Go::ElementarySurface> e_surface = dynamic_pointer_cast<Go::ElementarySurface, Go::ParamSurface>(surface);
+  if (parSurf->instanceType() == Go::Class_SplineSurface)
+    return dynamic_pointer_cast<Go::SplineSurface, Go::ParamSurface>(parSurf);
+  shared_ptr<Go::ElementarySurface> e_surface = dynamic_pointer_cast<Go::ElementarySurface, Go::ParamSurface>(parSurf);
   if (e_surface)
     return shared_ptr<Go::SplineSurface>(e_surface->geometrySurface());
   return shared_ptr<Go::SplineSurface>();
 }
 
-void printSurfaceToStream(std::ostream& str, shared_ptr<Go::ParamSurface> surf)
+void printSurfaceToStream(std::ostream& str, shared_ptr<Go::ParamSurface> parSurf)
 {
-  if (surf) {
-    if (surf->instanceType() == Go::Class_Plane)
+  if (parSurf) {
+    if (parSurf->instanceType() == Go::Class_Plane)
       str << "Plane:" << std::endl;
-    if (surf->instanceType() == Go::Class_Sphere)
+    if (parSurf->instanceType() == Go::Class_Sphere)
       str << "Sphere surface:" << std::endl;
-    if (surf->instanceType() == Go::Class_Cylinder)
+    if (parSurf->instanceType() == Go::Class_Cylinder)
       str << "Cylinder surface:" << std::endl;
-    if (surf->instanceType() == Go::Class_Cone)
+    if (parSurf->instanceType() == Go::Class_Cone)
       str << "Cone surface:" << std::endl;
-    if (surf->instanceType() == Go::Class_Torus)
+    if (parSurf->instanceType() == Go::Class_Torus)
       str << "Torus surface:" << std::endl;
-    if (surf->instanceType() == Go::Class_Disc)
+    if (parSurf->instanceType() == Go::Class_Disc)
       str << "Circular disc:" << std::endl;
-    str << *surf;
+    str << *parSurf;
   } else
     str << "(empty)";
 }
 
-void WriteSurfaceG2(std::ofstream& g2_file, Surface* surface, bool convert)
+void WriteSurfaceG2(std::ofstream& g2_file, Surface* pySurf, bool convert)
 {
-  if (!surface->data)
+  if (!pySurf->data)
     return;
   if (convert) {
-    shared_ptr<Go::SplineSurface> srf = convertSplineSurface(surface->data);
-    if (srf) {
-      srf->writeStandardHeader(g2_file);
-      srf->write(g2_file);
+    shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(pySurf->data);
+    if (spSurf) {
+      spSurf->writeStandardHeader(g2_file);
+      spSurf->write(g2_file);
     }
   } else {
-    surface->data->writeStandardHeader(g2_file);
-    surface->data->write(g2_file);
+    pySurf->data->writeStandardHeader(g2_file);
+    pySurf->data->write(g2_file);
   }
 }

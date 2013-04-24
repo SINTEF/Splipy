@@ -88,21 +88,21 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords, &oCrv, &continuity, &reparam))
     return NULL;
 
-  shared_ptr<Go::ParamCurve> crv2 = PyObject_AsGoCurve(self);
-  shared_ptr<Go::ParamCurve> crv;
-  if (crv2->instanceType() != Go::Class_SplineCurve) {
+  shared_ptr<Go::ParamCurve> parCrv2 = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv;
+  if (parCrv2->instanceType() != Go::Class_SplineCurve) {
     std::cerr << "Converting param curve to a spline curve (append not implemented for param curves)" << std::endl;
-    crv = ((Curve*)self)->data = convertSplineCurve(crv2);
+    parCrv = ((Curve*)self)->data = convertSplineCurve(parCrv2);
   }
   else
-    crv = dynamic_pointer_cast<Go::SplineCurve,Go::ParamCurve>(crv);
+    parCrv = dynamic_pointer_cast<Go::SplineCurve,Go::ParamCurve>(parCrv);
 
-  shared_ptr<Go::SplineCurve> otherCrv = convertSplineCurve(PyObject_AsGoCurve(oCrv));
-  if (!crv || !otherCrv)
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(PyObject_AsGoCurve(oCrv));
+  if (!parCrv || !spCrv)
     return NULL;
 
   double dist;
-  crv->appendCurve(otherCrv.get(), continuity, dist, reparam);
+  parCrv->appendCurve(spCrv.get(), continuity, dist, reparam);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -114,8 +114,8 @@ PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
 PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   Curve* res = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-  shared_ptr<Go::ParamCurve> crv = PyObject_AsGoCurve(self);
-  res->data.reset(crv->clone());
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  res->data.reset(parCrv->clone());
  
   return (PyObject*)res;
 }
@@ -146,15 +146,15 @@ PyDoc_STRVAR(curve_evaluate__doc__,"Evaluate curve at a parameter value\n"
 PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value", NULL };
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   double value=0;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
-                                   (char**)keyWords,&value) || !curve)
+                                   (char**)keyWords,&value) || !parCrv)
     return NULL;
 
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(curve->dimension()));
-  curve->point(*result->data,value);
+  result->data.reset(new Go::Point(parCrv->dimension()));
+  parCrv->point(*result->data,value);
 
   return (PyObject*)result;
 }
@@ -167,14 +167,14 @@ PyDoc_STRVAR(curve_evaluate_tangent__doc__,"Evaluate the curve tangent at a para
 PyObject* Curve_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value", NULL };
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   double value=0;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
-                                   (char**)keyWords,&value) || !curve)
+                                   (char**)keyWords,&value) || !parCrv)
     return NULL;
 
   std::vector<Go::Point> pts(2);
-  curve->point(pts, value, 1);
+  parCrv->point(pts, value, 1);
 
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
   result->data.reset(new Go::Point(pts[1]));
@@ -186,11 +186,11 @@ PyDoc_STRVAR(curve_flip_parametrization__doc__,"Flip curve parametrization\n"
                                                "@return: None");
 PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
-  if (!curve)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
 
-  curve->reverseParameterDirection();
+  parCrv->reverseParameterDirection();
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -200,16 +200,16 @@ PyDoc_STRVAR(curve_force_rational__doc__,"Enforce a rational representation of t
                                          "@return: None");
 PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
-  if (!curve)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
 
-  shared_ptr<Go::SplineCurve> scrv = convertSplineCurve(curve);
-  if(!scrv)
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
+  if(!spCrv)
     return NULL;
-  ((Curve*)self)->data = scrv;
+  ((Curve*)self)->data = spCrv;
 
-  scrv->representAsRational();
+  spCrv->representAsRational();
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -227,18 +227,18 @@ PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|b",
                                    (char**)keyWords, &withmult))
     return NULL;
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
-  if (!curve)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
-  Curve* crv = (Curve*)self;
-  crv->data = convertSplineCurve(curve);
+  Curve* pyCrv = (Curve*)self;
+  pyCrv->data = convertSplineCurve(parCrv);
   PyObject* result = PyList_New(0);
   std::vector<double> knots;
-  shared_ptr<Go::SplineCurve> scrv = static_pointer_cast<Go::SplineCurve>(crv->data);
+  shared_ptr<Go::SplineCurve> spCrv = static_pointer_cast<Go::SplineCurve>(pyCrv->data);
   if (withmult) 
-    knots = scrv->basis().getKnots();
+    knots = spCrv->basis().getKnots();
   else
-    scrv->basis().knotsSimple(knots);
+    spCrv->basis().knotsSimple(knots);
   for (std::vector<double>::iterator it  = knots.begin();
                                      it != knots.end();++it) {
     PyList_Append(result,Py_BuildValue((char*)"d",*it));
@@ -252,15 +252,15 @@ PyDoc_STRVAR(curve_get_order__doc__,"Get the curve order (polynomial degree + 1)
                                     "@rtype: Integer");
 PyObject* Curve_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
-  if (!curve)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
 
-  shared_ptr<Go::SplineCurve> sc = convertSplineCurve(curve);
-  if(!sc)
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
+  if(!spCrv)
     return NULL;
 
-  return Py_BuildValue((char*)"i",sc->order());
+  return Py_BuildValue((char*)"i",spCrv->order());
 }
 
 PyDoc_STRVAR(curve_get_parameter_at_point__doc__,"Get all Curve parameter values at a geometric Point\n"
@@ -283,18 +283,18 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
     return NULL;
 
   // get ParamCurve from Python object
-  shared_ptr<Go::ParamCurve> curvep = PyObject_AsGoCurve(self);
-  if (!curvep)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
 
   // get SplineCurve from ParamCurve
-  shared_ptr<Go::SplineCurve> curves = convertSplineCurve(curvep);
-  if (!curves)
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
+  if (!spCrv)
     return NULL;
 
   // get SISL curve from SplineCurve
-  SISLCurve *crv = Curve2SISL(*curves, true);
-  if (!crv) 
+  SISLCurve *sislCrv = Curve2SISL(*spCrv, true);
+  if (!sislCrv) 
     return NULL;
 
   // setup SISL parameters
@@ -303,14 +303,14 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
   double epsge    = modState.gapTolerance; // Geometry resolution
   int    numPts;          // number of intersection points
   int    numCrv;          // number of intersection curves (Wait, what? intersection CURVES?)
-  double *parCrv;         // array of parameter-values at intersection points
+  double *parPts;         // array of parameter-values at intersection points
   SISLIntcurve **intCrvs; // array of intersection curves  (I have no idea how you get these guys.
                           // We're silently ignoring and hoping for the best)
   int    status;          // errors/warnings from evaluation
 
 
-  s1871(crv, pt, pointDim, epsge, // input arguments
-        &numPts, &parCrv,         // output points
+  s1871(sislCrv, pt, pointDim, epsge, // input arguments
+        &numPts, &parPts,         // output points
         &numCrv, &intCrvs,        // output curves
         &status);                 // output errors
 
@@ -326,7 +326,7 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
   PyObject* result = PyList_New(0);
   std::vector<double> knots;
   for (int i=0; i<numPts; i++) {
-    PyList_Append(result,Py_BuildValue((char*)"d",parCrv[i]));
+    PyList_Append(result,Py_BuildValue((char*)"d",parPts[i]));
   }
                 
   return result;
@@ -339,17 +339,17 @@ PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve\n"
 PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"knot", NULL };
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   double knot;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
-                                   (char**)keyWords,&knot) || !curve)
+                                   (char**)keyWords,&knot) || !parCrv)
     return NULL;
 
-  Curve* crv = (Curve*)self;
-  crv->data = convertSplineCurve(curve);
+  Curve* pyCrv = (Curve*)self;
+  pyCrv->data = convertSplineCurve(parCrv);
 
-  static_pointer_cast<Go::SplineCurve>(crv->data)->insertKnot(knot);
+  static_pointer_cast<Go::SplineCurve>(pyCrv->data)->insertKnot(knot);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -359,14 +359,14 @@ PyDoc_STRVAR(curve_normalize__doc__,"Normalize a curve in the parameter domain\n
                                     "@return: None");
 PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
-  if (!curve)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
 
-  Curve* crv = (Curve*)self;
-  crv->data = convertSplineCurve(curve);
+  Curve* pyCrv = (Curve*)self;
+  pyCrv->data = convertSplineCurve(parCrv);
 
-  crv->data->setParameterInterval(0,1);
+  pyCrv->data->setParameterInterval(0,1);
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -379,11 +379,11 @@ PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along
 PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", NULL };
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   char *sAxis;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
-                                   (char**)keyWords,&sAxis) || !curve)
+                                   (char**)keyWords,&sAxis) || !parCrv)
     return NULL;
 
   bool bAxis[3];
@@ -400,14 +400,14 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
     sAxis++;
   }
 
-  Curve* crv = (Curve*)self;
-  crv->data = convertSplineCurve(curve);
+  Curve* pyCrv = (Curve*)self;
+  pyCrv->data = convertSplineCurve(parCrv);
 
-  shared_ptr<Go::SplineCurve>   scurve   = static_pointer_cast<Go::SplineCurve>(crv->data);
-  bool                          rational = scurve->rational();
-  int                           dim      = scurve->dimension();
-  std::vector<double>::iterator coefs    = (rational) ? scurve->rcoefs_begin() : scurve->coefs_begin();
-  std::vector<double>::iterator coefsEnd = (rational) ? scurve->rcoefs_end()   : scurve->coefs_end();
+  shared_ptr<Go::SplineCurve>   spCrv    = static_pointer_cast<Go::SplineCurve>(pyCrv->data);
+  bool                          rational = spCrv->rational();
+  int                           dim      = spCrv->dimension();
+  std::vector<double>::iterator coefs    = (rational) ? spCrv->rcoefs_begin() : spCrv->coefs_begin();
+  std::vector<double>::iterator coefsEnd = (rational) ? spCrv->rcoefs_end()   : spCrv->coefs_end();
   while(coefs != coefsEnd) {
     if(bAxis[0] && dim>0)
       coefs[0] = 0.0;
@@ -429,17 +429,17 @@ PyDoc_STRVAR(curve_raise_order__doc__,"Raise the order of the curve's B-spline b
 PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"n", NULL };
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   int amount;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
-                                   (char**)keyWords,&amount) || !curve)
+                                   (char**)keyWords,&amount) || !parCrv)
     return NULL;
 
-  Curve* crv = (Curve*)self;
-  crv->data = convertSplineCurve(curve);
+  Curve* pyCrv = (Curve*)self;
+  pyCrv->data = convertSplineCurve(parCrv);
 
-  static_pointer_cast<Go::SplineCurve>(crv->data)->raiseOrder(amount);
+  static_pointer_cast<Go::SplineCurve>(pyCrv->data)->raiseOrder(amount);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -458,15 +458,15 @@ PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|dd",
                                    (char**)keyWords,&umin,&umax))
     return NULL;
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
-  if (!curve)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
 
-  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve);
-  if(!crv)
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
+  if(!spCrv)
     return NULL;
 
-  crv->setParameterInterval(umin, umax);
+  spCrv->setParameterInterval(umin, umax);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -485,7 +485,7 @@ PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"n", "p", NULL };
   int n,p;
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   int amount;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ii",
@@ -496,15 +496,15 @@ PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
   
   // get a few needed curve values
-  int    dim = curve->dimension();
-  double u0  = curve->startparam();
-  double u1  = curve->endparam();
+  int    dim = parCrv->dimension();
+  double u0  = parCrv->startparam();
+  double u1  = parCrv->endparam();
 
   // set boundary conditions (match tangent at start/end)
   std::vector<Go::Point> ptsStart(2);
   std::vector<Go::Point> ptsStop(2);
-  curve->point(ptsStart, u0, 1, true );
-  curve->point(ptsStop,  u1, 1, false);
+  parCrv->point(ptsStart, u0, 1, true );
+  parCrv->point(ptsStop,  u1, 1, false);
   shared_ptr<Go::Point> p0(new Go::Point(ptsStart[1]));
   shared_ptr<Go::Point> p1(new Go::Point(ptsStop[1]));
   *p0 *= (u1-u0)/(n-p+1); // scale tangents to new parameterization
@@ -570,7 +570,7 @@ PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
     k++;
   }
   for(int i=0; i<nPts; i++, k++) {
-    evalPt = curve->point(paramOld[i]);
+    evalPt = parCrv->point(paramOld[i]);
     for(int j=0; j<dim; j++)
       b[k][j] = evalPt[j];
   }
@@ -589,10 +589,10 @@ PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
   }
 
   // wrap results in a python object and return
-  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-  result->data.reset(new Go::SplineCurve(basis, coefs.begin(), dim));
+  Curve* pyCrv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+  pyCrv->data.reset(new Go::SplineCurve(basis, coefs.begin(), dim));
 
-  return (PyObject*)result;
+  return (PyObject*)pyCrv;
 }
 
 PyDoc_STRVAR(curve_rotate__doc__,"Rotate a curve around an axis\n"
@@ -610,17 +610,17 @@ PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&axiso,&angle))
     return NULL;
 
-  shared_ptr<Go::ParamCurve> crv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
-  if (!crv || !axis)
+  if (!parCrv || !axis)
     return NULL;
 
-   Curve* curve = (Curve*)self;
-   curve->data = convertSplineCurve(crv);
-   crv = curve->data;
+   Curve* pyCurve = (Curve*)self;
+   pyCurve->data = convertSplineCurve(parCrv);
+   parCrv = pyCurve->data;
 
    Go::GeometryTools::rotateSplineCurve(*axis, angle,
-                        *static_pointer_cast<Go::SplineCurve>(crv));
+                        *static_pointer_cast<Go::SplineCurve>(parCrv));
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -655,8 +655,8 @@ PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
 
   std::vector<shared_ptr<Go::ParamCurve> > curves;
   if (p.size() > 1) {
-    shared_ptr<Go::SplineCurve> crv = convertSplineCurve(((Curve*)self)->data);
-    std::vector<shared_ptr<Go::SplineCurve> > curves2 = crv->split(p);
+    shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(((Curve*)self)->data);
+    std::vector<shared_ptr<Go::SplineCurve> > curves2 = spCrv->split(p);
     for (size_t i=0;i<curves2.size();++i)
       curves.push_back(static_pointer_cast<Go::ParamCurve,Go::SplineCurve>(curves2[i]));
   } else
@@ -664,9 +664,9 @@ PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
 
   PyObject* result = PyList_New(0);
   for (size_t i=0;i<curves.size();++i) {
-    Curve* crv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-    crv->data = curves[i];
-    PyList_Append(result,(PyObject*)crv);
+    Curve* pyCrv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+    pyCrv->data = curves[i];
+    PyList_Append(result,(PyObject*)pyCrv);
   }
 
   return result;
@@ -685,18 +685,18 @@ PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&veco))
     return NULL;
 
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
   shared_ptr<Go::Point>      vec   = PyObject_AsGoPoint(veco);
-  if (!curve || !vec)
+  if (!parCrv || !vec)
     return NULL;
 
-   if (curve->geometryCurve() != NULL) {
-     Curve* crv = (Curve*)self;
-     crv->data = convertSplineCurve(curve);
-     curve = crv->data;
+   if (parCrv->geometryCurve() != NULL) {
+     Curve* pyCrv = (Curve*)self;
+     pyCrv->data = convertSplineCurve(parCrv);
+     parCrv = pyCrv->data;
    }
 
-   Go::GeometryTools::translateSplineCurve(*vec, *static_pointer_cast<Go::SplineCurve>(curve));
+   Go::GeometryTools::translateSplineCurve(*vec, *static_pointer_cast<Go::SplineCurve>(parCrv));
 
    Py_INCREF(Py_None);
    return Py_None;
@@ -704,62 +704,62 @@ PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyObject* Curve_Add(PyObject* o1, PyObject* o2)
 {
-  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(o1);
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(o1);
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(o2);
-  Curve* result = NULL;
-  if (curve && point) {
-    result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-    if (curve->instanceType() == Go::Class_SplineCurve)
-      result->data = shared_ptr<Go::ParamCurve>(
-          new Go::SplineCurve(*static_pointer_cast<Go::SplineCurve>(curve)));
+  Curve* pyCrv = NULL;
+  if (parCrv && point) {
+    pyCrv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+    if (parCrv->instanceType() == Go::Class_SplineCurve)
+      pyCrv->data = shared_ptr<Go::ParamCurve>(
+          new Go::SplineCurve(*static_pointer_cast<Go::SplineCurve>(parCrv)));
     else
-      result->data = convertSplineCurve(curve);
+      pyCrv->data = convertSplineCurve(parCrv);
 
     Go::GeometryTools::translateSplineCurve(*point, 
-                         *static_pointer_cast<Go::SplineCurve>(result->data));
+                         *static_pointer_cast<Go::SplineCurve>(pyCrv->data));
   }
 
-  return (PyObject*) result;
+  return (PyObject*) pyCrv;
 }
 
 Py_ssize_t Curve_NmbComponent(PyObject* self)
 {
-  shared_ptr<Go::ParamCurve> pc = PyObject_AsGoCurve(self);
-  if (!pc)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return 0;
 
-  shared_ptr<Go::SplineCurve> sc = convertSplineCurve(pc);
-  if(!sc)
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
+  if(!spCrv)
     return 0;
 
-  return sc->numCoefs();
+  return spCrv->numCoefs();
 }
 
 PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
 {
-  shared_ptr<Go::ParamCurve> pc = PyObject_AsGoCurve(self);
-  if (!pc)
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
     return NULL;
 
-  if(pc->dimension() != 3) 
+  if(parCrv->dimension() != 3) 
     return NULL;
 
-  shared_ptr<Go::SplineCurve> sc = convertSplineCurve(pc);
-  if(!sc)
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
+  if(!spCrv)
     return NULL;
   
-  if(i < 0 || i >= sc->numCoefs())
+  if(i < 0 || i >= spCrv->numCoefs())
     return NULL;
 
-  int dim = sc->dimension();
+  int dim = spCrv->dimension();
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  if (sc->rational()) {
-    vector<double>::const_iterator cp = sc->rcoefs_begin() + i*(dim+1);
+  if (spCrv->rational()) {
+    vector<double>::const_iterator cp = spCrv->rcoefs_begin() + i*(dim+1);
     result->data.reset(new Go::Point(cp, cp+(dim+1)));
   } else {
-    double x = *(sc->coefs_begin() + i*dim + 0);
-    double y = *(sc->coefs_begin() + i*dim + 1);
-    double z = *(sc->coefs_begin() + i*dim + 2);
+    double x = *(spCrv->coefs_begin() + i*dim + 0);
+    double y = *(spCrv->coefs_begin() + i*dim + 1);
+    double z = *(spCrv->coefs_begin() + i*dim + 2);
     result->data.reset(new Go::Point(x,y,z));
   }
 
@@ -813,24 +813,24 @@ void init_Curve_Type()
 }
 }
 
-shared_ptr<Go::SplineCurve> convertSplineCurve(shared_ptr<Go::ParamCurve> curve)
+shared_ptr<Go::SplineCurve> convertSplineCurve(shared_ptr<Go::ParamCurve> parCrv)
 {
-  if (!curve)
+  if (!parCrv)
     return shared_ptr<Go::SplineCurve>();
 
-  if (curve->instanceType() == Go::Class_SplineCurve)
-    return dynamic_pointer_cast<Go::SplineCurve, Go::ParamCurve>(curve);
-  return shared_ptr<Go::SplineCurve>(curve->geometryCurve());
+  if (parCrv->instanceType() == Go::Class_SplineCurve)
+    return dynamic_pointer_cast<Go::SplineCurve, Go::ParamCurve>(parCrv);
+  return shared_ptr<Go::SplineCurve>(parCrv->geometryCurve());
 }
 
-void WriteCurveG2(std::ofstream& g2_file, Curve* curve, bool convert)
+void WriteCurveG2(std::ofstream& g2_file, Curve* pyCurve, bool convert)
 {
   if (convert) {
-    shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve->data);
-    crv->writeStandardHeader(g2_file);
-    crv->write(g2_file);
+    shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(pyCurve->data);
+    spCrv->writeStandardHeader(g2_file);
+    spCrv->write(g2_file);
   } else {
-    curve->data->writeStandardHeader(g2_file);
-    curve->data->write(g2_file);
+    pyCurve->data->writeStandardHeader(g2_file);
+    pyCurve->data->write(g2_file);
   }
 }
