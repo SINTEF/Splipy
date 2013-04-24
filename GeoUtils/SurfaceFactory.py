@@ -18,8 +18,8 @@ def SplitSurface(original, param, value):
  # this actually fails for 2D models, but no Surface.GetDim() or 
  # Surface.IsRational()  :(
         rational     = (len(surf[0]) == 4)
-        knot1, knot2 = surf.GetKnots(True);
-        p            = surf.GetOrder();
+        knot1, knot2 = surf.GetKnots(True)
+        p            = surf.GetOrder()
 
         # error check input (Note: that rational should really fail unless you know what you're doing)
 #         if rational:
@@ -145,7 +145,7 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
         controlPoints = []
 
         listAxis = [0,0,0]
-        listAxis[axis] = 1.0;
+        listAxis[axis] = 1.0
         nAxis = Point(list=listAxis)
         
         for i in range(len(crv1)):
@@ -208,17 +208,17 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
                         print 'Error. Curves not on the same cylinder height'
                         return
                 
-                l1 = a-origin1;
-                l2 = b-origin2;
+                l1 = a-origin1
+                l2 = b-origin2
                 if abs(l1*l2/abs(l1)/abs(l2)-1.0) < 1e-14 or \
                    abs(l1*l2/abs(l1)/abs(l2)+1.0) < 1e-14:
                         theta = pi
                 else:
                         theta = acos((l1*l2)/abs(l1)/abs(l2))
 #                 if((l1 % l2)[axis] < 0):
-#                         theta = - theta;
-                dt    = theta / 4.0;
-                dr    = (r2-r1)/4.0;
+#                         theta = - theta
+                dt    = theta / 4.0
+                dr    = (r2-r1)/4.0
 
                 rotPoint = l1.Clone()
                 rotPoint.Normalize()
@@ -231,20 +231,20 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
                 for j in range(1,5):
                         r = r1 + j*dr
                         
-                        w = cos(dt)*(j%2) + (1.0-(j%2));
+                        w = cos(dt)*(j%2) + (1.0-(j%2))
                         controlPoints.append((origin1[0] + r*rotPoint[0]) * w)
                         controlPoints.append((origin1[1] + r*rotPoint[1]) * w)
                         controlPoints.append((origin1[2] + r*rotPoint[2]) * w)
-                        controlPoints.append(w);
+                        controlPoints.append(w)
 
-                        rotPoint.Rotate(nAxis, dt);
+                        rotPoint.Rotate(nAxis, dt)
                         if j%2==0:
-                                rotPoint = rotPoint / cos(dt);
+                                rotPoint = rotPoint / cos(dt)
                         else:
-                                rotPoint = rotPoint * cos(dt);
+                                rotPoint = rotPoint * cos(dt)
         
         knotXi = [0,0,0,1,1,2,2,2]
 
         surf   = Surface(3, crv1.GetOrder(), knotXi, crv1.GetKnots(True), controlPoints, True)
 
-        return surf;
+        return surf
