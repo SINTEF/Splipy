@@ -196,6 +196,25 @@ PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kw
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_force_rational__doc__,"Enforce a rational representation of the spline curve\n"
+                                         "@return: None");
+PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  if (!curve)
+    return NULL;
+
+  shared_ptr<Go::SplineCurve> scrv = convertSplineCurve(curve);
+  if(!scrv)
+    return NULL;
+  ((Curve*)self)->data = scrv;
+
+  scrv->representAsRational();
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(curve_get_knots__doc__,"Get the knots of a spline curve\n"
                                     "@param with_multiplicities: (optional) Set to true to obtain the knot vector with multiplicities\n"
                                     "@type with_multiplicities: Boolean\n"
@@ -726,6 +745,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Curve_EvaluateTangent,     METH_VARARGS|METH_KEYWORDS, curve_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
+     {(char*)"ForceRational",       (PyCFunction)Curve_ForceRational,       METH_VARARGS,               curve_force_rational__doc__},
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS|METH_KEYWORDS, curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
