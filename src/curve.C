@@ -445,6 +445,33 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(curve_reparametrize__doc__,"Re-parametrize a curve\n"
+                                        "@param umin: The minimum u value\n"
+                                        "@type umin: float\n"
+                                        "@param umax: The maximum u value\n"
+                                        "@type umax: float\n"
+                                        "@return: None");
+PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"umin", "umax", NULL };
+  double umin=0, umax=1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|dd",
+                                   (char**)keyWords,&umin,&umax))
+    return NULL;
+  shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(self);
+  if (!curve)
+    return NULL;
+
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve);
+  if(!crv)
+    return NULL;
+
+  crv->setParameterInterval(umin, umax);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyDoc_STRVAR(curve_rebuild__doc__,"Rebuild the curve by resampling it to a given order and number of control points\n"
                                   "The rebuilt curve will match the old one at the end-points, the end tangents and \n"
                                   "n-4 internal uniformly distributed points \n"
@@ -753,6 +780,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
+     {(char*)"ReParametrize",       (PyCFunction)Curve_ReParametrize,       METH_VARARGS|METH_KEYWORDS, curve_reparametrize__doc__},
      {(char*)"Rebuild",             (PyCFunction)Curve_Rebuild,             METH_VARARGS|METH_KEYWORDS, curve_rebuild__doc__},
      {(char*)"Rotate",              (PyCFunction)Curve_Rotate,              METH_VARARGS|METH_KEYWORDS, curve_rotate__doc__},
      {(char*)"Split",               (PyCFunction)Curve_Split,               METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
