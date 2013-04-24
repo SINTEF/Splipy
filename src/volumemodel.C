@@ -109,7 +109,7 @@ PyObject* VolumeModel_Get(PyObject* self, Py_ssize_t i)
 }
 
 PyDoc_STRVAR(volumemodel_get_bounding_box__doc__,"Generate and return the Volumemodel bounding box\n"
-                                                 "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,..."
+                                                 "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,...\n"
                                                  "@rtype: List of floats");
 PyObject* VolumeModel_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
 {
