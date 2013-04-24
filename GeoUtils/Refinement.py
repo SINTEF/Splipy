@@ -104,6 +104,47 @@ def BoundaryLayerCurve(curve, start, scale, n):
     curve.InsertKnot(smm*major+(1.0-smm)*minor)
 
 # Geometric distribution of knots
+def GeometricRefineCurve(curve, alpha, n):
+        """Refine a curve by making a geometric distribution of element sizes
+        Consider Curve.FlipParametrization if you need refinement towards the other edge
+        @param curve: The curve to refine
+        @type curve: Curve 
+        @param alpha: The ratio between two sequential knot segments
+        @type alpha: float
+        @param n: The number of knots to insert
+        @type n: int
+        @return: None
+        """
+        
+        # some error tests on input
+        if n<=0:
+                print 'n should be greater than 0'
+                return None
+
+        # fetch knots
+        knots = curve.GetKnots()
+        knotStart = knots[0]
+        knotEnd   = knots[-1]
+        dk = knotEnd - knotStart
+
+        # evaluate the factors
+        n = n+1 # redefine n to be knot spans instead of new internal knots
+        totProd = 1.0
+        totSum  = 0.0
+        for i in range(n):
+                totSum  += totProd
+                totProd *= alpha
+        d1 = 1.0 / totSum
+        knot = d1
+
+        # do the actual knot insertion
+        for i in range(n-1):
+                curve.InsertKnot(knotStart + knot*dk)
+                knot += alpha*d1
+                d1   *= alpha
+
+
+# Geometric distribution of knots
 def GeometricRefineSurface(surface, direction, alpha, n):
         """Refine a surface by making a geometric distribution of element sizes
         Consider Surface.FlipParametrization if you need refinement towards the other edge
