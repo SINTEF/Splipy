@@ -2,11 +2,6 @@ __doc__ = 'Implementation of various methods which should have been in GoTools.S
 
 from GoTools import *
 
-# ideally, the epsilon should be looked up from the modState of the geomodeler,
-# but I don't know how to do it and don't have enough time to figure it out
-# right now...
-knotEpsilon = 1e-6
-
 def SplitSurface(original, param, value):
         """Split a SplineSurface in two by continued knot insertion
         @param original: The Surface to split
@@ -43,7 +38,7 @@ def SplitSurface(original, param, value):
         # Figure out if knot already exist
         knotCount = 0
         for i in range(len(knot)):
-                if abs(knot[i]-value) < knotEpsilon:
+                if abs(knot[i]-value) < GetTolerance('neighbour'):
                         value = knot[i] # snap to existing knot value
                         knotCount = knotCount + 1
 
@@ -58,7 +53,7 @@ def SplitSurface(original, param, value):
                 knot = knot2
         # figure out which knot interval (ki) the split lies
         for ki in range(len(knot)):
-                if abs(knot[ki]-value) < knotEpsilon:
+                if abs(knot[ki]-value) < GetTolerance('neighbour'):
                         break
         ki = ki-1
         
