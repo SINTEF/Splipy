@@ -102,5 +102,5 @@ def SmoothVolInterior(obj, nIter):
 						newCP[cpI] = cp
 		smoothedCP = newCP
 	
-	return Volume(p[0], p[1], p[2] knots1, knots2, knots3, smoothedCP, rational)
+	return Volume(p[0], p[1], p[2], knots1, knots2, knots3, smoothedCP, rational)
 
