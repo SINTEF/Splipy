@@ -96,6 +96,43 @@ PyObject* GeoMod_SetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(get_tolerance__doc__, "Get a tolerance\n"
+                                   "@param type: Requested tolerance\n"
+                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', or 'bend'\n"
+                                   "@return: Tolerance\n"
+                                   "@rtype: Float");
+PyObject* GeoMod_GetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"type", NULL };
+  const char* typec;
+  double tolerance;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s",
+                                   (char**)keyWords,&typec, &tolerance))
+    return NULL;
+
+  std::string type(typec);
+
+  double result=0.0;
+
+  if (type == "gap")
+    result = modState.gapTolerance;
+
+  if (type == "approx")
+    result = modState.approxTolerance;
+
+  if (type == "neighbour")
+    result = modState.neighbourTolerance;
+
+  if (type == "kink")
+    result = modState.kinkTolerance;
+
+  if (type == "bend")
+    result = modState.bendTolerance;
+
+
+  return Py_BuildValue((char*)"d", result);
+}
+
 PyDoc_STRVAR(set_final_output__doc__, "Set final output file\n"
                                       "@param file: The output file\n"
                                       "@type file:  string\n"
@@ -591,6 +628,7 @@ PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 PyMethodDef GeoMod_methods[] = {
      // setup and general methods
      {(char*)"GetVersion",            (PyCFunction)GeoMod_GetVersion,        METH_VARARGS,               get_go_version__doc__},
+     {(char*)"GetTolerance",          (PyCFunction)GeoMod_GetTolerance,      METH_VARARGS|METH_KEYWORDS, get_tolerance__doc__},
      {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS|METH_KEYWORDS, set_tolerance__doc__},
      {(char*)"SetDimension",          (PyCFunction)GeoMod_SetDimension,      METH_VARARGS|METH_KEYWORDS, set_dim__doc__},
      {(char*)"SetFinalOutput",        (PyCFunction)GeoMod_SetFinalOutput,    METH_VARARGS|METH_KEYWORDS, set_final_output__doc__},
