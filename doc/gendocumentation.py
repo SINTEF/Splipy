@@ -7,6 +7,9 @@ import GeoUtils
 doxy = build_doc_index(['GoTools', \
                         'GoTools.Curve', \
                         'GoTools.Surface', \
+                        'GoTools.Volume', \
+                        'GoTools.SurfaceModel', \
+                        'GoTools.VolumeModel', \
                         'GoTools.VolumeFactory', \
                         'GoTools.CurveFactory', \
                         'GoTools.SurfaceFactory', \
