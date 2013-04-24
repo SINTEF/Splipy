@@ -4,8 +4,6 @@ from math import *
 from GoTools import *
 from GoTools.CurveFactory import *
 
-gap_epsilon = 1e-4;
-
 def RotationalCrv2CrvSweep(crv1, crv2, axis):
         """ Rotational sweep the surface in between to curves,
         where both curves live on the same cylinder.
@@ -78,11 +76,11 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
                 ###   this test isn't really true since the control points are floating outside
                 ###   the actual curve in geometry space (but nice to have to illustrate whats 
                 ###   going on)
-                # if abs(r1-r2) > gap_epsilon:
+                # if abs(r1-r2) > GetTolerance('gap'):
                 #         print 'Error. Curves not on the same cylinder radius'
                 #         return
 
-                if dist > gap_epsilon:
+                if dist > GetTolerance('gap'):
                         print 'Error. Curves not on the same cylinder height'
                         return
                 
