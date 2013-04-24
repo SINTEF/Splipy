@@ -1,8 +1,8 @@
-from Interpolate import *
-from IO import *
-from Knots import *
-from Refinement import *
-from SurfaceFactory import *
-from WallDistance import *
-from Smooth import *
-from Elementary import *
+import Interpolate
+import IO
+import Knots
+import Refinement
+import SurfaceFactory
+import WallDistance
+import Smooth
+import Elementary

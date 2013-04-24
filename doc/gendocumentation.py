@@ -1,8 +1,8 @@
-from GoTools import *
+import GoTools
 from epydoc.docbuilder import build_doc_index
 from epydoc.docwriter.html import HTMLWriter
 from epydoc.docwriter.latex import LatexWriter
-from GeoUtils import *
+import GeoUtils
 
 doxy = build_doc_index(['GoTools', \
                         'GoTools.Curve', \
@@ -16,6 +16,7 @@ doxy = build_doc_index(['GoTools', \
                         'GeoUtils.Knots', \
                         'GeoUtils.Smooth', \
                         'GeoUtils.Elementary', \
+                        'GeoUtils.SurfaceFactory', \
                         'GeoUtils.IO'],introspect=True,parse=True)
 l = LatexWriter(doxy)
 l.write('doc/latex/')
