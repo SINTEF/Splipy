@@ -27,6 +27,7 @@ class GeoModellerState {
       neighbourTolerance = 1.e-2;
       kinkTolerance = 1.e-2;
       bendTolerance = 1.e-1;
+      refineTolerance = 1.e-3;
       debugLevel = 1;
     }
 
@@ -47,6 +48,7 @@ class GeoModellerState {
     double neighbourTolerance; //!< How much crap we can stomach from our neighbour
     double kinkTolerance; //!< Kink tolerance
     double bendTolerance; //!< Bend tolerance
+    double refineTolerance; //!< Tolerance for skipping refinement-inserted knots as they already exist
     std::string finalOutput; //!< The final output file
 
     //!< Python binding metadata

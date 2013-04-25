@@ -2,6 +2,7 @@ __doc__ = 'Implementation of various refinement schemes.'
 
 from math import atan
 from math import pi
+from GeoUtils.Knots import *
 
 def UniformCurve(curve, n=1):
         """Uniformly refine a curve by inserting n new knots into each knot interval
@@ -138,8 +139,11 @@ def GeometricRefineCurve(curve, alpha, n):
         knot = d1
 
         # do the actual knot insertion
+        oldKnots = curve.GetKnots()
         for i in range(n-1):
-                curve.InsertKnot(knotStart + knot*dk)
+                newKnot = knotStart + knot*dk
+                if not KnotExist(oldKnots, newKnot):
+                        curve.InsertKnot(newKnot)
                 knot += alpha*d1
                 d1   *= alpha
 
@@ -194,13 +198,80 @@ def GeometricRefineSurface(surface, direction, alpha, n):
         knot = d1
 
         # do the actual knot insertion
+        oldKnots = surface.GetKnots()[direction-1]
         for i in range(n-1):
-                surface.InsertKnot(direction-1, knotStart + knot*dk)
+                newKnot = knotStart + knot*dk
+                if not KnotExist(oldKnots, newKnot):
+                        surface.InsertKnot(direction-1, newKnot)
                 knot += alpha*d1
                 d1   *= alpha
 
         if flipBack:
                 surface.FlipParametrization(direction-1)
+
+# Geometric distribution of knots
+def GeometricRefineVolume(volume, direction, alpha, n):
+        """Refine a volume by making a geometric distribution of element sizes
+        Consider Volume.FlipParametrization if you need refinement towards the other edge
+        @param volume: The volume to refine
+        @type volume: Volume 
+        @param direction: The direction to refine in (u=1, v=2 or w=3) 
+        @type direction: int
+        @param alpha: The ratio between two sequential knot segments
+        @type alpha: float
+        @param n: The number of knots to insert
+        @type n: int
+        @return: None
+        """
+        
+        # some error tests on input
+        if n<=0:
+                print 'n should be greater than 0'
+                return None
+
+        flipBack = False
+        if direction < 0:
+                volume.FlipParametrization(-direction-1)
+                direction = -direction
+                flipBack = True
+
+        # fetch knots
+        knots_u, knots_v, knots_w = volume.GetKnots()
+        if direction == 1:
+                knotStart = knots_u[0]
+                knotEnd   = knots_u[-1]
+        elif direction == 2:
+                knotStart = knots_v[0]
+                knotEnd   = knots_v[-1]
+        elif direction == 3:
+                knotStart = knots_w[0]
+                knotEnd   = knots_w[-1]
+        else:
+                print 'Direction should be 1, 2 or 3' 
+                return None
+        dk = knotEnd - knotStart
+
+        # evaluate the factors
+        n = n+1 # redefine n to be knot spans instead of new internal knots
+        totProd = 1.0
+        totSum  = 0.0
+        for i in range(n):
+                totSum  += totProd
+                totProd *= alpha
+        d1 = 1.0 / totSum
+        knot = d1
+
+        # do the actual knot insertion
+        oldKnots = volume.GetKnots()[direction-1]
+        for i in range(n-1):
+                newKnot = knotStart + knot*dk
+                if not KnotExist(oldKnots, newKnot):
+                        volume.InsertKnot(direction-1, newKnot)
+                knot += alpha*d1
+                d1   *= alpha
+
+        if flipBack:
+                volume.FlipParametrization(direction-1)
 
 
 # Edge refinement
@@ -244,7 +315,9 @@ def EdgeRefineSurface(surface, direction, S, n):
                 newKnots.append(knotStart + (atan(xi)+maxAtan)/2/maxAtan*dk)
 
         # do the actual knot insertion
+        oldKnots = surface.getKnots()[direction-1]
         for x in newKnots:
-                surface.InsertKnot(direction-1, x)
+                if not KnotExist(oldKNots, x):
+                        surface.InsertKnot(direction-1, x)
 
 

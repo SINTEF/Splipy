@@ -62,7 +62,7 @@ PyObject* GeoMod_SetDimension(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyDoc_STRVAR(set_tolerance__doc__, "Set a tolerance\n"
                                    "@param type: Tolerance that should be changed\n"
-                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', or 'bend'\n"
+                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', 'bend' or 'refine'\n"
                                    "@param tolerance: Tolerance to set\n"
                                    "@type tolerance: float\n"
                                    "@return: None");
@@ -92,13 +92,16 @@ PyObject* GeoMod_SetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
   if (type == "bend" && modState.kinkTolerance >= 0)
     modState.bendTolerance = tolerance;
 
+  if (type == "refine" && modState.refineTolerance >= 0)
+    modState.refineTolerance = tolerance;
+
   Py_INCREF(Py_None);
   return Py_None;
 }
 
 PyDoc_STRVAR(get_tolerance__doc__, "Get a tolerance\n"
                                    "@param type: Requested tolerance\n"
-                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', or 'bend'\n"
+                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', 'bend' or refine\n"
                                    "@return: Tolerance\n"
                                    "@rtype: Float");
 PyObject* GeoMod_GetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
@@ -128,6 +131,9 @@ PyObject* GeoMod_GetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
 
   if (type == "bend")
     result = modState.bendTolerance;
+
+  if (type == "refine")
+    result = modState.refineTolerance;
 
 
   return Py_BuildValue((char*)"d", result);
