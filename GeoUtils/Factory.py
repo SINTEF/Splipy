@@ -1,6 +1,7 @@
-__doc__ = 'Implementation of various methods which should have been in GoTools.SurfaceFactory or GoTools.Surface.'
+__doc__ = 'Implementation of various factory methods which should have been in GoTools, but are missing or bugged'
 
 from GoTools import *
+from GeoUtils.Elementary import *
 
 def SplitSurface(original, param, value):
         """Split a SplineSurface in two by continued knot insertion
@@ -248,3 +249,39 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
         surf   = Surface(3, crv1.GetOrder(), knotXi, crv1.GetKnots(True), controlPoints, True)
 
         return surf
+
+def LoftBetween(obj1, obj2):
+    """Linear lofing the domain between two objects. If the arguments
+    are curves, the extruded domain will be a surface, if the arguments
+    are surfaces, the domain will be the contained volume.
+    @param obj1: The first object
+    @type obj1: Curve or Surface 
+    @param obj2: The second object
+    @type obj2: Curve or Surface 
+    @return: The contained domain
+    @rtype: Surface or Volume
+    """
+    
+    cObj1 = obj1.Clone()
+    cObj2 = obj2.Clone()
+
+    MakeCommonSplineSpace(cObj1, cObj2)
+
+    newCP = []
+    for c in cObj1:
+        newCP.append(c)
+    for c in cObj2:
+        newCP.append(c)
+    
+    p = cObj1.GetOrder()
+    rational = len(cObj1[0]) == 4 
+    newKnot = [0, 0, 1, 1]  # linear in the extrusion direction
+    newP    = 2
+
+    if type(cObj1) is Curve:
+        knots = cObj1.GetKnots(with_multiplicities=True)
+        return Surface(p, newP, knots, newKnot, newCP, rational)
+    elif type(cObj1) is Surface:
+        knots1, knots2 = cObj1.GetKnots(with_multiplicities=True)
+        return Volume(p[0], p[1], newP, knots1, knots2, newKnot, newCP, rational)
+

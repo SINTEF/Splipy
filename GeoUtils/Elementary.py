@@ -205,3 +205,91 @@ def Rotate(obj, normal, theta):
         elif type(obj) is Volume:
                 knots1, knots2, knots3 = obj.GetKnots(with_multiplicities=True)
                 return Volume(p[0], p[1], p[2], knots1, knots2, knots3, rotatedCP, rational)
+
+def MakeCommonSplineSpace(obj1, obj2):
+    """ Make obj1 and obj2 have the same degree, and same
+    knot vector and same rational representation
+    @param obj1: The first object
+    @type obj1: Curve or Surface 
+    @param obj2: The second object
+    @type obj2: Curve or Surface 
+    @return: none
+    """
+    
+    p1   = obj1.GetOrder()
+    p2   = obj2.GetOrder()
+    rat1 = len(obj1[0]) == 4 # here assuming that obj1 & obj2 lies in 3D space
+    rat2 = len(obj2[0]) == 4
+    if rat1 or rat2:
+        obj1.ForceRational()
+        obj2.ForceRational()
+    obj1.ReParametrize()  # set knot vectors to span [0,1]
+    obj2.ReParametrize()
+
+    if type(obj1) is Curve:
+        if p1 > p2:
+            obj2.RaiseOrder(p1-p2)
+        else:
+            obj1.RaiseOrder(p2-p1)
+        k1 = obj1.GetKnots(True)
+        k2 = obj2.GetKnots(True)
+        done = False
+        i = 0
+        j = 0
+        while not done:
+            if k1[i] == k2[j]:
+                i = i+1
+                j = j+1
+            elif k1[i] < k2[j]:
+                obj2.InsertKnot(k1[i])
+                i = i+1
+            elif k1[i] > k2[j]:
+                obj1.InsertKnot(k2[j])
+                j = j+1
+            if i == len(k1) or j == len(k2):
+                done = True
+
+
+    else:
+        if type(obj1) is Surface:
+            if p1[0] > p2[0]:
+                obj2.RaiseOrder(p1[0]-p2[0], 0)
+            else:
+                obj1.RaiseOrder(p2[0]-p1[0], 0)
+            if p1[1] > p2[1]:
+                obj2.RaiseOrder(0, p1[1]-p2[1])
+            else:
+                obj1.RaiseOrder(0, p2[1]-p1[1])
+        elif type(obj1) is Volume:
+            if p1[0] > p2[0]:
+                obj2.RaiseOrder(p1[0]-p2[0], 0, 0)
+            else:
+                obj1.RaiseOrder(p2[0]-p1[0], 0, 0)
+            if p1[1] > p2[1]:
+                obj2.RaiseOrder(0, p1[1]-p2[1], 0)
+            else:
+                obj1.RaiseOrder(0, p2[1]-p1[1], 0)
+            if p1[2] > p2[2]:
+                obj2.RaiseOrder(0, 0, p1[2]-p2[2])
+            else:
+                obj1.RaiseOrder(0, 0, p2[2]-p1[2])
+
+        k1 = obj1.GetKnots(True)
+        k2 = obj2.GetKnots(True)
+        done = False
+        for d in range(len(p1)):
+            i = 0
+            j = 0
+            while not done:
+                if k1[d][i] == k2[d][j]:
+                    i = i+1
+                    j = j+1
+                elif k1[d][i] < k2[d][j]:
+                    obj2.InsertKnot(d, k1[d][i])
+                    i = i+1
+                elif k1[d][i] > k2[d][j]:
+                    obj1.InsertKnot(d, k2[d][i])
+                    j = j+1
+                if i == len(k1[d]) or j == len(k2[d]):
+                    done = True
+    
