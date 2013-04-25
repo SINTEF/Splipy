@@ -27,11 +27,12 @@ PyObject* SurfaceModel_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
   if (PyObject_TypeCheck(surfaceso,&PyList_Type)) {
     std::vector<shared_ptr<Go::ftSurface> > surfaces;
     for (int i=0; i < PyList_Size(surfaceso); ++i) {
-      PyObject* surfaceo = PyList_GetItem(surfaceso,i);
-      shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(surfaceo);
-      if (!surface)
+      PyObject* pySurf = PyList_GetItem(surfaceso,i);
+      shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(pySurf);
+      shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
+      if (!spSurf)
         continue;
-      surfaces.push_back(shared_ptr<Go::ftSurface>(new Go::ftSurface(surface,-1)));
+      surfaces.push_back(shared_ptr<Go::ftSurface>(new Go::ftSurface(spSurf,-1)));
     }
     if (surfaces.size() < 1)
       return NULL;
