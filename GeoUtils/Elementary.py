@@ -156,18 +156,19 @@ def rotation_matrix(axis,theta):
                          [2*(b*d-a*c), 2*(c*d+a*b), a*a+d*d-b*b-c*c]])
         
 
-def Rotate(obj, normal, degrees):
+def Rotate(obj, normal, theta):
         """Rotate a curve, surface or volume 
         @param obj: The obj to rotate
         @type obj: Curve, Surface or Volume
-        @param amount: The amount to rotate the object with
-        @type amount: float
+        @param normal: The normal to rotate object around
+        @type normal: float
+        @param theta: Angle to rotate, as measured in radians
+        @type theta: float
         @return: Scaled result
         @rtype: Curve, Surface or Volume
         """
 
         rotatedCP = []
-        theta = degrees / 360.0 * 2 * pi;
 
         if isinstance(normal, list):
                 normal = Point(list=normal)

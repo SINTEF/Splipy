@@ -137,10 +137,10 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
         @type  crv1: Curve
         @param crv2: The second curve on the cylinder
         @type  crv2: Curve
-        @param axis: The cylinder axis (0=x-axis, 1=y, 2=z)
-        @type  axis: int
-        @return : Swept surface
-        @rtype  : Surface
+        @param axis: The cylinder axis; 0=x-axis, 1=y-axis, 2=z-axis
+        @type  axis: Int
+        @return:     Swept surface
+        @rtype:      Surface
         """
         controlPoints = []
 

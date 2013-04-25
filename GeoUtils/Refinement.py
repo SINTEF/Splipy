@@ -4,7 +4,7 @@ from math import atan
 from math import pi
 
 def UniformCurve(curve, n=1):
-        """Uniformly refine a curve by halfing each knot interval
+        """Uniformly refine a curve by inserting n new knots into each knot interval
         @param curve: The curve to refine
         @type curve: Curve
         @param n: number of new knots in each interval
@@ -20,7 +20,7 @@ def UniformCurve(curve, n=1):
 
 # Chop each knot span in half
 def UniformSurface(surface, direction=0, n=1):
-        """Uniformly refine a surface by halfing each knot interval
+        """Uniformly refine a surface by inserting n new knots into each knot interval
         @param surface: The surface to refine
         @type surface: Surface 
         @param direction: The direction to refine in (0 = both, 1, 2)
@@ -43,7 +43,7 @@ def UniformSurface(surface, direction=0, n=1):
 
 # Chop each knot span in half
 def UniformVolume(volume, direction=0, n=1):
-        """Uniformly refine a volume by halfing each knot interval
+        """Uniformly refine a volume by inserting n new knots into each knot interval
         @param volume: The volume to refine
         @type volume: Volume 
         @param direction: The direction to refine in (0 = both, 1, 2, 3)

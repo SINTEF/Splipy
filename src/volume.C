@@ -414,8 +414,8 @@ PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
 PyDoc_STRVAR(volume_split__doc__, "Split the volume into segments\n"
                                   "@param params: The parameter values to split at\n"
                                   "@type params: Float or list of floats\n"
-                                  "@param pardir: The direction to split along\n"
-                                  "@type pardir: integer (0,1,2)\n"
+                                  "@param pardir: The direction to split along (0,1 or 2)\n"
+                                  "@type pardir: int\n"
                                   "@return: The resulting volumes\n"
                                   "@rtype: List of Volume");
 PyObject* Volume_Split(PyObject* self, PyObject* args, PyObject* kwds)
