@@ -71,39 +71,6 @@ def UniformVolume(volume, direction=0, n=1):
                                 volume.InsertKnot(2, newKnot);
 
 
-def BoundaryLayerCurve(curve, start, scale, n):
-        """Refine a curve with geometric grading
-        @param curve: The curve to refine
-        @type curve: Curve
-        @param start: The end of the curve to have grading towards (1 or 2)
-        @type start: integer
-        @param scale: The geometric scaling factor
-        @type scale: Float
-        @param n: The total number of control points
-        @type n: integer
-        @return: None
-        """
-        knots = curve.GetKnots()
-        pwr  = 1
-        smm = 0.0
-        for i in range(0,n):
-                smm += pwr
-                pwr *= scale
-        if start == 1:
-                minor = knots[1]
-                major = knots[0]
-        if start == 2:
-                minor = knots[-2]
-                major = knots[-1]
-        
-        alpha = 1/smm
-        smm = 0.0
-        pwr = 1.0
-        for i in range(0,n-1):
-                smm += alpha*pwr
-                pwr *= scale
-                curve.InsertKnot(smm*major+(1.0-smm)*minor)
-
 # Geometric distribution of knots
 def GeometricRefineCurve(curve, alpha, n):
         """Refine a curve by making a geometric distribution of element sizes
