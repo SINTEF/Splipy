@@ -4,6 +4,7 @@
 #include "pyutils.h"
 
 #include "GoTools/geometry/ClassType.h"
+#include "GoTools/geometry/ClosestPoint.h"
 #include "GoTools/geometry/GeometryTools.h"
 #include "GoTools/geometry/SplineInterpolator.h"
 #include "GoTools/utils/LUDecomp.h"
@@ -353,6 +354,76 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 
   Py_INCREF(Py_None);
   return Py_None;
+}
+
+PyDoc_STRVAR(curve_intersect__doc__,"Check if this curve intersects another curve or surface.\n"
+                                    "Set tolerance 'gap' for intersection tolerance \n"
+                                    "@param obj: The object to test against\n"
+                                    "@type obj: Curve or Surface\n"
+                                    "@return: One intersection point (if any)\n"
+                                    "@rtype: Point or None");
+PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"obj", NULL };
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  double knot;
+  PyObject *pyObj;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&pyObj) || !parCrv)
+    return NULL;
+
+  if(PyObject_TypeCheck(pyObj, &Curve_Type) ) {
+    shared_ptr<Go::ParamCurve> parCrv2 = PyObject_AsGoCurve(pyObj);
+    if(!parCrv2)
+      return NULL;
+    double par1, par2, dist;
+    Go::Point ptc1, ptc2;
+    Go::ClosestPoint::closestPtCurves(parCrv.get(), parCrv2.get(), par1, par2, dist, ptc1, ptc2);
+    if(dist < modState.gapTolerance) {
+      Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      result->data.reset(new Go::Point(ptc1));
+      return (PyObject*) result;
+    } else {
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  } else if(PyObject_TypeCheck(pyObj, &Surface_Type) ) {
+    shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(pyObj);
+    if(!parSurf)
+      return NULL;
+    // input arguments
+    double         geomRes       = modState.gapTolerance;
+    double         startCrv      = parCrv->startparam();
+    double         endCrv        = parCrv->endparam();
+    Go::RectDomain domain        = parSurf->containingDomain();
+    double         itStartCrv    = (startCrv + endCrv)/2.0;
+    double         itStartSurf[] = { (domain.umin()+domain.umax())/2,
+                                     (domain.vmin()+domain.vmax())/2 };
+    //output arguments
+    double         crvPos;
+    double         surfPos[2];
+    double         dist;
+    Go::Point      crvPt;
+    Go::Point      surfPt;
+    // newton iteration search for closest point on surface
+    Go::ClosestPoint::closestPtCurveSurf(parCrv.get(), parSurf.get(), geomRes,
+                                         startCrv, endCrv,         // curve parameter range 
+                                         &domain,                  // surface parameter range 
+                                         itStartCrv, itStartSurf,  // iteration start
+                                         crvPos, surfPos,          // [out] parametric closest points
+                                         dist,                     // [out] geometric distance between points
+                                         crvPt,  surfPt);          // [out] geometric closest points
+    if(dist < modState.gapTolerance) {
+      Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      result->data.reset(new Go::Point(crvPt));
+      return (PyObject*) result;
+    } else {
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  }
+  return NULL;
 }
 
 PyDoc_STRVAR(curve_normalize__doc__,"Normalize a curve in the parameter domain\n"
@@ -777,6 +848,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
+     {(char*)"Intersect",           (PyCFunction)Curve_Intersect,           METH_VARARGS|METH_KEYWORDS, curve_intersect__doc__},
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},

@@ -18,11 +18,14 @@
 #include "geomodeller.h"
 
 #include "GoTools/geometry/ClassType.h"
+#include "GoTools/geometry/ClosestPoint.h"
 #include "GoTools/geometry/ElementarySurface.h"
 #include "GoTools/geometry/GeometryTools.h"
 #include "GoTools/geometry/RectDomain.h"
+#include "GoTools/geometry/SISLconversion.h"
 #include "GoTools/geometry/SplineSurface.h"
 #include "GoTools/geometry/SurfaceInterpolator.h"
+#include "sislP.h"
 
 #include <fstream>
 #include <sstream>
@@ -514,6 +517,108 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
    return Py_None;
 }
 
+PyDoc_STRVAR(surface_intersect__doc__,"Check if this surface intersects another surface or surface.\n"
+                                      "Set tolerance 'gap' for intersection tolerance \n"
+                                      "@param obj: The object to test against\n"
+                                      "@type obj: Curve or Surface\n"
+                                      "@return: True if the surface intersects obj\n"
+                                      "@rtype: Bool");
+PyObject* Surface_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"obj", NULL };
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  double knot;
+  PyObject *pyObj;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&pyObj) || !parSurf)
+    return NULL;
+
+  if(PyObject_TypeCheck(pyObj, &Curve_Type) ) {
+    shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(pyObj);
+    if(!parCrv)
+      return NULL;
+    // input arguments
+    double         geomRes       = modState.gapTolerance;
+    double         startCrv      = parCrv->startparam();
+    double         endCrv        = parCrv->endparam();
+    Go::RectDomain domain        = parSurf->containingDomain();
+    double         itStartCrv    = (startCrv + endCrv)/2.0;
+    double         itStartSurf[] = { (domain.umin()+domain.umax())/2,
+                                     (domain.vmin()+domain.vmax())/2 };
+    //output arguments
+    double         crvPos;
+    double         surfPos[2];
+    double         dist;
+    Go::Point      crvPt;
+    Go::Point      surfPt;
+    // newton iteration search for closest point on surface
+    Go::ClosestPoint::closestPtCurveSurf(parCrv.get(), parSurf.get(), geomRes,
+                                         startCrv, endCrv,         // curve parameter range 
+                                         &domain,                  // surface parameter range 
+                                         itStartCrv, itStartSurf,  // iteration start
+                                         crvPos, surfPos,          // [out] parametric closest points
+                                         dist,                     // [out] geometric distance between points
+                                         crvPt,  surfPt);          // [out] geometric closest points
+    if(dist < modState.gapTolerance) {
+      // Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      // result->data.reset(new Go::Point(crvPt));
+      // return (PyObject*) result;
+      return Py_BuildValue((char*)"b",true);
+    } else {
+      // Py_INCREF(Py_None);
+      // return Py_None;
+      return Py_BuildValue((char*)"b",false);
+    }
+  } else if(PyObject_TypeCheck(pyObj, &Surface_Type) ) {
+    shared_ptr<Go::ParamSurface> parSurf2 = PyObject_AsGoSurface(pyObj);
+    if(!parSurf2)
+      return NULL;
+    // convert to spline surfaces
+    shared_ptr<Go::SplineSurface> spSurf1 = convertSplineSurface(parSurf);
+    shared_ptr<Go::SplineSurface> spSurf2 = convertSplineSurface(parSurf2);
+    if(!spSurf1 || !spSurf2)
+      return NULL;
+    // convert to SISL surfaces
+    SISLSurf* sislSurf1 = GoSurf2SISL(*spSurf1, true);
+    SISLSurf* sislSurf2 = GoSurf2SISL(*spSurf2, true);
+    if(!sislSurf1 || !sislSurf2)
+      return NULL;
+    // setup parameters
+    double epsco = 0.0;                   // Computational resolution (not used)
+    double epsge = modState.gapTolerance; // Geometry resolution
+    int    numPts;                        // number of single intersection points
+    double *parPt1;                       // parameter values of the single intersection pts
+    double *parPt2;                       // parameter values of the single intersection pts
+    int    numCrv;                        // number of intersection curves
+    SISLIntcurve **curves;                // intersection curves
+    int    status;                        // warnings and error messages
+
+    // actual SISL call
+    s1859(sislSurf1, sislSurf2, epsco, epsge, // input arguments
+          &numPts, &parPt1, &parPt2,          // output points
+          &numCrv, &curves,                   // output curves
+          &status);                           // output errors
+
+    // error handling
+    if (status > 0) { // warning
+      std::cerr << __FUNCTION__ << " WARNING: " << status << std::endl;
+    } else if (status < 0) { // error
+      std::cerr << __FUNCTION__ << " ERROR: " << status << std::endl;
+      return NULL;
+    }
+
+    // return results
+    if(numPts > 0 || numCrv > 0) {
+      return Py_BuildValue((char*)"b",true);
+    } else {
+      return Py_BuildValue((char*)"b",false);
+    }
+
+  }
+  return NULL;
+}
+
 PyDoc_STRVAR(surface_project__doc__,"Project the surface onto an axis or plane parallel to the cartesian coordinate system\n"
                                     "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a combination of these)\n"
                                     "@type axis: string\n"
@@ -779,6 +884,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
      {(char*)"GetSubSurf",          (PyCFunction)Surface_GetSubSurf,            METH_VARARGS|METH_KEYWORDS, surface_get_sub_surf__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
+     {(char*)"Intersect",           (PyCFunction)Surface_Intersect,             METH_VARARGS|METH_KEYWORDS, surface_intersect__doc__},
      {(char*)"LowerOrder",          (PyCFunction)Surface_LowerOrder,            METH_VARARGS|METH_KEYWORDS, surface_lower_order__doc__},
      {(char*)"Project",             (PyCFunction)Surface_Project,               METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Surface_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, surface_raise_order__doc__},
