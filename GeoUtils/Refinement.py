@@ -25,7 +25,7 @@ def UniformSurface(surface, direction=0, n=1):
         @param surface: The surface to refine
         @type surface: Surface 
         @param direction: The direction to refine in (0 = both, 1, 2)
-        @type direction: integer
+        @type direction: Int
         @param n: number of new knots in each interval
         @type n: Int
         @return: None
@@ -48,7 +48,7 @@ def UniformVolume(volume, direction=0, n=1):
         @param volume: The volume to refine
         @type volume: Volume 
         @param direction: The direction to refine in (0 = both, 1, 2, 3)
-        @type direction: integer
+        @type direction: Int
         @param n: number of new knots in each interval
         @type n: Int
         @return: None
@@ -78,9 +78,9 @@ def GeometricRefineCurve(curve, alpha, n):
         @param curve: The curve to refine
         @type curve: Curve 
         @param alpha: The ratio between two sequential knot segments
-        @type alpha: float
+        @type alpha: Float
         @param n: The number of knots to insert
-        @type n: int
+        @type n: Int
         @return: None
         """
         
@@ -122,11 +122,11 @@ def GeometricRefineSurface(surface, direction, alpha, n):
         @param surface: The surface to refine
         @type surface: Surface 
         @param direction: The direction to refine in (u=1 or v=2) 
-        @type direction: int
+        @type direction: Int
         @param alpha: The ratio between two sequential knot segments
-        @type alpha: float
+        @type alpha: Float
         @param n: The number of knots to insert
-        @type n: int
+        @type n: Int
         @return: None
         """
         
@@ -183,11 +183,11 @@ def GeometricRefineVolume(volume, direction, alpha, n):
         @param volume: The volume to refine
         @type volume: Volume 
         @param direction: The direction to refine in (u=1, v=2 or w=3) 
-        @type direction: int
+        @type direction: Int
         @param alpha: The ratio between two sequential knot segments
-        @type alpha: float
+        @type alpha: Float
         @param n: The number of knots to insert
-        @type n: int
+        @type n: Int
         @return: None
         """
         
@@ -247,11 +247,11 @@ def EdgeRefineSurface(surface, direction, S, n):
         @param surface: The surface to refine
         @type surface: Surface 
         @param direction: The direction to refine in (u=1 or v=2) 
-        @type direction: int
+        @type direction: Int
         @param S: The slope of the atan-function
-        @type S: float
+        @type S: Float
         @param n: The number of knots to insert
-        @type n: int
+        @type n: Int
         @return: None
         """
         

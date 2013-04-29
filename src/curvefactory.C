@@ -770,9 +770,9 @@ PyDoc_STRVAR(generate_resample_curve__doc__,"Generate a curve by sampling anothe
                                             "@param curve : The curve to sample\n"
                                             "@type curve: Curve\n"
                                             "@param knots: The knot vector for the new curve\n"
-                                            "@type knots: List of float"
+                                            "@type knots: List of float\n"
                                             "@param order: The order of the new curve\n"
-                                            "@type order: Integer"
+                                            "@type order: Integer\n"
                                             "@return: The resampled curve\n"
                                             "@rtype: Curve");
 PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)

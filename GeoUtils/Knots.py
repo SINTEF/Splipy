@@ -7,7 +7,7 @@ def FullContinuity(params, order):
       @param params: The parameter values
       @type params: List of float
       @param order: The order of the spline
-      @type order: integer
+      @type order: Int
       @return: The knot vector
       @rtype: List of float
   """
@@ -21,16 +21,16 @@ def FullContinuity(params, order):
   return result
 
 def KnotExist(knotVec, knot, ignoreEnds=True):
-  """" Check if knot already exist in the object based on the global refine tolerance
-       @param knotVec: The knot vector to check against
-       @type knotVec:  List of floats
-       @param knot: The new knot to insert
-       @type knot:  Float
-       @param ignoreEnds: If the first and last knot should be ignored 
-       @type ignoreEnds:  Bool
-       @return: Number of occurances in the knot vector
-       @rtype: Int
-       """
+  """ Check if knot already exist in the object based on the global refine tolerance
+      @param knotVec: The knot vector to check against
+      @type knotVec:  List of floats
+      @param knot: The new knot to insert
+      @type knot:  Float
+      @param ignoreEnds: If the first and last knot should be ignored 
+      @type ignoreEnds:  Bool
+      @return: If the knot already exist
+      @rtype: Bool
+  """
 
   tol    = GetTolerance('refine')
   start  = knotVec[0]

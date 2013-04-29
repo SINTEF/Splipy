@@ -90,7 +90,7 @@ def CubicP(pts):
         return GoTools.CurveFactory.ApproximateCurve(pts, t, 4)
         
 def UniformCubic(x, y=[], z=[]):
-        """Cubic spline interpolation a list of points by arclength parametrization
+        """Cubic spline interpolation a list of points by uniform parametrization
         @param x: The x-coordinate of the points to interpolate
         @type x: List of floats
         @param y: y-coordinates

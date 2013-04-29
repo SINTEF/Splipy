@@ -11,7 +11,7 @@ def getNonWeightCP(cp):
         
 
 def SmoothSurfInterior(obj, nIter):
-        """Smooth a surface by setting the interior control points to the average of its 8 neighbours
+        """Smooth a surface by setting the interior control points to the average of itself and 8 neighbours
         @param obj: The surface to smooth
         @type obj: Surface 
         @param nIter: Number of smoothing iterations
@@ -57,7 +57,7 @@ def SmoothSurfInterior(obj, nIter):
         return Surface(p[0], p[1], knots1, knots2, smoothedCP, rational)
 
 def SmoothVolInterior(obj, nIter):
-        """Smooth a volume by setting the interior control points to the average of its 26 neighbours
+        """Smooth a volume by setting the interior control points to the average of itself and 26 neighbours
         @param obj: The volume to smooth
         @type obj: Volume
         @param nIter: Number of smoothing iterations
