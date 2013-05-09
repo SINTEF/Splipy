@@ -238,6 +238,17 @@ PyObject* Point_GetComponent(PyObject* self, Py_ssize_t i)
   return PyFloat_FromDouble((*sm)[i]);
 }
 
+int Point_SetComponent(PyObject* self, Py_ssize_t i, PyObject* value)
+{
+  shared_ptr<Go::Point> sm = PyObject_AsGoPoint(self);
+  double v = PyFloat_AsDouble(value);
+  if (!sm || i < 0 || i >= sm->size())
+    return -1;
+
+  (*sm)[i] = v;
+  return 0;
+}
+
 PyMethodDef Point_methods[] = {
      {(char*)"Clone",     (PyCFunction)Point_Clone,     METH_VARARGS,               point_clone__doc__},
      {(char*)"Normalize", (PyCFunction)Point_Normalize, METH_VARARGS,               point_normalize__doc__},
@@ -252,6 +263,7 @@ PyDoc_STRVAR(point__doc__, "A point");
 void init_Point_Type()
 {
   Point_seq_operators.sq_item = Point_GetComponent;
+  Point_seq_operators.sq_ass_item = Point_SetComponent;
   Point_seq_operators.sq_length = Point_NmbComponent;
   InitializeTypeObject(&Point_Type);
   Point_operators.nb_add = Point_Add;
