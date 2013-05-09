@@ -139,6 +139,29 @@ PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(surface_evaluate_normal__doc__,"Evaluate surface normal at given parameter values\n"
+                                            "@param value_u: The u parameter value\n"
+                                            "@type value_u: float\n"
+                                            "@param value_v: The v parameter value\n"
+                                            "@type value_v: float\n"
+                                            "@return: The value of the surface normal at the given parameters\n"
+                                            "@rtype: Point");
+PyObject* Surface_EvaluateNormal(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"value_u", "value_v", NULL };
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  double value_u=0, value_v=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd",
+                                   (char**)keyWords,&value_u,&value_v) || !parSurf)
+    return NULL;
+
+  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  result->data.reset(new Go::Point(parSurf->dimension()));
+  parSurf->normal(*result->data,value_u,value_v);
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(surface_evaluate_tangent__doc__,"Evaluate the two tangent vectors of the surface at given parameter values\n"
                                              "@param value_u: The u parameter value\n"
                                              "@type value_u: float\n"
@@ -747,6 +770,7 @@ PyObject* Surface_Scale(PyObject* o1, PyObject* o2)
 PyMethodDef Surface_methods[] = {
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
+     {(char*)"EvaluateNormal",      (PyCFunction)Surface_EvaluateNormal,        METH_VARARGS|METH_KEYWORDS, surface_evaluate_normal__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Surface_EvaluateTangent,       METH_VARARGS|METH_KEYWORDS, surface_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
      {(char*)"ForceRational",       (PyCFunction)Surface_ForceRational,         METH_VARARGS,               surface_force_rational__doc__},
