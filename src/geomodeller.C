@@ -270,13 +270,13 @@ static void DoWriteSTL(std::string fname, bool ascii, PyObject* objectso, int re
   }
 }
 
-PyDoc_STRVAR(write3dm__doc__,"Write entities to 3DM file\n"
+PyDoc_STRVAR(write3dm__doc__,"Write entities to native Rhino 3DM file\n"
                              "@param filename: The file to write\n"
-                             "@type  filename: string\n"
+                             "@type  filename: String\n"
                              "@param entities: The entities to write to file\n"
                              "@type  entities: Curve, Surface or a list of these\n"
                              "@param    level: Debug level to store file at\n"
-                             "@type     level: int >= 1\n"
+                             "@type     level: Int >= 1\n"
                              "@return: None");
 PyObject* GeoMod_Write3DM(PyObject* self, PyObject* args, PyObject* kwds)
 {
@@ -301,15 +301,15 @@ PyObject* GeoMod_Write3DM(PyObject* self, PyObject* args, PyObject* kwds)
 #endif
 }
 
-PyDoc_STRVAR(writeg2__doc__,"Write entities to G2 file\n"
+PyDoc_STRVAR(writeg2__doc__,"Write entities to native GoTools G2 file\n"
                             "@param filename: The file to write\n"
-                            "@type  filename: string\n"
+                            "@type  filename: String\n"
                             "@param entities: The entities to write to file\n"
                             "@type  entities: Curve, Surface, Volume, SurfaceModel, VolumeModel or a list of these\n"
                             "@param  convert: Convert to a spline entity before saving\n"
-                            "@type   convert: bool\n"
+                            "@type   convert: Boolean\n"
                             "@param    level: Debug level to store file at\n"
-                            "@type     level: int >= 1\n"
+                            "@type     level: Int >= 1\n"
                             "@return: None");
 PyObject* GeoMod_WriteG2(PyObject* self, PyObject* args, PyObject* kwds)
 {
@@ -331,13 +331,13 @@ PyObject* GeoMod_WriteG2(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyDoc_STRVAR(writestl__doc__,"Write entities to STL file\n"
                              "@param filename   : The file to write\n"
-                             "@type  filename   : string\n"
+                             "@type  filename   : String\n"
                              "@param entities   : The entities to write to file\n"
                              "@type  entities   : Surface, Volume or a list of these\n"
                              "@param resolution : Number of tesselation points used for triangles\n"
-                             "@type  resolution : int or list of int\n"
+                             "@type  resolution : Int or list of Int\n"
                              "@param ascii      : True to store ascii file instead of binary\n"
-                             "@type  ascii      : bool\n"
+                             "@type  ascii      : Boolean\n"
                              "@return: None");
 PyObject* GeoMod_WriteSTL(PyObject* self, PyObject* args, PyObject* kwds)
 {
@@ -525,13 +525,13 @@ PyObject* GeoMod_ReadHDF5Geometry(PyObject* self, PyObject* args, PyObject* kwds
 
 PyDoc_STRVAR(write_hdf5field__doc__,"Write a field to a HDF5 file\n"
                                     "@param filename: The file to read\n"
-                                    "@type  filename: string\n"
+                                    "@type  filename: String\n"
                                     "@param fieldname: Field name\n"
-                                    "@type fieldname: string \n"
+                                    "@type fieldname: String \n"
                                     "@param patch: patch number\n"
-                                    "@type patch: integer (>= 1)\n"
+                                    "@type patch: Integer (>= 1)\n"
                                     "@param level: time level\n"
-                                    "@type level: integer\n"
+                                    "@type level: Integer\n"
                                     "@param coefs: Field coefficients\n"
                                     "@type coefs: List of float\n"
                                     "@param truncate: Truncate hdf5 file?\n"
@@ -566,13 +566,13 @@ PyObject* GeoMod_WriteHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyDoc_STRVAR(write_hdf5geometry__doc__,"Write a geometry to a HDF5 file\n"
                                        "@param filename: The file to read\n"
-                                       "@type  filename: string\n"
+                                       "@type  filename: String\n"
                                        "@param geometry: Geometry name\n"
-                                       "@type geometry: string \n"
+                                       "@type geometry: String \n"
                                        "@param patch: patch number\n"
-                                       "@type patch: integer (>= 1)\n"
+                                       "@type patch: Integer (>= 1)\n"
                                        "@param level: time level\n"
-                                       "@type level: integer\n"
+                                       "@type level: Integer\n"
                                        "@param Object: Object\n"
                                        "@type Object: Curve, Surface or Volume\n"
                                        "@param truncate: Truncate hdf5 file?\n"
@@ -608,7 +608,7 @@ PyDoc_STRVAR(final_output__doc__,"Write final entities to G2 file\n"
                                  "@param entities: The entities to write to file\n"
                                  "@type  entities: Curve, Surface, Volume, SurfaceModel, VolumeModel or a list of these\n"
                                  "@param  convert: Convert to a spline entity before saving\n"
-                                 "@type   convert: bool\n"
+                                 "@type   convert: Boolean\n"
                                  "@return: None");
 PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 {
