@@ -1,6 +1,8 @@
 __doc__ = 'Implementation of various factory methods which should have been in GoTools, but are missing or bugged'
 
 from GoTools import *
+from GoTools.SurfaceFactory import *
+from GeoUtils.Knots import *
 from GeoUtils.Elementary import *
 
 def SplitSurface(original, param, value):
@@ -285,3 +287,42 @@ def LoftBetween(obj1, obj2):
         knots1, knots2 = cObj1.GetKnots(with_multiplicities=True)
         return Volume(p[0], p[1], newP, knots1, knots2, newKnot, newCP, rational)
 
+def Thicken(obj, amount):
+    """Extrudes a surface in the normal direction to create a volume representation of it.
+    May cause self intersections for large amount or high curvature surfaces
+    @param    obj: The surface to thicken
+    @type     obj: Surface 
+    @param amount: The distance to extrude
+    @type  amount: Float
+    @return:       Thickened surface
+    @rtype:        Volume
+    """
+
+    # this is not a hard restriction. Just have to come up with another 
+    # sampling point strategy
+    p1,p2 = obj.GetOrder()
+    if p1>4 or p2>4:
+      print 'Surfaces of higher order than 4 not supported for thicken command'
+      return None
+
+    # sampling point choice: use the greville point of the corresponding bicubic surface representation
+    sampleObj = obj.Clone()
+    sampleObj.RaiseOrder(4-p1, 4-p2)
+    knot1, knot2 = sampleObj.GetKnots(True)
+    g1 = GetGrevillePoints(knot1)
+    g2 = GetGrevillePoints(knot2)
+
+    outPts = []
+    inPts = []
+    for v in g2:
+      for u in g1:
+        p = sampleObj.Evaluate(u,v)
+        n = sampleObj.EvaluateNormal(u,v)
+        outPts.append( p + 0.5*amount * n)
+        inPts.append(  p - 0.5*amount * n)
+
+    outShell = InterpolateSurface(outPts, g1, g2)
+    inShell  = InterpolateSurface(inPts,  g1, g2)
+
+    return LoftBetween(inShell, outShell)
+        

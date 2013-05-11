@@ -44,3 +44,25 @@ def KnotExist(knotVec, knot, ignoreEnds=True):
     if abs(k-knot) < tol:
       return True
   return False
+
+def GetGrevillePoints(knotVec):
+  """" Generate the list of all greville points ascociated with a knot vector. Polynomial degree of 
+       the basis is implicitly given by the first knot multiplicity
+       @param knotVec: The knot vector to check against
+       @type knotVec:  List of floats
+       @return: The greville points
+       @rtype: List of floats
+       """
+
+  p = 1
+  while knotVec[p] == knotVec[0]:
+    p += 1
+  n = len(knotVec) - p
+  results = []
+  for i in range(n):
+    pt = 0
+    for j in range(i+1, i+p):
+      pt += knotVec[j]
+    results.append(pt/(p-1))
+  return results
+
