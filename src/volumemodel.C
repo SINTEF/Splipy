@@ -28,10 +28,13 @@ PyObject* VolumeModel_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
     std::vector<shared_ptr<Go::ftVolume> > volumes;
     for (int i=0; i < PyList_Size(volumeso); ++i) {
       PyObject* volumeo = PyList_GetItem(volumeso,i);
-      shared_ptr<Go::ParamVolume> volume = PyObject_AsGoVolume(volumeo);
-      if (!volume)
+      shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(volumeo);
+      if (!parVol)
         continue;
-      volumes.push_back(shared_ptr<Go::ftVolume>(new Go::ftVolume(volume,-1)));
+      shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+      if (!spVol)
+        continue;
+      volumes.push_back(shared_ptr<Go::ftVolume>(new Go::ftVolume(spVol,-1)));
     }
     if (volumes.size() < 1)
       return NULL;
@@ -133,6 +136,28 @@ PyObject* VolumeModel_GetBoundingBox(PyObject* self, PyObject* args, PyObject* k
   return result;
 }
 
+PyDoc_STRVAR(volumemodel_get_shell__doc__,"Generate and return all boundary faces of the volume model\n"
+                                          "@return: The enclosing shell representation\n"
+                                          "@rtype: List of Surfaces");
+PyObject* VolumeModel_GetShell(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::VolumeModel> volumemodel = PyObject_AsGoVolumeModel(self);
+  if (!volumemodel)
+    return NULL;
+
+  std::vector<shared_ptr<Go::ftSurface> > shell = volumemodel->getBoundaryFaces();
+
+  PyObject* result = PyList_New(0);
+
+  for(size_t i=0; i<shell.size(); i++) {
+    Surface* pySurf = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+    pySurf->data = shell[i]->surface();
+    PyList_Append(result, (PyObject*) pySurf);
+  }
+
+  return result;
+}
+
 PyDoc_STRVAR(volumemodel_make_common_spline__doc__,"Make sure all volumes in model share the same spline space\n"
                                                    "@return: None");
 PyObject* VolumeModel_MakeCommonSpline(PyObject* self, PyObject* args)
@@ -177,6 +202,7 @@ PySequenceMethods VolumeModel_seq_operators = {0};
 
 PyMethodDef VolumeModel_methods[] = {
      {"GetBoundingBox",        (PyCFunction)VolumeModel_GetBoundingBox,   METH_VARARGS, volumemodel_get_bounding_box__doc__},
+     {"GetShell",              (PyCFunction)VolumeModel_GetShell,         METH_VARARGS, volumemodel_get_shell__doc__},
      {"IsCornerToCorner",      (PyCFunction)VolumeModel_CtoC,             METH_VARARGS, volumemodel_ctoc__doc__},
      {"MakeCommonSplineSpace", (PyCFunction)VolumeModel_MakeCommonSpline, METH_VARARGS, volumemodel_make_common_spline__doc__},
      {"MakeCornerToCorner",    (PyCFunction)VolumeModel_MakeCtoC,         METH_VARARGS, volumemodel_make_ctoc__doc__},

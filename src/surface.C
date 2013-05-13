@@ -869,6 +869,8 @@ shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> 
 {
   if (parSurf->instanceType() == Go::Class_SplineSurface)
     return dynamic_pointer_cast<Go::SplineSurface, Go::ParamSurface>(parSurf);
+  if (parSurf->instanceType() == Go::Class_SurfaceOnVolume)
+    return shared_ptr<Go::SplineSurface>(parSurf->asSplineSurface());
   shared_ptr<Go::ElementarySurface> e_surface = dynamic_pointer_cast<Go::ElementarySurface, Go::ParamSurface>(parSurf);
   if (e_surface)
     return shared_ptr<Go::SplineSurface>(e_surface->geometrySurface());
