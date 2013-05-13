@@ -23,15 +23,21 @@ class InputFile:
     return result.childNodes[0].nodeValue
 
 
-  def GetTopologySet(self, name):
+  def GetTopologySet(self, name, context=""):
     """ Extract a topology set from the input file.
         @param name: Name of topology set
         @type name: String
+        @param context: App context to read from (optional)
+        @type context: String
         @return: Requested topologyset
         @rtype: Dict with PatchInfo
         """
     result = {}
-    geometry = self.dom.getElementsByTagName('geometry')[0]
+    if len(context):
+      ctx = self.dom.getElementsByTagName(context)[0]
+      geometry = ctx.getElementsByTagName('geometry')[0]
+    else:
+      geometry = self.dom.getElementsByTagName('geometry')[0]
     topologyset = geometry.getElementsByTagName('topologysets')[0]
     for topset in topologyset.getElementsByTagName('set'):
       if topset.getAttributeNode('name').nodeValue == name:
@@ -44,12 +50,12 @@ class InputFile:
             remap = [4,2,1,3]
             ed = int(item.childNodes[0].nodeValue)
             result[patch].edge.append(remap[ed-1])
-          elif topset.type == 'face':
+          elif typ == 'face':
             remap = [1,2,5,6,3,4]
             fa = int(item.childNodes[0].nodeValue)
             result[int(item.patch)].face.append(remap[fa-1])
           else:
-            result[int(item.patch)].vertex.append(int(item.childNodes[0].nodeValue))
+            result[int(item.getAttributeNode('patch').nodeValue)].vertex.append(int(item.childNodes[0].nodeValue))
     return result
 
   def write(self, name):
