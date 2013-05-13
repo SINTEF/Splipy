@@ -8,59 +8,43 @@ from GeoUtils.Elementary import *
 def SplitSurface(original, param, value):
     """Split a SplineSurface in two by continued knot insertion
     @param original: The Surface to split
-    @type original: Surface
-    @param param: The parametric direction to split along (u=0, v=1)
-    @type param: Int
-    @param value: The parametric value to split along
-    @type value: Float
-    @return: The two new surfaces
-    @rtype: List of Surfaces
+    @type  original: Surface
+    @param    param: The parametric direction to split along (u=0, v=1)
+    @type     param: Int
+    @param    value: The parametric value to split along
+    @type     value: Float
+    @return:         The two new surfaces
+    @rtype:          List of Surfaces
     """
     
-    surf         = original.Clone()
+    surf      = original.Clone()
 # this actually fails for 2D models, but no Surface.GetDim() or 
 # Surface.IsRational()  :(
-    rational     = (len(surf[0]) == 4)
-    knot1, knot2 = surf.GetKnots(True)
-    p            = surf.GetOrder()
+    rational  = (len(surf[0]) == 4)
+    knot      = surf.GetKnots(True)
+    p         = surf.GetOrder()
 
     # error check input (Note: that rational should really fail unless you know what you're doing)
 #         if rational:
 #                 return None
-    if(param == 0):
-        if(value < knot1[0] or knot1[-1] < value):
-            return None
-        knot = knot1
-    elif(param == 1):
-        if(value < knot2[0] or knot2[-1] < value):
-            return None
-        knot = knot2
-    else:
-        return None
+    if( value <= knot[param][0] or knot[param][-1] <= value):
+      return None
 
     # Figure out if knot already exist
-    knotCount = 0
-    for i in range(len(knot)):
-        if abs(knot[i]-value) < GetTolerance('neighbour'):
-            value = knot[i] # snap to existing knot value
-            knotCount = knotCount + 1
+    knotCount = KnotExist(knot[param], value)
 
     # insert the actual knot
     for i in range(knotCount, p[param]-1):
         surf.InsertKnot(param, value)
 
-    knot1, knot2 = surf.GetKnots(True)
-    if param==0:
-        knot = knot1
-    else:
-        knot = knot2
+    knot = surf.GetKnots(True)
     # figure out which knot interval (ki) the split lies
-    for ki in range(len(knot)):
-        if abs(knot[ki]-value) < GetTolerance('neighbour'):
+    for ki in range(len(knot[param])):
+        if abs(knot[param][ki]-value) < GetTolerance('refine'):
             break
     ki = ki-1
     
-    n = [len(knot1) - p[0] , len(knot2) - p[1]]
+    n = [len(knot[0]) - p[0] , len(knot[1]) - p[1]]
 
     coefs1 = []
     coefs2 = []
@@ -80,14 +64,14 @@ def SplitSurface(original, param, value):
                 k = k+1
 
         for i in range(ki+p[0]):
-                knot1u.append(knot1[i])
+                knot1u.append(knot[0][i])
         knot1u.append(knot1u[-1])
-        for i in range(ki+1, len(knot1)):
-                knot2u.append(knot1[i])
+        for i in range(ki+1, len(knot[0])):
+                knot2u.append(knot[0][i])
         knot2u = [knot2u[0]] + knot2u
 
-        knot1v = knot2
-        knot2v = knot2
+        knot1v = knot[1]
+        knot2v = knot[1]
     else:
         for y in range(n[1]):
             for x in range(n[0]):
@@ -98,37 +82,142 @@ def SplitSurface(original, param, value):
                 k = k+1
 
         for i in range(ki+p[1]):
-            knot1v.append(knot2[i])
+            knot1v.append(knot[1][i])
         knot1v.append(knot1v[-1])
-        for i in range(ki+1, len(knot2)):
-            knot2v.append(knot2[i])
+        for i in range(ki+1, len(knot[1])):
+            knot2v.append(knot[1][i])
         knot2v = [knot2v[0]] + knot2v
 
-        knot1u = knot1
-        knot2u = knot1
+        knot1u = knot[0]
+        knot2u = knot[0]
 
-#         print knot1u
-#         print knot1v
-#         print knot2u
-#         print knot2v
-# 
-#         for point in surf:
-#                 print point
-#         print '****     SURFACE 1    ****'
-#         for point in coefs1:
-#                 print point
-#         print '****     SURFACE 2    ****'
-#         for point in coefs2:
-#                 print point
     
     result = []
     result.append(Surface(p[0], p[1], knot1u, knot1v, coefs1, rational))
     result.append(Surface(p[0], p[1], knot2u, knot2v, coefs2, rational))
     return  result
     
-    # p = original.GetOrder()
-    # knots1, knots2, knots3 = volume.GetKnotsWithMult()
-    # return Volume(p[0], p[1], p[2], knots1, knots2, knots3, mirroredCP, rational)
+
+def SplitVolume(original, param, value):
+    """Split a SplineVolume in two by continued knot insertion
+    @param original: The Volume to split
+    @type  original: Volume
+    @param    param: The parametric direction to split along (u=0, v=1, w=2)
+    @type     param: Int
+    @param    value: The parametric value to split along
+    @type     value: Float
+    @return:         The two new volumes
+    @rtype:          List of Volumes
+    """
+    
+    vol       = original.Clone()
+# this actually fails for 2D models, but no Surface.GetDim() or 
+# Surface.IsRational()  :(
+    rational  = (len(vol[0]) == 4)
+    knot      = vol.GetKnots(True)
+    p         = vol.GetOrder()
+
+    # error check input (Note: that rational should really fail unless you know what you're doing)
+#         if rational:
+#                 return None
+    if( value <= knot[param][0] or knot[param][-1] <= value):
+      return None
+
+    # Figure out if knot already exist
+    knotCount = KnotExist(knot[param], value)
+
+    # insert the actual knot
+    for i in range(knotCount, p[param]-1):
+        vol.InsertKnot(param, value)
+
+    knot = vol.GetKnots(True)
+    # figure out which knot interval (ki) the split lies
+    for ki in range(len(knot[param])):
+        if abs(knot[param][ki]-value) < GetTolerance('refine'):
+            break
+    ki = ki-1
+    
+    n = [len(knot[0]) - p[0] , len(knot[1]) - p[1], len(knot[2]) - p[2]]
+
+    coefs1 = []
+    coefs2 = []
+    knot1u = []
+    knot1v = []
+    knot1w = []
+    knot2u = []
+    knot2v = []
+    knot2w = []
+    
+    k = 0
+    if param == 0:
+        for z in range(n[2]):
+            for y in range(n[1]):
+                for x in range(n[0]):
+                    if x <= ki:
+                        coefs1.append(vol[k])
+                    if x >= ki:
+                        coefs2.append(vol[k])
+                    k = k+1
+
+        for i in range(ki+p[0]):
+                knot1u.append(knot[0][i])
+        knot1u.append(knot1u[-1])
+        for i in range(ki+1, len(knot[0])):
+                knot2u.append(knot[0][i])
+        knot2u = [knot2u[0]] + knot2u
+
+        knot1v = knot[1]
+        knot2v = knot[1]
+        knot1w = knot[2]
+        knot2w = knot[2]
+    elif param == 1:
+        for z in range(n[2]):
+            for y in range(n[1]):
+                for x in range(n[0]):
+                    if y <= ki:
+                        coefs1.append(vol[k])
+                    if y >= ki:
+                        coefs2.append(vol[k])
+                    k = k+1
+
+        for i in range(ki+p[1]):
+            knot1v.append(knot[1][i])
+        knot1v.append(knot1v[-1])
+        for i in range(ki+1, len(knot[1])):
+            knot2v.append(knot[1][i])
+        knot2v = [knot2v[0]] + knot2v
+
+        knot1u = knot[0]
+        knot2u = knot[0]
+        knot1w = knot[2]
+        knot2w = knot[2]
+    else:
+        for z in range(n[2]):
+            for y in range(n[1]):
+                for x in range(n[0]):
+                    if z <= ki:
+                        coefs1.append(vol[k])
+                    if z >= ki:
+                        coefs2.append(vol[k])
+                    k = k+1
+
+        for i in range(ki+p[2]):
+            knot1w.append(knot[2][i])
+        knot1w.append(knot1w[-1])
+        for i in range(ki+1, len(knot[2])):
+            knot2w.append(knot[2][i])
+        knot2w = [knot2w[0]] + knot2w
+
+        knot1u = knot[0]
+        knot2u = knot[0]
+        knot1v = knot[1]
+        knot2v = knot[1]
+
+    
+    result = []
+    result.append(Volume(p[0], p[1], p[2], knot1u, knot1v, knot1w, coefs1, rational))
+    result.append(Volume(p[0], p[1], p[2], knot2u, knot2v, knot2w, coefs2, rational))
+    return  result
 
 
 def RotationalCrv2CrvSweep(crv1, crv2, axis):

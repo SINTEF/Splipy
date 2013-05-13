@@ -28,13 +28,14 @@ def KnotExist(knotVec, knot, ignoreEnds=True):
        @type knot:  Float
        @param ignoreEnds: If the first and last knot should be ignored 
        @type ignoreEnds:  Bool
-       @return: If the knot already exist
-       @rtype: Bool
+       @return: Number of occurances in the knot vector
+       @rtype: Int
        """
 
-  tol = GetTolerance('refine')
-  start = knotVec[0]
-  end   = knotVec[-1]
+  tol    = GetTolerance('refine')
+  start  = knotVec[0]
+  end    = knotVec[-1]
+  result = 0;
   for k in knotVec:
     # note that one may pass knot vector with multiplicities here
     # which means that the endpoints may appear multiple places in
@@ -42,8 +43,8 @@ def KnotExist(knotVec, knot, ignoreEnds=True):
     if (k == start or k == end) and ignoreEnds:
       continue
     if abs(k-knot) < tol:
-      return True
-  return False
+      result += 1
+  return result
 
 def GetGrevillePoints(knotVec):
   """" Generate the list of all greville points ascociated with a knot vector. Polynomial degree of 
