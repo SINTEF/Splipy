@@ -710,16 +710,16 @@ shared_ptr<Go::SplineVolume> convertSplineVolume(shared_ptr<Go::ParamVolume> par
 void printVolumeToStream(std::ostream& str, shared_ptr<Go::ParamVolume> parVol)
 {
   if (parVol) {
-    if (parVol->instanceType() == Go::Class_Parallelepiped)
-      str << "Paralellepiped:" << std::endl;
-    if (parVol->instanceType() == Go::Class_SphereVolume)
-      str << "Sphere volume:" << std::endl;
-    if (parVol->instanceType() == Go::Class_CylinderVolume)
-      str << "Cylinder volume:" << std::endl;
-    if (parVol->instanceType() == Go::Class_ConeVolume)
-      str << "Cone volume:" << std::endl;
-    if (parVol->instanceType() == Go::Class_TorusVolume)
-      str << "Torus volume:" << std::endl;
+    // fetch GoTools class type 
+    std::string       sClassName  = Go::GoTools::className(parVol->instanceType());
+    std::stringstream ssClassName ;
+    ssClassName << sClassName;
+    if(sClassName.compare("Unknown") == 0)
+      ssClassName << "(" << parVol->instanceType() << ")";
+    
+    // print class type
+    str << "Type: " << ssClassName.str() << std::endl;
+    // print full raw data
     str << *parVol;
   } else
     str << "(empty)";

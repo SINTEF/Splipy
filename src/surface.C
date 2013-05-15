@@ -986,18 +986,16 @@ shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> 
 void printSurfaceToStream(std::ostream& str, shared_ptr<Go::ParamSurface> parSurf)
 {
   if (parSurf) {
-    if (parSurf->instanceType() == Go::Class_Plane)
-      str << "Plane:" << std::endl;
-    if (parSurf->instanceType() == Go::Class_Sphere)
-      str << "Sphere surface:" << std::endl;
-    if (parSurf->instanceType() == Go::Class_Cylinder)
-      str << "Cylinder surface:" << std::endl;
-    if (parSurf->instanceType() == Go::Class_Cone)
-      str << "Cone surface:" << std::endl;
-    if (parSurf->instanceType() == Go::Class_Torus)
-      str << "Torus surface:" << std::endl;
-    if (parSurf->instanceType() == Go::Class_Disc)
-      str << "Circular disc:" << std::endl;
+    // fetch GoTools class type 
+    std::string       sClassName  = Go::GoTools::className(parSurf->instanceType());
+    std::stringstream ssClassName ;
+    ssClassName << sClassName;
+    if(sClassName.compare("Unknown") == 0)
+      ssClassName << "(" << parSurf->instanceType() << ")";
+    
+    // print class type
+    str << "Type: " << ssClassName.str() << std::endl;
+    // print full raw data
     str << *parSurf;
   } else
     str << "(empty)";

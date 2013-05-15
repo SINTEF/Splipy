@@ -125,14 +125,16 @@ PyObject* Curve_Str(Curve* self)
 {
   std::stringstream str;
   if (self->data) {
-    if (self->data->instanceType() == Go::Class_Line)
-      str << "Line:" << std::endl;
-    if (self->data->instanceType() == Go::Class_Circle)
-      str << "Circle:" << std::endl;
-    if (self->data->instanceType() == Go::Class_Ellipse)
-      str << "Ellipse:" << std::endl;
-    if (self->data->instanceType() == Go::Class_SplineCurve)
-      str << "Spline curve:" << std::endl;
+    // fetch GoTools class type 
+    std::string       sClassName  = Go::GoTools::className(self->data->instanceType());
+    std::stringstream ssClassName ;
+    ssClassName << sClassName;
+    if(sClassName.compare("Unknown") == 0)
+      ssClassName << "(" << self->data->instanceType() << ")";
+    
+    // print class type
+    str << "Type: " << ssClassName.str() << std::endl;
+    // print full raw data
     str << *self->data;
   } else
     str << "(empty)";
