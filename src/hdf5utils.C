@@ -172,7 +172,7 @@ void DoWriteHDF5Geometry(const std::string& fname, const std::string& geoname,
 
   hid_t space = H5Screate_simple(1,&siz,NULL);
   hid_t set = H5Dcreate2(group,strp.str().c_str(),
-                         H5T_NATIVE_DOUBLE,space,
+                         H5T_NATIVE_CHAR,space,
                          H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
   hid_t file_space = H5Dget_space(set);
   hsize_t stride = 1;
