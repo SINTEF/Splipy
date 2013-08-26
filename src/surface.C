@@ -973,6 +973,9 @@ void init_Surface_Type()
 //          the surface converted to a spline surface otherwise.
 shared_ptr<Go::SplineSurface> convertSplineSurface(shared_ptr<Go::ParamSurface> parSurf)
 {
+  if (!parSurf)
+    return shared_ptr<Go::SplineSurface>();
+
   if (parSurf->instanceType() == Go::Class_SplineSurface)
     return dynamic_pointer_cast<Go::SplineSurface, Go::ParamSurface>(parSurf);
   if (parSurf->instanceType() == Go::Class_SurfaceOnVolume)
