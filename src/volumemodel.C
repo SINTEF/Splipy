@@ -198,7 +198,7 @@ PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
   std::cerr << "Compiled without GPM support - no numbering generated" << std::endl;
   Py_INCREF(Py_None);
   return Py_None;
-#endif
+#else
 
   VolumeModel* sm = (VolumeModel*)(self);
   if (!sm)
@@ -226,6 +226,7 @@ PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
   }
 
   return (PyObject*)result;
+#endif
 }
 
 PyDoc_STRVAR(volumemodel_nmb_faces__doc__,"Returns the number of simple entities (Volumes) in this model\n"

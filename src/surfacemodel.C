@@ -163,7 +163,7 @@ PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
   std::cerr << "Compiled without GPM support - no numbering generated" << std::endl;
   Py_INCREF(Py_None);
   return Py_None;
-#endif
+#else
 
   SurfaceModel* sm = (SurfaceModel*)(self);
   if (!sm)
@@ -179,8 +179,7 @@ PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
   model.generateGlobalNumbersPETSc();
 
   std::vector< std::vector<int> > numbers;
-  model.getGlobalNumbering(numbers);
-  model.renumberNatural(numbers);
+  model.getGlobalNaturalNumbering(numbers);
 
   PyObject* result = PyList_New(numbers.size());
   for (size_t i = 0; i < numbers.size(); ++i) {
@@ -191,6 +190,7 @@ PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
   }
 
   return (PyObject*)result;
+#endif
 }
 
 PyDoc_STRVAR(surfacemodel_make_ctoc__doc__,"Force model into a corner to corner configuration\n"
