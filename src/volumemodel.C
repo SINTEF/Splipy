@@ -6,6 +6,10 @@
 #include "GoTools/trivariate/ElementaryVolume.h"
 #include "GoTools/trivariate/SplineVolume.h"
 
+#if ENABLE_GPM
+#include <GPM/SplineModel.h>
+#endif
+
 #include <fstream>
 #include <sstream>
 
@@ -186,6 +190,44 @@ PyObject* VolumeModel_MakeCtoC(PyObject* self, PyObject* args)
   return Py_None;
 }
 
+PyDoc_STRVAR(volumemodel_natural_node_numbers__doc__,"Calculate node numbering\n"
+                                                      "@return: Node numbers as a list of lists");
+PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
+{
+#ifndef ENABLE_GPM
+  std::cerr << "Compiled without GPM support - no numbering generated" << std::endl;
+  Py_INCREF(Py_None);
+  return Py_None;
+#endif
+
+  VolumeModel* sm = (VolumeModel*)(self);
+  if (!sm)
+    return NULL;
+
+  std::vector< shared_ptr<Go::SplineVolume> > data;
+  for (int i=0;i<sm->data->nmbEntities();++i)
+    data.push_back(sm->data->getSplineVolume(i));
+
+  SplineModel model(data);
+
+  model.buildTopology();
+  model.generateGlobalNumbersPETSc();
+
+  std::vector< std::vector<int> > numbers;
+  model.getGlobalNumbering(numbers);
+  model.renumberNatural(numbers);
+
+  PyObject* result = PyList_New(numbers.size());
+  for (size_t i = 0; i < numbers.size(); ++i) {
+    PyObject* lst = PyList_New(numbers[i].size());
+    for (size_t j=0; j < numbers[i].size(); ++j)
+      PyList_SetItem(lst, j, Py_BuildValue((char*) "i", numbers[i][j]));
+    PyList_SetItem(result, i, lst);
+  }
+
+  return (PyObject*)result;
+}
+
 PyDoc_STRVAR(volumemodel_nmb_faces__doc__,"Returns the number of simple entities (Volumes) in this model\n"
                                           "@return: The number of faces in this model\n"
                                           "@rtype: integer");
@@ -201,12 +243,13 @@ Py_ssize_t VolumeModel_NmbFaces(PyObject* self)
 PySequenceMethods VolumeModel_seq_operators = {0};
 
 PyMethodDef VolumeModel_methods[] = {
-     {"GetBoundingBox",        (PyCFunction)VolumeModel_GetBoundingBox,   METH_VARARGS, volumemodel_get_bounding_box__doc__},
-     {"GetShell",              (PyCFunction)VolumeModel_GetShell,         METH_VARARGS, volumemodel_get_shell__doc__},
-     {"IsCornerToCorner",      (PyCFunction)VolumeModel_CtoC,             METH_VARARGS, volumemodel_ctoc__doc__},
-     {"MakeCommonSplineSpace", (PyCFunction)VolumeModel_MakeCommonSpline, METH_VARARGS, volumemodel_make_common_spline__doc__},
-     {"MakeCornerToCorner",    (PyCFunction)VolumeModel_MakeCtoC,         METH_VARARGS, volumemodel_make_ctoc__doc__},
-     {NULL,                    NULL,                                       0,            NULL}
+     {"GetBoundingBox",        (PyCFunction)VolumeModel_GetBoundingBox,     METH_VARARGS, volumemodel_get_bounding_box__doc__},
+     {"GetShell",              (PyCFunction)VolumeModel_GetShell,           METH_VARARGS, volumemodel_get_shell__doc__},
+     {"IsCornerToCorner",      (PyCFunction)VolumeModel_CtoC,               METH_VARARGS, volumemodel_ctoc__doc__},
+     {"MakeCommonSplineSpace", (PyCFunction)VolumeModel_MakeCommonSpline,   METH_VARARGS, volumemodel_make_common_spline__doc__},
+     {"MakeCornerToCorner",    (PyCFunction)VolumeModel_MakeCtoC,           METH_VARARGS, volumemodel_make_ctoc__doc__},
+     {"NaturalNodeNumbers",    (PyCFunction)VolumeModel_NaturalNodeNumbers, METH_VARARGS, volumemodel_natural_node_numbers__doc__},
+     {NULL,                    NULL,                                        0,            NULL}
    };
 
 PyDoc_STRVAR(volume_model__doc__, "A collection of parametric volumes");

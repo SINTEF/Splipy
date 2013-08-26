@@ -103,27 +103,51 @@ void DoWriteHDF5Field(const std::string& fname, const std::string& fldname,
   else
     group = H5Gcreate2(file,str.str().c_str(),0, H5P_DEFAULT, H5P_DEFAULT);
   hsize_t siz = PyList_Size(data);
-  double* wrData = new double[siz];
-  for (int i=0;i<siz;++i)
-    wrData[i] = PyFloat_AsDouble(PyList_GetItem(data,i));
+  if (PyInt_Check(PyList_GetItem(data,0))) {
+    int* wrData = new int[siz];
+    for (int i=0;i<siz;++i)
+      wrData[i] = PyInt_AsLong(PyList_GetItem(data,i));
 
-  hid_t space = H5Screate_simple(1,&siz,NULL);
-  hid_t set = H5Dcreate2(group,fldname.c_str(),
-                         H5T_NATIVE_DOUBLE,space,
-                         H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-  hid_t file_space = H5Dget_space(set);
-  hsize_t stride = 1;
-  hsize_t start = 0;
-  H5Sselect_hyperslab(file_space,H5S_SELECT_SET,&start,&stride,&siz,NULL);
-  hid_t mem_space = H5Screate_simple(1,&siz,NULL);
-  H5Dwrite(set,H5T_NATIVE_DOUBLE,mem_space,file_space,H5P_DEFAULT,wrData);
-  H5Sclose(mem_space);
-  H5Sclose(file_space);
-  H5Dclose(set);
-  H5Sclose(space);
-  H5Gclose(group);
-  H5Fclose(file);
-  delete[] wrData;
+    hid_t space = H5Screate_simple(1,&siz,NULL);
+    hid_t set = H5Dcreate2(group,fldname.c_str(),
+                           H5T_NATIVE_INT,space,
+                           H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+    hid_t file_space = H5Dget_space(set);
+    hsize_t stride = 1;
+    hsize_t start = 0;
+    H5Sselect_hyperslab(file_space,H5S_SELECT_SET,&start,&stride,&siz,NULL);
+    hid_t mem_space = H5Screate_simple(1,&siz,NULL);
+    H5Dwrite(set,H5T_NATIVE_INT,mem_space,file_space,H5P_DEFAULT,wrData);
+    H5Sclose(mem_space);
+    H5Sclose(file_space);
+    H5Dclose(set);
+    H5Sclose(space);
+    H5Gclose(group);
+    H5Fclose(file);
+    delete[] wrData;
+  } else  {
+    double* wrData = new double[siz];
+    for (int i=0;i<siz;++i)
+      wrData[i] = PyFloat_AsDouble(PyList_GetItem(data,i));
+
+    hid_t space = H5Screate_simple(1,&siz,NULL);
+    hid_t set = H5Dcreate2(group,fldname.c_str(),
+                           H5T_NATIVE_DOUBLE,space,
+                           H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+    hid_t file_space = H5Dget_space(set);
+    hsize_t stride = 1;
+    hsize_t start = 0;
+    H5Sselect_hyperslab(file_space,H5S_SELECT_SET,&start,&stride,&siz,NULL);
+    hid_t mem_space = H5Screate_simple(1,&siz,NULL);
+    H5Dwrite(set,H5T_NATIVE_DOUBLE,mem_space,file_space,H5P_DEFAULT,wrData);
+    H5Sclose(mem_space);
+    H5Sclose(file_space);
+    H5Dclose(set);
+    H5Sclose(space);
+    H5Gclose(group);
+    H5Fclose(file);
+    delete[] wrData;
+  }
 }
 
 void DoWriteHDF5Geometry(const std::string& fname, const std::string& geoname,
