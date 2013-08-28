@@ -203,7 +203,7 @@ static void DoWrite(std::string fname, PyObject* objectso, bool convert)
     fname = "/tmp/sgui.fifo";
     mode = std::ios_base::out|std::ios_base::app;
   }
-  std::ofstream g2_file(fname,mode);
+  std::ofstream g2_file(fname.c_str(),mode);
   if (PyObject_TypeCheck(objectso,&PyList_Type)) {
     for (int i=0; i < PyList_Size(objectso); ++i) {
       PyObject* obj = PyList_GetItem(objectso,i);
@@ -233,7 +233,7 @@ static void DoWriteSTL(std::string fname, bool ascii, PyObject* objectso, int re
   std::ios_base::openmode mode = std::ios_base::out;
   if (!ascii)
     mode = std::ios_base::out|std::ios_base::binary;
-  std::ofstream stl_file(fname,mode);
+  std::ofstream stl_file(fname.c_str(),mode);
   unsigned int nTriangles = 0;
 
   // write header
