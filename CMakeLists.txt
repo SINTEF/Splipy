@@ -12,6 +12,7 @@ ENABLE_LANGUAGE(CXX)
 OPTION(USE_OPENNURBS "Use OpenNURBS?" ON)
 OPTION(USE_HDF5 "Use HDF5?" ON)
 OPTION(USE_GPM "Use GPM?" ON)
+OPTION(BUILD_PYTHON_MODULE "Build standalone python module?" ON)
 
 FIND_PACKAGE(PythonLibs REQUIRED)
 FIND_PACKAGE(PythonInterp REQUIRED)
@@ -27,6 +28,7 @@ FIND_PACKAGE(GoIgeslib REQUIRED)
 FIND_PACKAGE(GoTopology REQUIRED)
 FIND_PACKAGE(GoImplicitization REQUIRED)
 FIND_PACKAGE(GoIntersections REQUIRED)
+FIND_PACKAGE(LATEX)
 
 IF(USE_OPENNURBS)
   FIND_PACKAGE(OpenNURBS)
@@ -100,25 +102,29 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS}")
 
 FILE(GLOB_RECURSE SRCS src/*.C)
 
-PYTHON_ADD_MODULE(GoTools ${SRCS})
-TARGET_LINK_LIBRARIES(GoTools ${DEPLIBS})
+IF(BUILD_PYTHON_MODULE)
+  PYTHON_ADD_MODULE(GoTools ${SRCS})
+  TARGET_LINK_LIBRARIES(GoTools ${DEPLIBS})
+ENDIF()
 
 ADD_EXECUTABLE(geoModeler app/geoModeler.C ${SRCS})
 TARGET_LINK_LIBRARIES(geoModeler ${DEPLIBS})
 
 EXECUTE_PROCESS(COMMAND python -c "import sys; print sys.version[:3]" OUTPUT_VARIABLE PYTHON_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-ADD_CUSTOM_TARGET(doc PYTHONPATH=${CMAKE_BINARY_DIR}:${PROJECT_SOURCE_DIR} ${PYTHON_EXECUTABLE}
-                      ${CMAKE_SOURCE_DIR}/doc/gendocumentation.py
-                      DEPENDS GoTools
-                      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                      COMMENT "Generating API documentation" VERBATIM)
+IF(LATEX_FOUND)
+  ADD_CUSTOM_TARGET(doc PYTHONPATH=${CMAKE_BINARY_DIR}:${PROJECT_SOURCE_DIR} ${PYTHON_EXECUTABLE}
+                        ${CMAKE_SOURCE_DIR}/doc/gendocumentation.py
+                        DEPENDS GoTools
+                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                        COMMENT "Generating API documentation" VERBATIM)
 
-ADD_CUSTOM_TARGET(pdfdoc pdflatex
-                  api.tex
-                  DEPENDS doc
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc/latex
-                  COMMENT "Compiling documentation to PDF (doc/latex/api.pdf)" VERBATIM)
+  ADD_CUSTOM_TARGET(pdfdoc pdflatex
+                    api.tex
+                    DEPENDS doc
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc/latex
+                    COMMENT "Compiling documentation to PDF (doc/latex/api.pdf)" VERBATIM)
+ENDIF()
 
 SET(TAR_BALL GoTools-python-bindings-${GEOMODELLER_VERSION_MAJOR}.${GEOMODELLER_VERSION_MINOR}.${GEOMODELLER_VERSION_PATCH}.tar.bz2)
 FILE(GLOB_RECURSE DIST_SRCS RELATIVE ${PROJECT_SOURCE_DIR} CMakeLists.txt src/*.C include/*.h include/*.in app/*.C doc/gendocumentation.py cmake/*.cmake)
@@ -131,14 +137,18 @@ SET_DIRECTORY_PROPERTIES(${PROJECT_SOURCE_DIR}/doc ADDITIONAL_MAKE_CLEAN_DIRECTO
 
 # 'install' target
 # Make install force doc build
-INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${CMAKE_BUILD_TOOL} doc WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")" COMPONENT doc)
-INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools
-        COMPONENT doc)
-IF(EXISTS "/etc/debian_version")
-  INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/ COMPONENT bin)
-ELSE(EXISTS "/etc/debian_version")
-  INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/site-packages/ COMPONENT bin)
-ENDIF(EXISTS "/etc/debian_version")
+IF(LATEX_FOUND)
+  INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${CMAKE_BUILD_TOOL} doc WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")" COMPONENT doc)
+  INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools
+          COMPONENT doc)
+ENDIF()
+IF(BUILD_PYTHON_MODULE)
+  IF(EXISTS "/etc/debian_version")
+    INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/ COMPONENT bin)
+  ELSE(EXISTS "/etc/debian_version")
+    INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/site-packages/ COMPONENT bin)
+  ENDIF(EXISTS "/etc/debian_version")
+ENDIF()
 
 INSTALL(TARGETS geoModeler DESTINATION bin COMPONENT bin)
 
