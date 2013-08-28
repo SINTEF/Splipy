@@ -166,7 +166,7 @@ PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
 #else
 
   SurfaceModel* sm = (SurfaceModel*)(self);
-  if (!sm)
+  if (!sm || !sm->data)
     return NULL;
 
   std::vector< shared_ptr<Go::SplineSurface> > data;
