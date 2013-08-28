@@ -38,7 +38,7 @@ PyObject* VolumeModel_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
       shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
       if (!spVol)
         continue;
-      volumes.push_back(shared_ptr<Go::ftVolume>(new Go::ftVolume(spVol,-1)));
+      volumes.push_back(shared_ptr<Go::ftVolume>(new Go::ftVolume(static_pointer_cast<Go::ParamVolume>(spVol),-1)));
     }
     if (volumes.size() < 1)
       return NULL;
