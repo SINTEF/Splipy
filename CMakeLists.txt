@@ -14,6 +14,10 @@ OPTION(USE_HDF5 "Use HDF5?" ON)
 OPTION(USE_GPM "Use GPM?" ON)
 OPTION(BUILD_PYTHON_MODULE "Build standalone python module?" ON)
 
+# Add local modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+                      ${CMAKE_SOURCE_DIR}/cmake/Modules)
+
 FIND_PACKAGE(PythonLibs REQUIRED)
 FIND_PACKAGE(PythonInterp REQUIRED)
 FIND_PACKAGE(GoTools REQUIRED)
@@ -29,6 +33,7 @@ FIND_PACKAGE(GoTopology REQUIRED)
 FIND_PACKAGE(GoImplicitization REQUIRED)
 FIND_PACKAGE(GoIntersections REQUIRED)
 FIND_PACKAGE(LATEX)
+FIND_PACKAGE(EpyDoc)
 
 IF(USE_OPENNURBS)
   FIND_PACKAGE(OpenNURBS)
@@ -112,15 +117,15 @@ TARGET_LINK_LIBRARIES(geoModeler ${DEPLIBS})
 
 EXECUTE_PROCESS(COMMAND python -c "import sys; print sys.version[:3]" OUTPUT_VARIABLE PYTHON_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-IF(LATEX_FOUND)
+IF(EPYDOC_EXECUTABLE)
   ADD_CUSTOM_TARGET(doc PYTHONPATH=${CMAKE_BINARY_DIR}:${PROJECT_SOURCE_DIR} ${PYTHON_EXECUTABLE}
                         ${CMAKE_SOURCE_DIR}/doc/gendocumentation.py
                         DEPENDS GoTools
                         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                         COMMENT "Generating API documentation" VERBATIM)
-
-  ADD_CUSTOM_TARGET(pdfdoc pdflatex
-                    api.tex
+ENDIF()
+IF(PDFLATEX_COMPILER)
+  ADD_CUSTOM_TARGET(pdfdoc ${PDFLATEX_COMPILER} api.tex
                     DEPENDS doc
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc/latex
                     COMMENT "Compiling documentation to PDF (doc/latex/api.pdf)" VERBATIM)
@@ -137,7 +142,7 @@ SET_DIRECTORY_PROPERTIES(${PROJECT_SOURCE_DIR}/doc ADDITIONAL_MAKE_CLEAN_DIRECTO
 
 # 'install' target
 # Make install force doc build
-IF(LATEX_FOUND)
+IF(EPYDOC_EXECUTABLE)
   INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${CMAKE_BUILD_TOOL} doc WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")" COMPONENT doc)
   INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools
           COMPONENT doc)
