@@ -191,8 +191,14 @@ PyObject* VolumeModel_MakeCtoC(PyObject* self, PyObject* args)
 }
 
 PyDoc_STRVAR(volumemodel_natural_node_numbers__doc__,"Calculate node numbering\n"
-                                                      "@return: Node numbers as a list of lists");
-PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
+                                                     "@param perX: periodic in X?\n"
+                                                     "@type perX: Boolean\n"
+                                                     "@param perY: periodic in Y?\n"
+                                                     "@type perY: Boolean\n"
+                                                     "@param perZ: periodic in Z?\n"
+                                                     "@type perZ: Boolean\n"
+                                                     "@return: Node numbers as a list of lists");
+PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args, PyObject* kwds)
 {
 #ifndef ENABLE_GPM
   std::cerr << "Compiled without GPM support - no numbering generated" << std::endl;
@@ -200,8 +206,17 @@ PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
   return Py_None;
 #else
 
+  static const char* keyWords[] = {"perX", "perY", "perZ", NULL };
+  bool periodic[3] = {false, false, false};
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|bbb",
+                                   (char**)keyWords,&periodic[0],
+                                                    &periodic[1],
+                                                    &periodic[2]))
+    return NULL;
+
+
   VolumeModel* sm = (VolumeModel*)(self);
-  if (!sm)
+  if (!sm || !sm->data)
     return NULL;
 
   std::vector< shared_ptr<Go::SplineVolume> > data;
@@ -210,12 +225,13 @@ PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
 
   SplineModel model(data);
 
-  model.buildTopology();
-  model.generateGlobalNumbersPETSc();
+  std::vector<bool> per;
+  per.assign(periodic, periodic+3);
+  model.buildTopology(&per);
 
+  model.generateGlobalNumbersPETSc();
   std::vector< std::vector<int> > numbers;
-  model.getGlobalNumbering(numbers);
-  model.renumberNatural(numbers);
+  model.getGlobalNaturalNumbering(numbers);
 
   PyObject* result = PyList_New(numbers.size());
   for (size_t i = 0; i < numbers.size(); ++i) {
@@ -244,13 +260,13 @@ Py_ssize_t VolumeModel_NmbFaces(PyObject* self)
 PySequenceMethods VolumeModel_seq_operators = {0};
 
 PyMethodDef VolumeModel_methods[] = {
-     {"GetBoundingBox",        (PyCFunction)VolumeModel_GetBoundingBox,     METH_VARARGS, volumemodel_get_bounding_box__doc__},
-     {"GetShell",              (PyCFunction)VolumeModel_GetShell,           METH_VARARGS, volumemodel_get_shell__doc__},
-     {"IsCornerToCorner",      (PyCFunction)VolumeModel_CtoC,               METH_VARARGS, volumemodel_ctoc__doc__},
-     {"MakeCommonSplineSpace", (PyCFunction)VolumeModel_MakeCommonSpline,   METH_VARARGS, volumemodel_make_common_spline__doc__},
-     {"MakeCornerToCorner",    (PyCFunction)VolumeModel_MakeCtoC,           METH_VARARGS, volumemodel_make_ctoc__doc__},
-     {"NaturalNodeNumbers",    (PyCFunction)VolumeModel_NaturalNodeNumbers, METH_VARARGS, volumemodel_natural_node_numbers__doc__},
-     {NULL,                    NULL,                                        0,            NULL}
+     {"GetBoundingBox",        (PyCFunction)VolumeModel_GetBoundingBox,     METH_VARARGS,               volumemodel_get_bounding_box__doc__},
+     {"GetShell",              (PyCFunction)VolumeModel_GetShell,           METH_VARARGS,               volumemodel_get_shell__doc__},
+     {"IsCornerToCorner",      (PyCFunction)VolumeModel_CtoC,               METH_VARARGS,               volumemodel_ctoc__doc__},
+     {"MakeCommonSplineSpace", (PyCFunction)VolumeModel_MakeCommonSpline,   METH_VARARGS,               volumemodel_make_common_spline__doc__},
+     {"MakeCornerToCorner",    (PyCFunction)VolumeModel_MakeCtoC,           METH_VARARGS,               volumemodel_make_ctoc__doc__},
+     {"NaturalNodeNumbers",    (PyCFunction)VolumeModel_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, volumemodel_natural_node_numbers__doc__},
+     {NULL,                    NULL,                                        0,                          NULL}
    };
 
 PyDoc_STRVAR(volume_model__doc__, "A collection of parametric volumes");

@@ -156,14 +156,25 @@ PyObject* SurfaceModel_MakeCommonSpline(PyObject* self, PyObject* args)
 }
 
 PyDoc_STRVAR(surfacemodel_natural_node_numbers__doc__,"Calculate node numbering\n"
+                                                      "@param perX: periodic in X?\n"
+                                                      "@type perX: Boolean\n"
+                                                      "@param perY: periodic in Y?\n"
+                                                      "@type perY: Boolean\n"
                                                       "@return: Node numbers as a list of lists");
-PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
+PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args, PyObject* kwds)
 {
 #ifndef ENABLE_GPM
   std::cerr << "Compiled without GPM support - no numbering generated" << std::endl;
   Py_INCREF(Py_None);
   return Py_None;
 #else
+
+  static const char* keyWords[] = {"perX", "perY", NULL };
+  bool periodic[2] = {false, false};
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|bb",
+                                   (char**)keyWords,&periodic[0],
+                                                    &periodic[1]))
+    return NULL;
 
   SurfaceModel* sm = (SurfaceModel*)(self);
   if (!sm || !sm->data)
@@ -175,9 +186,11 @@ PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args)
 
   SplineModel model(data);
 
-  model.buildTopology();
-  model.generateGlobalNumbersPETSc();
+  std::vector<bool> per;
+  per.assign(periodic, periodic+2);
+  model.buildTopology(&per);
 
+  model.generateGlobalNumbersPETSc();
   std::vector< std::vector<int> > numbers;
   model.getGlobalNaturalNumbering(numbers);
 
@@ -222,12 +235,12 @@ Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
 PySequenceMethods SurfaceModel_seq_operators = {0};
 
 PyMethodDef SurfaceModel_methods[] = {
-     {"GetBoundingBox",        (PyCFunction)SurfaceModel_GetBoundingBox,     METH_VARARGS, surfacemodel_get_bounding_box__doc__},
-     {"IsCornerToCorner",      (PyCFunction)SurfaceModel_CtoC,               METH_VARARGS, surfacemodel_ctoc__doc__},
-     {"MakeCommonSplineSpace", (PyCFunction)SurfaceModel_MakeCommonSpline,   METH_VARARGS, surfacemodel_make_common_spline__doc__},
-     {"MakeCornerToCorner",    (PyCFunction)SurfaceModel_MakeCtoC,           METH_VARARGS, surfacemodel_make_ctoc__doc__},
-     {"NaturalNodeNumbers",    (PyCFunction)SurfaceModel_NaturalNodeNumbers, METH_VARARGS, surfacemodel_natural_node_numbers__doc__},
-     {NULL,                    NULL,                                         0,            NULL}
+     {"GetBoundingBox",        (PyCFunction)SurfaceModel_GetBoundingBox,     METH_VARARGS,               surfacemodel_get_bounding_box__doc__},
+     {"IsCornerToCorner",      (PyCFunction)SurfaceModel_CtoC,               METH_VARARGS,               surfacemodel_ctoc__doc__},
+     {"MakeCommonSplineSpace", (PyCFunction)SurfaceModel_MakeCommonSpline,   METH_VARARGS,               surfacemodel_make_common_spline__doc__},
+     {"MakeCornerToCorner",    (PyCFunction)SurfaceModel_MakeCtoC,           METH_VARARGS,               surfacemodel_make_ctoc__doc__},
+     {"NaturalNodeNumbers",    (PyCFunction)SurfaceModel_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, surfacemodel_natural_node_numbers__doc__},
+     {NULL,                    NULL,                                         0,                          NULL}
    };
 
 PyDoc_STRVAR(surface_model__doc__, "A collection of parametric surfaces");
