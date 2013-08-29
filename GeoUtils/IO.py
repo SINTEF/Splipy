@@ -73,7 +73,7 @@ class HDF5File:
      @param prefix: Prefix for filename (no extension)
      @type prefix: String
   """
-  FieldInfo = namedtuple("FieldInfo","basis patches components")
+  FieldInfo = namedtuple("FieldInfo","basis patches components fieldtype")
   def __init__(self, prefix):
     self.prefix = prefix
     self.create = True
@@ -85,8 +85,8 @@ class HDF5File:
       f = open(self.prefix+'.xml','w')
       xml ='<info>\n'
       for entry in self.basismap:
-        xml += '  <entry name="%s" description="%s" type="field" basis="%s" patches="%i" components="%i"/>\n' \
-                %(entry, entry, self.basismap[entry].basis, self.basismap[entry].patches, self.basismap[entry].components)
+        xml += '  <entry name="%s" description="%s" type="%s" basis="%s" patches="%i" components="%i"/>\n' \
+                %(entry, entry, self.basismap[entry].fieldtype, self.basismap[entry].basis, self.basismap[entry].patches, self.basismap[entry].components)
       xml += '  <levels>0</levels>\n</info>\n'
       f.write(xml)
       f.close()
@@ -125,5 +125,8 @@ class HDF5File:
      """
     WriteHDF5Field(self.prefix+'.hdf5', name, patch, level, data, self.create)
     if not self.basismap.has_key(name):
-      self.basismap[name] = HDF5File.FieldInfo('', 0, 1)
-    self.basismap[name] = HDF5File.FieldInfo(basis, max(self.basismap[name].patches, patch), components)
+      self.basismap[name] = HDF5File.FieldInfo('', 0, 1,'')
+    typ = 'field'
+    if type(data[0]) is int:
+      typ = 'intfield'
+    self.basismap[name] = HDF5File.FieldInfo(basis, max(self.basismap[name].patches, patch), components, typ)
