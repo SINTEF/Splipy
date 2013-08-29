@@ -119,7 +119,7 @@ PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
 PyDoc_STRVAR(surfacemodel_get_bounding_box__doc__,"Generate and return the Surfacemodel bounding box\n"
                                                   "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,...\n"
                                                   "@rtype: List of floats");
-PyObject* SurfaceModel_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* SurfaceModel_GetBoundingBox(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::SurfaceModel> surfacemodel = PyObject_AsGoSurfaceModel(self);
   if (!surfacemodel)

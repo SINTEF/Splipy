@@ -118,7 +118,7 @@ PyObject* VolumeModel_Get(PyObject* self, Py_ssize_t i)
 PyDoc_STRVAR(volumemodel_get_bounding_box__doc__,"Generate and return the Volumemodel bounding box\n"
                                                  "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,...\n"
                                                  "@rtype: List of floats");
-PyObject* VolumeModel_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* VolumeModel_GetBoundingBox(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::VolumeModel> volumemodel = PyObject_AsGoVolumeModel(self);
   if (!volumemodel)
@@ -143,7 +143,7 @@ PyObject* VolumeModel_GetBoundingBox(PyObject* self, PyObject* args, PyObject* k
 PyDoc_STRVAR(volumemodel_get_shell__doc__,"Generate and return all boundary faces of the volume model\n"
                                           "@return: The enclosing shell representation\n"
                                           "@rtype: List of Surfaces");
-PyObject* VolumeModel_GetShell(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* VolumeModel_GetShell(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::VolumeModel> volumemodel = PyObject_AsGoVolumeModel(self);
   if (!volumemodel)
