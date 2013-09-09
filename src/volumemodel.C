@@ -6,10 +6,6 @@
 #include "GoTools/trivariate/ElementaryVolume.h"
 #include "GoTools/trivariate/SplineVolume.h"
 
-#if ENABLE_GPM
-#include <GPM/SplineModel.h>
-#endif
-
 #include <fstream>
 #include <sstream>
 
@@ -190,61 +186,6 @@ PyObject* VolumeModel_MakeCtoC(PyObject* self, PyObject* args)
   return Py_None;
 }
 
-PyDoc_STRVAR(volumemodel_natural_node_numbers__doc__,"Calculate node numbering\n"
-                                                     "@param perX: periodic in X?\n"
-                                                     "@type perX: Boolean\n"
-                                                     "@param perY: periodic in Y?\n"
-                                                     "@type perY: Boolean\n"
-                                                     "@param perZ: periodic in Z?\n"
-                                                     "@type perZ: Boolean\n"
-                                                     "@return: Node numbers as a list of lists");
-PyObject* VolumeModel_NaturalNodeNumbers(PyObject* self, PyObject* args, PyObject* kwds)
-{
-#ifndef ENABLE_GPM
-  std::cerr << "Compiled without GPM support - no numbering generated" << std::endl;
-  Py_INCREF(Py_None);
-  return Py_None;
-#else
-
-  static const char* keyWords[] = {"perX", "perY", "perZ", NULL };
-  bool periodic[3] = {false, false, false};
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|bbb",
-                                   (char**)keyWords,&periodic[0],
-                                                    &periodic[1],
-                                                    &periodic[2]))
-    return NULL;
-
-
-  VolumeModel* sm = (VolumeModel*)(self);
-  if (!sm || !sm->data)
-    return NULL;
-
-  std::vector< shared_ptr<Go::SplineVolume> > data;
-  for (int i=0;i<sm->data->nmbEntities();++i)
-    data.push_back(sm->data->getSplineVolume(i));
-
-  SplineModel model(data);
-
-  std::vector<bool> per;
-  per.assign(periodic, periodic+3);
-  model.buildTopology(&per);
-
-  model.generateGlobalNumbersPETSc();
-  std::vector< std::vector<int> > numbers;
-  model.getGlobalNaturalNumbering(numbers);
-
-  PyObject* result = PyList_New(numbers.size());
-  for (size_t i = 0; i < numbers.size(); ++i) {
-    PyObject* lst = PyList_New(numbers[i].size());
-    for (size_t j=0; j < numbers[i].size(); ++j)
-      PyList_SetItem(lst, j, Py_BuildValue((char*) "i", numbers[i][j]));
-    PyList_SetItem(result, i, lst);
-  }
-
-  return (PyObject*)result;
-#endif
-}
-
 PyDoc_STRVAR(volumemodel_nmb_faces__doc__,"Returns the number of simple entities (Volumes) in this model\n"
                                           "@return: The number of faces in this model\n"
                                           "@rtype: integer");
@@ -265,7 +206,6 @@ PyMethodDef VolumeModel_methods[] = {
      {"IsCornerToCorner",      (PyCFunction)VolumeModel_CtoC,               METH_VARARGS,               volumemodel_ctoc__doc__},
      {"MakeCommonSplineSpace", (PyCFunction)VolumeModel_MakeCommonSpline,   METH_VARARGS,               volumemodel_make_common_spline__doc__},
      {"MakeCornerToCorner",    (PyCFunction)VolumeModel_MakeCtoC,           METH_VARARGS,               volumemodel_make_ctoc__doc__},
-     {"NaturalNodeNumbers",    (PyCFunction)VolumeModel_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, volumemodel_natural_node_numbers__doc__},
      {NULL,                    NULL,                                        0,                          NULL}
    };
 

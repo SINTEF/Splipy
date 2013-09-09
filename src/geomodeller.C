@@ -2,6 +2,7 @@
 
 #include "curve.h"
 #include "point.h"
+#include "preprocess.h"
 #include "pyutils.h"
 #include "surface.h"
 #include "surfacemodel.h"
@@ -668,6 +669,7 @@ void InitGoToolsTypes()
   init_SurfaceModelFactory_Module();
   init_Volume_Type();
   init_VolumeFactory_Module();
+  init_Preprocess_Module();
 }
 
 PyDoc_STRVAR(gotools_module__doc__,"GoTools bindings");

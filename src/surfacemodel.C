@@ -239,7 +239,6 @@ PyMethodDef SurfaceModel_methods[] = {
      {"IsCornerToCorner",      (PyCFunction)SurfaceModel_CtoC,               METH_VARARGS,               surfacemodel_ctoc__doc__},
      {"MakeCommonSplineSpace", (PyCFunction)SurfaceModel_MakeCommonSpline,   METH_VARARGS,               surfacemodel_make_common_spline__doc__},
      {"MakeCornerToCorner",    (PyCFunction)SurfaceModel_MakeCtoC,           METH_VARARGS,               surfacemodel_make_ctoc__doc__},
-     {"NaturalNodeNumbers",    (PyCFunction)SurfaceModel_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, surfacemodel_natural_node_numbers__doc__},
      {NULL,                    NULL,                                         0,                          NULL}
    };
 
