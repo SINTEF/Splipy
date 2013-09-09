@@ -13,13 +13,15 @@
 static std::vector<std::vector<int> >
         GenerateNumbers(T& data, std::vector<bool>& per)
 {
+  std::vector< std::vector<int> > numbers;
+#if ENABLE_GPM
   SplineModel model(data);
 
   model.buildTopology(&per);
 
   model.generateGlobalNumbersPETSc();
-  std::vector< std::vector<int> > numbers;
   model.getGlobalNaturalNumbering(numbers);
+#endif
 
   return numbers;
 }
