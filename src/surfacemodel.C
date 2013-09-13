@@ -6,10 +6,6 @@
 #include "GoTools/geometry/ElementarySurface.h"
 #include "GoTools/geometry/SplineSurface.h"
 
-#if ENABLE_GPM
-#include <GPM/SplineModel.h>
-#endif
-
 #include <fstream>
 #include <sstream>
 
@@ -153,57 +149,6 @@ PyObject* SurfaceModel_MakeCommonSpline(PyObject* self, PyObject* args)
 
   Py_INCREF(Py_None);
   return Py_None;
-}
-
-PyDoc_STRVAR(surfacemodel_natural_node_numbers__doc__,"Calculate node numbering\n"
-                                                      "@param perX: periodic in X?\n"
-                                                      "@type perX: Boolean\n"
-                                                      "@param perY: periodic in Y?\n"
-                                                      "@type perY: Boolean\n"
-                                                      "@return: Node numbers as a list of lists");
-PyObject* SurfaceModel_NaturalNodeNumbers(PyObject* self, PyObject* args, PyObject* kwds)
-{
-#ifndef ENABLE_GPM
-  std::cerr << "Compiled without GPM support - no numbering generated" << std::endl;
-  Py_INCREF(Py_None);
-  return Py_None;
-#else
-
-  static const char* keyWords[] = {"perX", "perY", NULL };
-  bool periodic[2] = {false, false};
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|bb",
-                                   (char**)keyWords,&periodic[0],
-                                                    &periodic[1]))
-    return NULL;
-
-  SurfaceModel* sm = (SurfaceModel*)(self);
-  if (!sm || !sm->data)
-    return NULL;
-
-  std::vector< shared_ptr<Go::SplineSurface> > data;
-  for (int i=0;i<sm->data->nmbEntities();++i)
-    data.push_back(sm->data->getSplineSurface(i));
-
-  SplineModel model(data);
-
-  std::vector<bool> per;
-  per.assign(periodic, periodic+2);
-  model.buildTopology(&per);
-
-  model.generateGlobalNumbersPETSc();
-  std::vector< std::vector<int> > numbers;
-  model.getGlobalNaturalNumbering(numbers);
-
-  PyObject* result = PyList_New(numbers.size());
-  for (size_t i = 0; i < numbers.size(); ++i) {
-    PyObject* lst = PyList_New(numbers[i].size());
-    for (size_t j=0; j < numbers[i].size(); ++j)
-      PyList_SetItem(lst, j, Py_BuildValue((char*) "i", numbers[i][j]));
-    PyList_SetItem(result, i, lst);
-  }
-
-  return (PyObject*)result;
-#endif
 }
 
 PyDoc_STRVAR(surfacemodel_make_ctoc__doc__,"Force model into a corner to corner configuration\n"
