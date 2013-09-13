@@ -224,7 +224,7 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
     """ Rotational sweep the surface in between to curves,
     where both curves live on the same cylinder.
     CONSTRAINT: Curves must share the height-parametrization, i.e.
-    lie share z-coordinates if living on the unit cylinder
+    share the z-coordinates if living on the unit cylinder
     @param crv1: The first curve on the cylinder
     @type  crv1: Curve
     @param crv2: The second curve on the cylinder

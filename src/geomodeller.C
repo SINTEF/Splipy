@@ -102,7 +102,7 @@ PyObject* GeoMod_SetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyDoc_STRVAR(get_tolerance__doc__, "Get a tolerance\n"
                                    "@param type: Requested tolerance\n"
-                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', 'bend' or refine\n"
+                                   "@type type: 'gap', 'approx', 'neighbour', 'kink', 'bend' or 'refine'\n"
                                    "@return: Tolerance\n"
                                    "@rtype: Float");
 PyObject* GeoMod_GetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
