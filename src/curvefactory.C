@@ -105,6 +105,30 @@ PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
     if (!norm)
       return NULL;
     normal = *norm;
+  } else if(modState.dim == 2) { 
+    // WORKAROUND FIX, due to GoTools bug.
+    // Creating a Circle-object of dimension 2 works, but it crashes when trying
+    // to convert this to a SplineCurve
+    int    dim      = 2;
+    bool   rational = 1;
+    int    p        = 3; // polynimial order (degree + 1)
+    double w        = sqrt(2)/2;
+    double cp[9*(dim+rational)];
+    double knot[] = {0,0,0,1,1,2,2,3,3,4,4,4};
+    for(int i=0; i<9; i++) {
+      cp[3*i  ] = (*center)[0];
+      cp[3*i+1] = (*center)[1];
+      cp[3*i+2] = (i%2) ? w : 1.0;
+      if     (i<2 || i>6) cp[3*i  ] += radius;
+      else if(i>2 && i<6) cp[3*i  ] -= radius;
+      if     (i>0 && i<4) cp[3*i+1] += radius;
+      else if(i>4 && i<8) cp[3*i+1] -= radius;
+      cp[3*i  ] *= cp[3*i+2];
+      cp[3*i+1] *= cp[3*i+2];
+    }
+    Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+    result->data.reset(new Go::SplineCurve(9, p, knot, cp, dim, rational));
+    return (PyObject*)result;
   }
 
   Go::Point x_axis;
@@ -177,8 +201,9 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   int knotSpans = (int) ( fabs(angle-angleEpsilon) / (2*M_PI/3) + 1);
   int p = 3;                 // polynomial order (degree + 1)
   int n = (knotSpans-1)*2+3; // number of controlpoints/basis functions
+  int dim = modState.dim;    // number of spatial dimensions (i.e. 2D or 3D)
   std::vector<double> knots(n+p);
-  std::vector<double> cp(4*n); // control point values (x,y,z,w)
+  std::vector<double> cp((dim+1)*n); // control point values (x,y,z,w) or (x,y,w)
   bool rational = true;
 
   // build the knot vector
@@ -198,9 +223,8 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   k=0;
   for(int i=0; i<n; i++) {
     double w = (i%2==0) ? 1.0 : cos(dt); // control point weight
-    cp[k++] = (x_axis[0] + origo[0])*w;
-    cp[k++] = (x_axis[1] + origo[1])*w;
-    cp[k++] = (x_axis[2] + origo[2])*w;
+    for(int d=0; d<dim; d++) 
+      cp[k++] = (x_axis[d] + origo[d])*w;
     cp[k++] = w;
     Go::GeometryTools::rotatePoint(normal, dt, x_axis.begin());
     if(i%2 == 0) 
@@ -208,7 +232,7 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
     else
       x_axis *= cos(dt);
   }
-  shared_ptr<Go::ParamCurve> curve(new Go::SplineCurve(n, p, knots.begin(), cp.begin(), 3, rational));
+  shared_ptr<Go::ParamCurve> curve(new Go::SplineCurve(n, p, knots.begin(), cp.begin(), dim, rational));
   curve->setParameterInterval(0, fabs(angle));
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
