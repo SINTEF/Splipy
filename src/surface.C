@@ -112,6 +112,30 @@ PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)res;
 }
 
+PyDoc_STRVAR(surface_append__doc__,"Append another surface to this surface\n"
+                                  "@return: None\n");
+PyObject* Surface_Append(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"other", "dir", NULL };
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+  PyObject* other;
+  int dir=0; 
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|i",
+                                   (char**)keyWords,&other) || !surf)
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> otherPar = PyObject_AsGoSurface(other);
+  if (!otherPar || dir > 2 || dir < 0)
+    return NULL;
+
+  double dist;
+  surf->appendSurface(otherPar.get(), dir, 0, dist, false);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyObject* Surface_Str(Surface* self)
 {
   std::stringstream str;
@@ -873,6 +897,7 @@ PyObject* Surface_Scale(PyObject* o1, PyObject* o2)
 }
 
 PyMethodDef Surface_methods[] = {
+     {(char*)"Append",              (PyCFunction)Surface_Append,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
      {(char*)"EvaluateNormal",      (PyCFunction)Surface_EvaluateNormal,        METH_VARARGS|METH_KEYWORDS, surface_evaluate_normal__doc__},
