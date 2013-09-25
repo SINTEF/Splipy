@@ -152,7 +152,7 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::Point> start = PyObject_AsGoPoint(starto);
   if (!center || !start)
     return NULL;
-  Go::Point normal(0.0,0.0);
+  Go::Point normal(0.0,0.0,1.0);
   if (modState.dim == 3) {
     shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
     if (!norm)
