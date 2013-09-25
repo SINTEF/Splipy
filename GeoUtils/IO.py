@@ -4,6 +4,19 @@ import xml.dom.minidom
 from collections import namedtuple
 from GoTools import *
 
+def topologystring(geotype, name, patches, entries):
+  xml = '  <set name="%s" type="%s">\n' % (name, geotype)
+  for patch in patches:
+    xml += '    <item patch="%i">%s</item>\n' % (patch, entries)
+  xml += '  </set>\n'
+  return xml
+
+def writeAsc(X, U, fname):
+  f = open(fname,'w')
+  for i in range(0,len(U)):
+    f.write('%f %f\n' % (X[i], U[i]))
+  f.close()
+
 class InputFile:
   """Class for working with IFEM input (.xinp) files.
      @param path: The path of the xinp to open
@@ -23,7 +36,7 @@ class InputFile:
     return result.childNodes[0].nodeValue
 
 
-  def GetTopologySet(self, name, context=""):
+  def GetTopologySet(self, name, context="", nocontext=False, toptype=""):
     """ Extract a topology set from the input file.
         @param name: Name of topology set
         @type name: String
@@ -33,29 +46,42 @@ class InputFile:
         @rtype: Dict with PatchInfo
         """
     result = {}
-    if len(context):
-      ctx = self.dom.getElementsByTagName(context)[0]
-      geometry = ctx.getElementsByTagName('geometry')[0]
+
+    if type(name) is list:
+      names = name
     else:
-      geometry = self.dom.getElementsByTagName('geometry')[0]
-    topologyset = geometry.getElementsByTagName('topologysets')[0]
-    for topset in topologyset.getElementsByTagName('set'):
-      if topset.getAttributeNode('name').nodeValue == name:
-        typ = topset.getAttributeNode('type').nodeValue
-        for item in topset.getElementsByTagName('item'):
-          patch = int(item.getAttributeNode('patch').nodeValue)
-          if not result.has_key(patch):
-            result[patch] = InputFile.PatchInfo([], [], [])
-          if typ == 'edge':
-            remap = [4,2,1,3]
-            ed = int(item.childNodes[0].nodeValue)
-            result[patch].edge.append(remap[ed-1])
-          elif typ == 'face':
-            remap = [1,2,5,6,3,4]
-            fa = int(item.childNodes[0].nodeValue)
-            result[int(item.patch)].face.append(remap[fa-1])
-          else:
-            result[int(item.getAttributeNode('patch').nodeValue)].vertex.append(int(item.childNodes[0].nodeValue))
+      names = [name]
+
+    if nocontext:
+      topologyset = self.dom.getElementsByTagName('topologysets')[0]
+    else:
+      if len(context):
+        ctx = self.dom.getElementsByTagName(context)[0]
+        geometry = ctx.getElementsByTagName('geometry')[0]
+      else:
+        geometry = self.dom.getElementsByTagName('geometry')[0]
+      topologyset = geometry.getElementsByTagName('topologysets')[0]
+
+    for name in names:
+      for topset in topologyset.getElementsByTagName('set'):
+        if topset.getAttributeNode('name').nodeValue == name:
+          typ = topset.getAttributeNode('type').nodeValue
+          for item in topset.getElementsByTagName('item'):
+            patch = int(item.getAttributeNode('patch').nodeValue)
+            if not result.has_key(patch):
+              result[patch] = InputFile.PatchInfo([], [], [])
+            if typ == 'edge':
+              if  toptype == 'edge' or len(toptype) == 0:
+                remap = [4,2,1,3]
+                ed = int(item.childNodes[0].nodeValue)
+                result[patch].edge.append(remap[ed-1])
+            elif typ == 'face':
+              if toptype == 'face' or len(toptype) == 0:
+                remap = [1,2,5,6,3,4]
+                fa = int(item.childNodes[0].nodeValue)
+                result[patch].face.append(remap[fa-1])
+            else:
+              result[int(item.getAttributeNode('patch').nodeValue)].vertex.append(int(item.childNodes[0].nodeValue))
     return result
 
   def write(self, name):
