@@ -511,7 +511,7 @@ PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   if (parVol) {
-    std::shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+    shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
     if (!parVol->isSpline())
       ((Volume*)self)->data = spVol;
     spVol->setParameterDomain(umin, umax, vmin, vmax, wmin, wmax);

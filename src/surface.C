@@ -712,7 +712,7 @@ PyObject* Surface_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(self);
   if (surface) {
-    std::shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(surface);
+    shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(surface);
     if (!surface->isSpline())
       ((Surface*)self)->data = spSurf;
     spSurf->setParameterDomain(umin, umax, vmin, vmax);

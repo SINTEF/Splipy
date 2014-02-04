@@ -998,7 +998,7 @@ PyObject* Generate_TrimSurface(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::SplineSurface> surf_remove = convertSplineSurface(surf2);
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  std::vector<std::shared_ptr<Go::BoundedSurface> > trimmed_sfs =
+  std::vector<shared_ptr<Go::BoundedSurface> > trimmed_sfs =
       Go::BoundedUtils::trimSurfWithSurf(surf_base, surf_remove, fabs(modState.gapTolerance));
   result->data = trimmed_sfs[0];
 
