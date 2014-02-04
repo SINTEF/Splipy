@@ -226,6 +226,8 @@ static int WriteSTLEntity(std::ofstream& stl_file, bool ascii, PyObject* obj, in
     return WriteSurfaceSTL(stl_file, (Surface*)obj, ascii, resolution);
   if (PyObject_TypeCheck(obj,&Volume_Type))
     return WriteVolumeSTL(stl_file, (Volume*)obj, ascii, resolution);
+
+  return 0;
 }
 
 static void DoWriteSTL(std::string fname, bool ascii, PyObject* objectso, int resolution[3])
