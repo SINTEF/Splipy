@@ -19,8 +19,9 @@
 #include "GoTools/geometry/SplineCurve.h"
 #include "GoTools/geometry/SweepSurfaceCreator.h"
 #include "GoTools/geometry/Torus.h"
+#include "GoTools/geometry/SISLconversion.h"
 #include "GoTools/geometry/SurfaceInterpolator.h"
-
+#include "sislP.h"  
 
 extern "C" {
 PyObject* SurfaceFactory_module;
@@ -413,16 +414,19 @@ PyDoc_STRVAR(generate_interpolate_surface__doc__, "Construct a spline surface wh
                                                   "@type parvalsu: List of floats\n"
                                                   "@param parvalsv: The parameter values for the points\n"
                                                   "@type parvalsv: List of floats\n"
+                                                  "@param order: Order of interpolation+1 (defaults to cubic=4)"
+                                                  "@type order: Integer"
                                                   "@return: Spline surface interpolating the point cloud\n"
                                                   "@rtype: Surface");
 PyObject* Generate_InterpolateSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"points", "parvalsu", "parvalsv", NULL };
+  static const char* keyWords[] = {"points", "parvalsu", "parvalsv", "order", NULL };
   PyObject* pointso;
   PyObject* parvalsu;
   PyObject* parvalsv;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO",
-                                   (char**)keyWords,&pointso,&parvalsu,&parvalsv))
+  int order=4;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO|i",
+                                   (char**)keyWords,&pointso,&parvalsu,&parvalsv,&order))
     return NULL;
 
   if (!PyObject_TypeCheck(pointso,&PyList_Type) || 
@@ -452,30 +456,20 @@ PyObject* Generate_InterpolateSurface(PyObject* self, PyObject* args, PyObject* 
   for (int i=0; i < PyList_Size(parvalsv); ++i)
     paramsv.push_back(PyFloat_AsDouble(PyList_GetItem(parvalsv,i)));
 
-  std::vector<double> knot_u;
-  for (int i=0;i<4;++i)
-    knot_u.push_back(paramsu[0]);
-  for (int i=2;i<paramsu.size()-2;++i)
-    knot_u.push_back(paramsu[i]);
-  for (int i=0;i<4;++i)
-    knot_u.push_back(paramsu.back());
-
-  std::vector<double> knot_v;
-  for (int i=0;i<4;++i)
-    knot_v.push_back(paramsv[0]);
-  for (int i=2;i<paramsv.size()-2;++i)
-    knot_v.push_back(paramsv[i]);
-  for (int i=0;i<4;++i)
-    knot_v.push_back(paramsv.back());
-
-  Go::BsplineBasis basis_u(paramsu.size(),4,knot_u.begin());
-  Go::BsplineBasis basis_v(paramsv.size(),4,knot_v.begin());
-
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  std::vector<double> weights;
-  result->data.reset(Go::SurfaceInterpolator::regularInterpolation(basis_u, basis_v,
-                                                                   paramsu, paramsv, points,
-                                                                   3, false, weights));
+
+  SISLSurf* rsurf;
+  int jstat;
+  s1537(&points[0], paramsu.size(), paramsv.size(), modState.dim,
+        &paramsu[0], &paramsv[0], 1, 1, 1, 1, order, order, 1, 1,
+        &rsurf, &jstat);
+  if (jstat == 0) {
+    result->data.reset(Go::SISLSurf2Go(rsurf));
+    freeSurf(rsurf);
+  } else {
+    std::cerr << "surface interpolation failed" << std::endl;
+    exit(1);
+  }
 
   return (PyObject*)result;
 }
