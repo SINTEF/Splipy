@@ -511,32 +511,63 @@ PyObject* Generate_LinearCurveSweep(PyObject* self, PyObject* args, PyObject* kw
 PyDoc_STRVAR(generate_loft_curves__doc__,"Generate a surface by lofting curves\n"
                                          "@param curves: The curves to loft\n"
                                          "@type curves: List of Curve\n"
+                                         "@param params: The parameters of the curves (optional)\n"
+                                         "@type params: List of floats\n"
+                                         "@param order: The order in the lofting direction\n"
+                                         "@type order: Integer\n"
                                          "@return: The lofted surface\n"
                                          "@rtype: Surface");
 PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"curves", NULL };
+  static const char* keyWords[] = {"curves", "params", "order", NULL };
   PyObject* curveso;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
-                                   (char**)keyWords,&curveso))
+  PyObject* paramso=NULL;
+  int order=4;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|Oi",
+                                   (char**)keyWords,&curveso,&paramso,&order))
     return NULL;
 
   if (!PyObject_TypeCheck(curveso,&PyList_Type))
     return NULL;
 
-  std::vector<shared_ptr<Go::SplineCurve> > curves;
+  std::vector<SISLCurve*> curves;
+  std::vector<int> types;
   for (int i=0; i < PyList_Size(curveso); ++i) {
     PyObject* curvo = PyList_GetItem(curveso,i);
     shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(curvo);
     if (!curve)
       continue;
-    curves.push_back(convertSplineCurve(curve));
+    shared_ptr<Go::SplineCurve> splnCrv = convertSplineCurve(curve);
+    curves.push_back(Curve2SISL(*splnCrv));
+    types.push_back(1);
   }
   if (curves.size() < 2)
     return NULL;
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
-  result->data.reset(Go::CoonsPatchGen::loftSurface(curves.begin(),curves.size()));
+
+  SISLSurf* srf;
+  double* gpar;
+  int jstat;
+  if (paramso) {
+    std::vector<double> params;
+    for (int i=0; i < PyList_Size(paramso); ++i)
+      params.push_back(PyFloat_AsDouble(PyList_GetItem(paramso,i)));
+    s1539(curves.size(), &curves[0], &types[0], &params[0], params[0], 1, order, 0,
+          &srf, &gpar, &jstat);
+  } else
+    s1538(curves.size(), &curves[0], &types[0], 0.0, 1, order, 0,
+          &srf, &gpar, &jstat);
+  if (jstat != 0) {
+    std::cerr << "Lofting curves failed" << std::endl;
+    exit(1);
+  }
+
+  free(gpar);
+  result->data.reset(Go::SISLSurf2Go(srf));
+  for (size_t i=0;i<curves.size();++i)
+    freeCurve(curves[i]);
+  freeSurf(srf);
 
   return (PyObject*)result;
 }
