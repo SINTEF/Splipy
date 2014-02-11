@@ -6,6 +6,7 @@
 #include "pyutils.h"
 #include "surface.h"
 #include "volume.h"
+#include "sislP.h"
 
 #include "GoTools/trivariate/ConeVolume.h"
 #include "GoTools/trivariate/CylinderVolume.h"
@@ -245,14 +246,20 @@ PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds
 PyDoc_STRVAR(generate_loft_surfaces__doc__, "Generate a volume by lofting surfaces\n"
                                             "@param surfaces: The surfaces to loft\n"
                                             "@type surfaces: List of Surface\n"
+                                            "@param params: parametrization in lofting direction\n"
+                                            "@type params: List of float\n"
+                                            "@param order: Order in lofting direction\n"
+                                            "@type order: Integer\n"
                                             "@return: The lofted surfaces\n"
                                             "@rtype: Volume");
 PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"surfaces", NULL };
+  static const char* keyWords[] = {"surfaces", "params", "order", NULL };
   PyObject* surfaceso;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
-                                   (char**)keyWords,&surfaceso))
+  PyObject* paramso=NULL;
+  int order=4;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|Oi",
+                                   (char**)keyWords,&surfaceso,&paramso,&order))
     return NULL;
 
   if (!PyObject_TypeCheck(surfaceso,&PyList_Type))
@@ -269,8 +276,54 @@ PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
   if (surfaces.size() < 2)
     return NULL;
 
+  std::vector<double> params;
+  if (paramso) {
+    for (int i=0; i < PyList_Size(paramso); ++i)
+      params.push_back(PyFloat_AsDouble(PyList_GetItem(paramso, i)));
+  } else {
+    for (size_t i=0;i<surfaces.size();++i)
+      params.push_back(i*1.0/(surfaces.size()-1));
+  }
+
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
-  result->data.reset(Go::LoftVolumeCreator::loftVolume(surfaces.begin(),surfaces.size()));
+  std::vector<double> coefs(surfaces[0]->numCoefs_u()*
+                            surfaces[0]->numCoefs_v()*
+                            surfaces[0]->dimension()*
+                            surfaces.size());
+  std::vector<double>::iterator it = coefs.begin();
+  for (size_t i=0;i<surfaces.size();++i) {
+    std::copy(surfaces[i]->coefs_begin(), surfaces[i]->coefs_end(), it);
+    it += surfaces[i]->numCoefs_u()*surfaces[i]->numCoefs_v()*surfaces[i]->dimension();
+  }
+
+  SISLCurve* rc;
+  double endpar;
+  int jnbpar, jstat;
+  double* gpar;
+  std::vector<int> types(surfaces.size(), 1);
+  s1357(&coefs[0], surfaces.size(),
+        surfaces[0]->numCoefs_u()*surfaces[0]->numCoefs_v()*surfaces[0]->dimension(),
+        &types[0], &params[0], order==2?0:1, order==2?0:1, 1, order, params[0], &endpar,
+        &rc, &gpar, &jnbpar, &jstat);
+
+  if (jstat != 0) {
+    std::cerr << "lofting volumes failed" << std::endl;
+    exit(1);
+  }
+  
+  std::vector<double> knot3;
+  knot3.resize(rc->in+rc->ik);
+  std::copy(rc->et, rc->et+knot3.size(), knot3.begin());
+
+  result->data.reset(new Go::SplineVolume(surfaces[0]->basis_u().numCoefs(),
+                                          surfaces[0]->basis_v().numCoefs(),
+                                          rc->in, surfaces[0]->basis_u().order(),
+                                          surfaces[0]->basis_v().order(), order,
+                                          surfaces[0]->basis_u().begin(),
+                                          surfaces[0]->basis_v().begin(),
+                                          knot3.begin(), rc->ecoef, modState.dim, false));
+  free(gpar);
+  freeCurve(rc);
 
   return (PyObject*)result;
 }
