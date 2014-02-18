@@ -293,6 +293,44 @@ PyObject* Volume_GetFaces(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(volume_get_sub_vol__doc__,"Get a Spline Volume which represent a part of 'this' Volume\n"
+	                               "@param from_par: The parametric lower left corner of the sub volume\n"
+                                       "@type  from_par: Point, list of floats or triple of floats\n"
+                                       "@param to_par:   The parametric upper right corner of the sub volume\n"
+                                       "@type  to_par:   Point, list of floats or triple of floats\n"
+                                       "@return: A parametric rectangular subregion of this Volume represented as a Spline Volume\n"
+                                         "@rtype: Volume");
+PyObject* Volume_GetSubVol(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  static const char* keyWords[] = {"from_par", "to_par", NULL };
+  PyObject *lowerLefto, *upperRighto;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords, &lowerLefto, &upperRighto) || !parVol)
+    return NULL;
+
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
+  }
+  shared_ptr<Go::SplineVolume> spVol = static_pointer_cast<Go::SplineVolume>(parVol);
+  if(!spVol)
+    return NULL;
+
+  shared_ptr<Go::Point> lowerLeft  = PyObject_AsGoPoint(lowerLefto);
+  shared_ptr<Go::Point> upperRight = PyObject_AsGoPoint(upperRighto);
+
+  Go::SplineVolume *subVol = spVol->subVolume((*lowerLeft)[0], (*lowerLeft)[1], (*lowerLeft)[2],(*upperRight)[0], (*upperRight)[1],(*upperRight)[2]);
+
+  Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
+  result->data = shared_ptr<Go::ParamVolume>(subVol);
+
+  return (PyObject*) result;
+}
+
+
 PyDoc_STRVAR(volume_get_knots__doc__,"Return knots for a spline volume\n"
                                      "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
                                      "@type with_multiplicities: Boolean\n"
@@ -611,6 +649,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetBoundingBox",      (PyCFunction)Volume_GetBoundingBox,        METH_VARARGS              , volume_get_bounding_box__doc__},
      {(char*)"GetConstParSurf",     (PyCFunction)Volume_GetConstParSurf,       METH_VARARGS|METH_KEYWORDS, volume_get_const_par_surf__doc__},
+     {(char*)"GetSubVol",           (PyCFunction)Volume_GetSubVol,             METH_VARARGS|METH_KEYWORDS, volume_get_sub_vol__doc__},
      {(char*)"GetFaces",            (PyCFunction)Volume_GetFaces,              METH_VARARGS|METH_KEYWORDS, volume_get_faces__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
