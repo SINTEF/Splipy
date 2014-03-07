@@ -781,9 +781,9 @@ PyObject* Generate_ResampleSurface(PyObject* self, PyObject* args, PyObject* kwd
 
   k=1;
   std::vector<double> knot_v;
-  for (int i=0;i<p1;++i)
+  for (int i=0;i<p2;++i)
     knot_v.push_back(0);
-  for (int i=0;i<n1-p2;++i)
+  for (int i=0;i<n2-p2;++i)
     knot_v.push_back(k++);
   for (int i=0;i<p2;++i)
     knot_v.push_back(k);
