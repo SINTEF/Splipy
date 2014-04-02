@@ -22,6 +22,7 @@ GeoModellerState modState;
 #include "surfacefactory.h"
 #include "volumefactory.h"
 #include "surfacemodelfactory.h"
+#include "igesutils.h"
 
 #ifdef ENABLE_HDF5
 #include "hdf5utils.h"
@@ -356,12 +357,12 @@ PyObject* GeoMod_WriteSTL(PyObject* self, PyObject* args, PyObject* kwds)
     for (int i=0; i < PyList_Size(objectRes); ++i) {
       PyObject* obj = PyList_GetItem(objectRes,i);
       if(PyObject_TypeCheck(obj, &PyInt_Type) ) {
-	resolution[i] = PyInt_AsLong(obj);
+        resolution[i] = PyInt_AsLong(obj);
       } else if(PyObject_TypeCheck(obj, &PyFloat_Type) ) {
-	resolution[i] = PyFloat_AsDouble(obj);
+        resolution[i] = PyFloat_AsDouble(obj);
       } else {
-	std::cerr << "Invalid resolution. No file written" << std::endl;
-	return Py_None;
+        std::cerr << "Invalid resolution. No file written" << std::endl;
+        return Py_None;
       }
     }
   } else if(PyObject_TypeCheck(objectRes, &PyInt_Type) ) {
@@ -430,6 +431,26 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
     std::cerr << "Failed to load " << fname << std::endl;
 
   return result;
+}
+
+PyDoc_STRVAR(readiges__doc__,"Read entities from an IGES file\n"
+                             "@param filename: The file to read\n"
+                             "@type  filename: string\n"
+                             "@param type: Only read objects of this type\n"
+                             "@type type: string (Curves or Surfaces)\n"
+                             "@return: The requested entities\n"
+                             "@rtype: Curve, Surface or a list of these");
+PyObject* GeoMod_ReadIGES(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"filename", "type", NULL };
+  PyObject* objectso;
+  char* fname = 0;
+  char* type = 0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"s|s",
+                                   (char**)keyWords,&fname,&type))
+    return NULL;
+
+  return DoReadIGES(fname,type?type:"");
 }
 
 PyDoc_STRVAR(read3dm__doc__,"Read entities from a 3DM file\n"
@@ -644,6 +665,7 @@ PyMethodDef GeoMod_methods[] = {
 
      // I/O
      {(char*)"FinalOutput",           (PyCFunction)GeoMod_FinalOutput,       METH_VARARGS|METH_KEYWORDS, final_output__doc__},
+     {(char*)"ReadIGES",              (PyCFunction)GeoMod_ReadIGES,          METH_VARARGS|METH_KEYWORDS, readiges__doc__},
      {(char*)"Read3DM",               (PyCFunction)GeoMod_Read3DM,           METH_VARARGS|METH_KEYWORDS, read3dm__doc__},
      {(char*)"ReadG2",                (PyCFunction)GeoMod_ReadG2,            METH_VARARGS|METH_KEYWORDS, readg2__doc__},
      {(char*)"ReadHDF5Field",         (PyCFunction)GeoMod_ReadHDF5Field,     METH_VARARGS|METH_KEYWORDS, read_hdf5field__doc__},

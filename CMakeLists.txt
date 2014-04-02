@@ -24,11 +24,11 @@ FIND_PACKAGE(GoTools REQUIRED)
 FIND_PACKAGE(GoTrivariate REQUIRED)
 FIND_PACKAGE(GoTrivariateModel REQUIRED)
 FIND_PACKAGE(GoCompositeModel REQUIRED)
-FIND_PACKAGE(SISL REQUIRED)
 FIND_PACKAGE(Parametrization REQUIRED)
 FIND_PACKAGE(TTL REQUIRED)
 FIND_PACKAGE(Newmat REQUIRED)
 FIND_PACKAGE(GoIgeslib REQUIRED)
+FIND_PACKAGE(SISL REQUIRED)
 FIND_PACKAGE(GoTopology REQUIRED)
 FIND_PACKAGE(GoImplicitization REQUIRED)
 FIND_PACKAGE(GoIntersections REQUIRED)
@@ -59,10 +59,10 @@ ENDIF(GoTools_VERSION_MAJOR LESS 4 OR NOT GoTools_VERSION_MAJOR)
 SET(DEPLIBS ${PYTHON_LIBRARIES}
             ${GoTrivariateModel_LIBRARIES}
             ${GoCompositeModel_LIBRARIES}
-            ${SISL_LIBRARIES}
             ${Parametrization_LIBRARIES}
             ${TTL_LIBRARIES}
             ${GoIgeslib_LIBRARIES}
+            ${SISL_LIBRARIES}
             ${GoTopology_LIBRARIES}
             ${GoIntersections_LIBRARIES}
             ${GoImplicitization_LIBRARIES}
