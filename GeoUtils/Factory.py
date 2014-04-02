@@ -459,3 +459,87 @@ def HyperEllipse(radius, center, N, order=4, quadrant=0):
     vals.append(vals[0])
 
   return InterpolateCurve(vals, range(len(vals)))
+        
+def CombineSurfaces(surf1, surf2):
+    """Combine two surfaces into a single patch with internal C^0 knot
+    @param surf1: The first Surface 
+    @type  surf1: Surface
+    @param surf2: The second Surface 
+    @type  surf2: Surface
+    @return:      The combined surface
+    @rtype:       Surface
+    """
+    
+    # this actually fails for 2D models, but no Surface.GetDim() or Surface.IsRational()  :(
+    rational  = (len(surf1[0]) == 4)
+    knot1 = surf1.GetKnots(True)
+    p1    = surf1.GetOrder()
+    n1    = [len(knot1[0]) - p1[0] , len(knot1[1]) - p1[1]]
+
+    knot2 = surf2.GetKnots(True)
+    p2    = surf2.GetOrder()
+    n2    = [len(knot2[0]) - p2[0] , len(knot2[1]) - p2[1]]
+
+    # swap parametrizations since we want the sem at vmax
+    if n1[1]==n2[1] and p1[1]==p2[1]:
+        surf1.SwapParametrization()
+        surf2.SwapParametrization()
+    elif n1[1]==n2[0] and p1[1]==p2[0]:
+        surf1.SwapParametrization()
+    elif n1[0]==n2[1] and p1[0]==p2[1]:
+        surf2.SwapParametrization()
+
+    # update discretization values
+    knot1 = surf1.GetKnots(True)
+    p1    = surf1.GetOrder()
+    n1    = [len(knot1[0]) - p1[0] , len(knot1[1]) - p1[1]]
+    knot2 = surf2.GetKnots(True)
+    p2    = surf2.GetOrder()
+    n2    = [len(knot2[0]) - p2[0] , len(knot2[1]) - p2[1]]
+
+    # make sure that the sem is on top (vmax) of surf1 
+    tol = GetTolerance('neighbour')
+    if n1[0]==n2[0] and p1[0]==p2[0]:
+        n = n1[0]
+        reverse = 0
+        while reverse<4:
+            done = True
+            for i in range(n):
+                if abs(surf2[i] - surf1[n1[0]*(n1[1]-1)+i]) > tol:
+                    done = False
+                    break
+            if done:
+                reverse = 5
+            else:
+                if reverse==0:
+                    surf1.FlipParametrization(1)
+                elif reverse==1:
+                    surf2.FlipParametrization(1);
+                elif reverse==2:
+                    surf1.FlipParametrization(1);
+                reverse = reverse+1
+    else:
+        print('Error: CombineSurfaces failed due to surfaces not having matching parametrization')
+        return None
+
+
+    # surfaces now organized as surf1 below surf2 with sem at vmax
+    coefs =  []
+    knotU = knot1[0]
+    start = knot2[1][0]
+    for i in range(len(knot2[1])):
+        knot2[1][i] = knot2[1][i] + knot1[1][-1] - start
+    knotV =  knot1[1][:-1] + knot2[1][p2[1]:]
+    
+    k = 0
+    for y in range(n1[1]-1):
+        for x in range(n1[0]):
+            coefs.append(surf1[k])
+            k = k+1
+    k=0
+    for y in range(n2[1]):
+        for x in range(n2[0]):
+            coefs.append(surf2[k])
+            k = k+1
+
+    return Surface(p1[0], p1[1], knotU, knotV, coefs, rational)
