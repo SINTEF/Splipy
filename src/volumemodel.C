@@ -158,6 +158,43 @@ PyObject* VolumeModel_GetShell(PyObject* self, PyObject* args)
   return result;
 }
 
+PyDoc_STRVAR(volumemodel_get_boundary_ids__doc__,"Return all boundary face ids of a volume model with a shoebox topology\n"
+                                                 "@return: Lists of face ids\n"
+                                                 "@rtype: List of (List of (tuple of integers))");
+PyObject* VolumeModel_GetBoundaryIds(PyObject* self, PyObject* args)
+{
+  shared_ptr<Go::VolumeModel> volumemodel = PyObject_AsGoVolumeModel(self);
+  if (!volumemodel)
+    return NULL;
+
+  PyObject* result = PyList_New(6);
+
+  Go::BoundingBox bb = volumemodel->boundingBox();
+  // loop over the six physical faces
+  for (size_t i=0;i<6;++i) {
+    PyObject* r = PyList_New(0);
+    // loop over all volumes
+    for (int j=0;j<volumemodel->nmbEntities();++j) {
+      // loop over all faces of the box and check coordinates
+      std::vector<shared_ptr<Go::SplineSurface> >
+        srfs = volumemodel->getSplineVolume(j)->getBoundarySurfaces();
+      for (int k=0;k<6;++k) {
+        Go::BoundingBox fb = srfs[k]->boundingBox();
+        if (fabs(fb.low()[i/2]-fb.high()[i/2]) < 1e-6 &&
+            (i%2 == 0?fb.low()[i/2]:fb.high()[i/2]) == (i%2 == 0?bb.low()[i/2]:bb.high()[i/2])) {
+          PyObject* pt = PyTuple_New(2);
+          PyTuple_SetItem(pt, 0, Py_BuildValue((char*)"i", j+1));
+          PyTuple_SetItem(pt, 1, Py_BuildValue((char*)"i", k+1));
+          PyList_Append(r, pt);
+        }
+      }
+    }
+    PyList_SetItem(result, i, r);
+  }
+
+  return result;
+}
+
 PyDoc_STRVAR(volumemodel_make_common_spline__doc__,"Make sure all volumes in model share the same spline space\n"
                                                    "@return: None");
 PyObject* VolumeModel_MakeCommonSpline(PyObject* self, PyObject* args)
@@ -203,6 +240,7 @@ PySequenceMethods VolumeModel_seq_operators = {0};
 PyMethodDef VolumeModel_methods[] = {
      {"GetBoundingBox",        (PyCFunction)VolumeModel_GetBoundingBox,     METH_VARARGS,               volumemodel_get_bounding_box__doc__},
      {"GetShell",              (PyCFunction)VolumeModel_GetShell,           METH_VARARGS,               volumemodel_get_shell__doc__},
+     {"GetBoundaryIds",        (PyCFunction)VolumeModel_GetBoundaryIds,     METH_VARARGS,               volumemodel_get_boundary_ids__doc__},
      {"IsCornerToCorner",      (PyCFunction)VolumeModel_CtoC,               METH_VARARGS,               volumemodel_ctoc__doc__},
      {"MakeCommonSplineSpace", (PyCFunction)VolumeModel_MakeCommonSpline,   METH_VARARGS,               volumemodel_make_common_spline__doc__},
      {"MakeCornerToCorner",    (PyCFunction)VolumeModel_MakeCtoC,           METH_VARARGS,               volumemodel_make_ctoc__doc__},

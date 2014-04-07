@@ -177,10 +177,50 @@ Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
   return sm->nmbEntities();
 }
 
+PyDoc_STRVAR(surfacemodel_get_boundary_ids__doc__,"Return all boundary face ids of a X-Y plane surface model with hex topology\n"
+                                                  "@return: Lists of edge ids\n"
+                                                  "@rtype: List of (List of (tuple of integers))");
+PyObject* SurfaceModel_GetBoundaryIds(PyObject* self, PyObject* args)
+{
+  shared_ptr<Go::SurfaceModel> surfacemodel = PyObject_AsGoSurfaceModel(self);
+  if (!surfacemodel)
+    return NULL;
+
+  PyObject* result = PyList_New(4);
+
+  Go::BoundingBox bb = surfacemodel->boundingBox();
+  // loop over the four physical edges
+  for (size_t i=0;i<4;++i) {
+    PyObject* r = PyList_New(0);
+    // loop over all surfaces
+    for (int j=0;j<surfacemodel->nmbEntities();++j) {
+      // loop over all faces of the box and check coordinates
+      std::vector<shared_ptr<Go::SplineCurve> > crvs;
+      static const int order[]={3,1,0,2};
+      for (size_t cunt=0;cunt<4;++cunt)
+        crvs.push_back(shared_ptr<Go::SplineCurve>(surfacemodel->getSplineSurface(j)->edgeCurve(order[cunt])));
+      for (int k=0;k<4;++k) {
+        Go::BoundingBox fb = crvs[k]->boundingBox();
+        if (fabs(fb.low()[i/2]-fb.high()[i/2]) < 1e-6 &&
+            (i%2 == 0?fb.low()[i/2]:fb.high()[i/2]) == (i%2 == 0?bb.low()[i/2]:bb.high()[i/2])) {
+          PyObject* pt = PyTuple_New(2);
+          PyTuple_SetItem(pt, 0, Py_BuildValue((char*)"i", j+1));
+          PyTuple_SetItem(pt, 1, Py_BuildValue((char*)"i", k+1));
+          PyList_Append(r, pt);
+        }
+      }
+    }
+    PyList_SetItem(result, i, r);
+  }
+
+  return result;
+}
+
 PySequenceMethods SurfaceModel_seq_operators = {0};
 
 PyMethodDef SurfaceModel_methods[] = {
      {"GetBoundingBox",        (PyCFunction)SurfaceModel_GetBoundingBox,     METH_VARARGS,               surfacemodel_get_bounding_box__doc__},
+     {"GetBoundaryIds",        (PyCFunction)SurfaceModel_GetBoundaryIds,     METH_VARARGS,               surfacemodel_get_boundary_ids__doc__},
      {"IsCornerToCorner",      (PyCFunction)SurfaceModel_CtoC,               METH_VARARGS,               surfacemodel_ctoc__doc__},
      {"MakeCommonSplineSpace", (PyCFunction)SurfaceModel_MakeCommonSpline,   METH_VARARGS,               surfacemodel_make_common_spline__doc__},
      {"MakeCornerToCorner",    (PyCFunction)SurfaceModel_MakeCtoC,           METH_VARARGS,               surfacemodel_make_ctoc__doc__},
