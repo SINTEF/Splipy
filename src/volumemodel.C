@@ -168,6 +168,8 @@ PyObject* VolumeModel_GetBoundaryIds(PyObject* self, PyObject* args)
     return NULL;
 
   PyObject* result = PyList_New(6);
+  double face_loc, bnd_loc;
+  bool face_in_plane, align;
 
   Go::BoundingBox bb = volumemodel->boundingBox();
   // loop over the six physical faces
@@ -180,8 +182,11 @@ PyObject* VolumeModel_GetBoundaryIds(PyObject* self, PyObject* args)
         srfs = volumemodel->getSplineVolume(j)->getBoundarySurfaces();
       for (int k=0;k<6;++k) {
         Go::BoundingBox fb = srfs[k]->boundingBox();
-        if (fabs(fb.low()[i/2]-fb.high()[i/2]) < 1e-6 &&
-            (i%2 == 0?fb.low()[i/2]:fb.high()[i/2]) == (i%2 == 0?bb.low()[i/2]:bb.high()[i/2])) {
+        face_in_plane = fabs(fb.low()[i/2]-fb.high()[i/2]) < modState.approxTolerance; // is face in correct plane?
+        face_loc = (i%2 == 0?fb.low()[i/2]:fb.high()[i/2]); // face location
+        bnd_loc = (i%2 == 0?bb.low()[i/2]:bb.high()[i/2]); // boundary location
+        align = fabs(face_loc-bnd_loc) < modState.approxTolerance; // is face in same position as boundary?
+        if (face_in_plane && align) {
           PyObject* pt = PyTuple_New(2);
           PyTuple_SetItem(pt, 0, Py_BuildValue((char*)"i", j+1));
           PyTuple_SetItem(pt, 1, Py_BuildValue((char*)"i", k+1));
