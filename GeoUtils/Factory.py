@@ -4,6 +4,7 @@ from GoTools import *
 from GoTools.SurfaceFactory import *
 from GeoUtils.Knots import *
 from GeoUtils.Elementary import *
+from GoTools.CurveFactory import *
 
 def SplitSurface(original, param, value):
     """Split a SplineSurface in two by continued knot insertion
@@ -414,4 +415,47 @@ def Thicken(obj, amount):
     inShell  = InterpolateSurface(inPts,  g1, g2)
 
     return LoftBetween(inShell, outShell)
-        
+
+def HyperEllipse(radius, center, N, order=4, quadrant=0):
+  """Generate a hyperellipse in the X-Y plane
+  @param radius: Radius of the original circle
+  @type radius: Float
+  @param center: Origo of the circle
+  @type center: Point
+  @param N: Number of spline coefficients on curve
+  @type N: Integer
+  @param order: The order of the hyperellipse. 2 for a Squircle (default)
+  @type order: Integer
+  @param quadrant: Quadrants to include. 0 for all quadrants
+  @type quadrant: Integer
+  @return: New (cubic) curve describing the hyperellipse
+  @rtype: Curve
+  """
+  if quadrant == 0:
+    N = N/4
+  vals = []
+  if quadrant == 0 or quadrant == 1:
+    vals = [[center[0]+radius[0]*pow(cos(knot),2.0/order),center[1]+radius[1]*pow(sin(knot),2.0/order),center[2]] for knot in [i*pi/(2*(N-1)) for i in range(N)]]
+  if quadrant == 0 or quadrant == 2:
+    val2 = [[center[0]-radius[0]*pow(cos(knot),2.0/order),center[1]+radius[1]*pow(sin(knot),2.0/order),center[2]] for knot in [i*pi/(2*(N-1)) for i in range(N)]]
+    val2.reverse()
+    if quadrant == 0:
+      del val2[0]
+    vals += val2
+  if quadrant == 0 or quadrant == 3:
+    val2 = [[center[0]-radius[0]*pow(cos(knot),2.0/order),center[0]-radius[1]*pow(sin(knot),2.0/order),center[2]] for knot in [i*pi/(2*(N-1)) for i in range(N)]]
+    if quadrant == 0:
+      del val2[0]
+    vals += val2
+  if quadrant == 0 or quadrant == 4:
+    val2 = [[center[0]+radius[0]*pow(cos(knot),2.0/order),center[0]-radius[1]*pow(sin(knot),2.0/order),center[2]] for knot in [i*pi/(2*(N-1)) for i in range(N)]]
+    if quadrant == 0:
+      del val2[0]
+    val2.reverse()
+    vals += val2
+
+  # Make loop
+  if quadrant==0:
+    vals.append(vals[0])
+
+  return InterpolateCurve(vals, range(len(vals)))
