@@ -11,6 +11,13 @@ def topologystring(geotype, name, patches, entries):
   xml += '  </set>\n'
   return xml
 
+def topologystringfrompairs(geotype, name, entries):
+  xml = '  <set name="%s" type="%s">\n' % (name, geotype)
+  for (patch, face) in entries:
+    xml += '    <item patch="%i">%s</item>\n' % (patch, face)
+  xml += '  </set>\n'
+  return xml
+
 def writeAsc(X, U, fname):
   f = open(fname,'w')
   for i in range(0,len(U)):
