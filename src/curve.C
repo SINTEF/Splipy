@@ -745,6 +745,40 @@ PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(curve_get_sub_curve__doc__,"Get a Curve which represent a part of 'this' Curve\n"
+                                        "@param from_par: The parametric left end of the sub curve\n"
+                                        "@type  from_par: float\n"
+                                        "@param to_par:   The upper right end of the sub curve\n"
+                                        "@type  to_par:   float\n"
+                                        "@return: A parametric subcurve of this Curve represented as a Spline Curve\n"
+                                        "@rtype: Curve");
+PyObject* Curve_GetSubCurve(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  static const char* keyWords[] = {"from_par", "to_par", NULL };
+  double Left=0.0, Right=1.0;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd",
+                                   (char**)keyWords, &Left, &Right) || !parCrv)
+    return NULL;
+
+  if (!parCrv->geometryCurve()) {
+    Curve* pyCrv = (Curve*)self;
+    pyCrv->data = convertSplineCurve(parCrv);
+    parCrv = pyCrv->data;
+  }
+  shared_ptr<Go::SplineCurve> spCrv = static_pointer_cast<Go::SplineCurve>(parCrv);
+  if(!spCrv)
+    return NULL;
+
+  Go::SplineCurve *subCrv = spCrv->subCurve(Left, Right);
+
+  Curve* result = (Curve*)Surface_Type.tp_alloc(&Curve_Type,0);
+  result->data = shared_ptr<Go::ParamCurve>(subCrv);
+
+  return (PyObject*) result;
+}
+
 PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
                                     "@param vector: The vector to translate along\n"
                                     "@type axis: Point, list of floats or tuple of floats\n"
@@ -849,6 +883,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS|METH_KEYWORDS, curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
+     {(char*)"GetSubCurve",         (PyCFunction)Curve_GetSubCurve,         METH_VARARGS|METH_KEYWORDS, curve_get_sub_curve__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Intersect",           (PyCFunction)Curve_Intersect,           METH_VARARGS|METH_KEYWORDS, curve_intersect__doc__},
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
