@@ -335,4 +335,3 @@ def MakeCommonSplineSpace(obj1, obj2):
                     j = j+1
                 if i == len(k1[d]) or j == len(k2[d]):
                     done = True
-    

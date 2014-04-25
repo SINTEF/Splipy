@@ -287,4 +287,65 @@ def EdgeRefineSurface(surface, direction, S, n):
                 if not KnotExist(oldKNots, x):
                         surface.InsertKnot(direction-1, x)
 
+def _splitvector(len, parts):
+  delta = len/(parts)
+  sizes = [delta for i in range(parts)]
+  remainder = len-parts*delta
+  for i in range(parts-remainder+1, parts):
+      sizes[i] = sizes[i]+1
+  result = [0]
+  for i in range(1,parts):
+      result.append(sizes[i]+result[i-1])
+  return result
 
+def SubdivideVolume(vols, subdivisions, zsplit):
+    """Subdivide a list of volumes
+       First the X-Y plane is subdivided in subdivisions+1 blocks.
+       Then the result is in z in zsplit+1 parts
+       @param vols: Volumes to split
+       @type vols: List of Volume
+       @param subdivisions: Number of subdivisions to perform in the X-Y plane
+       @type subdivisions: Int
+       @param zsplit: Number of times to split in the z direction
+       @type zsplit: Int
+       @return: List of new volumes
+    """
+
+    # Subdivisions
+    if subdivisions > 0:
+      volsx = []
+      for v in vols:
+        v.ReParametrize()
+        knotx, knoty, knotz = v.GetKnots()
+        splits = _splitvector(len(knotx), subdivisions+1)
+        splitval = []
+        for i in range(1,len(splits)):
+          splitval.append(knotx[splits[i]])
+        volsx += v.Split(splitval, 0)
+
+      volsy = []
+      for v in volsx:
+        v.ReParametrize()
+        knotx, knoty, knotz = v.GetKnots()
+        splits = _splitvector(len(knoty), subdivisions+1)
+        splitval = []
+        for i in range(1,len(splits)):
+          splitval.append(knoty[splits[i]])
+        volsy += v.Split(splitval, 1)
+    else:
+      volsy = vols
+
+    if zsplit > 0:
+      volsz = []
+      for v in volsy:
+        v.ReParametrize()
+        knotx, knoty, knotz = v.GetKnots()
+        splits = _splitvector(len(knotz), zsplit+1)
+        splitval = []
+        for i in range(1,len(splits)):
+          splitval.append(knotz[splits[i]])
+        volsz += v.Split(splitval, 2)
+    else:
+      volsz = volsy
+
+    return volsz
