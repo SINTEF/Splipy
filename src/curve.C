@@ -96,7 +96,7 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
     parCrv = ((Curve*)self)->data = convertSplineCurve(parCrv2);
   }
   else
-    parCrv = dynamic_pointer_cast<Go::SplineCurve,Go::ParamCurve>(parCrv);
+    parCrv = dynamic_pointer_cast<Go::SplineCurve,Go::ParamCurve>(parCrv2);
 
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(PyObject_AsGoCurve(oCrv));
   if (!parCrv || !spCrv)
