@@ -25,18 +25,18 @@ def writeAsc(X, U, fname):
   f.close()
 
 class InputFile:
-  """Class for working with IFEM input (.xinp) files.
-     @param path: The path of the xinp to open
-     @type path: String
+  """ Class for working with IFEM input (.xinp) files.
+      @param path: The path of the xinp to open
+      @type path: String
   """
   PatchInfo = namedtuple("PatchInfo","vertex edge face")
   def __init__(self, path):
     self.dom = xml.dom.minidom.parse(path)
 
   def GetGeometryFile(self):
-    """Extract the geometry definition (.g2 file)
-       @return: The file name
-       @rtype: String
+    """ Extract the geometry definition (.g2 file)
+        @return: The file name
+        @rtype: String
     """
     geometry = self.dom.getElementsByTagName('geometry')[0]
     result = geometry.getElementsByTagName('patchfile')[0]
@@ -92,19 +92,19 @@ class InputFile:
     return result
 
   def write(self, name):
-    """Write the input file to disk.
-       @param name: The filename
-       @type name: String
-       @return: None
+    """ Write the input file to disk.
+        @param name: The filename
+        @type name: String
+        @return: None
     """
     f = open(name,'w')
     f.write(self.dom.toxml('utf-8'))
     f.close()
 
 class HDF5File:
-  """Handle output of fields and geometries to HDF5+XML
-     @param prefix: Prefix for filename (no extension)
-     @type prefix: String
+  """ Handle output of fields and geometries to HDF5+XML
+      @param prefix: Prefix for filename (no extension)
+      @type prefix: String
   """
   FieldInfo = namedtuple("FieldInfo","basis patches components fieldtype")
   def __init__(self, prefix):
@@ -113,7 +113,7 @@ class HDF5File:
     self.basismap = {}
 
   def __del__(self):
-    """The destructor writes the final .xml file to disk."""
+    """ The destructor writes the final .xml file to disk."""
     if (len(self.basismap)):
       f = open(self.prefix+'.xml','w')
       xml ='<info>\n'
@@ -125,36 +125,36 @@ class HDF5File:
       f.close()
 
   def AddGeometry(self, name, patch, level, data):
-    """Add a geometry basis to the HDF5 file.
-       @param name: Name of basis
-       @type name: String
-       @param patch: Patch number
-       @type patch: Integer
-       @param level: Time level to write at
-       @type level: Integer
-       @param data: The entity to write
-       @type data: Curve, Surface or Volume
-       @return: None
+    """ Add a geometry basis to the HDF5 file.
+        @param name: Name of basis
+        @type name: String
+        @param patch: Patch number
+        @type patch: Integer
+        @param level: Time level to write at
+        @type level: Integer
+        @param data: The entity to write
+        @type data: Curve, Surface or Volume
+        @return: None
      """
     WriteHDF5Geometry(self.prefix+'.hdf5', name, patch, level, data, self.create)
     self.create = False
 
   def AddField(self, basis, name, patch, level, components, data):
-    """Add a field to the HDF5 file.
-       @param basis: Name of basis of the field
-       @type name: String
-       @param name: Name of field
-       @type name: String
-       @param patch: Patch number
-       @type patch: Integer
-       @param level: Time level to write at
-       @type level: Integer
-       @param data: The entity to write
-       @param components: Number of components in field
-       @type components: Integer
-       @param data: The coefficients of the field
-       @type data: List of float
-       @return: None
+    """ Add a field to the HDF5 file.
+        @param basis: Name of basis of the field
+        @type name: String
+        @param name: Name of field
+        @type name: String
+        @param patch: Patch number
+        @type patch: Integer
+        @param level: Time level to write at
+        @type level: Integer
+        @param data: The entity to write
+        @param components: Number of components in field
+        @type components: Integer
+        @param data: The coefficients of the field
+        @type data: List of float
+        @return: None
      """
     WriteHDF5Field(self.prefix+'.hdf5', name, patch, level, data, self.create)
     if not self.basismap.has_key(name):
@@ -163,3 +163,114 @@ class HDF5File:
     if type(data[0]) is int:
       typ = 'intfield'
     self.basismap[name] = HDF5File.FieldInfo(basis, max(self.basismap[name].patches, patch), components, typ)
+
+class IFEMResultDatabase:
+  """ Class for working with IFEM data output files
+      @param path: The path to the xml/hdf5 pair (no extension)
+      @type path: String
+  """
+  def __init__(self, path):
+    self.dom = xml.dom.minidom.parse(path+'.xml')
+    self.path = path
+
+  """ Extract the basis associated with a given field
+      @param field: The field name
+      @type  geom: String
+      @return: Basis for field
+      @rtype: String
+  """
+  def GetBasisForField(self, field):
+    # Find number of patches in field
+    fields = self.dom.getElementsByTagName('entry')
+    patches = 1
+    for f in fields:
+      if f.getAttributeNode('name').nodeValue == field:
+        return f.getAttributeNode('basis').nodeValue
+
+    return ''
+
+  """ Get number of patches in a basis
+      @param basis: The basis name
+      @type basis: String
+      @return: Number of patches
+      @rtype: Integer
+  """
+  def _GetPatchesForBasis(self, basis):
+    fields = self.dom.getElementsByTagName('entry')
+    patches = 1
+    for field in fields:
+      if field.getAttributeNode('basis').nodeValue == basis:
+        patches = int(field.getAttributeNode('patches').nodeValue)
+
+    return patches
+
+  """ Extract the geometry definition for a given field
+      @param geom: The basis name
+      @type  geom: String
+      @param level: Level to read geometry at
+      @type level: Integer
+      @return The geometry basis
+      @rtype: List of curves, surfaces or volumes)
+  """
+  def GetGeometry(self, basis, level):
+    patches = self._GetPatchesForBasis(basis)
+
+    res = []
+    for i in range(1, patches+1):
+      res.append(ReadHDF5Geometry(self.path+'.hdf5', basis, i, level))
+
+    return res
+
+  """ Extract the coefficients for a given field
+      @param field: The field name
+      @type  field: String
+      @param level: Level to read field at
+      @type level: Integer
+      @return The field coefficients
+      @rtype: List of float
+  """
+  def GetFieldCoefs(self, field, level):
+    basis = self.GetBasisForField(field)
+    patches = self._GetPatchesForBasis(basis)
+
+    res = []
+    for i in range(1, patches+1):
+      res.append(ReadHDF5Field(self.path+'.hdf5', field, i, level))
+
+    return res
+
+  """ Extract a given field
+      @param field: The field name
+      @type  field: String
+      @param level: Level to read field at
+      @type level: Integer
+      @return The field
+      @rtype: List of (curves, surfaces or volumes)
+  """
+  def GetField(self, field, level):
+    basis = self.GetBasisForField(field)
+    geom = self.GetGeometry(basis, 0)
+
+    res = []
+    for i in range(len(geom)):
+      coefs = ReadHDF5Field(self.path+'.hdf5', field, i+1, level)
+      if isinstance(geom[0], Volume):
+        k1, k2, k3 = geom[i].GetKnots(True)
+        order = geom[i].GetOrder()
+        res.append(Volume(order[0], order[1], order[2], k1, k2, k3, coefs))
+      elif isinstance(geom[0], Surface):
+        k1, k2 = geom[i].GetKnots(True)
+        order = geom[i].GetOrder()
+        res.append(Surface(order[0], order[1], k1, k2, coefs))
+      elif isinstance(geom[0], Curve):
+        k1 = geom[i].GetKnots(True)
+        order = geom[i].GetOrder()
+        res.append(Surface(order, k1, coefs))
+    return res
+
+  """ Extract number of timelevels in result data set
+      @return: Number of time levels
+      @rtype: Integer
+  """
+  def GetTimeLevels(self):
+    return int(self.dom.getElementsByTagName('levels').nodeValue)
