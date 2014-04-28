@@ -86,11 +86,12 @@ PyObject* Surface_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
           coefs.push_back(PyInt_AsLong(o));
       }
     }
+    int dim = coefs.size()/((knots1.size()-order1)*(knots2.size()-order2));
     ((Surface*)self)->data.reset(new Go::SplineSurface(knots1.size()-order1,
                                                        knots2.size()-order2, 
                                                        order1, order2,
                                                        knots1.begin(), knots2.begin(),
-                                                       coefs.begin(), modState.dim, rational));
+                                                       coefs.begin(), dim, rational));
   }
 
   return (PyObject*)self;

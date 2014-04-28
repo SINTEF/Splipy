@@ -58,8 +58,10 @@ PyObject* Curve_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
           coefs.push_back(PyInt_AsLong(o));
       }
     }
-    ((Curve*)self)->data.reset(new Go::SplineCurve(knots.size()-order, order, knots.begin(),
-                                                   coefs.begin(), modState.dim, rational));
+    int dim = coefs.size()/(knots.size()-order);
+    ((Curve*)self)->data.reset(new Go::SplineCurve(knots.size()-order, order,
+                                                   knots.begin(), coefs.begin(),
+                                                   dim, rational));
   }
 
   return (PyObject*)self;

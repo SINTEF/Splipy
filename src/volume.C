@@ -81,6 +81,7 @@ PyObject* Volume_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
           coefs.push_back(PyInt_AsLong(o));
       }
     }
+    int dim = coefs.size()/((knots1.size()-order1)*(knots2.size()-order2)*(knots3.size()-order3));
     ((Volume*)self)->data.reset(new Go::SplineVolume(knots1.size()-order1,
                                                      knots2.size()-order2, 
                                                      knots3.size()-order3, 
@@ -88,7 +89,7 @@ PyObject* Volume_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
                                                      knots1.begin(),
                                                      knots2.begin(),
                                                      knots3.begin(),
-                                                     coefs.begin(), modState.dim, rational));
+                                                     coefs.begin(), dim, rational));
   }
 
   return (PyObject*)self;
