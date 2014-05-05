@@ -25,9 +25,9 @@ def writeAsc(X, U, fname):
   f.close()
 
 class InputFile:
-  """ Class for working with IFEM input (.xinp) files.
-      @param path: The path of the xinp to open
-      @type path: String
+  """Class for working with IFEM input (.xinp) files.
+     @param path: The path of the xinp to open
+     @type path: String
   """
   PatchInfo = namedtuple("PatchInfo","vertex edge face")
   def __init__(self, path):
@@ -173,13 +173,13 @@ class IFEMResultDatabase:
     self.dom = xml.dom.minidom.parse(path+'.xml')
     self.path = path
 
-  """ Extract the basis associated with a given field
-      @param field: The field name
-      @type  geom: String
-      @return: Basis for field
-      @rtype: String
-  """
   def GetBasisForField(self, field):
+    """ Extract the basis associated with a given field
+          @param field: The field name
+          @type  geom: String
+          @return: Basis for field
+          @rtype: String
+    """
     # Find number of patches in field
     fields = self.dom.getElementsByTagName('entry')
     patches = 1
@@ -189,13 +189,13 @@ class IFEMResultDatabase:
 
     return ''
 
-  """ Get number of patches in a basis
-      @param basis: The basis name
-      @type basis: String
-      @return: Number of patches
-      @rtype: Integer
-  """
   def _GetPatchesForBasis(self, basis):
+    """ Get number of patches in a basis
+          @param basis: The basis name
+          @type basis: String
+          @return: Number of patches
+          @rtype: Integer
+    """
     fields = self.dom.getElementsByTagName('entry')
     patches = 1
     for field in fields:
@@ -204,15 +204,15 @@ class IFEMResultDatabase:
 
     return patches
 
-  """ Extract the geometry definition for a given field
-      @param geom: The basis name
-      @type  geom: String
-      @param level: Level to read geometry at
-      @type level: Integer
-      @return The geometry basis
-      @rtype: List of curves, surfaces or volumes)
-  """
   def GetGeometry(self, basis, level):
+    """ Extract the geometry definition for a given field
+        @param geom: The basis name
+        @type  geom: String
+        @param level: Level to read geometry at
+        @type level: Integer
+        @return The geometry basis
+        @rtype: List of curves, surfaces or volumes)
+    """
     patches = self._GetPatchesForBasis(basis)
 
     res = []
@@ -221,15 +221,15 @@ class IFEMResultDatabase:
 
     return res
 
-  """ Extract the coefficients for a given field
-      @param field: The field name
-      @type  field: String
-      @param level: Level to read field at
-      @type level: Integer
-      @return The field coefficients
-      @rtype: List of float
-  """
   def GetFieldCoefs(self, field, level):
+    """ Extract the coefficients for a given field
+        @param field: The field name
+        @type  field: String
+        @param level: Level to read field at
+        @type level: Integer
+        @return The field coefficients
+        @rtype: List of float
+    """
     basis = self.GetBasisForField(field)
     patches = self._GetPatchesForBasis(basis)
 
@@ -239,17 +239,20 @@ class IFEMResultDatabase:
 
     return res
 
-  """ Extract a given field
-      @param field: The field name
-      @type  field: String
-      @param level: Level to read field at
-      @type level: Integer
-      @return The field
-      @rtype: List of (curves, surfaces or volumes)
-  """
-  def GetField(self, field, level):
-    basis = self.GetBasisForField(field)
-    geom = self.GetGeometry(basis, 0)
+  def GetField(self, field, level, geom=None):
+    """ Extract a given field
+        @param field: The field name
+        @type  field: String
+        @param level: Level to read field at
+        @type level: Integer
+        @param geom: Basis/geometry
+        @type geom: Curve, Volume, Surface or NoneType
+        @return The field
+        @rtype: List of (curves, surfaces or volumes)
+    """
+    if geom is None:
+      basis = self.GetBasisForField(field)
+      geom = self.GetGeometry(basis, 0)
 
     res = []
     for i in range(len(geom)):
@@ -266,11 +269,14 @@ class IFEMResultDatabase:
         k1 = geom[i].GetKnots(True)
         order = geom[i].GetOrder()
         res.append(Surface(order, k1, coefs))
+      del coefs 
+    del geom
+
     return res
 
-  """ Extract number of timelevels in result data set
-      @return: Number of time levels
-      @rtype: Integer
-  """
   def GetTimeLevels(self):
-    return int(self.dom.getElementsByTagName('levels').nodeValue)
+    """ Extract number of timelevels in result data set
+        @return: Number of time levels
+        @rtype: Integer
+    """
+    return int(self.dom.getElementsByTagName('levels')[0].firstChild.nodeValue)

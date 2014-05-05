@@ -50,14 +50,14 @@ def TFIcurve(curve, j1=1, r=0.9):
 
 def TFISurface(curve):
   """Construct a surface from four edge curves by using transfinite interpolation
-  @param curves: Surface edges
-   @type curves: List of Curve
-  @param perodic1: Whether or not surface is periodic in first direction
-  @type periodic1: Boolean
-  @param periodic2: Whether or not surface is periodic in second direction
-  @type periodic2: Boolean
-  @return: New surface
-  @rtype: Surface
+     @param curves: Surface edges
+     @type curves: List of Curve
+     @param perodic1: Whether or not surface is periodic in first direction
+     @type periodic1: Boolean
+     @param periodic2: Whether or not surface is periodic in second direction
+     @type periodic2: Boolean
+     @return: New surface
+     @rtype: Surface
   """
   # Knots without multiplicity
   knotsu = curve[0].GetKnots()
@@ -100,22 +100,21 @@ def TFISurface(curve):
 
 def TFIGradedSurface(curve, periodic1 = False, periodic2 = False):
   """Construct a graded surface from four edge curves by using transfinite interpolation
-  @param curve: Surface edges
-  @type curve: List of Curve
-  @param perodic1: Whether or not surface is periodic in first direction
-  @type periodic1: Boolean
-  @param periodic2: Whether or not surface is periodic in second direction
-  @type periodic2: Boolean
-  @return: New surface
-  @rtype: Surface
-
-  - 4 4 4 4 4 4 -
-  1             2
-  1             2
-  1             2
-  1             2
-  - 3 3 3 3 3 3 -
+     @param curve: Surface edges
+     @type curve: List of Curve
+     @param perodic1: Whether or not surface is periodic in first direction
+     @type periodic1: Boolean
+     @param periodic2: Whether or not surface is periodic in second direction
+     @type periodic2: Boolean
+     @return: New surface
+     @rtype: Surface
   """
+#     - 4 4 4 4 4 4 -
+#     1             2
+#     1             2
+#     1             2
+#     1             2
+#     - 3 3 3 3 3 3 -
 
   # Smoothing factor for grid size
   factor = 0.8
