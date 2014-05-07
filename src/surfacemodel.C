@@ -201,8 +201,8 @@ PyObject* SurfaceModel_GetBoundaryIds(PyObject* self, PyObject* args)
         crvs.push_back(shared_ptr<Go::SplineCurve>(surfacemodel->getSplineSurface(j)->edgeCurve(order[cunt])));
       for (int k=0;k<4;++k) {
         Go::BoundingBox fb = crvs[k]->boundingBox();
-        if (fabs(fb.low()[i/2]-fb.high()[i/2]) < 1e-6 &&
-            (i%2 == 0?fb.low()[i/2]:fb.high()[i/2]) == (i%2 == 0?bb.low()[i/2]:bb.high()[i/2])) {
+        if (fabs(fb.low()[i/2]-fb.high()[i/2]) < modState.approxTolerance &&
+            fabs((i%2 == 0?fb.low()[i/2]:fb.high()[i/2]) - (i%2 == 0?bb.low()[i/2]:bb.high()[i/2])) < modState.approxTolerance) {
           PyObject* pt = PyTuple_New(2);
           PyTuple_SetItem(pt, 0, Py_BuildValue((char*)"i", j+1));
           PyTuple_SetItem(pt, 1, Py_BuildValue((char*)"i", k+1));
