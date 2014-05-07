@@ -3,6 +3,7 @@ __doc__ = 'Implementation of various refinement schemes.'
 from math import atan
 from math import pi
 from GeoUtils.Knots import *
+from GeoUtils.Factory import *
 
 def UniformCurve(curve, n=1):
         """Uniformly refine a curve by inserting n new knots into each knot interval
@@ -298,10 +299,56 @@ def _splitvector(len, parts):
       result.append(sizes[i]+result[i-1])
   return result
 
+def SubdivideSurface(srfs, subdivisions):
+    """Subdivide a list of surfaces
+       The X-Y plane is subdivided in subdivisions+1 blocks.
+       @param vols: Volumes/Surfaces to split
+       @type vols: List of Volume/Surfaces
+       @param subdivisions: Number of subdivisions to perform in the X-Y plane
+       @type subdivisions: Int
+       @return: List of new surfaces
+    """
+
+    # Subdivisions
+    if subdivisions > 0:
+      volsx = []
+      for v in srfs:
+        v.ReParametrize()
+        knotx, knoty = v.GetKnots()
+        splits = _splitvector(len(knotx), subdivisions+1)
+        splitval = []
+        for i in range(1,len(splits)):
+          splitval.append(knotx[splits[i]])
+        volstmp = [v,v]
+        for val in splitval:
+          volstmp = SplitSurface(volstmp[1], 0, val)
+          volsx.append(volstmp[0])
+          if val == splitval[-1]:
+            volsx.append(volstmp[1])
+
+      volsy = []
+      for v in volsx:
+        v.ReParametrize()
+        knotx, knoty = v.GetKnots()
+        splits = _splitvector(len(knoty), subdivisions+1)
+        splitval = []
+        for i in range(1,len(splits)):
+          splitval.append(knoty[splits[i]])
+        volstmp = [v,v]
+        for val in splitval:
+          volstmp = SplitSurface(volstmp[1], 1, val)
+          volsy.append(volstmp[0])
+          if val == splitval[-1]:
+            volsy.append(volstmp[1])
+    else:
+      volsy = srfs
+
+    return volsy
+
 def SubdivideVolume(vols, subdivisions, zsplit):
     """Subdivide a list of volumes
        First the X-Y plane is subdivided in subdivisions+1 blocks.
-       Then the result is in z in zsplit+1 parts
+       Then the result is split in zsplit+1 parts in the z direction.
        @param vols: Volumes to split
        @type vols: List of Volume
        @param subdivisions: Number of subdivisions to perform in the X-Y plane
