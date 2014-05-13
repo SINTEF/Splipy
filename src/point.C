@@ -32,6 +32,7 @@ PyObject* Point_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 void Point_Dealloc(Point* self)
 {
+  self->data.reset();
   self->ob_type->tp_free((PyObject*)self);
 }
 

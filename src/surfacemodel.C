@@ -50,6 +50,7 @@ PyObject* SurfaceModel_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 void SurfaceModel_Dealloc(SurfaceModel* self)
 {
+  self->data.reset();
   self->ob_type->tp_free((PyObject*)self);
 }
 

@@ -99,6 +99,7 @@ PyObject* Surface_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 void Surface_Dealloc(Surface* self)
 {
+  self->data.reset();
   self->ob_type->tp_free((PyObject*)self);
 }
 

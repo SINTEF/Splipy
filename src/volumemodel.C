@@ -51,6 +51,7 @@ PyObject* VolumeModel_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 void VolumeModel_Dealloc(VolumeModel* self)
 {
+  self->data.reset();
   self->ob_type->tp_free((PyObject*)self);
 }
 

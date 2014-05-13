@@ -97,6 +97,7 @@ PyObject* Volume_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 void Volume_Dealloc(Volume* self)
 {
+  self->data.reset();
   self->ob_type->tp_free((PyObject*)self);
 }
 
