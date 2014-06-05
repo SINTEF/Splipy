@@ -79,7 +79,8 @@ PyDoc_STRVAR(curve_append_curve__doc__,"Merge another curve with this one, with 
                                        "@type continuity: int\n"
                                        "@param reparam: (optional) Specify whether or not there should be reparametrization\n"
                                        "@type reparam: bool\n"
-                                       "@return: None");
+                                       "@return: The curve\n"
+                                       "@rtype: Curve");
 PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve", "continuity", "reparam", NULL };
@@ -107,8 +108,7 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
   double dist;
   parCrv->appendCurve(spCrv.get(), continuity, dist, reparam);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
@@ -188,7 +188,8 @@ PyObject* Curve_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(curve_flip_parametrization__doc__,"Flip curve parametrization\n"
-                                               "@return: None");
+                                               "@return: The curve\n"
+                                               "@rtype: Curve");
 PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -197,12 +198,12 @@ PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kw
 
   parCrv->reverseParameterDirection();
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(curve_force_rational__doc__,"Enforce a rational representation of the spline curve\n"
-                                         "@return: None");
+                                         "@return: The curve\n"
+                                         "@rtype: Curve");
 PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -216,8 +217,7 @@ PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
 
   spCrv->representAsRational();
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(curve_get_knots__doc__,"Get the knots of a spline curve\n"
@@ -340,7 +340,8 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
 PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve\n"
                                       "@param knot: The knot to insert\n"
                                       "@type knot: float\n"
-                                      "@return: None");
+                                      "@return: The curve\n"
+                                      "@rtype: Curve");
 PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"knot", NULL };
@@ -356,8 +357,7 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 
   static_pointer_cast<Go::SplineCurve>(pyCrv->data)->insertKnot(knot);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(curve_intersect__doc__,"Check if this curve intersects another curve or surface.\n"
@@ -431,7 +431,8 @@ PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(curve_normalize__doc__,"Normalize a curve in the parameter domain\n"
-                                    "@return: None");
+                                    "@return: The curve\n"
+                                    "@rtype: Curve");
 PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -443,14 +444,14 @@ PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
 
   pyCrv->data->setParameterInterval(0,1);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   return self;
 }
 
 PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along parallel to the cartesian coordinate system\n"
                                   "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
                                   "@type axis: string\n"
-                                  "@return: None");
+                                  "@return: The curve\n"
+                                  "@rtype: Curve");
 PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", NULL };
@@ -493,14 +494,14 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
     coefs += (dim+rational);
   }
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(curve_raise_order__doc__,"Raise the order of the curve's B-spline basis without changing the shape of the curve\n"
                                       "@param n: Specifies how many times the order will be raised\n"
                                       "@type n: int\n"
-                                      "@return: None");
+                                      "@return: The curve\n"
+                                      "@rtype: Curve");
 PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"n", NULL };
@@ -516,8 +517,7 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 
   static_pointer_cast<Go::SplineCurve>(pyCrv->data)->raiseOrder(amount);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(curve_reparametrize__doc__,"Re-parametrize a curve\n"
@@ -525,7 +525,8 @@ PyDoc_STRVAR(curve_reparametrize__doc__,"Re-parametrize a curve\n"
                                         "@type umin: float\n"
                                         "@param umax: The maximum u value\n"
                                         "@type umax: float\n"
-                                        "@return: None");
+                                        "@return: The curve\n"
+                                        "@rtype: Curve");
 PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"umin", "umax", NULL };
@@ -543,8 +544,7 @@ PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 
   spCrv->setParameterInterval(umin, umax);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(curve_rebuild__doc__,"Rebuild the curve by resampling it to a given order and number of control points\n"
@@ -675,7 +675,8 @@ PyDoc_STRVAR(curve_rotate__doc__,"Rotate a curve around an axis\n"
                                  "@type axis: Point, list of floats or tuple of floats\n"
                                  "@param angle: Angle to rotate curve with in radians\n"
                                  "@type angle: float\n"
-                                 "@return: None");
+                                 "@return: The curve\n"
+                                 "@rtype: Curve");
 PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", "angle", NULL };
@@ -697,8 +698,7 @@ PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
    Go::GeometryTools::rotateSplineCurve(*axis, angle,
                         *static_pointer_cast<Go::SplineCurve>(parCrv));
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   return self;
 }
 
 PyDoc_STRVAR(curve_split__doc__, "Split the curve into segments\n"
@@ -784,7 +784,8 @@ PyObject* Curve_GetSubCurve(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
                                     "@param vector: The vector to translate along\n"
                                     "@type axis: Point, list of floats or tuple of floats\n"
-                                    "@return: None");
+                                    "@return: The curve\n"
+                                    "@rtype: Curve");
 PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"vector", NULL };
@@ -807,8 +808,7 @@ PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 
    Go::GeometryTools::translateSplineCurve(*vec, *static_pointer_cast<Go::SplineCurve>(parCrv));
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   return self;
 }
 
 PyObject* Curve_Add(PyObject* o1, PyObject* o2)
