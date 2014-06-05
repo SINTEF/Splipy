@@ -177,7 +177,8 @@ PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(volume_flip_parametrization__doc__,"Flip (or reverse) volume parametrization\n"
                                                 "@param direction: The parametric direction to flip (0=u, 1=v, 2=w)\n"
                                                 "@type direction: int\n"
-                                                "@return: None");
+                                                "@return: The volume\n"
+                                                "@rtype: Volume");
 PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"direction", NULL };
@@ -199,8 +200,7 @@ PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* k
 
    pyVol->data->reverseParameterDirection(direction);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   return self;
 }
 
 PyDoc_STRVAR(volume_get_bounding_box__doc__,"Generate and return the Spline Volume bounding box\n"
@@ -404,7 +404,8 @@ PyDoc_STRVAR(volume_insert_knot__doc__,"Insert a knot in a spline volume\n"
                                        "@type direction: int (0, 1 or 2)\n"
                                        "@param knot: The knot to insert\n"
                                        "@type knot: float\n"
-                                       "@return: None");
+                                       "@return: The volume\n"
+                                       "@rtype: Volume");
 PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"direction", "knot", NULL };
@@ -424,12 +425,12 @@ PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   }
   static_pointer_cast<Go::SplineVolume>(parVol)->insertKnot(direction, knot);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(volume_make_rhs__doc__,"Make sure volume has a right-hand coordinate system\n"
-                                    "@return: None");
+                                    "@return: The volume\n"
+                                    "@rtype: Volume");
 PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -447,8 +448,7 @@ PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
   if (jacobian < 0)
     parVol->reverseParameterDirection(2);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(volume_split__doc__, "Split the volume into segments\n"
@@ -504,7 +504,8 @@ PyDoc_STRVAR(volume_raise_order__doc__,"Raise order of a spline volume\n"
                                        "@type raise_v: int (>= 0)\n"
                                        "@param raise_w: Raise of order in w\n"
                                        "@type raise_w: int (>= 0)\n"
-                                       "@returns: None");
+                                       "@returns: The volume\n"
+                                       "@rtype: Volume");
 PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"raise_u", "raise_v", "raise_w", NULL };
@@ -523,8 +524,7 @@ PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
    }
    static_pointer_cast<Go::SplineVolume>(parVol)->raiseOrder(raise_u,raise_v,raise_w);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   return self;
 }
 
 PyDoc_STRVAR(volume_reparametrize__doc__,"Re-parametrize a volume\n"
@@ -540,7 +540,8 @@ PyDoc_STRVAR(volume_reparametrize__doc__,"Re-parametrize a volume\n"
                                          "@type wmin: float\n"
                                          "@param wmax: The maximum w value\n"
                                          "@type wmax: float\n"
-                                         "@return: None");
+                                         "@return: The volume\n"
+                                         "@rtype: Volume");
 PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"umin", "umax", "vmin", "vmax", "wmin", "wmax", NULL };
@@ -557,8 +558,7 @@ PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
     spVol->setParameterDomain(umin, umax, vmin, vmax, wmin, wmax);
   }
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyDoc_STRVAR(volume_swap_parametrization__doc__,"Swaps two of the parametric directions\n"
@@ -566,7 +566,8 @@ PyDoc_STRVAR(volume_swap_parametrization__doc__,"Swaps two of the parametric dir
                                                 "@type pardir1: int\n"
                                                 "@param pardir2: The second parametric direction \n"
                                                 "@type pardir2: int\n"
-                                                "@return: None");
+                                                "@return: The volume\n"
+                                                "@rtype: Volume");
 PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"pardir1", "pardir2", NULL };
@@ -589,8 +590,7 @@ PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* k
 
   pyVol->data->swapParameterDirection(pardir1, pardir2);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return self;
 }
 
 PyObject* Volume_Scale(PyObject* o1, PyObject* o2)
@@ -618,7 +618,8 @@ PyObject* Volume_Scale(PyObject* o1, PyObject* o2)
 PyDoc_STRVAR(volume_translate__doc__,"Translate a volume along a given vector\n"
                                      "@param vector: The vector to translate along\n"
                                      "@type vector: Point, list of floats or tuple of floats\n"
-                                     "@return: None");
+                                     "@return: The volume\n"
+                                     "@rtype: Volume");
 PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"vector", NULL };
@@ -641,8 +642,7 @@ PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 
    parVol->translate(*vec);
 
-   Py_INCREF(Py_None);
-   return Py_None;
+   return self;
 }
 
 PyMethodDef Volume_methods[] = {
