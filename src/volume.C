@@ -82,6 +82,8 @@ PyObject* Volume_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
       }
     }
     int dim = coefs.size()/((knots1.size()-order1)*(knots2.size()-order2)*(knots3.size()-order3));
+    if (rational)
+      dim--;
     ((Volume*)self)->data.reset(new Go::SplineVolume(knots1.size()-order1,
                                                      knots2.size()-order2, 
                                                      knots3.size()-order3, 
