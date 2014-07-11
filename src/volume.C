@@ -194,15 +194,16 @@ PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* k
   if (!parVol)
     return NULL;
 
-   Volume* pyVol = (Volume*)self;
-   if (!parVol->isSpline()) {
-     pyVol->data = convertSplineVolume(parVol);
-     parVol = pyVol->data;
-   }
+  Volume* pyVol = (Volume*)self;
+  if (!parVol->isSpline()) {
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
+  }
 
-   pyVol->data->reverseParameterDirection(direction);
+  pyVol->data->reverseParameterDirection(direction);
 
-   return self;
+  Py_INCREF(self);
+  return self;
 }
 
 PyDoc_STRVAR(volume_get_bounding_box__doc__,"Generate and return the Spline Volume bounding box\n"
@@ -427,6 +428,7 @@ PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   }
   static_pointer_cast<Go::SplineVolume>(parVol)->insertKnot(direction, knot);
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -450,6 +452,7 @@ PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
   if (jacobian < 0)
     parVol->reverseParameterDirection(2);
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -519,14 +522,15 @@ PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   if (!parVol)
     return NULL;
-   if (!parVol->isSpline()) {
-     Volume* pyVol = (Volume*)self;
-     pyVol->data = convertSplineVolume(parVol);
-     parVol = pyVol->data;
-   }
-   static_pointer_cast<Go::SplineVolume>(parVol)->raiseOrder(raise_u,raise_v,raise_w);
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
+  }
+  static_pointer_cast<Go::SplineVolume>(parVol)->raiseOrder(raise_u,raise_v,raise_w);
 
-   return self;
+  Py_INCREF(self);
+  return self;
 }
 
 PyDoc_STRVAR(volume_reparametrize__doc__,"Re-parametrize a volume\n"
@@ -560,6 +564,7 @@ PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
     spVol->setParameterDomain(umin, umax, vmin, vmax, wmin, wmax);
   }
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -592,6 +597,7 @@ PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* k
 
   pyVol->data->swapParameterDirection(pardir1, pardir2);
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -636,15 +642,16 @@ PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
   if (!parVol || !vec)
     return NULL;
 
-   if (!parVol->isSpline()) {
-     Volume* volum = (Volume*)self;
-     volum->data = convertSplineVolume(parVol);
-     parVol = volum->data;
-   }
+  if (!parVol->isSpline()) {
+    Volume* volum = (Volume*)self;
+    volum->data = convertSplineVolume(parVol);
+    parVol = volum->data;
+  }
 
-   parVol->translate(*vec);
+  parVol->translate(*vec);
 
-   return self;
+  Py_INCREF(self);
+  return self;
 }
 
 PyMethodDef Volume_methods[] = {

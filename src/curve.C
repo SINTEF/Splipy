@@ -67,6 +67,7 @@ PyObject* Curve_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
                                                    dim, rational));
   }
 
+  Py_INCREF(self);
   return (PyObject*)self;
 }
 
@@ -111,6 +112,7 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
   double dist;
   parCrv->appendCurve(spCrv.get(), continuity, dist, reparam);
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -201,6 +203,7 @@ PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kw
 
   parCrv->reverseParameterDirection();
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -220,6 +223,7 @@ PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
 
   spCrv->representAsRational();
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -360,6 +364,7 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 
   static_pointer_cast<Go::SplineCurve>(pyCrv->data)->insertKnot(knot);
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -447,7 +452,8 @@ PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
 
   pyCrv->data->setParameterInterval(0,1);
 
-   return self;
+  Py_INCREF(self);
+  return self;
 }
 
 PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along parallel to the cartesian coordinate system\n"
@@ -497,6 +503,7 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
     coefs += (dim+rational);
   }
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -520,6 +527,7 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 
   static_pointer_cast<Go::SplineCurve>(pyCrv->data)->raiseOrder(amount);
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -547,6 +555,7 @@ PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 
   spCrv->setParameterInterval(umin, umax);
 
+  Py_INCREF(self);
   return self;
 }
 
@@ -701,7 +710,8 @@ PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
    Go::GeometryTools::rotateSplineCurve(*axis, angle,
                         *static_pointer_cast<Go::SplineCurve>(parCrv));
 
-   return self;
+  Py_INCREF(self);
+  return self;
 }
 
 PyDoc_STRVAR(curve_split__doc__, "Split the curve into segments\n"
@@ -803,15 +813,16 @@ PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
   if (!parCrv || !vec)
     return NULL;
 
-   if (parCrv->geometryCurve() != NULL) {
-     Curve* pyCrv = (Curve*)self;
-     pyCrv->data = convertSplineCurve(parCrv);
-     parCrv = pyCrv->data;
-   }
+  if (parCrv->geometryCurve() != NULL) {
+    Curve* pyCrv = (Curve*)self;
+    pyCrv->data = convertSplineCurve(parCrv);
+    parCrv = pyCrv->data;
+  }
 
-   Go::GeometryTools::translateSplineCurve(*vec, *static_pointer_cast<Go::SplineCurve>(parCrv));
+  Go::GeometryTools::translateSplineCurve(*vec, *static_pointer_cast<Go::SplineCurve>(parCrv));
 
-   return self;
+  Py_INCREF(self);
+  return self;
 }
 
 PyObject* Curve_Add(PyObject* o1, PyObject* o2)
