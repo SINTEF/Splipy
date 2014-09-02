@@ -6,6 +6,7 @@
 
 #include "GoTools/geometry/ClassType.h"
 #include "GoTools/trivariate/ElementaryVolume.h"
+#include "GoTools/trivariate/VolumeInterpolator.h"
 #include "GoTools/geometry/ParamSurface.h"
 
 #include <fstream>
@@ -533,6 +534,70 @@ PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyDoc_STRVAR(volume_lower_order__doc__,"Lower order of a spline volume\n"
+                                       "@param lower_u: Lower of order in u\n"
+                                       "@type lower_u: int (>= 0)\n"
+                                       "@param Lower_v: Lower of order in v\n"
+                                       "@type lower_v: int (>= 0)\n"
+                                       "@param Lower_w: Lower of order in w\n"
+                                       "@type lower_w: int (>= 0)\n"
+                                       "@returns: The volume\n"
+                                       "@rtype: Volume");
+PyObject* Volume_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"lower_u", "lower_v", "lower_w", NULL };
+  int lower_u=0, lower_v=0, lower_w=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"iii",
+                                   (char**)keyWords,&lower_u,&lower_v,&lower_w))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
+    return NULL;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
+  }
+  shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+  std::vector<double>::const_iterator first =  spVol->basis(0).begin()+lower_u;
+  std::vector<double>::const_iterator last  =  spVol->basis(0).end()-lower_u;
+  Go::BsplineBasis b1 = Go::BsplineBasis(spVol->order(0)-lower_u,first,last);
+  first =  spVol->basis(1).begin()+lower_v;
+  last  =  spVol->basis(1).end()-lower_v;
+  Go::BsplineBasis b2 = Go::BsplineBasis(spVol->order(1)-lower_v,first,last);
+  first =  spVol->basis(2).begin()+lower_w;
+  last  =  spVol->basis(2).end()-lower_w;
+  Go::BsplineBasis b3 = Go::BsplineBasis(spVol->order(2)-lower_w,first,last);
+
+  if (spVol->rational())
+    std::cout << "WARNING: The geometry basis is rational (using NURBS)\n."
+              << "         The basis for the unknown fields of one degree"
+              << "         lower will however be non-rational.\n"
+              << "         This may affect accuracy.\n"<< std::endl;
+
+  std::vector<double> ug(b1.numCoefs()), vg(b2.numCoefs()), wg(b3.numCoefs());
+  for (size_t i = 0; i < ug.size(); i++)
+    ug[i] = b1.grevilleParameter(i);
+  for (size_t i = 0; i < vg.size(); i++)
+    vg[i] = b2.grevilleParameter(i);
+  for (size_t i = 0; i < wg.size(); i++)
+    wg[i] = b3.grevilleParameter(i);
+
+  // Evaluate the spline surface at all points
+  std::vector<double> XYZ(spVol->dimension()*ug.size()*vg.size()*wg.size());
+  spVol->gridEvaluator(XYZ,ug,vg,wg);
+
+  // Project the coordinates onto the new basis (the 2nd XYZ is dummy here)
+  Volume* pySurf = (Volume*)self;
+  pySurf->data.reset(Go::VolumeInterpolator::regularInterpolation(b1, b2, b3, ug,
+                                                                  vg, wg, XYZ,
+                                                                  spVol->dimension(),
+                                                                  false, XYZ));
+
+  return self;
+}
+
 PyDoc_STRVAR(volume_reparametrize__doc__,"Re-parametrize a volume\n"
                                          "@param umin: The minimum u value\n"
                                          "@type umin: float\n"
@@ -665,6 +730,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
+     {(char*)"LowerOrder",          (PyCFunction)Volume_LowerOrder,            METH_VARARGS|METH_KEYWORDS, volume_lower_order__doc__},
      {(char*)"MakeRHS",             (PyCFunction)Volume_MakeRHS,               METH_VARARGS,               volume_make_rhs__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},
      {(char*)"ReParametrize",       (PyCFunction)Volume_ReParametrize,         METH_VARARGS|METH_KEYWORDS, volume_reparametrize__doc__},
