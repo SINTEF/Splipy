@@ -53,8 +53,9 @@ void addPath()
 int main(int argc, char** argv)
 {
   const char* file=NULL;
-  char* argv_[9];
-  int argc_=1;
+  std::vector<char*> argv_;
+  argv_.reserve(argc);
+  argv_.push_back(NULL);
   for (int i=1;i<argc;++i) {
     if (!strncasecmp(argv[i],"finaloutput=",12))
       modState.finalOutput = argv[i]+12;
@@ -64,8 +65,8 @@ int main(int argc, char** argv)
       modState.convertSpline = 1+atoi(argv[i]+9);
     else if (!file)
       file = argv[i];
-    else if (argc_ < 9)
-      argv_[argc_++] = argv[i];
+    else
+      argv_.push_back(argv[i]);
   }
   argv_[0] = (char*)file;
   if (!file) {
@@ -84,7 +85,7 @@ int main(int argc, char** argv)
   ON::Begin();
 #endif
   initGoTools();
-  PySys_SetArgv(argc_, argv_);
+  PySys_SetArgv(argv_.size(), &argv_[0]);
   int result=PyRun_SimpleFile(f,file);
   fclose(f);
   Py_Finalize();
