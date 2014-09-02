@@ -3,6 +3,7 @@ import os
 import numpy as np
 import math
 from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize
 
 def distanceFunction(surfaces, wallset, patches=[]):
     """Calculate shortest wall distance
@@ -90,6 +91,10 @@ def getWallCurve(surface, idx):
     edges = surface.GetEdges()
     return edges[idx]
 
+def getWallFace(volume, idx):
+    faces = volume.GetFaces()
+    return faces[idx]
+
 def edgeNumber(edgeID):
     """
     Convert edge number to parametric order
@@ -104,6 +109,14 @@ def edgeNumber(edgeID):
     elif edgeID == 3:
         return 2
 
+def faceNumber(edgeID):
+    """
+    Convert face number to parametric order
+    """
+
+    remap = [1,2,5,6,3,4]
+    return remap[edgeID]-1
+
 def calcPtsDistance(pt1, pt2):
     """
     Calculate shortest distance between two points
@@ -116,3 +129,98 @@ def calcPtsDistanceCurve(s, curve, pt2):
     """
     pt1 = curve.Evaluate(s)
     return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2)
+
+def calcPtsDistance3D(pt1, pt2):
+    """
+    Calculate shortest distance between two points
+    """
+    return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2 + (pt2[2]-pt1[2])**2)
+
+def calcPtsDistanceSurface(s, surface, pt2):
+    """
+    Calculate shortest distance between two points
+    """
+    pt1 = surface.Evaluate(s[0], s[1])
+    return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2 + (pt2[2]-pt1[2])**2)
+
+def distanceFunction3D(volumes, wallset, patches=[]):
+    """Calculate shortest wall distance
+       @param volumes: Volumes in model
+       @type volumes: List of Volume
+       @param wallset: The faces defining the wall
+       @type wallset: List of tuple of (patch, face) numbers
+       @param: Optional list of patches to process
+       @type patches: List of integer
+       @return: Coefficients of distance field
+       @rtype: List of list of float
+    """
+
+    workvolumes = []
+    if len(patches):
+      for patch in patches:
+          workvolumes.append(volumes[patch-1])
+    else:
+      workvolumes = volumes
+
+    wallvolumes = []
+    for idx in wallset:
+        wallvolumes.append(volumes[idx-1])
+
+    wallfaces = []
+
+    for idx in wallset:
+      for face in wallset[idx].face:
+        wallfaces.append(getWallFace(volumes[idx-1], faceNumber(face-1)))
+
+    D = calcDistScipy3D(wallfaces, workvolumes)
+
+    return D
+
+
+def calcDistScipy3D(wallfaces, workvolumes):
+    """Calculate minimum wall distance using scipy and minimize scalar
+       @param wallcurves: List of faces describing the wall
+       @type wallcurves: List of Surface
+       @param workvolumes: Volumes to process
+       @type workvolumes: List of Volume
+       @return Wall distance
+       @rtype List of doubles
+    """
+
+    D = []
+    volID = 0
+    for volume in workvolumes:
+        print 'Working on volume number ' + str(volID+1)
+
+        (knots_xi, knots_eta, knots_gamma) = volume.GetKnots()
+        s = np.zeros(4)
+        wdist = np.zeros((len(knots_gamma), len(knots_eta), len(knots_xi)))
+
+        i = 0
+
+        for knot_xi in knots_xi:
+            j = 0
+            for knot_eta in knots_eta:
+                k = 0
+                for knot_gamma in knots_gamma:
+                    pt = volume.Evaluate(knot_xi, knot_eta, knot_gamma)
+
+                    mindist = np.infty
+
+                    for face in wallfaces:
+                        (crv_knots_xi, crv_knots_eta) = face.GetKnots()
+                        s0 = ((crv_knots_xi[-1] + crv_knots_xi[0])/2.0,
+                              (crv_knots_eta[-1] + crv_knots_eta[0])/2.0)
+                        lb = (crv_knots_xi[0], crv_knots_eta[0])
+                        ub = (crv_knots_xi[-1], crv_knots_eta[-1])
+                        res = minimize(calcPtsDistanceSurface, s0, args=(face, pt), bounds=(lb,ub), method='BFGS', jac=False)
+                        tmp = calcPtsDistance3D(face.Evaluate(res.x[0], res.x[1]), pt)
+                        if tmp < mindist:
+                            mindist = tmp
+                    wdist[k,j,i] = mindist
+                    k = k+1
+                j = j+1
+            i = i+1
+        D.append(wdist)
+        volID = volID + 1
+    return D
