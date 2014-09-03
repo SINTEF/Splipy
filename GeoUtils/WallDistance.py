@@ -55,11 +55,9 @@ def calcDistScipy(wallcurves, worksurfaces):
         print 'Working on surface number ' + str(srfID+1)
 
         (knots_xi, knots_eta) = surface.GetKnots()
-        s = np.zeros(4)
-        wdist = np.zeros((len(knots_xi), len(knots_eta)))
+        Dp = [0]*len(knots_xi)*len(knots_eta)
 
         i = 0
-
         for knot_xi in knots_xi:
             j = 0
             for knot_eta in knots_eta:
@@ -78,11 +76,11 @@ def calcDistScipy(wallcurves, worksurfaces):
                     tmp = calcPtsDistance(curve.Evaluate(res.x), pt)
                     if tmp < mindist:
                         mindist = tmp
-                wdist[i,j] = mindist
+                Dp[j*len(knots_xi)+i] = mindist
                 j = j+1
             i = i+1
         curveID = curveID + 1
-        D.append(wdist)
+        D.append(surface.Interpolate(Dp))
         srfID = srfID + 1
     return D
 
@@ -188,16 +186,14 @@ def calcDistScipy3D(wallfaces, workvolumes):
     """
 
     D = []
-    volID = 0
+    volID = 1
     for volume in workvolumes:
-        print 'Working on volume number ' + str(volID+1)
+        print 'Working on volume number ' + str(volID)
 
-        (knots_xi, knots_eta, knots_gamma) = volume.GetKnots()
-        s = np.zeros(4)
-        wdist = np.zeros((len(knots_gamma), len(knots_eta), len(knots_xi)))
+        (knots_xi, knots_eta, knots_gamma) = volume.GetGreville()
+        Dp = [0]*len(knots_gamma)*len(knots_eta)*len(knots_xi)
 
         i = 0
-
         for knot_xi in knots_xi:
             j = 0
             for knot_eta in knots_eta:
@@ -211,16 +207,16 @@ def calcDistScipy3D(wallfaces, workvolumes):
                         (crv_knots_xi, crv_knots_eta) = face.GetKnots()
                         s0 = ((crv_knots_xi[-1] + crv_knots_xi[0])/2.0,
                               (crv_knots_eta[-1] + crv_knots_eta[0])/2.0)
-                        lb = (crv_knots_xi[0], crv_knots_eta[0])
-                        ub = (crv_knots_xi[-1], crv_knots_eta[-1])
-                        res = minimize(calcPtsDistanceSurface, s0, args=(face, pt), bounds=(lb,ub), method='BFGS', jac=False)
-                        tmp = calcPtsDistance3D(face.Evaluate(res.x[0], res.x[1]), pt)
+                        lb = (crv_knots_xi[0], crv_knots_xi[-1])
+                        ub = (crv_knots_eta[0], crv_knots_eta[-1])
+                        res = minimize(_calcPtsDistanceSurface, s0, args=(face, pt), bounds=(lb,ub), method='SLSQP', jac=False)
+                        tmp = _calcPtsDistance3D(face.Evaluate(res.x[0], res.x[1]), pt)
                         if tmp < mindist:
                             mindist = tmp
-                    wdist[k,j,i] = mindist
+                    Dp[k*len(knots_xi)*len(knots_eta)+j*len(knots_xi)+i] = mindist
                     k = k+1
                 j = j+1
             i = i+1
-        D.append(wdist)
+        D.append(volume.Interpolate(Dp))
         volID = volID + 1
     return D
