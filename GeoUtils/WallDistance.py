@@ -99,6 +99,9 @@ def _calcDistScipy(wallcurves, worksurfaces):
                 j = j+1
             i = i+1
         curveID = curveID + 1
+        Dp = []
+        for g in wdist:
+          Dp += list(g)
         D.append(surface.Interpolate(Dp))
         srfID = srfID + 1
     return D
@@ -236,6 +239,10 @@ def _calcDistScipy3D(wallfaces, workvolumes):
                     k = k+1
                 j = j+1
             i = i+1
+        Dp = []
+        for l in wdist:
+          for g in l:
+            Dp += list(g)
         D.append(volume.Interpolate(Dp))
         volID = volID + 1
     return D
