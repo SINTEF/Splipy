@@ -6,6 +6,7 @@
 #include "GoTools/geometry/ClassType.h"
 #include "GoTools/geometry/ClosestPoint.h"
 #include "GoTools/geometry/GeometryTools.h"
+#include "GoTools/geometry/CurveInterpolator.h"
 #include "GoTools/geometry/SplineInterpolator.h"
 #include "GoTools/utils/LUDecomp.h"
 #include "GoTools/utils/LUDecomp_implementation.h"
@@ -227,6 +228,29 @@ PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyDoc_STRVAR(curve_get_greville__doc__,"Return Greville points for a spline curve\n"
+                                       "@return: List with the parameter values\n"
+                                       "@rtype: List of float");
+PyObject* Curve_GetGreville(PyObject* self)
+{
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
+    return NULL;
+  if (!parCrv->geometryCurve()) {
+    Curve* pyCrv = (Curve*)self;
+    pyCrv->data = convertSplineCurve(parCrv);
+    parCrv = pyCrv->data;
+  }
+
+  shared_ptr<Go::SplineCurve> spCrv = static_pointer_cast<Go::SplineCurve>(parCrv);
+  PyObject* result = PyList_New(0);
+  for (size_t j=0;j<spCrv->basis().numCoefs();++j)
+    PyList_Append(result,Py_BuildValue((char*)"d",
+                   spCrv->basis().grevilleParameter(j)));
+
+  return result;
+}
+
 PyDoc_STRVAR(curve_get_knots__doc__,"Get the knots of a spline curve\n"
                                     "@param with_multiplicities: (optional) Set to true to obtain the knot vector with multiplicities\n"
                                     "@type with_multiplicities: Boolean\n"
@@ -366,6 +390,61 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 
   Py_INCREF(self);
   return self;
+}
+
+PyDoc_STRVAR(curve_interpolate__doc__,"Interpolate a field onto the curve's basis\n"
+                                       "@param coefs: The values to interpolate (sample in the Greville points)\n"
+                                       "@type coefs: List of Float"
+                                       "@return: New basis coefficients\n"
+                                       "@rtype: List of float");
+PyObject* Curve_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"coefs", NULL };
+  PyObject* pycoefs=NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&pycoefs))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv || !PyObject_TypeCheck(pycoefs,&PyList_Type))
+    return NULL;
+
+  if (!parCrv->geometryCurve()) {
+    Curve* pyCrv = (Curve*)self;
+    pyCrv->data = convertSplineCurve(parCrv);
+    parCrv = pyCrv->data;
+  }
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
+
+  std::vector<double> coefs;
+  for (int i=0;i<PyList_Size(pycoefs);++i) {
+    PyObject* o = PyList_GetItem(pycoefs,i);
+    coefs.push_back(PyFloat_AsDouble(o));
+  }
+
+  std::vector<double> greville_u(crv->basis().numCoefs());
+  for(int i=0; i<crv->basis().numCoefs(); i++)
+    greville_u[i] = crv->basis().grevilleParameter(i);
+  std::vector<double> weights(0);
+
+  int dim = coefs.size()/greville_u.size();
+
+  Go::SplineCurve* res =
+        Go::CurveInterpolator::regularInterpolation(crv->basis(),
+                                                    greville_u,
+                                                    coefs,
+                                                    dim,
+                                                    false,
+                                                    weights);
+
+  PyObject* result = PyList_New(coefs.size());
+  for (std::vector<double>::const_iterator it  = res->coefs_begin();
+                                           it != res->coefs_end();++it)
+    PyList_Append(result,Py_BuildValue((char*)"d",*it));
+
+  delete res;
+
+  return result;
 }
 
 PyDoc_STRVAR(curve_intersect__doc__,"Check if this curve intersects another curve or surface.\n"
@@ -896,11 +975,13 @@ PyMethodDef Curve_methods[] = {
      {(char*)"EvaluateTangent",     (PyCFunction)Curve_EvaluateTangent,     METH_VARARGS|METH_KEYWORDS, curve_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"ForceRational",       (PyCFunction)Curve_ForceRational,       METH_VARARGS,               curve_force_rational__doc__},
+     {(char*)"GetGreville",         (PyCFunction)Curve_GetGreville,         0,                          curve_get_greville__doc__},
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS|METH_KEYWORDS, curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
      {(char*)"GetSubCurve",         (PyCFunction)Curve_GetSubCurve,         METH_VARARGS|METH_KEYWORDS, curve_get_sub_curve__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
+     {(char*)"Interpolate",         (PyCFunction)Curve_Interpolate,         METH_VARARGS|METH_KEYWORDS, curve_interpolate__doc__},
      {(char*)"Intersect",           (PyCFunction)Curve_Intersect,           METH_VARARGS|METH_KEYWORDS, curve_intersect__doc__},
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},

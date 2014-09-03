@@ -336,6 +336,31 @@ PyObject* Volume_GetSubVol(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) result;
 }
 
+PyDoc_STRVAR(volume_get_greville__doc__,"Return Greville points for a spline volume\n"
+                                         "@return: List with the parameter values\n"
+                                         "@rtype: Tuple with List of float");
+PyObject* Volume_GetGreville(PyObject* self)
+{
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
+    return NULL;
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
+  }
+  PyObject* result = PyTuple_New(3);
+  shared_ptr<Go::SplineVolume> spVol = static_pointer_cast<Go::SplineVolume>(parVol);
+  for (int i=0;i<3;++i) {
+    PyObject* list = PyList_New(0);
+    for (size_t j=0;j<spVol->basis(i).numCoefs();++j)
+      PyList_Append(list,Py_BuildValue((char*)"d",
+                     spVol->basis(i).grevilleParameter(j)));
+    PyTuple_SetItem(result,i,list);
+  }
+
+  return result;
+}
 
 PyDoc_STRVAR(volume_get_knots__doc__,"Return knots for a spline volume\n"
                                      "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
@@ -431,6 +456,71 @@ PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 
   Py_INCREF(self);
   return self;
+}
+
+PyDoc_STRVAR(volume_interpolate__doc__,"Interpolate a field onto the volume's basis\n"
+                                       "@param coefs: The values to interpolate (sample in the Greville points)\n"
+                                       "@type coefs: List of Float"
+                                       "@return: New basis coefficients\n"
+                                       "@rtype: List of float");
+PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"coefs", NULL };
+  PyObject* pycoefs=NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&pycoefs))
+    return NULL;
+
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol || !PyObject_TypeCheck(pycoefs,&PyList_Type))
+    return NULL;
+
+  if (!parVol->isSpline()) {
+    Volume* pyVol = (Volume*)self;
+    pyVol->data = convertSplineVolume(parVol);
+    parVol = pyVol->data;
+  }
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
+
+  std::vector<double> coefs;
+  for (int i=0;i<PyList_Size(pycoefs);++i) {
+    PyObject* o = PyList_GetItem(pycoefs,i);
+    coefs.push_back(PyFloat_AsDouble(o));
+  }
+
+  std::vector<double> greville_u(vol->basis(0).numCoefs());
+  std::vector<double> greville_v(vol->basis(1).numCoefs());
+  std::vector<double> greville_w(vol->basis(2).numCoefs());
+  for(int i=0; i<vol->basis(0).numCoefs(); i++)
+    greville_u[i] = vol->basis(0).grevilleParameter(i);
+  for(int i=0; i<vol->basis(1).numCoefs(); i++)
+    greville_v[i] = vol->basis(1).grevilleParameter(i);
+  for(int i=0; i<vol->basis(2).numCoefs(); i++)
+    greville_w[i] = vol->basis(2).grevilleParameter(i);
+  std::vector<double> weights(0);
+
+  int dim = coefs.size()/(greville_u.size()*greville_v.size()*greville_w.size());
+
+  Go::SplineVolume* res =
+        Go::VolumeInterpolator::regularInterpolation(vol->basis(0),
+                                                     vol->basis(1),
+                                                     vol->basis(2),
+                                                     greville_u,
+                                                     greville_v,
+                                                     greville_w,
+                                                     coefs,
+                                                     dim,
+                                                     false,
+                                                     weights);
+
+  PyObject* result = PyList_New(0);
+  for (std::vector<double>::const_iterator it  = res->coefs_begin();
+                                           it != res->coefs_end();++it)
+    PyList_Append(result,Py_BuildValue((char*)"d",*it));
+
+  delete res;
+
+  return result;
 }
 
 PyDoc_STRVAR(volume_make_rhs__doc__,"Make sure volume has a right-hand coordinate system\n"
@@ -727,9 +817,11 @@ PyMethodDef Volume_methods[] = {
      {(char*)"GetConstParSurf",     (PyCFunction)Volume_GetConstParSurf,       METH_VARARGS|METH_KEYWORDS, volume_get_const_par_surf__doc__},
      {(char*)"GetSubVol",           (PyCFunction)Volume_GetSubVol,             METH_VARARGS|METH_KEYWORDS, volume_get_sub_vol__doc__},
      {(char*)"GetFaces",            (PyCFunction)Volume_GetFaces,              METH_VARARGS|METH_KEYWORDS, volume_get_faces__doc__},
+     {(char*)"GetGreville",         (PyCFunction)Volume_GetGreville,           0,                          volume_get_greville__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
+     {(char*)"Interpolate",         (PyCFunction)Volume_Interpolate,           METH_VARARGS|METH_KEYWORDS, volume_interpolate__doc__},
      {(char*)"LowerOrder",          (PyCFunction)Volume_LowerOrder,            METH_VARARGS|METH_KEYWORDS, volume_lower_order__doc__},
      {(char*)"MakeRHS",             (PyCFunction)Volume_MakeRHS,               METH_VARARGS,               volume_make_rhs__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Volume_RaiseOrder,            METH_VARARGS|METH_KEYWORDS, volume_raise_order__doc__},

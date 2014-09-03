@@ -455,6 +455,33 @@ PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(surface_get_greville__doc__,"Return Greville points for a spline surface\n"
+                                         "@return: List with the parameter values\n"
+                                         "@rtype: Tuple with List of float");
+PyObject* Surface_GetGreville(PyObject* self)
+{
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
+    return NULL;
+  if (!parSurf->isSpline()) {
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
+  }
+
+  PyObject* result = PyTuple_New(2);
+  shared_ptr<Go::SplineSurface> spSurf = static_pointer_cast<Go::SplineSurface>(parSurf);
+  for (int i=0;i<2;++i) {
+    PyObject* list = PyList_New(0);
+    for (size_t j=0;j<spSurf->basis(i).numCoefs();++j)
+      PyList_Append(list,Py_BuildValue((char*)"d",
+                     spSurf->basis(i).grevilleParameter(j)));
+    PyTuple_SetItem(result,i,list);
+  }
+
+  return result;
+}
+
 PyDoc_STRVAR(surface_get_order__doc__,"Return spline surface order (polynomial degree + 1) in all parametric directions\n"
                                       "@return: B-Spline order\n"
                                       "@rtype: List of two integers");
@@ -549,6 +576,66 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 
   Py_INCREF(self);
   return self;
+}
+
+PyDoc_STRVAR(surface_interpolate__doc__,"Interpolate a field onto the surface' basis\n"
+                                        "@param coefs: The values to interpolate (sample in the Greville points)\n"
+                                        "@type coefs: List of Float"
+                                        "@return: New basis coefficients\n"
+                                        "@rtype: List of float");
+PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"coefs", NULL };
+  PyObject* pycoefs=NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&pycoefs))
+    return NULL;
+
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf || !PyObject_TypeCheck(pycoefs,&PyList_Type))
+    return NULL;
+
+  if (!parSurf->isSpline()) {
+    Surface* pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
+  }
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+
+  std::vector<double> coefs;
+  for (int i=0;i<PyList_Size(pycoefs);++i) {
+    PyObject* o = PyList_GetItem(pycoefs,i);
+    coefs.push_back(PyFloat_AsDouble(o));
+  }
+
+  std::vector<double> greville_u(surf->basis_u().numCoefs());
+  std::vector<double> greville_v(surf->basis_v().numCoefs());
+  for(int i=0; i<surf->basis_u().numCoefs(); i++)
+    greville_u[i] = surf->basis_u().grevilleParameter(i);
+  for(int i=0; i<surf->basis_v().numCoefs(); i++)
+    greville_v[i] = surf->basis_v().grevilleParameter(i);
+  std::vector<double> weights(0);
+
+  int dim = coefs.size()/(greville_u.size()*greville_v.size());
+
+  Go::SplineSurface* res =
+        Go::SurfaceInterpolator::regularInterpolation(surf->basis_u(),
+                                                      surf->basis_v(),
+                                                      greville_u,
+                                                      greville_v,
+                                                      coefs,
+                                                      dim,
+                                                      false,
+                                                      weights);
+
+  PyObject* result = PyList_New(coefs.size());
+  for (std::vector<double>::const_iterator it  = res->coefs_begin();
+                                           it != res->coefs_end();++it)
+    PyList_Append(result,Py_BuildValue((char*)"d",*it));
+
+  delete res;
+
+  return result;
 }
 
 PyDoc_STRVAR(surface_intersect__doc__,"Check if this surface intersects another surface or surface.\n"
@@ -914,7 +1001,7 @@ PyObject* Surface_Scale(PyObject* o1, PyObject* o2)
 }
 
 PyMethodDef Surface_methods[] = {
-     {(char*)"Append",              (PyCFunction)Surface_Append,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
+     {(char*)"Append",              (PyCFunction)Surface_Append,                METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
      {(char*)"EvaluateNormal",      (PyCFunction)Surface_EvaluateNormal,        METH_VARARGS|METH_KEYWORDS, surface_evaluate_normal__doc__},
@@ -922,10 +1009,12 @@ PyMethodDef Surface_methods[] = {
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
      {(char*)"ForceRational",       (PyCFunction)Surface_ForceRational,         METH_VARARGS,               surface_force_rational__doc__},
      {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
+     {(char*)"GetGreville",         (PyCFunction)Surface_GetGreville,           0,                          surface_get_greville__doc__},
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
      {(char*)"GetSubSurf",          (PyCFunction)Surface_GetSubSurf,            METH_VARARGS|METH_KEYWORDS, surface_get_sub_surf__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
+     {(char*)"Interpolate",         (PyCFunction)Surface_Interpolate,           METH_VARARGS|METH_KEYWORDS, surface_interpolate__doc__},
      {(char*)"Intersect",           (PyCFunction)Surface_Intersect,             METH_VARARGS|METH_KEYWORDS, surface_intersect__doc__},
      {(char*)"LowerOrder",          (PyCFunction)Surface_LowerOrder,            METH_VARARGS|METH_KEYWORDS, surface_lower_order__doc__},
      {(char*)"Project",             (PyCFunction)Surface_Project,               METH_VARARGS|METH_KEYWORDS, surface_project__doc__},
