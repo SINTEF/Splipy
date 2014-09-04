@@ -5,8 +5,28 @@ import math
 from scipy.optimize import minimize_scalar
 from scipy.optimize import minimize
 
-def distanceFunction(surfaces, wallset, patches=[]):
+def distanceFunction(patches, wallset, process=[]):
     """Calculate shortest wall distance
+       @param surfaces: Patches in model
+       @type surfaces: List of Surface or Volume
+       @param wallset: The edges/faces defining the wall
+       @type wallset: List of tuple of (patch, edge/face) numbers
+       @param process: Optional list of patches to process
+       @type process: List of integer
+       @return: Coefficients of distance field
+       @rtype: List of list of float
+    """
+
+    if isinstance(patches[0], Surface):
+      return _distanceFunction2D(patches, wallset, process)
+
+    if isinstance(patches[0], Volume):
+      return _distanceFunction3D(patches, wallset, process)
+
+    raise ValueError('Can only process surfaces or volumes')
+
+def _distanceFunction2D(surfaces, wallset, patches=[]):
+    """Calculate shortest wall distance in 2D
        @param surfaces: Surfaces in model
        @type surfaces: List of Surface
        @param wallset: The edges defining the wall
@@ -32,14 +52,14 @@ def distanceFunction(surfaces, wallset, patches=[]):
 
     for idx in wallset:
       for edge in wallset[idx].edge:
-        wallcurves.append(getWallCurve(surfaces[idx-1], edgeNumber(edge-1)))
+        wallcurves.append(_getWallCurve(surfaces[idx-1], _edgeNumber(edge-1)))
 
-    D = calcDistScipy(wallcurves, worksurfaces)
+    D = _calcDistScipy(wallcurves, worksurfaces)
 
     return D
 
 
-def calcDistScipy(wallcurves, worksurfaces):
+def _calcDistScipy(wallcurves, worksurfaces):
     """Calculate minimum wall distance using scipy and minimize scalar
        @param wallcurves: List of curves describing the wall
        @type wallcurves: List of curve
@@ -69,11 +89,10 @@ def calcDistScipy(wallcurves, worksurfaces):
                     curveID = 0
                     crv_knots_xi = curve.GetKnots()
                     s0 = (crv_knots_xi[-1] + crv_knots_xi[0])/2.0
-                    #length = len(crv_knots_xi)
                     lb = crv_knots_xi[0]
                     ub = crv_knots_xi[-1]
-                    res = minimize_scalar(calcPtsDistanceCurve, s0, args=(curve, pt), bounds=(lb,ub), method='bounded', options={'xtol': 1e-10, 'disp': False})
-                    tmp = calcPtsDistance(curve.Evaluate(res.x), pt)
+                    res = minimize_scalar(_calcPtsDistanceCurve, s0, args=(curve, pt), bounds=(lb,ub), method='bounded', options={'xtol': 1e-10, 'disp': False})
+                    tmp = _calcPtsDistance(curve.Evaluate(res.x), pt)
                     if tmp < mindist:
                         mindist = tmp
                 Dp[j*len(knots_xi)+i] = mindist
@@ -85,15 +104,15 @@ def calcDistScipy(wallcurves, worksurfaces):
     return D
 
 
-def getWallCurve(surface, idx):
+def _getWallCurve(surface, idx):
     edges = surface.GetEdges()
     return edges[idx]
 
-def getWallFace(volume, idx):
+def _getWallFace(volume, idx):
     faces = volume.GetFaces()
     return faces[idx]
 
-def edgeNumber(edgeID):
+def _edgeNumber(edgeID):
     """
     Convert edge number to parametric order
     """
@@ -107,7 +126,7 @@ def edgeNumber(edgeID):
     elif edgeID == 3:
         return 2
 
-def faceNumber(edgeID):
+def _faceNumber(edgeID):
     """
     Convert face number to parametric order
     """
@@ -115,34 +134,34 @@ def faceNumber(edgeID):
     remap = [1,2,5,6,3,4]
     return remap[edgeID]-1
 
-def calcPtsDistance(pt1, pt2):
+def _calcPtsDistance(pt1, pt2):
     """
     Calculate shortest distance between two points
     """
     return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2)
 
-def calcPtsDistanceCurve(s, curve, pt2):
+def _calcPtsDistanceCurve(s, curve, pt2):
     """
     Calculate shortest distance between two points
     """
     pt1 = curve.Evaluate(s)
     return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2)
 
-def calcPtsDistance3D(pt1, pt2):
+def _calcPtsDistance3D(pt1, pt2):
     """
     Calculate shortest distance between two points
     """
     return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2 + (pt2[2]-pt1[2])**2)
 
-def calcPtsDistanceSurface(s, surface, pt2):
+def _calcPtsDistanceSurface(s, surface, pt2):
     """
     Calculate shortest distance between two points
     """
     pt1 = surface.Evaluate(s[0], s[1])
     return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2 + (pt2[2]-pt1[2])**2)
 
-def distanceFunction3D(volumes, wallset, patches=[]):
-    """Calculate shortest wall distance
+def _distanceFunction3D(volumes, wallset, patches=[]):
+    """Calculate shortest wall distance in 3D
        @param volumes: Volumes in model
        @type volumes: List of Volume
        @param wallset: The faces defining the wall
@@ -168,14 +187,14 @@ def distanceFunction3D(volumes, wallset, patches=[]):
 
     for idx in wallset:
       for face in wallset[idx].face:
-        wallfaces.append(getWallFace(volumes[idx-1], faceNumber(face-1)))
+        wallfaces.append(_getWallFace(volumes[idx-1], _faceNumber(face-1)))
 
-    D = calcDistScipy3D(wallfaces, workvolumes)
+    D = _calcDistScipy3D(wallfaces, workvolumes)
 
     return D
 
 
-def calcDistScipy3D(wallfaces, workvolumes):
+def _calcDistScipy3D(wallfaces, workvolumes):
     """Calculate minimum wall distance using scipy and minimize scalar
        @param wallcurves: List of faces describing the wall
        @type wallcurves: List of Surface
