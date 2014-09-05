@@ -1,9 +1,91 @@
 from GoTools import *
-import os
 import numpy as np
 import math
 from scipy.optimize import minimize_scalar
 from scipy.optimize import minimize
+
+# Parallel code copied from the nutils.org project.
+import os, multiprocessing, time
+class Fork( object ):
+  'nested fork context, unwinds at exit'
+
+  def __init__( self, nprocs ):
+    'constructor'
+
+    self.nprocs = nprocs
+
+  def __enter__( self ):
+    'fork and return iproc'
+
+    for self.iproc in range( self.nprocs-1 ):
+      self.child_pid = os.fork()
+      if self.child_pid:
+        break
+    else:
+      self.child_pid = None
+      self.iproc = self.nprocs-1
+    return self.iproc
+
+  def __exit__( self, *exc_info ):
+    'kill all processes but first one'
+
+    exctype, excvalue, tb = exc_info
+    status = 0
+    try:
+      if exctype == KeyboardInterrupt:
+        status = 1
+      elif exctype == GeneratorExit:
+        if self.iproc:
+          log.stack( 'generator failed with unknown exception' )
+        status = 1
+      elif exctype:
+        if self.iproc:
+          log.stack( exc_info )
+        status = 1
+      if self.child_pid:
+        child_pid, child_status = os.waitpid( self.child_pid, 0 )
+        if child_pid != self.child_pid:
+          log.error( 'pid failure! got %s, was waiting for %s' % (child_pid,self.child_pid) )
+          status = 1
+        elif child_status:
+          status = 1
+    except: # should not happen.. but just to be sure
+      status = 1
+    if self.iproc:
+      os._exit( status )
+    if not exctype:
+      assert status == 0, 'one or more subprocesses failed'
+
+def pariter( iterable, nprocs ):
+  'iterate parallel, helper generator'
+  shared_iter = multiprocessing.RawValue( 'i', nprocs )
+  lock = multiprocessing.Lock()
+  with Fork( nprocs ) as iproc:
+    iiter = iproc
+    for n, it in enumerate( iterable ):
+      if n < iiter:
+        continue
+      assert n == iiter
+      yield it
+      with lock:
+        iiter = shared_iter.value
+        shared_iter.value = iiter + 1
+
+def shzeros( shape, dtype=float ):
+  'create zero-initialized array in shared memory'
+  if isinstance( shape, int ):
+    shape = shape,
+  else:
+    assert all( isinstance(sh,int) for sh in shape )
+  size = np.product( shape ) if shape else 1
+  if dtype == float:
+    typecode = 'd'
+  elif dtype == int:
+    typecode = 'i'
+  else:
+    raise Exception, 'invalid dtype: %r' % dtype
+  buf = multiprocessing.RawArray( typecode, size )
+  return np.frombuffer( buf, dtype ).reshape( shape )
 
 def distanceFunction(patches, wallset, process=[]):
     """Calculate shortest wall distance
@@ -55,9 +137,7 @@ def _distanceFunction2D(surfaces, wallset, patches=[]):
         wallcurves.append(_getWallCurve(surfaces[idx-1], _edgeNumber(edge-1)))
 
     D = _calcDistScipy(wallcurves, worksurfaces)
-
     return D
-
 
 def _calcDistScipy(wallcurves, worksurfaces):
     """Calculate minimum wall distance using scipy and minimize scalar
@@ -75,7 +155,7 @@ def _calcDistScipy(wallcurves, worksurfaces):
         print 'Working on surface number ' + str(srfID+1)
 
         (knots_xi, knots_eta) = surface.GetKnots()
-        Dp = [0]*len(knots_xi)*len(knots_eta)
+        wdist = np.zeros(len(knots_xi), len(knots_gamma))
 
         i = 0
         for knot_xi in knots_xi:
@@ -95,14 +175,11 @@ def _calcDistScipy(wallcurves, worksurfaces):
                     tmp = _calcPtsDistance(curve.Evaluate(res.x), pt)
                     if tmp < mindist:
                         mindist = tmp
-                Dp[j*len(knots_xi)+i] = mindist
+                wdist[i,j] = mindist
                 j = j+1
             i = i+1
         curveID = curveID + 1
-        Dp = []
-        for g in wdist:
-          Dp += list(g)
-        D.append(surface.Interpolate(Dp))
+        D.append(surface.Interpolate(wdist.flatten('F')))
         srfID = srfID + 1
     return D
 
@@ -207,13 +284,15 @@ def _calcDistScipy3D(wallfaces, workvolumes):
        @rtype List of doubles
     """
 
-    D = []
-    volID = 1
-    for volume in workvolumes:
-        print 'Working on volume number ' + str(volID)
-
+    patch_size = lambda patch: np.prod( map( len, patch.GetKnots() ) )
+    max_patch_size = max( map( patch_size, workvolumes ) )
+    D = shzeros( (len(workvolumes), max_patch_size) )
+    lenD = shzeros( len(workvolumes) )
+    t0 = time.time()
+    for volID, volume in pariter( enumerate(workvolumes),12):
+        print 'Working on volume number %s/%i of len %i' % (str(volID+1), len(D), len(volume))
         (knots_xi, knots_eta, knots_gamma) = volume.GetGreville()
-        Dp = [0]*len(knots_gamma)*len(knots_eta)*len(knots_xi)
+        wdist = np.zeros((len(knots_xi), len(knots_eta), len(knots_gamma)))
 
         i = 0
         for knot_xi in knots_xi:
@@ -229,20 +308,20 @@ def _calcDistScipy3D(wallfaces, workvolumes):
                         (crv_knots_xi, crv_knots_eta) = face.GetKnots()
                         s0 = ((crv_knots_xi[-1] + crv_knots_xi[0])/2.0,
                               (crv_knots_eta[-1] + crv_knots_eta[0])/2.0)
-                        lb = (crv_knots_xi[0], crv_knots_xi[-1])
-                        ub = (crv_knots_eta[0], crv_knots_eta[-1])
-                        res = minimize(_calcPtsDistanceSurface, s0, args=(face, pt), bounds=(lb,ub), method='SLSQP', jac=False)
+                        b1 = (crv_knots_xi[0], crv_knots_xi[-1])
+                        b2 = (crv_knots_eta[0], crv_knots_eta[-1])
+                        res = minimize(_calcPtsDistanceSurface, s0, args=(face, pt), method='L-BFGS-B', bounds=(b1,b2), jac=False)
                         tmp = _calcPtsDistance3D(face.Evaluate(res.x[0], res.x[1]), pt)
+                        if not np.isfinite(tmp): print 'min dist @ vol_%i[%i,%i,%i] = '%(volID,i,j,k), tmp
                         if tmp < mindist:
                             mindist = tmp
-                    Dp[k*len(knots_xi)*len(knots_eta)+j*len(knots_xi)+i] = mindist
+                    wdist[i,j,k] = mindist
                     k = k+1
                 j = j+1
             i = i+1
-        Dp = []
-        for l in wdist:
-          for g in l:
-            Dp += list(g)
-        D.append(volume.Interpolate(Dp))
-        volID = volID + 1
-    return D
+        size = wdist.size
+        data = volume.Interpolate(list(wdist.flatten('F')))
+        D[volID,:size] = data
+        lenD[volID] = size
+    print 'elapsed: ', time.time()-t0
+    return [list(Di[:lenDi]) for (Di,lenDi) in zip(D,lenD)]
