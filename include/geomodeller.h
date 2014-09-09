@@ -4,6 +4,7 @@
 #include "GoTools/utils/config.h"
 #include "GoTools/utils/Point.h"
 
+#include <thread>
 #include <sstream>
 
 #include "geomodversion.h"
@@ -15,7 +16,7 @@ class GeoModellerState {
       std::stringstream str;
       str << GEOMODELLER_VERSION_MAJOR << "." << GEOMODELLER_VERSION_MINOR << "." << GEOMODELLER_VERSION_PATCH;
       version = str.str();
-      author = "Arne Morten Kvarving, Kjetil A. Johannessen";
+      author = "Arne Morten Kvarving, Kjetil A. Johannessen, Timo van Opstahl, Knut Nordanger";
       date = __DATE__;
       credits = "The GoTools authors";
 
@@ -29,6 +30,7 @@ class GeoModellerState {
       bendTolerance = 1.e-1;
       refineTolerance = 1.e-3;
       debugLevel = 1;
+      procCount = std::thread::hardware_concurrency();
     }
 
     void addInfo(PyObject* module)
@@ -43,6 +45,7 @@ class GeoModellerState {
     int dim; //!< The dimension of the geometries we will create
     int convertSpline; //!< Make output convert to splines by default
     int debugLevel; //!< The current debug level
+    int procCount; //!< Processor count
     double gapTolerance; //!< The tolerance of water-tight models
     double approxTolerance; //!< The tolerance of some kind of approximation :)
     double neighbourTolerance; //!< How much crap we can stomach from our neighbour

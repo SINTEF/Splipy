@@ -289,7 +289,7 @@ def _calcDistScipy3D(wallfaces, workvolumes):
     D = shzeros( (len(workvolumes), max_patch_size) )
     lenD = shzeros( len(workvolumes) )
     t0 = time.time()
-    for volID, volume in pariter( enumerate(workvolumes),12):
+    for volID, volume in pariter( enumerate(workvolumes),GetProcessorCount()):
         print 'Working on volume number %s/%i of len %i' % (str(volID+1), len(D), len(volume))
         (knots_xi, knots_eta, knots_gamma) = volume.GetGreville()
         wdist = np.zeros((len(knots_xi), len(knots_eta), len(knots_gamma)))

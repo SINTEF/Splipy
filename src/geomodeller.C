@@ -181,6 +181,34 @@ PyObject* GeoMod_SetDebugLevel(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(get_processor_count__doc__, "Get processor count\n"
+                                         "@return: Number of processes\n"
+                                         "@rtype: Integer");
+PyObject* GeoMod_GetProcessorCount(PyObject* self)
+{
+  return Py_BuildValue((char*)"i", modState.procCount);
+}
+
+PyDoc_STRVAR(set_processor_count__doc__, "Set processor count\n"
+                                         "@param procs: The number of processors\n"
+                                         "@type  procs: int >= 1\n"
+                                         "@return:      None\n"
+                                         "\n");
+PyObject* GeoMod_SetProcessorCount(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"procs", NULL };
+  int procs;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
+                                   (char**)keyWords,&procs))
+    return NULL;
+
+  if (procs >= 1)
+    modState.procCount = procs;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 // these statics are needed to handle the dynamic type of the input parameters
 // we may be given a list of objects, or a single object
 static void WriteEntity(std::ofstream& g2_file, PyObject* obj, bool convert)
@@ -662,6 +690,8 @@ PyMethodDef GeoMod_methods[] = {
      {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS|METH_KEYWORDS, set_tolerance__doc__},
      {(char*)"SetDimension",          (PyCFunction)GeoMod_SetDimension,      METH_VARARGS|METH_KEYWORDS, set_dim__doc__},
      {(char*)"SetFinalOutput",        (PyCFunction)GeoMod_SetFinalOutput,    METH_VARARGS|METH_KEYWORDS, set_final_output__doc__},
+     {(char*)"GetProcessorCount",     (PyCFunction)GeoMod_GetProcessorCount, 0,                          get_processor_count__doc__},
+     {(char*)"SetProcessorCount",     (PyCFunction)GeoMod_SetProcessorCount, METH_VARARGS|METH_KEYWORDS, set_processor_count__doc__},
 
      // I/O
      {(char*)"FinalOutput",           (PyCFunction)GeoMod_FinalOutput,       METH_VARARGS|METH_KEYWORDS, final_output__doc__},
