@@ -1,8 +1,15 @@
 __doc__ = 'Implementation of file I/O classes.'
 
 import xml.dom.minidom
+import os
+
 from collections import namedtuple
+from itertools import groupby
+from numpy import cumsum, prod
+from operator import itemgetter, methodcaller
+
 from GoTools import *
+from GoTools.Preprocess import NaturalNodeNumbers
 
 def topologystring(geotype, name, patches, entries):
   xml = '  <set name="%s" type="%s">\n' % (name, geotype)
@@ -280,3 +287,439 @@ class IFEMResultDatabase:
         @rtype: Integer
     """
     return int(self.dom.getElementsByTagName('levels')[0].firstChild.nodeValue)
+
+class Numberer(object):
+  """ Handles specification of topology sets and automatic renumbering of patches.
+  """
+
+  # A group is a named collection of patches of a single kind
+  # ('volume', 'face', etc.)
+  class Group:
+
+    def __init__(self, name, kind):
+      self.kind = kind
+      self.name = name
+      self.patches = []
+
+
+  # A boundary is a named collection of boundary components.
+  class Boundary:
+
+    def __init__(self, name):
+      self.name = name
+      self.components = []
+
+    # Returns a dict of type kind -> list of components of that kind
+    def KindsAndComponents(self):
+      kinds = {}
+      for comp in self.components:
+        if not comp.kind in kinds:
+          kinds[comp.kind] = []
+        kinds[comp.kind].append(comp)
+      return kinds
+
+
+  # A boundary component has a group (applies to all patches in that group),
+  # a kind ('face', 'edge', etc.), and a collection of indices.
+  #
+  # It corresponds to number of <item> entries in a topology set, e.g.
+  # for patch in group:
+  #   <item patch="patchnumber">indexes</item>
+  class BoundaryComponent:
+
+    def __init__(self, group, indexes, kind):
+      self.group = group
+      self.indexes = indexes
+      self.kind = kind
+
+
+  # An output group is a topology set that is not a boundary, i.e. it only
+  # consists of patches.  Its components are simply groups.
+  class OutputGroup:
+
+    def __init__(self, name, kind):
+      self.kind = kind
+      self.name = name
+      self.components = []
+
+
+  # A processor is a collection of patches.
+  class Proc:
+
+    def __init__(self):
+      self.items = []
+
+    def ndofs(self):
+      return sum(map(itemgetter('ndofs'), self.items))
+
+
+  def __init__(self):
+    self._patches = []
+    self._groups = {}
+    self._boundaries = {}
+    self._outputgroups = {}
+    self._numbering = None
+
+
+  def AddPatches(self, patches):
+    """ Adds patches to the geometry.
+        @param patches: The patches to add
+        @type patches: List of patches
+    """
+    self._patches += patches
+
+
+  def AddGroup(self, name, kind, objects):
+    """ Adds patches to a group. The patches must also be added to the model
+        using `AddPatches`.
+        @param name: The name of the group (will be created if it doesn't exist).
+        @type name: String
+        @param kind: The kind of the group.
+        @type kind: 'volume', 'face' or 'edge'
+        @param objects: The patches to add.
+        @type objects: List of patches
+    """
+    if not name in self._groups:
+      self._groups[name] = Numberer.Group(name, kind)
+    for o in objects:
+      self._groups[name].patches.append(o)
+
+
+  def Groups(self):
+    """ @return: The already defined group names.
+        @rtype: List of String
+    """
+    return self._groups.keys()
+
+
+  def WriteGroup(self, name, filename):
+    """ Writes the patches of a group to a file.
+        @param name: The group name.
+        @type name: String
+        @param filename: The filename to write to.
+        @type filename: String
+    """
+    WriteG2(filename, self._groups[name].patches)
+
+
+  def AddBoundary(self, name, components):
+    """ Adds boundary components to a boundary. Each component must be a tuple on the
+        form (groupname, kind, indexes), which will add, for each patch in the given group,
+        the sub-components of the given kind with the given indexes.
+
+        E.g. ('mygroup', 'edge', [1,2,3]) will add edges 1-3 from each patch in mygroup.
+
+        The indices are zero-indexed and must conform to the IFEM convention. (NOT the
+        GoTools convention.)
+
+        @param name: The name of the topology set (will be created if it doesn't exist).
+        @type name: String
+        @param components: Components to add.
+        @type components: List of Tuple of (String, String, List of Int)
+    """
+    if not name in self._boundaries:
+      self._boundaries[name] = Numberer.Boundary(name)
+    bnd = self._boundaries[name]
+    for cname, ckind, cidxs in components:
+      group = self._groups[cname]
+      bnd.components.append(Numberer.BoundaryComponent(group, cidxs, ckind))
+
+
+  def AddOutputGroup(self, name, kind, components):
+    """ Adds groups to an output group. An output group is like a boundary, in that
+        it will produce a topology set, but it produces a topology set of whole patches,
+        not of subcomponents.
+
+        @param name: The name of the topology set (will be created if it doesn't exist).
+        @type name: String
+        @param kind: The kind of the topology set.
+        @type kind: 'volume', 'face' or 'edge'
+        @param components: The groups to add.
+        @type components: List of String
+    """
+    if not name in self._outputgroups:
+      self._outputgroups[name] = Numberer.OutputGroup(name, kind)
+    outgroup = self._outputgroups[name]
+    for cname in components:
+      group = self._groups[cname]
+      if group.kind != outgroup.kind:
+        raise Exception('Numberer: Kind mismatch: %s and %s' % (group.kind, outgroup.kind))
+      outgroup.components.append(group)
+
+
+  def Boundaries(self):
+    """ @return: The already defined boundary names.
+        @rtype: List of String
+    """
+    return self._boundaries.keys()
+
+
+  def WriteBoundary(self, name, filename):
+    """ Writes the geometry of a boundary to a file.
+        @param name: The boundary name.
+        @type name: String
+        @param filename: The filename to write to.
+        @type filename: String
+    """
+    items = []
+    bnd = self._boundaries[name]
+    for bcmp in bnd.components:
+      fn = self.GetterFunction(bcmp.group.kind, bcmp.kind)
+      for patch in bcmp.group.patches:
+        for cidx in bcmp.indexes:
+          items.append(fn(patch, cidx))
+    WriteG2(filename, items)
+
+
+  def Renumber(self, nprocs):
+    """ Generates a numbering of all the patches and assigns a range of patches
+        to each processor. Doing this optimally is NP-complete, so this method
+        uses a quasi-optimal greedy algorithm.
+
+        All patches must be added before calling Renumber(), but it's not necessary
+        that all the topology sets are specified. Renumber() can be called several
+        times if necessary.
+        @param nprocs: Number of processors to optimize for
+        @type nprocs: Int
+    """
+    items = [{'patch': p,
+              'ndofs': prod(map(len, p.GetKnots()))}
+             for p in self._patches]
+
+    items.sort(key=itemgetter('ndofs'), reverse=True)
+
+    self._procs = [Numberer.Proc() for _ in xrange(nprocs)]
+
+    for n in items:
+      self._procs[0].items.append(n)
+      self._procs.sort(key=methodcaller('ndofs'))
+
+    self._numbering = []
+    for procnum, proc in enumerate(self._procs):
+      for i in proc.items:
+        i['procnum'] = procnum
+        i['index'] = len(self._numbering)
+        self._numbering.append(i)
+
+    self._patchmap = {i['patch']: i['index'] for i in self._numbering}
+
+
+  # Throws an exception if Renumber() has not been called.
+  def CheckNumbering(self):
+    if self._numbering is None:
+      raise Exception('Renumbering has not been performed yet')
+
+
+  def GetNumber(self, patch):
+    """ Gets the new number of a patch.
+        @param patch: The patch.
+        @type patch: Patch
+        @return: The new patch number (zero-indexed)
+        @rtype: Int
+    """
+    self.CheckNumbering()
+    return self._patchmap[patch]
+
+
+  def Partitioning(self, base_indent=0, indent=2, include_header=True):
+    """ Returns the XML representation of the patch partitioning.
+        @param base_indent: The base number of spaces to indent with.
+        @type base_indent: Int
+        @param indent: The number of spaces to add for each indentation leve.
+        @type indent: 2
+        @param include_header: Whether to include the root element <partitioning>
+        @type include_header: Bool
+        @return: The XML.
+        @rtype: String with trailing newline
+    """
+    self.CheckNumbering()
+
+    base = lambda k: ' '*(base_indent + k*indent)
+
+    items = map(len, (list(v) for _, v in groupby(self._numbering, itemgetter('procnum'))))
+    starts = [0] + list(cumsum(items)[:-1])
+    ends = list(cumsum(items) - 1)
+
+    lst = []
+
+    if include_header:
+      lst.append(base(0) + '<partitioning procs="%i">' % len(starts))
+
+    for i, (s, e) in enumerate(zip(starts, ends)):
+      lst.append(base(1) + '<part proc="%i" lower="%i" upper="%i" />' % (i, s+1, e+1))
+
+    if include_header:
+      lst.append(base(0) + '</partitioning>')
+
+    ret = ''
+    for t in lst:
+      ret += t + '\n'
+
+    return ret
+
+
+  def TopologySets(self, sets, base_indent=0, indent=2, include_header=True):
+    """ Returns the XML representation the topology sets.
+        @param sets: The names of the topology sets to write.
+        @type sets: List of String
+        @param base_indent: The base number of spaces to indent with.
+        @type base_indent: Int
+        @param indent: The number of spaces to add for each indentation leve.
+        @type indent: 2
+        @param include_header: Whether to include the root element <partitioning>
+        @type include_header: Bool
+        @return: The XML.
+        @rtype: String with trailing newline
+    """
+    self.CheckNumbering()
+
+    base = lambda k: ' '*(base_indent + k*indent)
+
+    lst = []
+    idxtostr = lambda i: str(i+1)
+
+    if include_header:
+      lst.append(base(0) + '<topologysets>')
+
+    for s in sets:
+      if s in self._boundaries:
+        bnd = self._boundaries[s]
+        for kind, comps in bnd.KindsAndComponents().iteritems():
+          lst.append(base(1) + '<set name="%s" type="%s">' % (bnd.name, kind))
+          for comp in comps:
+            for patch in comp.group.patches:
+              num = self.GetNumber(patch)
+              params = (num + 1, ' '.join(map(idxtostr, comp.indexes)))
+              lst.append(base(2) + '<item patch="%i">%s</item>' % params)
+          lst.append(base(1) + '</set>')
+
+      if s in self._outputgroups:
+        outgroup = self._outputgroups[s]
+        lst.append(base(1) + '<set name="%s" type="%s">' % (outgroup.name, outgroup.kind))
+        for group in outgroup.components:
+          for patch in group.patches:
+            num = self.GetNumber(patch)
+            lst.append(base(2) + '<item patch="%i"></item>' % (num + 1))
+        lst.append(base(1) + '</set>')
+
+    if include_header:
+      lst.append(base(0) + '</topologysets>')
+
+    ret = ''
+    for t in lst:
+      ret += t + '\n'
+
+    return ret
+
+
+  def WriteEverything(self, filename, indent=2):
+    """ All-in-one method for writing out everything you might need (g2 geometry file,
+        natural node numbers and IFEM xml file.
+        @param filename: The base filename to write to (no extension).
+        @type filename: String
+        @param indent: Number of spaces to add for each indentation level in the XML file.
+        @type indent: Int
+    """
+    self.CheckNumbering()
+
+    basename = os.path.basename(filename)
+    patchlist = map(itemgetter('patch'), self._numbering)
+
+    WriteG2('%s.g2' % filename, patchlist)
+
+    numbers = NaturalNodeNumbers(patchlist)
+    f = HDF5File('%s_nodenumbers' % filename)
+    for i, (p, n) in enumerate(zip(patchlist, numbers)):
+      f.AddGeometry('Common', i+1, 0, p)
+      f.AddField('Common', 'node numbers', i+1, 0, 1, n)
+
+    with open('%s.xinp' % filename, 'w') as f:
+      f.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n\n')
+      f.write('<geometry>\n')
+
+      f.write(' '*indent + '<patchfile>%s.g2</patchfile>\n' % basename)
+      f.write(' '*indent + '<nodefile>%s_nodenumbers.hdf5</nodefile>\n' % basename)
+
+      f.write(self.Partitioning(indent, indent, True))
+      f.write(self.TopologySets(self._boundaries.keys() + self._outputgroups.keys(),
+                                indent, indent, True))
+
+      f.write('</geometry>\n')
+
+
+  def PrintLoadBalance(self):
+    """ Writes a summary of the load balancing results to the console.
+    """
+    self.CheckNumbering()
+
+    tot = 0
+
+    print 'Load balancing results:'
+    for ndofs, procs in groupby(self._procs, methodcaller('ndofs')):
+      npatches = len(list(procs))
+      print '~%i DoFs: %i processors' % (ndofs, npatches)
+      tot += ndofs * npatches
+
+    print 'Total: ~%i DoFs' % tot
+
+
+  # Returns the appropriate getter function for getting type <target>
+  # from type <source>, where source and target are 'volume', 'face',
+  # 'edge', 'vertex'.
+  def GetterFunction(self, source, target):
+    _mapFE = {0: 3, 1: 1, 2: 0, 3: 2}
+
+    _mapVE = {0: [ 8,  6, 10,  4],
+              1: [ 9,  7, 11,  5],
+              2: [ 0,  5,  1,  4],
+              3: [ 2,  7,  3,  6],
+              4: [ 0,  9,  2,  8],
+              5: [ 1, 11,  3, 10]}
+
+    # Gets vertex #i from the edge
+    def GetEdgeVertex(edge, i):
+      return edge.Evaluate(edge.GetKnots()[-1 if i == 1 else 0])
+
+    # Gets vertex #i from the face (IFEM convention, zero-indexed)
+    def GetFaceVertex(face, i):
+      edge = face.GetEdges()[0 if i < 2 else 2]
+      return GetEdgeVertex(edge, i % 2)
+
+    # Gets edge #i from the face (IFEM convention, zero-indexed)
+    def GetFaceEdge(face, i):
+      return face.GetEdges()[_mapFE[i]]
+
+    # Gets vertex #i from the volume (IFEM convention, zero-indexed)
+    def GetVolVertex(vol, i):
+      face = vol.GetFaces()[4 if i < 4 else 5]
+      return GetFaceVertex(face, i % 4)
+
+    # Gets edge #i from the volume (IFEM convention, zero-indexed)
+    def GetVolEdge(vol, i):
+      for f_idx, e_idxs in _mapVE.iteritems():
+        if i in e_idxs:
+          return vol.GetFaces()[f_idx].GetEdges()[e_idxs.index(i)]
+
+    # Gets face #i from the volume (IFEM convention, zero-indexed)
+    def GetVolFace(vol, i):
+      return vol.GetFaces()[i]
+
+
+    # Pick the right getter
+    if source == 'volume':
+      if target == 'face':
+        return lambda p, i: p.GetFaces()[i]
+      elif target == 'edge':
+        return GetVolEdge
+      elif target == 'vertex':
+        return GetVolVertex
+
+    elif source == 'face':
+      if target == 'edge':
+        return GetFaceEdge
+      elif target == 'vertex':
+        return GetFaceVertex
+
+    elif source == 'edge':
+      if target == 'vertex':
+        return GetEdgeVertex
