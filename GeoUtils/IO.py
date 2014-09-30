@@ -50,9 +50,6 @@ class InputFile:
     return result.childNodes[0].nodeValue
 
 
-  # TODO: This function does not appear to support:
-  # - Multiple data, e.g. <item patch="1">1 2</item>
-  # - Empty data, e.g. <item patch="1"></item>
   def GetTopologySet(self, name, convention="gotools", context="", nocontext=False, toptype=""):
     """ Extract a topology set from the input file.
         @param name: Name of topology set
@@ -89,6 +86,7 @@ class InputFile:
           typ = topset.getAttributeNode('type').nodeValue
           for item in topset.getElementsByTagName('item'):
             patch = int(item.getAttributeNode('patch').nodeValue)
+            values = map(int, item.childNodes[0].nodeValue.split())
             if not result.has_key(patch):
               result[patch] = InputFile.PatchInfo([], [], [])
 
@@ -96,24 +94,22 @@ class InputFile:
               if typ == 'edge':
                 if toptype == 'edge' or len(toptype) == 0:
                   remap = [4,2,1,3]
-                  ed = int(item.childNodes[0].nodeValue)
-                  result[patch].edge.append(remap[ed-1])
+                  result[patch].edge.extend([remap[v-1] for v in values])
               elif typ == 'face':
                 if toptype == 'face' or len(toptype) == 0:
                   remap = [1,2,5,6,3,4]
-                  fa = int(item.childNodes[0].nodeValue)
-                  result[patch].face.append(remap[fa-1])
+                  result[patch].face.extend([remap[v-1] for v in values])
               else:
-                result[patch].vertex.append(int(item.childNodes[0].nodeValue))
+                result[patch].vertex.extend(values)
 
             elif convention == 'ifem':
-              val = int(item.childNodes[0].nodeValue)
               if typ == 'edge':
-                result[patch].edge.append(val)
+                target = result[patch].edge
               elif typ == 'face':
-                result[patch].face.append(val)
+                target = result[patch].face
               else:
-                result[patch].vertex.append(val)
+                target = result[patch].vertex
+              target.extend(values)
 
     return result
 
