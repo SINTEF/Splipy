@@ -50,12 +50,19 @@ class InputFile:
     return result.childNodes[0].nodeValue
 
 
-  def GetTopologySet(self, name, context="", nocontext=False, toptype=""):
+  # TODO: This function does not appear to support:
+  # - Multiple data, e.g. <item patch="1">1 2</item>
+  # - Empty data, e.g. <item patch="1"></item>
+  def GetTopologySet(self, name, convention="gotools", context="", nocontext=False, toptype=""):
     """ Extract a topology set from the input file.
         @param name: Name of topology set
         @type name: String
+        @param convention: Which numbering convention to use (optional)
+        @type convention: 'gotools' (default) or 'ifem'
         @param context: App context to read from (optional)
         @type context: String
+        @param toptype: Get only items of a given type (optional)
+        @type toptype: String
         @return: Requested topologyset
         @rtype: Dict with PatchInfo
         """
@@ -84,18 +91,30 @@ class InputFile:
             patch = int(item.getAttributeNode('patch').nodeValue)
             if not result.has_key(patch):
               result[patch] = InputFile.PatchInfo([], [], [])
-            if typ == 'edge':
-              if  toptype == 'edge' or len(toptype) == 0:
-                remap = [4,2,1,3]
-                ed = int(item.childNodes[0].nodeValue)
-                result[patch].edge.append(remap[ed-1])
-            elif typ == 'face':
-              if toptype == 'face' or len(toptype) == 0:
-                remap = [1,2,5,6,3,4]
-                fa = int(item.childNodes[0].nodeValue)
-                result[patch].face.append(remap[fa-1])
-            else:
-              result[int(item.getAttributeNode('patch').nodeValue)].vertex.append(int(item.childNodes[0].nodeValue))
+
+            if convention == 'gotools':
+              if typ == 'edge':
+                if toptype == 'edge' or len(toptype) == 0:
+                  remap = [4,2,1,3]
+                  ed = int(item.childNodes[0].nodeValue)
+                  result[patch].edge.append(remap[ed-1])
+              elif typ == 'face':
+                if toptype == 'face' or len(toptype) == 0:
+                  remap = [1,2,5,6,3,4]
+                  fa = int(item.childNodes[0].nodeValue)
+                  result[patch].face.append(remap[fa-1])
+              else:
+                result[patch].vertex.append(int(item.childNodes[0].nodeValue))
+
+            elif convention == 'ifem':
+              val = int(item.childNodes[0].nodeValue)
+              if typ == 'edge':
+                result[patch].edge.append(val)
+              elif typ == 'face':
+                result[patch].face.append(val)
+              else:
+                result[patch].vertex.append(val)
+
     return result
 
   def write(self, name):
