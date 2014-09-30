@@ -38,6 +38,8 @@ class InputFile:
   """
   PatchInfo = namedtuple("PatchInfo","vertex edge face")
   def __init__(self, path):
+    self.path = path
+    self.abspath = os.path.abspath(path)
     self.dom = xml.dom.minidom.parse(path)
 
   def GetGeometryFile(self):
