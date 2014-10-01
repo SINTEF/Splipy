@@ -3,6 +3,7 @@ __doc__ = 'Implementation of file I/O classes.'
 import xml.dom.minidom
 from collections import namedtuple
 from GoTools import *
+import scitools.filetable
 
 def topologystring(geotype, name, patches, entries):
   xml = '  <set name="%s" type="%s">\n' % (name, geotype)
@@ -23,6 +24,49 @@ def writeAsc(X, U, fname):
   for i in range(0,len(U)):
     f.write('%f %f\n' % (X[i], U[i]))
   f.close()
+
+def readMCfile(filename,remlast=True, silent=False):
+    """
+    Read text file with multiple columns
+    If remlast = True, the last row will be deleted
+    Return as tuple (x,y)
+    """
+
+    # Open file for reading
+    try:
+        readfile = open(filename,'r')
+    except IOError:
+        if silent != True:
+            print 'Utils.FileInputOutput.py::readMCfile: Could not open file ' + filename + ' for reading.'
+        #sys.exit(1)
+        return (None, None)
+
+    try:
+        data = scitools.filetable.read(readfile)
+    except Exception, e:
+        print 'Utils.FileInputOutput.py::readMCfile: Could not read from file ' + filename + '.'
+        print str(e)
+        data = None
+
+        #sys.exit(1)
+
+    readfile.close()
+    if data == None:
+        print 'Utils.FileInputOutput.py::readMCfile: Trying alterative file reading method for' + filename + '.'
+        data =  readLinesWithSeparation(filename,remlast=True, silent=silent)
+        #pdb.set_trace()
+    try:
+      if remlast == True:
+          x = data[0:-1,0]        # Remove last line which often is problematic
+          y = data[0:-1,1:]       # Remove last line which often is problematic
+      else:
+          x = data[:,0]
+          y = data[:,1:]
+      x.reshape(x.shape[0],1)
+    except TypeError:
+      return (None, None)
+
+    return (x,y)
 
 class InputFile:
   """Class for working with IFEM input (.xinp) files.
@@ -269,7 +313,7 @@ class IFEMResultDatabase:
         k1 = geom[i].GetKnots(True)
         order = geom[i].GetOrder()
         res.append(Surface(order, k1, coefs))
-      del coefs 
+      del coefs
     del geom
 
     return res
