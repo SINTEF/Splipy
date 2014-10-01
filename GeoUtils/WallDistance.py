@@ -149,13 +149,16 @@ def _calcDistScipy(wallcurves, worksurfaces):
        @rtype List of doubles
     """
 
-    D = []
-    srfID = 0
-    for surface in worksurfaces:
-        print 'Working on surface number ' + str(srfID+1)
+    patch_size = lambda patch: np.prod( map( len, patch.GetKnots() ) )
+    max_patch_size = max(map(patch_size, worksurfaces))
+    D = shzeros((len(worksurfaces), max_patch_size))
+    lenD = shzeros( len(worksurfaces) )
+    t0 = time.time()
+    for srfID, surface in pariter(enumerate(worksurfaces), GetProcessorCount()):
+        print 'Working on surface number %i/%i of len %i' % (srfID+1, len(D), len(surface))
 
-        (knots_xi, knots_eta) = surface.GetKnots()
-        wdist = np.zeros(len(knots_xi), len(knots_gamma))
+        (knots_xi, knots_eta) = surface.GetGreville()
+        wdist = np.zeros((len(knots_xi), len(knots_eta)))
 
         i = 0
         for knot_xi in knots_xi:
@@ -178,10 +181,13 @@ def _calcDistScipy(wallcurves, worksurfaces):
                 wdist[i,j] = mindist
                 j = j+1
             i = i+1
-        curveID = curveID + 1
-        D.append(surface.Interpolate(wdist.flatten('F')))
-        srfID = srfID + 1
-    return D
+        size = wdist.size
+        data = surface.Interpolate(list(wdist.flatten('F')))
+        D[srfID,:size] = data
+        lenD[srfID] = size
+
+    print 'elapsed: ', time.time()-t0
+    return [list(Di[:lenDi]) for (Di,lenDi) in zip(D,lenD)]
 
 
 def _getWallCurve(surface, idx):

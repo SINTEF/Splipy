@@ -628,7 +628,7 @@ PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
                                                       false,
                                                       weights);
 
-  PyObject* result = PyList_New(coefs.size());
+  PyObject* result = PyList_New(0);
   for (std::vector<double>::const_iterator it  = res->coefs_begin();
                                            it != res->coefs_end();++it)
     PyList_Append(result,Py_BuildValue((char*)"d",*it));
