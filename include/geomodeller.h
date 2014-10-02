@@ -16,7 +16,7 @@ class GeoModellerState {
       std::stringstream str;
       str << GEOMODELLER_VERSION_MAJOR << "." << GEOMODELLER_VERSION_MINOR << "." << GEOMODELLER_VERSION_PATCH;
       version = str.str();
-      author = "Arne Morten Kvarving, Kjetil A. Johannessen, Timo van Opstahl, Knut Nordanger";
+      author = "Arne Morten Kvarving, Kjetil A. Johannessen, Timo van Opstahl, Knut Nordanger, Eivind Fonn";
       date = __DATE__;
       credits = "The GoTools authors";
 
