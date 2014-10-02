@@ -378,11 +378,17 @@ class Numberer(object):
     self._numbering = None
 
 
-  def AddPatches(self, patches):
+  def AddPatches(self, patches, allow_left=False):
     """ Adds patches to the geometry.
-        @param patches: The patches to add
+        @param patches: The patches to add.
         @type patches: List of patches
+        @param allow_left: Whether to allow left-handed coordinate systems. (Default False.)
+        @type allow_left: Bool
     """
+    if not allow_left:
+      for p in patches:
+        if p.MakeRHS():
+          raise Exception("Left-handed patch added.")
     self._patches += patches
 
 
