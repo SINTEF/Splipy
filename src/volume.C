@@ -524,8 +524,8 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(volume_make_rhs__doc__,"Make sure volume has a right-hand coordinate system\n"
-                                    "@return: The volume\n"
-                                    "@rtype: Volume");
+                                    "@return: True if the third parameter direction was changed\n"
+                                    "@rtype: Bool");
 PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -540,11 +540,15 @@ PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
   vector<Go::Point> results(4); // one position and three derivatives
   parVol->point(results, u, v, w, 1);
   double jacobian = (results[1] % results[2])*results[3];
-  if (jacobian < 0)
-    parVol->reverseParameterDirection(2);
 
-  Py_INCREF(self);
-  return self;
+  if (jacobian < 0) {
+    parVol->reverseParameterDirection(2);
+    Py_INCREF(Py_True);
+    return Py_True;
+  }
+
+  Py_INCREF(Py_False);
+  return Py_False;
 }
 
 PyDoc_STRVAR(volume_split__doc__, "Split the volume into segments\n"
