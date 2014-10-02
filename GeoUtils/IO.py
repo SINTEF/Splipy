@@ -169,6 +169,18 @@ class InputFile:
       if not os.path.isdir(name):
         raise Exception("The path '%s' already exists and is not a directory." % name)
 
+    # Header function
+    def header(cls, obj, note=None):
+      s = 'FoamFile\n{\n'
+      s += '    version     2.0;\n'
+      s += '    format      ascii;\n'
+      s += '    class       %s;\n' % cls
+      if note:
+        s += '    note        "%s";\n' % note
+      s += '    object      %s;\n' % obj
+      s += '}\n'
+      return s
+
     patchlist = ReadG2(os.path.join(os.path.dirname(self.abspath), self.GetGeometryFile()))
     for p in patchlist:
       if p.MakeRHS():
@@ -187,6 +199,7 @@ class InputFile:
         points[nodenumbers[patchid][localid]] = pt
 
     with open(os.path.join(name, 'points'), 'w') as out:
+      out.write(header('vectorField', 'points'))
       out.write('%i\n' % len(points))
       out.write('(\n')
       for pt in points:
@@ -275,6 +288,7 @@ class InputFile:
     # Write faces
     facenum = 0
     with open(os.path.join(name, 'faces'), 'w') as out:
+      out.write(header('faceList', 'faces'))
       out.write('%i\n' % nfaces)
       out.write('(\n')
       for f in internal_faces + boundary_faces:
@@ -283,25 +297,25 @@ class InputFile:
         facenum += 1
       out.write(')\n')
 
-    # Write owners
-    with open(os.path.join(name, 'owner'), 'w') as out:
-      out.write('%i\n' % nfaces)
-      out.write('(\n')
-      for f in internal_faces + boundary_faces:
-        out.write('%i\n' % f['owner'])
-      out.write(')\n')
+    # Write owners and neighbours
+    note = 'nPoints: %i nCells: %i nFaces: %i nInternalFaces: %i' % (len(points),
+                                                                     cellnum,
+                                                                     len(facedict),
+                                                                     len(internal_faces))
 
-    # Write neighbours
-    with open(os.path.join(name, 'neighbour'), 'w') as out:
-      out.write('%i\n' % nfaces)
-      out.write('(\n')
-      for f in internal_faces + boundary_faces:
-        out.write('%i\n' % f['neighbour'])
-      out.write(')\n')
+    for thing in ['owner', 'neighbour']:
+      with open(os.path.join(name, thing), 'w') as out:
+        out.write(header('labelList', thing, note=note))
+        out.write('%i\n' % nfaces)
+        out.write('(\n')
+        for f in internal_faces + boundary_faces:
+          out.write('%i\n' % f[thing])
+        out.write(')\n')
 
     # Write boundaries
     bdpatches = [(n,list(f)) for n,f in groupby(boundary_faces, itemgetter('boundary'))]
     with open(os.path.join(name, 'boundary'), 'w') as out:
+      out.write(header('polyBoundaryMesh', 'boundary'))
       out.write('%i\n' % len(bdpatches))
       out.write('(\n')
       for name, faces in bdpatches:
