@@ -46,8 +46,8 @@ PyObject* Point_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
 
   point->normalize();
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_INCREF(self);
+  return self;
 }
 
 PyDoc_STRVAR(point_clone__doc__,"Clone a point\n"
@@ -102,8 +102,8 @@ PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
     (*point)[2] *= w;
   }
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_INCREF(self);
+  return self;
 }
 
 PyObject* Point_Str(Point* self)
