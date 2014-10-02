@@ -638,8 +638,13 @@ class Numberer(object):
     """
     if not allow_left:
       for p in patches:
-        if p.MakeRHS():
+        try:
+          lhs = p.MakeRHS()
+        except:
+          lhs = False
+        if lhs:
           raise Exception("Left-handed patch added.")
+
     self._patches += patches
 
 
