@@ -8,6 +8,7 @@ from collections import namedtuple
 from itertools import groupby
 from numpy import cumsum, prod
 from operator import itemgetter, methodcaller
+from . import WallDistance
 
 from GoTools import *
 import scitools.filetable
@@ -726,6 +727,17 @@ class Numberer(object):
       outgroup.components.append(group)
 
 
+  def AddWallGroup(self, wallgroup, suffix='_walldist' ):
+    """Looks up the namesake boundary group and prepares to write wall distance upon invoking WriteEveryting
+       @param wallgroup: name of an existing boundary group
+       @type wallgroup: str
+       @param suffix: suffix to file basename for wall dist file
+       @type suffix: str"""
+    assert self._boundaries.has_key( wallgroup ), 'Wall group has to be added to boundary groups first'
+    self.wallgroup = wallgroup
+    self.wallsuffix = suffix
+
+
   def Boundaries(self):
     """ @return: The already defined boundary names.
         @rtype: List of String
@@ -924,6 +936,14 @@ class Numberer(object):
                                 indent, indent, True))
 
       f.write('</geometry>\n')
+
+    if hasattr( self, 'wallsuffix' ):
+      wallinfo = InputFile( filename+'.xinp' ).GetTopologySet( self.wallgroup )
+      dist = WallDistance.distanceFunction( patchlist, wallinfo )
+      g = HDF5File( filename+self.wallsuffix )
+      for i, (p, d) in enumerate(zip(patchlist, dist)):
+        g.AddGeometry('Common', i+1, 0, p)
+        g.AddField('Common', 'wall distance', i+1, 0, 1, d)
 
 
   def PrintLoadBalance(self):
