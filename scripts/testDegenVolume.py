@@ -1,4 +1,3 @@
-
 from GoTools import * 
 from GoTools.SurfaceFactory import * 
 from GoTools.VolumeFactory import * 
@@ -36,10 +35,10 @@ R2 = Rectangle([ 1, 1,0], -x_axis, z_axis, 2, 2)
 R3 = Rectangle([-1, 1,0], -y_axis, z_axis, 2, 2)
 R4 = Rectangle([-1,-1,0],  x_axis, z_axis, 2, 2)
 
-B1 = LoftSurfaces([Center, R1])
-B2 = LoftSurfaces([Center, R2])
-B3 = LoftSurfaces([Center, R3])
-B4 = LoftSurfaces([Center, R4])
+B1 = LoftSurfaces([Center, R1], order=2)
+B2 = LoftSurfaces([Center, R2], order=2)
+B3 = LoftSurfaces([Center, R3], order=2)
+B4 = LoftSurfaces([Center, R4], order=2)
 B5 = Box([ 1,-1,0], x_axis, y_axis, 2,2,2)
 B6 = Box([-1, 1,0], x_axis, y_axis, 2,2,2)
 B7 = Box([-3,-1,0], x_axis, y_axis, 2,2,2)
