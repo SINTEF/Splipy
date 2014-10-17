@@ -16,6 +16,8 @@
 #include <fstream>
 #include <sstream>
 
+namespace GeoModeller {
+
 extern "C"
 {
 PyTypeObject Curve_Type;
@@ -1039,4 +1041,6 @@ void WriteCurveG2(std::ofstream& g2_file, Curve* pyCurve, bool convert)
     pyCurve->data->writeStandardHeader(g2_file);
     pyCurve->data->write(g2_file);
   }
+}
+
 }

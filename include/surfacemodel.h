@@ -4,6 +4,8 @@
 #include "GoTools/utils/config.h"
 #include "GoTools/compositemodel/SurfaceModel.h"
 
+namespace GeoModeller {
+
 extern "C" {
   typedef struct {
     PyObject_HEAD
@@ -17,3 +19,5 @@ extern "C" {
 
 // helpers
 void WriteSurfaceModelG2(std::ofstream& g2_file, SurfaceModel* model, bool convert);
+
+}

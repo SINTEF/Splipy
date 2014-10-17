@@ -23,6 +23,8 @@
 #include "GoTools/geometry/SurfaceInterpolator.h"
 #include "sislP.h"  
 
+namespace GeoModeller {
+
 extern "C" {
 PyObject* SurfaceFactory_module;
 
@@ -1061,6 +1063,8 @@ init_SurfaceFactory_Module()
 {
   SurfaceFactory_module = Py_InitModule3((char*)"GoTools.SurfaceFactory",SurfaceFactory_methods,surface_factory__doc__);
   modState.addInfo(SurfaceFactory_module);
+}
+
 }
 
 }

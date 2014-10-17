@@ -19,6 +19,8 @@
 #include "GoTools/trivariate/VolumeInterpolator.h"
 #include "GoTools/geometry/GeometryTools.h"
 
+namespace GeoModeller {
+
 extern "C" {
 PyObject* VolumeFactory_module;
 
@@ -672,6 +674,8 @@ init_VolumeFactory_Module()
 {
   VolumeFactory_module = Py_InitModule3((char*)"GoTools.VolumeFactory",VolumeFactory_methods,volume_factory__doc__);
   modState.addInfo(VolumeFactory_module);
+}
+
 }
 
 }

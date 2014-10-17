@@ -9,6 +9,8 @@
 #include <fstream>
 #include <sstream>
 
+namespace GeoModeller {
+
 extern "C"
 {
 PyTypeObject SurfaceModel_Type;
@@ -269,4 +271,6 @@ void WriteSurfaceModelG2(std::ofstream& g2_file, SurfaceModel* model, bool conve
       }
     }
   }
+}
+
 }

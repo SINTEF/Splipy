@@ -16,8 +16,6 @@
 #include <fstream>
 #include <iostream>
 
-GeoModellerState modState;
-
 #include "curvefactory.h"
 #include "surfacefactory.h"
 #include "volumefactory.h"
@@ -31,6 +29,10 @@ GeoModellerState modState;
 #ifdef ENABLE_OPENNURBS
 #include "3dmutils.h"
 #endif
+
+namespace GeoModeller {
+
+GeoModellerState modState;
 
 extern "C"
 {
@@ -765,4 +767,6 @@ Go::Point someNormal(const Go::Point& vec)
     unit = Go::Point(0.0, 0.0, 1.0);
 
   return vec % unit;
+}
+
 }

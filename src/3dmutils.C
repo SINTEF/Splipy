@@ -7,6 +7,8 @@
 #include <GoTools/geometry/SplineSurface.h>
 #include <opennurbs.h>
 
+namespace GeoModeller {
+
 Curve* ONCurveToGoCurve(const ON_Curve* curve)
 {
   ON_NurbsCurve* n_curve = curve->NurbsCurve();
@@ -314,5 +316,6 @@ PyObject* DoRead3DM(const std::string& fname, const std::string& type)
   return result;
 }
 
+}
 
 #endif

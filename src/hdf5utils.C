@@ -12,6 +12,8 @@
 #include <sstream>
 #include <sys/stat.h>
 
+namespace GeoModeller {
+
 static bool checkGroupExistence(int parent, const char* path)
 {
   bool result = false;
@@ -210,6 +212,9 @@ void DoWriteHDF5Geometry(const std::string& fname, const std::string& geoname,
   H5Sclose(space);
   H5Gclose(group);
   H5Fclose(file);
+}
+
+
 }
 
 #endif

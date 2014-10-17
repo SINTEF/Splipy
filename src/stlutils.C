@@ -4,6 +4,8 @@
 #include "GoTools/geometry/SplineSurface.h"
 #include "GoTools/trivariate/SplineVolume.h"
 
+namespace GeoModeller {
+
 int WriteSurfaceSTL(std::ofstream& stl_file, Surface* surface,
                     bool ascii, int res[2])
 {
@@ -135,4 +137,6 @@ int WriteVolumeSTL(std::ofstream& stl_file, Volume* volume,
     nTriangles += WriteSurfaceSTL(stl_file, surface, ascii, surfRes);
   }
   return nTriangles;
+}
+
 }

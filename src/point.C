@@ -5,6 +5,8 @@
 
 #include <sstream>
 
+namespace GeoModeller {
+
 extern "C"
 {
 PyTypeObject Point_Type;
@@ -286,6 +288,8 @@ void init_Point_Type()
   Point_Type.tp_new = Point_New;
   Point_Type.tp_str = (reprfunc)Point_Str;
   PyType_Ready(&Point_Type);
+}
+
 }
 
 }

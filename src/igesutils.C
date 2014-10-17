@@ -8,6 +8,7 @@
 #include <GoTools/geometry/SplineSurface.h>
 #include <GoTools/igeslib/IGESconverter.h>
 
+namespace GeoModeller {
 
 PyObject* DoReadIGES(const std::string& fname, const std::string& type)
 {
@@ -47,3 +48,4 @@ PyObject* DoReadIGES(const std::string& fname, const std::string& type)
   return result;
 }
 
+}

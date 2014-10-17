@@ -8,6 +8,7 @@
 #if ENABLE_GPM
 #include <GPM/SplineModel.h>
 #endif
+namespace GeoModeller {
 
   template<class T>
 static std::vector<std::vector<int> >
@@ -124,6 +125,8 @@ init_Preprocess_Module()
 {
   Preprocess_module = Py_InitModule3((char*)"GoTools.Preprocess",Preprocess_methods,preprocess__doc__);
   modState.addInfo(Preprocess_module);
+}
+
 }
 
 }

@@ -12,6 +12,8 @@
 #include <fstream>
 #include <sstream>
 
+namespace GeoModeller {
+
 extern "C"
 {
 PyTypeObject Volume_Type;
@@ -953,3 +955,4 @@ void WriteVolumeG2(std::ofstream& g2_file, Volume* pyVol, bool convert)
   }
 }
 
+}

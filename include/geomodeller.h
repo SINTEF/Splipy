@@ -9,6 +9,8 @@
 
 #include "geomodversion.h"
 
+namespace GeoModeller {
+
 class GeoModellerState {
   public:
     GeoModellerState()
@@ -79,4 +81,6 @@ PyObject* ReadG2(std::istream& str, PyTypeObject& type)
   result->data->read(str);
 
   return (PyObject*)result;
+}
+
 }

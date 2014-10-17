@@ -14,7 +14,8 @@
 #include "GoTools/geometry/SplineInterpolator.h"
 #include "GoTools/geometry/GeometryTools.h"
 #include "sislP.h"
-// #include "GoTools/geometry/SISL_code.h"
+
+namespace GeoModeller {
 
 extern "C" {
 PyObject* CurveFactory_module;
@@ -960,4 +961,6 @@ init_CurveFactory_Module()
   CurveFactory_module = Py_InitModule3((char*)"GoTools.CurveFactory",CurveFactory_methods,curve_factory__doc__);
   modState.addInfo(CurveFactory_module);
 }
+}
+
 }

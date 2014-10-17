@@ -4,6 +4,8 @@
 #include "GoTools/utils/config.h"
 #include "GoTools/utils/Point.h"
 
+namespace GeoModeller {
+
 extern "C" {
   typedef struct {
     PyObject_HEAD
@@ -13,4 +15,6 @@ extern "C" {
   void init_Point_Type();
 
   extern PyTypeObject Point_Type;
+}
+
 }

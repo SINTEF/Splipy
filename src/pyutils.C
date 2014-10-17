@@ -1,5 +1,7 @@
 #include "pyutils.h"
 
+namespace GeoModeller {
+
 void InitializeTypeObject(PyTypeObject* type_object)
 { 
   static PyTypeObject py_type_object_header = { PyObject_HEAD_INIT(NULL) 0};
@@ -88,4 +90,6 @@ void PyMethods_Append(std::vector<PyMethodDef>& defs, PyMethodDef* start)
     defs.push_back(*start);
     start++;
   }
+}
+
 }

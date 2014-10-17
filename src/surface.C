@@ -30,6 +30,8 @@
 #include <fstream>
 #include <sstream>
 
+namespace GeoModeller {
+
 extern "C"
 {
 PyTypeObject Surface_Type;
@@ -1149,4 +1151,6 @@ void WriteSurfaceG2(std::ofstream& g2_file, Surface* pySurf, bool convert)
     pySurf->data->writeStandardHeader(g2_file);
     pySurf->data->write(g2_file);
   }
+}
+
 }

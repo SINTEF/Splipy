@@ -6,6 +6,8 @@
 #include <opennurbs.h>
 #endif
 
+using namespace GeoModeller;
+
 void syntax()
 {
   std::cout << "Syntax: geoModeler <script> [finaloutput=] [debuglevel=] [tospline=]" << std::endl;

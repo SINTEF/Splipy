@@ -9,6 +9,8 @@
 #include "GoTools/geometry/BoundedSurface.h"
 #include "GoTools/geometry/ParamSurface.h"
 
+namespace GeoModeller {
+
 extern "C" {
 PyObject* SurfaceModelFactory_module;
 
@@ -65,6 +67,8 @@ init_SurfaceModelFactory_Module()
 {
   SurfaceModelFactory_module = Py_InitModule3((char*)"GoTools.SurfaceModelFactory",SurfaceModelFactory_methods,surface_model_factory__doc__);
   modState.addInfo(SurfaceModelFactory_module);
+}
+
 }
 
 }

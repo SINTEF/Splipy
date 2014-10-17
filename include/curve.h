@@ -5,6 +5,8 @@
 #include "GoTools/geometry/ParamCurve.h"
 #include "GoTools/geometry/SplineCurve.h"
 
+namespace GeoModeller {
+
 extern "C" {
   typedef struct {
     PyObject_HEAD
@@ -19,3 +21,5 @@ extern "C" {
 // helpers
 shared_ptr<Go::SplineCurve> convertSplineCurve(shared_ptr<Go::ParamCurve> curve);
 void WriteCurveG2(std::ofstream& g2_file, Curve* curve, bool convert);
+
+}
