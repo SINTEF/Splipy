@@ -3,6 +3,7 @@ __doc__ = 'Implementation of file I/O classes.'
 import xml.dom.minidom
 import os
 import sys
+import json
 
 from collections import namedtuple
 from itertools import groupby
@@ -33,6 +34,53 @@ def writeAsc(X, U, fname):
   for i in range(0,len(U)):
     f.write('%f %f\n' % (X[i], U[i]))
   f.close()
+
+def ParseArgs(args, defaults):
+  """ Parses command line arguments in a standardized way. Takes a list of command line
+      arguments and a dictionary mapping arguments to default values. The defaults dict
+      will be modified. The arguments must be of the form: 'argname=newvalue'
+
+      This works for string, integer and float values (as determined by the default).
+      For boolean values, an argument 'argname' will set argname to True, while an argument
+      'noargname' will set it to False.
+
+      Arguments are parsed in order, so later values can override earlier ones.
+
+      A special argument of form 'paramfile=somefile.json' will load 'somefile.json' and apply
+      the arguments in that file, in order. To specify boolean arguments in JSON, give true
+      or false as the value.
+
+      @param args: Command-line arguments
+      @type args: List of String
+      @param defaults: Defaults
+      @type defaults: Dict
+      @returns: None
+      @rtype: NoneType
+  """
+
+  def set_def(key, value):
+    for k, v in defaults.iteritems():
+      if value is None and key in [k, 'no' + k] and isinstance(v, bool):
+        defaults[k] = k == key
+      elif k == key:
+        if isinstance(v, bool):
+          defaults[k] = bool(value)
+        elif isinstance(v, float):
+          defaults[k] = float(value)
+        elif isinstance(v, int):
+          defaults[k] = int(value)
+        else:
+          defaults[k] = str(value)
+
+  for arg in args:
+    if arg.startswith('paramfile=') :
+      with open(arg[10:], 'r') as f:
+        dc = json.load(f)
+      for k, v in dc.iteritems():
+        set_def(k, v)
+
+    split = arg.split('=', 1)
+    set_def(split[0], split[1] if len(split) > 1 else None)
 
 def readMCfile(filename,remlast=True, silent=False):
     """
