@@ -11,7 +11,7 @@ from operator import itemgetter, methodcaller
 from . import WallDistance
 
 from GoTools import *
-import scitools.filetable
+# import scitools.filetable
 from GoTools.Preprocess import NaturalNodeNumbers
 
 def topologystring(geotype, name, patches, entries):
@@ -928,10 +928,9 @@ class Numberer(object):
       f.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n\n')
       f.write('<geometry>\n')
 
+      f.write(self.Partitioning(indent, indent, True))
       f.write(' '*indent + '<patchfile>%s.g2</patchfile>\n' % basename)
       f.write(' '*indent + '<nodefile>%s_nodenumbers.hdf5</nodefile>\n' % basename)
-
-      f.write(self.Partitioning(indent, indent, True))
       f.write(self.TopologySets(self._boundaries.keys() + self._outputgroups.keys(),
                                 indent, indent, True))
 
