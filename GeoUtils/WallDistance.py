@@ -149,7 +149,7 @@ def _calcDistScipy(wallcurves, worksurfaces):
        @rtype List of doubles
     """
 
-    patch_size = lambda patch: np.prod( map( len, patch.GetKnots() ) )
+    patch_size = lambda patch: np.prod( map( len, patch.GetGreville() ) )
     max_patch_size = max(map(patch_size, worksurfaces))
     D = shzeros((len(worksurfaces), max_patch_size))
     lenD = shzeros( len(worksurfaces) )
