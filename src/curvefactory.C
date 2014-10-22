@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "curvefactory.h"
 
 #include "curve.h"
@@ -29,23 +30,34 @@ PyDoc_STRVAR(generate_approximate_curve__doc__, "Construct a spline curve that a
                                                 "@type order: int >= 1\n"
                                                 "@param maxiter: (optional) The maxium number of iterations in interpolation scheme\n"
                                                 "@type maxiter: int >= 1\n"
+                                                "@param knot: (optional) The knot vector of the spline curve\n"
+                                                "@type knot: List of floats\n"
                                                 "@return: Spline interpolating the point cloud\n"
                                                 "@rtype: Curve");
 PyObject* Generate_ApproximateCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"points", "parvals", "order", "maxiter", NULL };
+  static const char* keyWords[] = {"points", "parvals", "order", "maxiter", "knots", NULL };
   PyObject* pointso;
   PyObject* parvals;
+  PyObject* knotso = NULL;
+  std::vector<double> knots;
   int order=3;
   int max_iter=5;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|ii",
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|iiO",
                                    (char**)keyWords,&pointso,&parvals,
-                                                    &order,&max_iter))
+                                                    &order,&max_iter,&knotso))
     return NULL;
 
   if (!PyObject_TypeCheck(pointso,&PyList_Type) || 
       !PyObject_TypeCheck(parvals,&PyList_Type))
     return NULL;
+  if (knotso) {
+    if(!PyObject_TypeCheck(knotso,&PyList_Type))
+      return NULL;
+    for(int i=0; i<PyList_Size(knotso); ++i)
+      knots.push_back(PyFloat_AsDouble(PyList_GetItem(knotso,i)));
+  }
+      
 
   // get points
   std::vector<double> points;
@@ -65,13 +77,20 @@ PyObject* Generate_ApproximateCurve(PyObject* self, PyObject* args, PyObject* kw
   for (int i=0; i < PyList_Size(parvals); ++i)
     params.push_back(PyFloat_AsDouble(PyList_GetItem(parvals,i)));
 
-  Go::ApproxCurve approx(points,params,modState.dim,modState.approxTolerance,
-                         params.size(),order);
+  Go::ApproxCurve *approx;
+  if(knotso)
+     approx = new Go::ApproxCurve(points,params,modState.dim,modState.approxTolerance,
+                                  knots.size()-order,order,knots);
+  else {
+    int numbControlPts = params.size();
+    approx = new Go::ApproxCurve(points,params,modState.dim,modState.approxTolerance,
+                                 numbControlPts,order);
+  }
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   double maxdist;
   double avdist;
-  result->data = approx.getApproxCurve(maxdist,avdist,max_iter);
+  result->data = approx->getApproxCurve(maxdist,avdist,max_iter);
 
   return (PyObject*)result;
 }
