@@ -15,11 +15,12 @@ y = Point(0,1,0)
 z = Point(0,0,1)
 
 # create a slightly more interesting volume than the unit cube
-pts = []
+pts = [[],[]]
 for i in range(10):
 	t = i*2.0*pi/9
-	pts.append( Point(t, sin(t), 0))
-crv1 = CubicP(pts)
+	pts[0].append(t)
+        pts[1].append(sin(t))
+crv1 = Cubic(pts[0], pts[1])
 crv2 = LineSegment(2*y, 5*y + 7*x)
 surf = LoftBetween(crv1, crv2)
 vol  = ExtrudeSurface(surf, z+y, 3.0)

@@ -23,13 +23,13 @@ for i in range(N):
 	y.append(  sin(theta) + 1 );
 	z.append(      0          );
 
-for i in range(M):
+for i in range(1,M):
 	t = 8.0* i/(M-1);
 	x.append( -4 + t);
 	y.append( 0 );
 	z.append( 0 );
 
-for i in range(N):
+for i in range(1,N):
 	theta = - pi/4*i/(N-1) + pi/2;
 	x.append(  cos(theta) + 4 );
 	y.append(  sin(theta) - 1 );
