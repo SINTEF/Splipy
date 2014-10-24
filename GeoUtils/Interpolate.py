@@ -1,7 +1,6 @@
 __doc__ = 'Implementation of various interpolation schemes.'
 
 import GoTools
-import GoTools.CurveFactory
 import numpy as np
 
 def getBasis(t, knot):
@@ -13,7 +12,8 @@ def getBasis(t, knot):
     @return:  Matrix of all basis functions in all points
     @rtype:   Numpy.Matrix
     """
-    p = 1 # knot vector order
+    TOL = 1e-10 # knot vector snap tolerance
+    p = 1       # knot vector order
     while knot[p]==knot[0]:
         p += 1
     n = len(knot)-p # number of basis functions
@@ -23,7 +23,7 @@ def getBasis(t, knot):
             continue
         M = np.zeros(p+1)    # temp storage to keep all the function evaluations
         mu = p           # index of last non-zero basis function
-        if t[i]==knot[-1]:   # special case the endpoint
+        if abs(t[i]-knot[-1]) < TOL:   # special case the endpoint
             mu = n
         else:
             while knot[mu]<t[i]:
@@ -32,11 +32,11 @@ def getBasis(t, knot):
         for q in range(1,p):
             for j in range(p-q-1, p):
                 k = mu-p+j # 'i'-index in global knot vector (ref Hughes book pg.21)
-                if not knot[k+q]==knot[k]:
+                if abs(knot[k+q]-knot[k])>TOL:
                     M[j] = M[j]*float(t[i]-knot[k])/(knot[k+q]-knot[k])
                 else:
                     M[j] = 0
-                if not knot[k+q+1]==knot[k+1]:
+                if abs(knot[k+q+1]-knot[k+1])>TOL:
                     M[j] = M[j] + M[j+1]*float(knot[k+q+1]-t[i])/(knot[k+q+1]-knot[k+1])
         N[i,(mu-p):mu] = M[0:-1]
     return N

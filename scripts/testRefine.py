@@ -1,5 +1,6 @@
 from math import *
-from GoTools import * 
+from GoTools import *
+from GeoUtils.Interpolate import * 
 from GoTools.CurveFactory import * 
 from GoTools.SurfaceFactory import * 
 from GoTools.VolumeFactory import * 
@@ -11,11 +12,12 @@ y_axis = Point(0,1,0)
 z_axis = Point(0,0,1)
 
 # create a nonrational sin-curve and refine it
-pList = list()
+pList = [[],[]]
 for i in range(0,10):
 	x = i*2.0*pi/9
-	pList.append(Point(x,sin(x), 0))
-c1 = ApproximateCurve(pList, range(0,10))
+	pList[0].append(x)
+	pList[1].append(sin(x))
+c1 = Cubic(pList[0], pList[1])
 c2 = c1.Clone()
 # c1 should still be equal to c2 after refinement
 c2.InsertKnot(0.5)

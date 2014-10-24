@@ -21,81 +21,6 @@ namespace GeoModeller {
 extern "C" {
 PyObject* CurveFactory_module;
 
-PyDoc_STRVAR(generate_approximate_curve__doc__, "Construct a spline curve that approximatively interpolates a point cloud\n"
-                                                "@param points: The point cloud\n"
-                                                "@type points: List of (Point, list of floats or tuple of floats)\n"
-                                                "@param parvals: The parameter values for the points\n"
-                                                "@type parvals: List of floats\n"
-                                                "@param order: (optional) The order of the spline curve (p+1)\n"
-                                                "@type order: int >= 1\n"
-                                                "@param maxiter: (optional) The maxium number of iterations in interpolation scheme\n"
-                                                "@type maxiter: int >= 1\n"
-                                                "@param knot: (optional) The knot vector of the spline curve\n"
-                                                "@type knot: List of floats\n"
-                                                "@return: Spline interpolating the point cloud\n"
-                                                "@rtype: Curve");
-PyObject* Generate_ApproximateCurve(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"points", "parvals", "order", "maxiter", "knots", NULL };
-  PyObject* pointso;
-  PyObject* parvals;
-  PyObject* knotso = NULL;
-  std::vector<double> knots;
-  int order=3;
-  int max_iter=5;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|iiO",
-                                   (char**)keyWords,&pointso,&parvals,
-                                                    &order,&max_iter,&knotso))
-    return NULL;
-
-  if (!PyObject_TypeCheck(pointso,&PyList_Type) ||
-      !PyObject_TypeCheck(parvals,&PyList_Type))
-    return NULL;
-  if (knotso) {
-    if(!PyObject_TypeCheck(knotso,&PyList_Type))
-      return NULL;
-    for(int i=0; i<PyList_Size(knotso); ++i)
-      knots.push_back(PyFloat_AsDouble(PyList_GetItem(knotso,i)));
-  }
-
-
-  // get points
-  std::vector<double> points;
-  for (int i=0; i < PyList_Size(pointso); ++i) {
-    PyObject* entryo = PyList_GetItem(pointso,i);
-    shared_ptr<Go::Point> entry = PyObject_AsGoPoint(entryo);
-    if (entry) {
-      points.push_back((*entry)[0]);
-      points.push_back((*entry)[1]);
-      if (modState.dim == 3)
-        points.push_back((*entry)[2]);
-    }
-  }
-
-  // get parameters
-  std::vector<double> params;
-  for (int i=0; i < PyList_Size(parvals); ++i)
-    params.push_back(PyFloat_AsDouble(PyList_GetItem(parvals,i)));
-
-  Go::ApproxCurve *approx;
-  if(knotso)
-     approx = new Go::ApproxCurve(points,params,modState.dim,modState.approxTolerance,
-                                  knots.size()-order,order,knots);
-  else {
-    int numbControlPts = params.size();
-    approx = new Go::ApproxCurve(points,params,modState.dim,modState.approxTolerance,
-                                 numbControlPts,order);
-  }
-
-  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-  double maxdist;
-  double avdist;
-  result->data = approx->getApproxCurve(maxdist,avdist,max_iter);
-
-  return (PyObject*)result;
-}
-
-
 PyDoc_STRVAR(generate_circle__doc__, "Generate a circle\n"
                                      "@param center: The center of the circle\n"
                                      "@type center: Point, list of floats or tuple of floats\n"
@@ -416,94 +341,6 @@ PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
   s1012(start->begin(), center->begin(), axis->begin(),
         frequency, quadrants, 0, &sisl_helix, &stat);
   result->data.reset(Go::SISLCurve2Go(sisl_helix));
-
-  return (PyObject*)result;
-}
-
-PyDoc_STRVAR(generate_interpolate_curve__doc__, "Construct a cubic spline that interpolates a point cloud\n"
-                                                "@param points: The point cloud\n"
-                                                "@type points: List of (Point, list of floats or tuple of floats)\n"
-                                                "@param parvals: The parameter values for the points\n"
-                                                "@type parvals: List of floats\n"
-                                                "@param start_tangent: (optional) The left tangent\n"
-                                                "@type start_tangent: Point\n"
-                                                "@param end_tangent: (optional) The right tangent\n"
-                                                "@type end_tangent: Point\n"
-                                                "@return: Cubic spline interpolating the point cloud\n"
-                                                "@rtype: Curve");
-PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  static const char* keyWords[] = {"points", "parvals", "start_tangent",
-                                   "end_tangent", "order", NULL };
-  PyObject* pointso;
-  PyObject* parvals;
-  PyObject* tangent1o=0;
-  PyObject* tangent2o=0;
-  int order=4;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO|OOi",
-                                   (char**)keyWords,&pointso,&parvals,
-                                   &tangent1o, &tangent2o,&order))
-    return NULL;
-
-  if (!PyObject_TypeCheck(pointso,&PyList_Type) ||
-      !PyObject_TypeCheck(parvals,&PyList_Type))
-    return NULL;
-
-  // get tangents
-  shared_ptr<Go::Point> t1;
-  shared_ptr<Go::Point> t2;
-  if (tangent1o)
-    t1 = PyObject_AsGoPoint(tangent1o);
-  if (tangent2o)
-    t2 = PyObject_AsGoPoint(tangent2o);
-
-  std::vector<double> points;
-  std::vector<int> types;
-
-  if (t1) {
-    points.insert(points.end(),t1->begin(),t1->end());
-    types.push_back(3);
-  }
-
-  // get points
-  for (int i=0; i < PyList_Size(pointso); ++i) {
-    PyObject* entryo = PyList_GetItem(pointso,i);
-    shared_ptr<Go::Point> entry = PyObject_AsGoPoint(entryo);
-    if (entry) {
-      points.push_back((*entry)[0]);
-      points.push_back((*entry)[1]);
-      if (modState.dim == 3)
-        points.push_back((*entry)[2]);
-    }
-    types.push_back(1);
-  }
-
-  if (t2) {
-    points.insert(points.end(),t2->begin(),t2->end());
-    types.push_back(4);
-  }
-
-  // get parameters
-  std::vector<double> params;
-  for (int i=0; i < PyList_Size(parvals); ++i)
-    params.push_back(PyFloat_AsDouble(PyList_GetItem(parvals,i)));
-
-  Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-  SISLCurve* rc;
-  double endpar;
-  int jnbpar, jstat;
-  double* gpar;
-  s1357(&points[0], points.size()/modState.dim, modState.dim, &types[0],
-        &params[0], (t1||order==2)?0:1, (t2||order==2)?0:1,  1, order,
-        params[0], &endpar, &rc, &gpar, &jnbpar, &jstat);
-  if (jstat == 0) {
-    result->data.reset(Go::SISLCurve2Go(rc));
-    freeCurve(rc);
-    free(gpar);
-  } else {
-    std::cerr << "interpolation failed" << std::endl;
-    exit(1);
-  }
 
   return (PyObject*)result;
 }
@@ -955,13 +792,11 @@ PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
 
 
   PyMethodDef CurveFactory_methods[] = {
-     {(char*)"ApproximateCurve",      (PyCFunction)Generate_ApproximateCurve,  METH_VARARGS|METH_KEYWORDS, generate_approximate_curve__doc__},
      {(char*)"Circle",                (PyCFunction)Generate_Circle,            METH_VARARGS|METH_KEYWORDS, generate_circle__doc__},
      {(char*)"CircleSegment",         (PyCFunction)Generate_CircleSegment,     METH_VARARGS|METH_KEYWORDS, generate_circle_segment__doc__},
      {(char*)"Ellipse",               (PyCFunction)Generate_Ellipse,           METH_VARARGS|METH_KEYWORDS, generate_ellipse__doc__},
      {(char*)"EllipticSegment",       (PyCFunction)Generate_EllipticSegment,   METH_VARARGS|METH_KEYWORDS, generate_elliptic_segment__doc__},
      {(char*)"Helix",                 (PyCFunction)Generate_Helix,             METH_VARARGS|METH_KEYWORDS, generate_helix__doc__},
-     {(char*)"InterpolateCurve",      (PyCFunction)Generate_InterpolateCurve,  METH_VARARGS|METH_KEYWORDS, generate_interpolate_curve__doc__},
      {(char*)"IntersectCurve",        (PyCFunction)Generate_IntersectCurve,    METH_VARARGS|METH_KEYWORDS, generate_intersect_curve__doc__},
      {(char*)"IntersectCylinder",     (PyCFunction)Generate_IntersectCylinder, METH_VARARGS|METH_KEYWORDS, generate_intersect_cylinder__doc__},
      {(char*)"Line",                  (PyCFunction)Generate_Line,              METH_VARARGS|METH_KEYWORDS, generate_line__doc__},
