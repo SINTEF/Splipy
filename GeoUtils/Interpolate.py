@@ -49,12 +49,15 @@ def InterpolateCurve(x, t, knot):
     @type t:     List of floats
     @param knot: Open knot vector to use for interpolation. Size n+p, where p is the order to use for interpolation
     @type knot:  List of floats
-    @return:     Control points corresponding to the interpolating curve
-    @rtype:      Numpy.Matrix
+    @return:     Interpolating curve
+    @rtype:      Curve
     """
+    p = 1 # knot vector order
+    while knot[p]==knot[0]:
+        p += 1
     N = getBasis(t,knot)
     C = np.linalg.solve(N,x)
-    return C
+    return GoTools.Curve(p, knot, C.tolist(), False);
 
 def ApproximateCurve(x, t, knot):
     """Approximate a curve of m discrete points using a spline of n control points, where n<m
@@ -64,17 +67,20 @@ def ApproximateCurve(x, t, knot):
     @type t:     List of floats
     @param knot: Open knot vector to use for approximation. Size n+p, where p is the spline order and n is the number of control points
     @type knot:  List of floats
-    @return:     Control points corresponding to the approximation curve
-    @rtype:      Numpy.Matrix
+    @return:     Approximating curve
+    @rtype:      Curve
     """
+    p = 1 # knot vector order
+    while knotU[p]==knotU[0]:
+        p += 1
     N = getBasis(t,knot)
     C = np.linalg.solve(N.transpose()*N, N.transpose()*x)
-    return C
+    return GoTools.Curve(p, knot, C.tolist(), False);
 
 def InterpolateSurface(x, u, v, knotU, knotV):
     """Interpolate a surface at a given set of points. User is responsible that the input problem is well posed
     @param x:     The physical coordinates of the points to interpolate. Size (NxM)xD, where D is the dimension and NxM is the number of points
-    @type x:      Numpy.Matrix
+    @type x:      List of list of floats
     @param u:     The parametric coordinates in the first direction of the points to interpolate. Length N
     @type u:      List of floats
     @param v:     The parametric coordinates in the second direction of the points to interpolate. Length M
@@ -83,8 +89,8 @@ def InterpolateSurface(x, u, v, knotU, knotV):
     @type knotU:  List of floats
     @param knotV: Open knot vector to use for interpolation. Size M+q, where q is the order in the second direction
     @type knotV:  List of floats
-    @return:      Control points corresponding to the interpolating curve
-    @rtype:       Numpy.Matrix
+    @return:      Interpolating surface
+    @rtype:       Surface
     """
     Nu = getBasis(u,knotU)
     Nv = getBasis(v,knotV)
@@ -115,7 +121,7 @@ def InterpolateSurface(x, u, v, knotU, knotV):
                 k+=1
     return GoTools.Surface(p,q, knotU, knotV, controlpts.tolist(), False)
 
-def Linear(x,y=[],z=[]):
+def LinearCurve(x,y=[],z=[]):
     """Linear interpolate a list of points (arclength parametrization)
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats
@@ -142,10 +148,9 @@ def Linear(x,y=[],z=[]):
         dist = np.linalg.norm(x1-x0)  # eucledian distance between points i and (i-1)
         t.append(t[i-1]+dist)
     knot = [0]+t+[t[-1]]
-    C = InterpolateCurve(pts.transpose(), t, knot)
-    return GoTools.Curve(2, knot, C.tolist(), False);
+    return InterpolateCurve(pts.transpose(), t, knot)
 
-def Cubic(x, y=[], z=[]):
+def CubicCurve(x, y=[], z=[]):
     """Cubic spline interpolation a list of points by arclength parametrization
     @param x: The x-coordinate of the points to interpolate
     @type x: List of floats
@@ -171,10 +176,9 @@ def Cubic(x, y=[], z=[]):
         dist = np.linalg.norm(x1-x0)  # eucledian distance between points i and (i-1)
         t.append(t[i-1]+dist)
     knot = [t[0]]*4 + t[2:-2] + [t[-1]]*4
-    C = InterpolateCurve(pts.transpose(), t, knot)
-    return GoTools.Curve(4, knot, C.tolist(), False);
+    return InterpolateCurve(pts.transpose(), t, knot)
 
-def UniformCubic(x, y=[], z=[]):
+def UniformCubicCurve(x, y=[], z=[]):
     """Cubic spline interpolation a list of points by uniform parametrization
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats
@@ -195,6 +199,4 @@ def UniformCubic(x, y=[], z=[]):
     n = len(x)
     t = range(n)
     knot = [t[0]]*4 + t[2:-2] + [t[-1]]*4
-    C = InterpolateCurve(pts.transpose(), t, knot)
-    return GoTools.Curve(4, knot, C.tolist(), False);
-
+    return InterpolateCurve(pts.transpose(), t, knot)

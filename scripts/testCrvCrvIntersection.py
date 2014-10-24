@@ -35,7 +35,7 @@ for i in range(1,N):
 	y.append(  sin(theta) - 1 );
 	z.append(      0          );
 
-wigglyLine = Cubic(x,y,z);
+wigglyLine = CubicCurve(x,y,z);
 shortLine  = LineSegment(origin, x_axis);
 
 circ1 = Circle(x_axis, 1.5, z_axis);

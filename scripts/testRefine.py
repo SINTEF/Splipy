@@ -17,7 +17,7 @@ for i in range(0,10):
 	x = i*2.0*pi/9
 	pList[0].append(x)
 	pList[1].append(sin(x))
-c1 = Cubic(pList[0], pList[1])
+c1 = CubicCurve(pList[0], pList[1])
 c2 = c1.Clone()
 # c1 should still be equal to c2 after refinement
 c2.InsertKnot(0.5)

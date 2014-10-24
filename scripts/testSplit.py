@@ -20,7 +20,7 @@ for i in range(10):
 	t = i*2.0*pi/9
 	pts[0].append(t)
         pts[1].append(sin(t))
-crv1 = Cubic(pts[0], pts[1])
+crv1 = CubicCurve(pts[0], pts[1])
 crv2 = LineSegment(2*y, 5*y + 7*x)
 surf = LoftBetween(crv1, crv2)
 vol  = ExtrudeSurface(surf, z+y, 3.0)

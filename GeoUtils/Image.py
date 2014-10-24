@@ -117,7 +117,7 @@ def ImageCurves(filename):
     [contours, hierarchy] = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     result = []
-    for i in range(len(contours)):   # for all contours (except the last one which is the edge)
+    for i in range(len(contours)-1):   # for all contours (except the last one which is the edge)
         pts = contours[i][:,0,:]       # I have no idea why there needs to be a 0 here
         for j in range(len(pts)):      # invert y-axis since images are stored the other way around
             pts[j][1] = len(im[0])-pts[j][1]
@@ -167,8 +167,7 @@ def ImageCurves(filename):
         for i in range(len(knot)):
             knot[i] /= float(n)
 
-        C = ApproximateCurve(pts, parpt, knot)
-        c = GoTools.Curve(4, knot, C.tolist(), False)
+        c = ApproximateCurve(pts, parpt, knot)
 
         if len(contours) == 2:
             return c

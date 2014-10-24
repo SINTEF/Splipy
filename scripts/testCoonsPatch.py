@@ -39,10 +39,10 @@ for i in range(0,N):
 	p_right[1].append(y)
 
 # interpolate the four boundary curves
-bottom = UniformCubic(p_bottom[0], p_bottom[1])
-top    = UniformCubic(p_top[0]   , p_top[1]   )
-right  = UniformCubic(p_right[0] , p_right[1] )
-left   = UniformCubic(p_left[0]  , p_left[1]  )
+bottom = UniformCubicCurve(p_bottom[0], p_bottom[1])
+top    = UniformCubicCurve(p_top[0]   , p_top[1]   )
+right  = UniformCubicCurve(p_right[0] , p_right[1] )
+left   = UniformCubicCurve(p_left[0]  , p_left[1]  )
 top.FlipParametrization()
 left.FlipParametrization()
 

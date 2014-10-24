@@ -28,16 +28,16 @@ for i in range(N):
 
 
 # test the Interpolate entry points and optional parameters
-crv.append(Linear(range(10)))
-crv.append(Linear(range(10), range(10)))
-crv.append(Linear(range(10), range(10), range(10)))
-crv.append(Cubic(yp))
-crv.append(Cubic(range(10), yp))
-crv.append(Cubic(range(10), range(10), yp))
+crv.append(LinearCurve(range(10)))
+crv.append(LinearCurve(range(10), range(10)))
+crv.append(LinearCurve(range(10), range(10), range(10)))
+crv.append(CubicCurve(yp))
+crv.append(CubicCurve(range(10), yp))
+crv.append(CubicCurve(range(10), range(10), yp))
 
 # test the Interpolate different entry points
-crv.append(Linear(xp,yp))
-crv.append(UniformCubic(xp, yp))
+crv.append(LinearCurve(xp,yp))
+crv.append(UniformCubicCurve(xp, yp))
 
 FinalOutput(crv)
 
