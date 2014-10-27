@@ -77,6 +77,7 @@ def ApproximateCurve(x, t, knot):
     C = np.linalg.solve(N.transpose()*N, N.transpose()*x)
     return GoTools.Curve(p, knot, C.tolist(), False);
 
+
 def InterpolateSurface(x, u, v, knotU, knotV):
     """Interpolate a surface at a given set of points. User is responsible that the input problem is well posed
     @param x:     The physical coordinates of the points to interpolate. Size (NxM)xD, where D is the dimension and NxM is the number of points
@@ -114,6 +115,54 @@ def InterpolateSurface(x, u, v, knotU, knotV):
                 X[i,j] = x[k][d]
                 k+=1
         C = invNu*X*(invNv.transpose()) # compute control points
+        k=0
+        for j in range(m):
+            for i in range(n):
+                controlpts[k,d] = C[i,j] # rewrap output c-values to list format
+                k+=1
+    return GoTools.Surface(p,q, knotU, knotV, controlpts.tolist(), False)
+
+def ApproximateSurface(x, u, v, knotU, knotV):
+    """Approximate a surface of nxm discrete points using a spline of NxM control points, where n>N and m>M
+    @param x:     The physical coordinates of the points to interpolate. Size (nxm)xD, where D is the dimension and NxM is the number of points
+    @type x:      List of list of floats
+    @param u:     The parametric coordinates in the first direction of the points to interpolate. Length N
+    @type u:      List of floats
+    @param v:     The parametric coordinates in the second direction of the points to interpolate. Length M
+    @type v:      List of floats
+    @param knotU: Open knot vector to use for interpolation. Size N+p, where p is the order in the first direction
+    @type knotU:  List of floats
+    @param knotV: Open knot vector to use for interpolation. Size M+q, where q is the order in the second direction
+    @type knotV:  List of floats
+    @return:      Interpolating surface
+    @rtype:       Surface
+    """
+    Nu = getBasis(u,knotU)
+    Nv = getBasis(v,knotV)
+    NuT = Nu.transpose()
+    NvT = Nv.transpose()
+    invNu = np.linalg.inv(NuT*Nu) # symmetric matrix
+    invNv = np.linalg.inv(NvT*Nv)
+    p = 1 # knot vector order
+    q = 1
+    while knotU[p]==knotU[0]:
+        p += 1
+    while knotV[q]==knotV[0]:
+        q += 1
+    N   = len(u)
+    M   = len(v)
+    n   = len(knotU) -p
+    m   = len(knotV) -q
+    dim = len(x[0])
+    controlpts = np.zeros((n*m,dim))
+    for d in range(dim):
+        X = np.matrix(np.zeros((N,M))) # rewrap input x-values to matrix format
+        k = 0
+        for j in range(M):
+            for i in range(N):
+                X[i,j] = x[k][d]
+                k+=1
+        C = invNu * NuT * X * Nv * invNv # compute control points
         k=0
         for j in range(m):
             for i in range(n):

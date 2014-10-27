@@ -176,3 +176,45 @@ def ImageCurves(filename):
 
     return result
 
+def ImageHeight(filename, N=[30,30], p=[4,4]):
+    """Generate B-spline surface approximation given by the heightmap in a grayscale image
+    @param filename: Name of image file to read
+    @type  filename: String
+    @param N:        Number of controlpoints in u-direction
+    @type  N:        Two Integers
+    @param p:        Polynomial order (degree+1)
+    @type  p:        Two Integers
+    @return:         Normalized (all values between 0 and 1) heightmap approximation
+    @rtype:          Surface
+    """
+    im = cv2.imread(filename)
+
+    width  = len(im)
+    height = len(im[0])
+    print height,'x',width
+
+    # initialize image holder
+    imGrey = np.zeros((len(im),   len(im[0])),   np.uint8)
+
+    # convert to greyscale image
+    cv2.cvtColor(im, cv2.cv.CV_RGB2GRAY, imGrey)
+
+    pts = []
+    # guess uniform evaluation points and knot vectors
+    u = range(width)
+    v = range(height)
+    knot1 = [0]*3 + range(N[0]-p[0]+2) + [N[0]-p[0]+1]*3
+    knot2 = [0]*3 + range(N[0]-p[0]+2) + [N[0]-p[0]+1]*3
+
+    # normalize all values to be in range [0, 1]
+    u     = [float(i)/u[-1]     for i in u]
+    v     = [float(i)/v[-1]     for i in v]
+    knot1 = [float(i)/knot1[-1] for i in knot1]
+    knot2 = [float(i)/knot2[-1] for i in knot2]
+
+    for j in range(height):
+        for i in range(width):
+            pts.append([v[j], u[i], float(imGrey[width-i-1][j])/255.0*1.0])
+
+    return ApproximateSurface(pts,u,v,knot1,knot2)
+
