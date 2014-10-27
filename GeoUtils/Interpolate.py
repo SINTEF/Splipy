@@ -71,7 +71,49 @@ def ApproximateCurve(x, t, knot):
     C = np.linalg.solve(N.transpose()*N, N.transpose()*x)
     return C
 
-
+def InterpolateSurface(x, u, v, knotU, knotV):
+    """Interpolate a surface at a given set of points. User is responsible that the input problem is well posed
+    @param x:     The physical coordinates of the points to interpolate. Size (NxM)xD, where D is the dimension and NxM is the number of points
+    @type x:      Numpy.Matrix
+    @param u:     The parametric coordinates in the first direction of the points to interpolate. Length N
+    @type u:      List of floats
+    @param v:     The parametric coordinates in the second direction of the points to interpolate. Length M
+    @type v:      List of floats
+    @param knotU: Open knot vector to use for interpolation. Size N+p, where p is the order in the first direction
+    @type knotU:  List of floats
+    @param knotV: Open knot vector to use for interpolation. Size M+q, where q is the order in the second direction
+    @type knotV:  List of floats
+    @return:      Control points corresponding to the interpolating curve
+    @rtype:       Numpy.Matrix
+    """
+    Nu = getBasis(u,knotU)
+    Nv = getBasis(v,knotV)
+    invNu = np.linalg.inv(Nu)
+    invNv = np.linalg.inv(Nv)
+    p = 1 # knot vector order
+    q = 1
+    while knotU[p]==knotU[0]:
+        p += 1
+    while knotV[q]==knotV[0]:
+        q += 1
+    n   = len(Nu)
+    m   = len(Nv)
+    dim = len(x[0])
+    controlpts = np.zeros((n*m,dim))
+    for d in range(dim):
+        X = np.matrix(np.zeros((n,m))) # rewrap input x-values to matrix format
+        k = 0
+        for j in range(m):
+            for i in range(n):
+                X[i,j] = x[k][d]
+                k+=1
+        C = invNu*X*(invNv.transpose()) # compute control points
+        k=0
+        for j in range(m):
+            for i in range(n):
+                controlpts[k,d] = C[i,j] # rewrap output c-values to list format
+                k+=1
+    return GoTools.Surface(p,q, knotU, knotV, controlpts.tolist(), False)
 
 def Linear(x,y=[],z=[]):
     """Linear interpolate a list of points (arclength parametrization)
