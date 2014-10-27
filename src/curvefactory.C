@@ -48,7 +48,7 @@ PyObject* Generate_ApproximateCurve(PyObject* self, PyObject* args, PyObject* kw
                                                     &order,&max_iter,&knotso))
     return NULL;
 
-  if (!PyObject_TypeCheck(pointso,&PyList_Type) || 
+  if (!PyObject_TypeCheck(pointso,&PyList_Type) ||
       !PyObject_TypeCheck(parvals,&PyList_Type))
     return NULL;
   if (knotso) {
@@ -57,7 +57,7 @@ PyObject* Generate_ApproximateCurve(PyObject* self, PyObject* args, PyObject* kw
     for(int i=0; i<PyList_Size(knotso); ++i)
       knots.push_back(PyFloat_AsDouble(PyList_GetItem(knotso,i)));
   }
-      
+
 
   // get points
   std::vector<double> points;
@@ -125,7 +125,7 @@ PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
     if (!norm)
       return NULL;
     normal = *norm;
-  } else if(modState.dim == 2) { 
+  } else if(modState.dim == 2) {
     // WORKAROUND FIX, due to GoTools bug.
     // Creating a Circle-object of dimension 2 works, but it crashes when trying
     // to convert this to a SplineCurve
@@ -207,7 +207,7 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   Go::Point x_axis = *start-*center;
   double radius = x_axis.length();
 #define BUG_365_FIXED 0
-#if BUG_365_FIXED 
+#if BUG_365_FIXED
   Go::Point normal2 = normal-((x_axis*normal)/x_axis.length2())*x_axis;
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
@@ -243,11 +243,11 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
   k=0;
   for(int i=0; i<n; i++) {
     double w = (i%2==0) ? 1.0 : cos(dt); // control point weight
-    for(int d=0; d<dim; d++) 
+    for(int d=0; d<dim; d++)
       cp[k++] = (x_axis[d] + origo[d])*w;
     cp[k++] = w;
     Go::GeometryTools::rotatePoint(normal, dt, x_axis.begin());
-    if(i%2 == 0) 
+    if(i%2 == 0)
       x_axis /= cos(dt);
     else
       x_axis *= cos(dt);
@@ -445,7 +445,7 @@ PyObject* Generate_InterpolateCurve(PyObject* self, PyObject* args, PyObject* kw
                                    &tangent1o, &tangent2o,&order))
     return NULL;
 
-  if (!PyObject_TypeCheck(pointso,&PyList_Type) || 
+  if (!PyObject_TypeCheck(pointso,&PyList_Type) ||
       !PyObject_TypeCheck(parvals,&PyList_Type))
     return NULL;
 
@@ -578,7 +578,7 @@ PyObject* Generate_IntersectCurve(PyObject* self, PyObject* args, PyObject* kwds
     Point     *pyPoint     = (Point*) Point_Type.tp_alloc(&Point_Type, 0);
 
     // evaluate the returned parameter point to get the physical coordinates
-    curve1s->point(*intersectPt, parCrv1[i]); 
+    curve1s->point(*intersectPt, parCrv1[i]);
 
     pyPoint->data = shared_ptr<Go::Point>(intersectPt);
     PyList_Append(pointList, (PyObject*) pyPoint);
@@ -627,7 +627,7 @@ PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* k
   shared_ptr<Go::ParamSurface> param_srf = PyObject_AsGoSurface(surfo);
   if (!cyl_ps || !param_srf)
     return NULL;
- 
+
   // check for Cylinder and SplineSurface from ParamSurfaces
   if (cyl_ps->instanceType() != Go::Class_Cylinder) {
     std::cerr << "argument not a cylinder\n";
@@ -657,7 +657,7 @@ PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* k
   double      *pts;
   SISLIntcurve **curves;
   int stat;
-  
+
   // SISL surface intersect cylinder (generating points and curves)
   s1853(sisl_srf, center, axis, radius, dim, 0, modState.gapTolerance, // input arguments
         &num_of_pts, &pts, &num_of_curves, &curves, &stat);            // output arguments
@@ -687,7 +687,7 @@ PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* k
     int graphic = 0;    // "0: Don't draw the curve"
     s1316(sisl_srf, center, axis, radius, dim, 0, modState.gapTolerance, maxStep, // input arguments
           curves[i], makeCrv, graphic, &stat);
-  
+
     if (stat == 3) {
       // ERROR
       std::cerr << "Iteration stopped due to singular point or\n"
@@ -818,7 +818,7 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
   std::vector<double> weights(0);
   crv_base->gridEvaluator(interpolationPoints, greville);
 
-  Go::SplineCurve *nonrational_crv = 
+  Go::SplineCurve *nonrational_crv =
         Go::CurveInterpolator::regularInterpolation(basis,
                                                     greville,
                                                     interpolationPoints,
@@ -878,7 +878,7 @@ PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)
   std::vector<double> weights(0);
   curve->gridEvaluator(interpolationPoints, greville);
 
-  Go::SplineCurve *res = 
+  Go::SplineCurve *res =
         Go::CurveInterpolator::regularInterpolation(basis,
                                                     greville,
                                                     interpolationPoints,
@@ -918,7 +918,7 @@ PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
                                                     &coeffso,&order,&rational))
     return NULL;
 
-  if (!PyObject_TypeCheck(paramso,&PyList_Type) || 
+  if (!PyObject_TypeCheck(paramso,&PyList_Type) ||
       !PyObject_TypeCheck(knotso,&PyList_Type) ||
       !PyObject_TypeCheck(coeffso,&PyList_Type))
     return NULL;
