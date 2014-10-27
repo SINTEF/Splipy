@@ -17,9 +17,9 @@ def SplitSurface(original, param, value):
     @return:         The two new surfaces
     @rtype:          List of Surfaces
     """
-    
+
     surf      = original.Clone()
-# this actually fails for 2D models, but no Surface.GetDim() or 
+# this actually fails for 2D models, but no Surface.GetDim() or
 # Surface.IsRational()  :(
     rational  = (len(surf[0]) == 4)
     knot      = surf.GetKnots(True)
@@ -44,7 +44,7 @@ def SplitSurface(original, param, value):
         if abs(knot[param][ki]-value) < GetTolerance('refine'):
             break
     ki = ki-1
-    
+
     n = [len(knot[0]) - p[0] , len(knot[1]) - p[1]]
 
     coefs1 = []
@@ -53,7 +53,7 @@ def SplitSurface(original, param, value):
     knot1v = []
     knot2u = []
     knot2v = []
-    
+
     k = 0
     if param == 0:
         for y in range(n[1]):
@@ -92,12 +92,12 @@ def SplitSurface(original, param, value):
         knot1u = knot[0]
         knot2u = knot[0]
 
-    
+
     result = []
     result.append(Surface(p[0], p[1], knot1u, knot1v, coefs1, rational))
     result.append(Surface(p[0], p[1], knot2u, knot2v, coefs2, rational))
     return  result
-    
+
 
 def SplitVolume(original, param, value):
     """Split a SplineVolume in two by continued knot insertion
@@ -110,9 +110,9 @@ def SplitVolume(original, param, value):
     @return:         The two new volumes
     @rtype:          List of Volumes
     """
-    
+
     vol       = original.Clone()
-# this actually fails for 2D models, but no Surface.GetDim() or 
+# this actually fails for 2D models, but no Surface.GetDim() or
 # Surface.IsRational()  :(
     rational  = (len(vol[0]) == 4)
     knot      = vol.GetKnots(True)
@@ -137,7 +137,7 @@ def SplitVolume(original, param, value):
         if abs(knot[param][ki]-value) < GetTolerance('refine'):
             break
     ki = ki-1
-    
+
     n = [len(knot[0]) - p[0] , len(knot[1]) - p[1], len(knot[2]) - p[2]]
 
     coefs1 = []
@@ -148,7 +148,7 @@ def SplitVolume(original, param, value):
     knot2u = []
     knot2v = []
     knot2w = []
-    
+
     k = 0
     if param == 0:
         for z in range(n[2]):
@@ -214,7 +214,7 @@ def SplitVolume(original, param, value):
         knot1v = knot[1]
         knot2v = knot[1]
 
-    
+
     result = []
     result.append(Volume(p[0], p[1], p[2], knot1u, knot1v, knot1w, coefs1, rational))
     result.append(Volume(p[0], p[1], p[2], knot2u, knot2v, knot2w, coefs2, rational))
@@ -240,10 +240,10 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
     listAxis = [0,0,0]
     listAxis[axis] = 1.0
     nAxis = Point(list=listAxis)
-    
+
     for i in range(len(crv1)):
 
-#                   A   
+#                   A
 #          , - ~ ~ ~ -0,
 #      , '           /   ' ,
 #    ,              /        ;,
@@ -257,10 +257,10 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
 #        ' - , _ _ _ ,0_"___0  ControlPt 3
 #                     B
 #
-#       going for two knot spans. Should work for all theta 
+#       going for two knot spans. Should work for all theta
 #       strictly less than 2pi (though bad results for close
 #       to 2pi
-#   
+#
 
         a = crv1[i]
         b = crv2[i]
@@ -288,10 +288,10 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
             origin2 = Point( newHeight, origin2[1], origin2[2])
             a = Point(newHeight, a[1], a[2])
             b = Point(newHeight, b[1], b[2])
-                
+
 
         ###   this test isn't really true since the control points are floating outside
-        ###   the actual curve in geometry space (but nice to have to illustrate whats 
+        ###   the actual curve in geometry space (but nice to have to illustrate whats
         ###   going on)
         # if abs(r1-r2) > GetTolerance('gap'):
         #         print 'Error. Curves not on the same cylinder radius'
@@ -300,7 +300,7 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
         if dist > GetTolerance('gap'):
             print 'Error. Curves not on the same cylinder height'
             return
-        
+
         l1 = a-origin1
         l2 = b-origin2
         if abs(l1*l2/abs(l1)/abs(l2)-1.0) < 1e-14 or \
@@ -320,10 +320,10 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
         controlPoints.extend([crv1[i][0], crv1[i][1], crv1[i][2], 1.0])
         rotPoint.Rotate(nAxis, dt)
         rotPoint = rotPoint / cos(dt)
-        
+
         for j in range(1,5):
             r = r1 + j*dr
-            
+
             w = cos(dt)*(j%2) + (1.0-(j%2))
             controlPoints.append((origin1[0] + r*rotPoint[0]) * w)
             controlPoints.append((origin1[1] + r*rotPoint[1]) * w)
@@ -335,7 +335,7 @@ def RotationalCrv2CrvSweep(crv1, crv2, axis):
                 rotPoint = rotPoint / cos(dt)
             else:
                 rotPoint = rotPoint * cos(dt)
-    
+
     knotXi = [0,0,0,1,1,2,2,2]
 
     surf   = Surface(3, crv1.GetOrder(), knotXi, crv1.GetKnots(True), controlPoints, True)
@@ -347,13 +347,13 @@ def LoftBetween(obj1, obj2):
     are curves, the extruded domain will be a surface, if the arguments
     are surfaces, the domain will be the contained volume.
     @param obj1: The first object
-    @type obj1: Curve or Surface 
+    @type obj1: Curve or Surface
     @param obj2: The second object
-    @type obj2: Curve or Surface 
+    @type obj2: Curve or Surface
     @return: The contained domain
     @rtype: Surface or Volume
     """
-    
+
     cObj1 = obj1.Clone()
     cObj2 = obj2.Clone()
 
@@ -364,9 +364,9 @@ def LoftBetween(obj1, obj2):
         newCP.append(c)
     for c in cObj2:
         newCP.append(c)
-    
+
     p = cObj1.GetOrder()
-    rational = len(cObj1[0]) == 4 
+    rational = len(cObj1[0]) == 4
     newKnot = [0, 0, 1, 1]  # linear in the extrusion direction
     newP    = 2
 
@@ -381,14 +381,14 @@ def Thicken(obj, amount):
     """Extrudes a surface in the normal direction to create a volume representation of it.
     May cause self intersections for large amount or high curvature surfaces
     @param    obj: The surface to thicken
-    @type     obj: Surface 
+    @type     obj: Surface
     @param amount: The distance to extrude
     @type  amount: Float
     @return:       Thickened surface
     @rtype:        Volume
     """
 
-    # this is not a hard restriction. Just have to come up with another 
+    # this is not a hard restriction. Just have to come up with another
     # sampling point strategy
     p1,p2 = obj.GetOrder()
     if p1>4 or p2>4:
@@ -459,17 +459,17 @@ def HyperEllipse(radius, center, N, order=4, quadrant=0):
     vals.append(vals[0])
 
   return InterpolateCurve(vals, range(len(vals)))
-        
+
 def CombineSurfaces(surf1, surf2):
     """Combine two surfaces into a single patch with internal C^0 knot
-    @param surf1: The first Surface 
+    @param surf1: The first Surface
     @type  surf1: Surface
-    @param surf2: The second Surface 
+    @param surf2: The second Surface
     @type  surf2: Surface
     @return:      The combined surface
     @rtype:       Surface
     """
-    
+
     # this actually fails for 2D models, but no Surface.GetDim() or Surface.IsRational()  :(
     rational  = (len(surf1[0]) == 4)
     knot1 = surf1.GetKnots(True)
@@ -497,7 +497,7 @@ def CombineSurfaces(surf1, surf2):
     p2    = surf2.GetOrder()
     n2    = [len(knot2[0]) - p2[0] , len(knot2[1]) - p2[1]]
 
-    # make sure that the sem is on top (vmax) of surf1 
+    # make sure that the sem is on top (vmax) of surf1
     tol = GetTolerance('neighbour')
     if n1[0]==n2[0] and p1[0]==p2[0]:
         n = n1[0]
@@ -530,7 +530,7 @@ def CombineSurfaces(surf1, surf2):
     for i in range(len(knot2[1])):
         knot2[1][i] = knot2[1][i] + knot1[1][-1] - start
     knotV =  knot1[1][:-1] + knot2[1][p2[1]:]
-    
+
     k = 0
     for y in range(n1[1]-1):
         for x in range(n1[0]):
