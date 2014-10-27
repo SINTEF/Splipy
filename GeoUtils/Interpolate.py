@@ -3,12 +3,23 @@ __doc__ = 'Implementation of various interpolation schemes.'
 import GoTools
 import numpy as np
 
-def getBasis(t, knot):
+FREE=1
+NATURAL=2
+HERMITE=3
+PERIODIC=4
+TANGENT=5
+UNIFORM=8
+
+def getBasis(t, knot, d=0, fromRight=True):
     """Get all basis functions evaluated in a given set of points
     @param t: The parametric coordinates to perform evaluation
     @type t:  List of floats
     @param t: Open knot vector corresponding to the basis functions
     @type t:  List of floats
+    @param d: Number of derivatives
+    @type d:  Integer
+    @param fromRight: True if evaluation should be done in the limit from above
+    @type fromRight:  Boolean
     @return:  Matrix of all basis functions in all points
     @rtype:   Numpy.Matrix
     """
@@ -16,28 +27,38 @@ def getBasis(t, knot):
     p = 1       # knot vector order
     while knot[p]==knot[0]:
         p += 1
-    n = len(knot)-p # number of basis functions
+    n = len(knot)-p                   # number of basis functions
     N = np.matrix(np.zeros((len(t),n)))
-    for i in range(len(t)):  # for all evaluation points t
+    for i in range(len(t)):           # for all evaluation points t
         if t[i]<knot[0] or t[i]>knot[-1]:
             continue
-        M = np.zeros(p+1)    # temp storage to keep all the function evaluations
-        mu = p           # index of last non-zero basis function
-        if abs(t[i]-knot[-1]) < TOL:   # special case the endpoint
+        M = np.zeros(p+1)             # temp storage to keep all the function evaluations
+        mu = p                        # index of last non-zero basis function
+        if abs(t[i]-knot[-1]) < TOL:  # special case the endpoint
             mu = n
         else:
-            while knot[mu]<t[i]:
-                mu += 1
+            if fromRight:
+                while t[i]-knot[mu] > -TOL:
+                    mu += 1
+            else:
+                while t[i] > knot[mu]:
+                    mu += 1
         M[-2] = 1 # the last entry is a dummy-zero which is never used
         for q in range(1,p):
             for j in range(p-q-1, p):
-                k = mu-p+j # 'i'-index in global knot vector (ref Hughes book pg.21)
+                k = mu-p+j   # 'i'-index in global knot vector (ref Hughes book pg.21)
                 if abs(knot[k+q]-knot[k])>TOL:
-                    M[j] = M[j]*float(t[i]-knot[k])/(knot[k+q]-knot[k])
-                else:
+                    if q<p-d:                                               # in case of normal evaluation
+                        M[j] = M[j]*float(t[i]-knot[k])/(knot[k+q]-knot[k])
+                    else:                                                   # in case of derivative evaluation
+                        M[j] = M[j]*float(q)/(knot[k+q]-knot[k])
+                else:                                                       # in case of multiplicative knot
                     M[j] = 0
-                if abs(knot[k+q+1]-knot[k+1])>TOL:
-                    M[j] = M[j] + M[j+1]*float(knot[k+q+1]-t[i])/(knot[k+q+1]-knot[k+1])
+                if abs(knot[k+q+1]-knot[k+1])>TOL:                          # and the same for the second term in the sum
+                    if q<p-d:
+                        M[j] = M[j] + M[j+1]*float(knot[k+q+1]-t[i])/(knot[k+q+1]-knot[k+1])
+                    else:
+                        M[j] = M[j] - M[j+1]*float(q)/(knot[k+q+1]-knot[k+1])
         N[i,(mu-p):mu] = M[0:-1]
     return N
 
@@ -199,14 +220,22 @@ def LinearCurve(x,y=[],z=[]):
     knot = [0]+t+[t[-1]]
     return InterpolateCurve(pts.transpose(), t, knot)
 
-def CubicCurve(x, y=[], z=[]):
+def CubicCurve(x, y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[]):
     """Cubic spline interpolation a list of points by arclength parametrization
     @param x: The x-coordinate of the points to interpolate
-    @type x: List of floats
+    @type x:  List of floats (n points)
     @param y: y-coordinates
-    @type y: List of floats
+    @type y:  List of floats
     @param z: z-coordinates
-    @type z: List of floats
+    @type z:  List of floats
+    @param boundary: Boundary conditions
+    @type boundary:  FREE, NATURAL, HERMITE, PERIODIC or TANGENT
+    @param derX: In case of Hermite or Tangent boundary conditions, one must supply tangent information
+    @type derX:  List of floats (two points for Tangent, n points for Hermite)
+    @param derY: Y-component of tangent information
+    @type derY:  List of floats
+    @param derZ: Z-component of tangent information
+    @type derZ:  List of floats
     @return: Cubic interpolated curve in 3 dimensions
     @rtype: Curve
     """
@@ -218,14 +247,61 @@ def CubicCurve(x, y=[], z=[]):
         pts[2,:] = z
 
     n = len(x)
+
+    # create a knot vector based on arclength discretization
     t   = [0]
     for i in range(1,n):
         x0 = pts[:,i-1]
         x1 = pts[:,i]
         dist = np.linalg.norm(x1-x0)  # eucledian distance between points i and (i-1)
         t.append(t[i-1]+dist)
-    knot = [t[0]]*4 + t[2:-2] + [t[-1]]*4
-    return InterpolateCurve(pts.transpose(), t, knot)
+
+    # modify knot vector for chosen boundary conditions
+    knot = [t[0]]*3 + t + [t[-1]]*3
+    if boundary == FREE:
+        del knot[-5]
+        del knot[4]
+    elif boundary == HERMITE:
+        knot = sorted(knot + t[1:-1])
+
+    # fetch the main system matrix, will be modified to take into account boundary conditions
+    N = getBasis(t,knot)  # matrix
+    pts = pts.transpose() # right-hand-side vector
+
+    # add boundary conditions
+    if boundary==TANGENT or boundary==HERMITE:
+        if boundary == TANGENT:
+            dn  = getBasis([t[0], t[-1]], knot, 1)
+            N   = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
+            pts = np.resize(pts, (pts.shape[0]+2, pts.shape[1]))
+        elif boundary == HERMITE:
+            dn  = getBasis(t, knot, 1)
+            N   = np.resize(N,   (N.shape[0]+n,   N.shape[1]))
+            pts = np.resize(pts, (pts.shape[0]+n, pts.shape[1]))
+        N[n:,:]   = dn
+        pts[n:,0] = derX            # derivative given at start/end (TANGENT)
+        if len(derY) != 0:          # or at all internal knots (HERMITE)
+            pts[n:,1]  = derY
+        if len(derZ) != 0:
+            pts[n:,1]  = derZ
+    elif boundary == PERIODIC:
+        dn   = getBasis([t[0], t[-1]], knot, 1)
+        ddn  = getBasis([t[0], t[-1]], knot, 2)
+        N    = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
+        pts  = np.resize(pts, (pts.shape[0]+2, pts.shape[1]))
+        N[-2,:] =  dn[0,:] -  dn[1,:] # first derivative matching at start/end
+        N[-1,:] = ddn[0,:] - ddn[1,:] # second derivative matching
+    elif boundary == NATURAL:
+        N    = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
+        pts  = np.resize(pts, (pts.shape[0]+2, pts.shape[1]))
+        ddn  = getBasis([t[0], t[-1]], knot, 2)
+        N[-2:,:] = ddn                # second deriative zero at start/end
+
+    # solve system to get controlpoints
+    C = np.linalg.solve(N,pts)
+
+    # wrap it all into a GoTools curve and return
+    return GoTools.Curve(4, knot, C.tolist(), False);
 
 def UniformCubicCurve(x, y=[], z=[]):
     """Cubic spline interpolation a list of points by uniform parametrization
