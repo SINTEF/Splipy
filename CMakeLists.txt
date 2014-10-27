@@ -175,3 +175,8 @@ FOREACH(TESTFILE ${GEOMOD_TESTFILES})
   STRING(REGEX REPLACE ".reg" ".py" TESTSCRIPT ${TESTFILE})
   ADD_TEST(${TESTFILE} ${CMAKE_BINARY_DIR}/dotest ${CMAKE_BINARY_DIR}/geoModeler ${PROJECT_SOURCE_DIR}/scripts/${TESTSCRIPT} ${PROJECT_SOURCE_DIR}/tests/${TESTFILE})
 ENDFOREACH()
+
+add_custom_target(check-commits COMMAND ${CMAKE_COMMAND}
+                                        -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
+                                        -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
+                                        -P ${PROJECT_SOURCE_DIR}/cmake/Scripts/CheckCommits.cmake)
