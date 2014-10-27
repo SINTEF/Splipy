@@ -1,14 +1,14 @@
 __doc__ = 'Implementation of various interpolation schemes.'
 
-import GoTools 
-import GoTools.CurveFactory 
+import GoTools
+import GoTools.CurveFactory
 import numpy as np
 
 def getBasis(t, knot):
     """Get all basis functions evaluated in a given set of points
     @param t: The parametric coordinates to perform evaluation
     @type t:  List of floats
-    @param t: Open knot vector corresponding to the basis functions 
+    @param t: Open knot vector corresponding to the basis functions
     @type t:  List of floats
     @return:  Matrix of all basis functions in all points
     @rtype:   Numpy.Matrix
@@ -24,7 +24,7 @@ def getBasis(t, knot):
         M = np.zeros(p+1)    # temp storage to keep all the function evaluations
         mu = p           # index of last non-zero basis function
         if t[i]==knot[-1]:   # special case the endpoint
-            mu = n  
+            mu = n
         else:
             while knot[mu]<t[i]:
                 mu += 1
@@ -44,7 +44,7 @@ def getBasis(t, knot):
 def InterpolateCurve(x, t, knot):
     """Interpolate a curve at a given set of points. User is responsible that the input problem is well posed
     @param x:    The physical coordinates of the points to interpolate. Size nxd, where d is the dimension and n is the number of points
-    @type x:     Numpy.Matrix 
+    @type x:     Numpy.Matrix
     @param t:    The parametric coordinates of the points to interpolate. Length n
     @type t:     List of floats
     @param knot: Open knot vector to use for interpolation. Size n+p, where p is the order to use for interpolation
@@ -59,7 +59,7 @@ def InterpolateCurve(x, t, knot):
 def ApproximateCurve(x, t, knot):
     """Approximate a curve of m discrete points using a spline of n control points, where n<m
     @param x:    The physical coordinates of the points to approximate. Size mxd, where d is the dimension and m is the number of points
-    @type x:     Numpy.Matrix 
+    @type x:     Numpy.Matrix
     @param t:    The parametric coordinates of the points above. Length m
     @type t:     List of floats
     @param knot: Open knot vector to use for approximation. Size n+p, where p is the spline order and n is the number of control points
@@ -70,11 +70,11 @@ def ApproximateCurve(x, t, knot):
     N = getBasis(t,knot)
     C = np.linalg.solve(N.transpose()*N, N.transpose()*x)
     return C
-    
+
 
 
 def Linear(x,y=[],z=[]):
-    """Linear interpolate a list of points (arclength parametrization) 
+    """Linear interpolate a list of points (arclength parametrization)
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats
     @param y: y-coordinates
@@ -104,7 +104,7 @@ def Linear(x,y=[],z=[]):
     return GoTools.Curve(2, knot, C.tolist(), False);
 
 def Cubic(x, y=[], z=[]):
-    """Cubic spline interpolation a list of points by arclength parametrization 
+    """Cubic spline interpolation a list of points by arclength parametrization
     @param x: The x-coordinate of the points to interpolate
     @type x: List of floats
     @param y: y-coordinates
@@ -155,4 +155,4 @@ def UniformCubic(x, y=[], z=[]):
     knot = [t[0]]*4 + t[2:-2] + [t[-1]]*4
     C = InterpolateCurve(pts.transpose(), t, knot)
     return GoTools.Curve(4, knot, C.tolist(), False);
-    
+
