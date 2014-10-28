@@ -283,7 +283,7 @@ def CubicCurve(x, y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[]):
         if len(derY) != 0:          # or at all internal knots (HERMITE)
             pts[n:,1]  = derY
         if len(derZ) != 0:
-            pts[n:,1]  = derZ
+            pts[n:,2]  = derZ
     elif boundary == PERIODIC:
         dn   = getBasis([t[0], t[-1]], knot, 1)
         ddn  = getBasis([t[0], t[-1]], knot, 2)
