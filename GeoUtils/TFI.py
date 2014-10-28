@@ -1,353 +1,264 @@
-__doc__ = 'Implementation of transfinite interpolation algorithms.'
-
-from CurveUtils import *
 from GoTools import *
-from GoTools.SurfaceFactory import *
-from GoTools.CurveFactory import *
+# from GoTools.CurveFactory import *
+# from GoTools.SurfaceFactory import *
+from GeoUtils.CurveUtils import *
+import GeoUtils.Interpolate as ip
 
-def TFIcurve(curve, j1=1, r=0.9):
-  pts1 = GetCurvePoints(curve[0])
-  pts2 = GetCurvePoints(curve[1])
-  pts3 = GetCurvePoints(curve[2])
-  pts4 = GetCurvePoints(curve[3])
+from itertools import product, chain
+from numpy import cumsum
+from operator import itemgetter
 
-  imax = len(pts1)
-  jmax = len(pts3)
 
-  ximin  = CurveLengthParametrization(pts1,True)
-  ximax  = CurveLengthParametrization(pts2,True)
-
-  etamin2 = CurveLengthParametrization(pts3,True)
-  etamax2 = CurveLengthParametrization(pts4,True)
-
-  knots3 = curve[2].GetKnots()
-  knots4 = curve[3].GetKnots()
-  etamin = []
-  etamax = []
-  smin = etamin2[jmax-1]-etamin2[j1-1]
-  smax = etamax2[jmax-1]-etamax2[j1-1]
-  for j in range(j1-1,jmax):
-    etamin.append((etamin2[j]-etamin2[j1-1])/smin)
-    etamax.append((etamax2[j]-etamax2[j1-1])/smax)
-
-  pts  = []
-  pts.append(pts3[j1])
-  for i in range(1,imax-1):
-    p_ij = 1.0 - (ximax[i]-ximin[i])*(etamax[1]-etamin[1])
-    bxi  = (ximin[i] + etamin[1]*(ximax[i]-ximin[i]))/p_ij
-    beta = (etamin[1] + ximin[i]*(etamax[1]-etamin[1]))/p_ij
-
-    pt = (1.0-beta)*pts1[i] + beta*pts2[i] + (1-bxi)*pts3[j1] + bxi*pts4[j1]
-    pt = pt - (1.0-beta)*(1.0-bxi)*pts1[0] - beta*(1.0-bxi)*pts3[-1]
-    pt = pt - (1.0-beta)*bxi*pts1[-1] - bxi*beta*pts4[-1]
-    pts.append(pt)
-
-  pts.append(pts4[j1])
-
-  knots = CurveLengthParametrization(pts,False)
-  curve  = InterpolateCurve(pts,knots)
-  return pts, curve
-
-def TFISurface(curve):
-  """Construct a surface from four edge curves by using transfinite interpolation
-     @param curves: Surface edges
-     @type curves: List of Curve
-     @param perodic1: Whether or not surface is periodic in first direction
-     @type periodic1: Boolean
-     @param periodic2: Whether or not surface is periodic in second direction
-     @type periodic2: Boolean
-     @return: New surface
-     @rtype: Surface
+def LinearSurface(curves, eval_xi=None, eval_eta=None):
+  """Performs linear transfinite interpolation between four curves to form a surface.
+  @param curves: The curves. Curves 1 and 2 run from curve 3 to curve 4, and curves
+  3 and 4 run from curve 1 to curve 2.
+  @type curves: List of Curve
+  @param eval_xi: Evaluation indices in the u-direction (optional, default all)
+  @type eval_xi: List of integer, or None
+  @param eval_eta: Evaluation indices in the v-direction (optional, default all)
+  @type eval_eta: List of integer, or None
+  @return: The generated surface (if eval_xi and eval_eta are not given) or the point cloud
+  @rtype: Surface or List of Point
   """
-  # Knots without multiplicity
-  knotsu = curve[0].GetKnots()
-  knotsv = curve[1].GetKnots()
 
-  # Span of parameter spaces
-  ulen = knotsu[-1]-knotsu[0]
-  vlen = knotsv[-1]-knotsv[0]
+  pts_ximin, pts_ximax, pts_etamin, pts_etamax = map(_GetExtPoints, curves)
+  nxi  = len(pts_ximin)  - 2
+  neta = len(pts_etamin) - 2
+  ximin, ximax, etamin, etamax = map(
+    lambda p: CurveLengthParametrization(p, True),
+    [pts_ximin, pts_ximax, pts_etamin, pts_etamax])
 
-  # Points for transfinite interpolation
-  # Corner points
-  P1 = curve[0].Evaluate(knotsu[0])
-  P2 = curve[1].Evaluate(knotsu[-1])
-  P3 = curve[2].Evaluate(knotsu[0])
-  P4 = curve[3].Evaluate(knotsu[-1])
+  def ConvertEval(kts, length):
+    ret = []
+    for k in kts:
+      if k == 0:
+        ret.append(k)
+      elif k == length - 1:
+        ret.append(k+2)
+      else:
+        ret.append(k+1)
+    return ret
 
-  pts = []
-  for eta in knotsv:
-    c2 = curve[1].Evaluate(eta)
-    c4 = curve[3].Evaluate(eta)
+  # Evaluate at all points if not specified
+  interpolate = not eval_xi and not eval_eta
+  if eval_xi is None:
+    eval_xi = range(0, nxi+2)
+  else:
+    eval_xi = ConvertEval(eval_xi, nxi)
+  if eval_eta is None:
+    eval_eta = range(0, neta+2)
+  else:
+    eval_eta = ConvertEval(eval_eta, neta)
 
-    v = (eta-knotsv[0])/vlen
-    for xi in knotsu:
-      c1 = curve[0].Evaluate(xi)
-      c3 = curve[2].Evaluate(xi)
+  points = []
+  for eta, xi in product(eval_eta, eval_xi):
+    emin, emax, pemin, pemax = map(itemgetter(eta), [etamin, etamax, pts_etamin, pts_etamax])
+    xmin, xmax, pxmin, pxmax = map(itemgetter(xi),  [ximin,  ximax,  pts_ximin,  pts_ximax])
 
-      u = (xi-knotsu[0])/ulen
-      c = (1.0-v)*c1 + v*c3 + (1.0-u)*c2 + u*c4
-      c = c - (1.0-u)*(1.0-v)*P2 + u*v*P3 - u*(1.0-v)*P1 - (1.0-u)*v*P4
-      pts.append(c)
+    # Solve a small linear system to determine the optimal placement of the node.
+    # Make a drawing, it will become clear.
+    # [    1.0     xmin-xmax ] [ x ]     [ xmin ]
+    # [                      ] [   ]  =  [      ]
+    # [ emin-emax     1.0    ] [ y ]     [ xmax ]
+    det = 1.0 - (xmax - xmin) * (emax - emin)
+    x = (xmin + emin * (xmax - xmin)) / det
+    y = (emin + xmin * (emax - emin)) / det
 
-  # Uniform knot vectors
-  dxi = 1.0/(len(knotsu)-1)
-  knots1 = [i*dxi for i in range(len(knotsu))]
-  deta = 1.0/(len(knotsv)-1)
-  knots2 = [i*deta for i in range(len(knotsu))]
+    pt = (1-y)*pxmin + y*pxmax + (1-x)*pemin + x*pemax
+    pt -= (1-x)*(1-y)*pts_ximin[0] + x*(1-y)*pts_ximin[-1]
+    pt -= (1-x)*y*pts_ximax[0] + x*y*pts_ximax[-1]
+    points.append(pt)
 
-  surface = InterpolateSurface(pts, knots1, knots2)
-  return surface
+  if interpolate:
+    return ip.InterpolateSurface(points,
+                                 [0, 0.5] + range(1, nxi-1) + [nxi-1.5, nxi-1],
+                                 [0, 0.5] + range(1, neta-1) + [neta-1.5, neta-1],
+                                 [0]*3 + range(nxi) + [nxi-1]*3,
+                                 [0]*3 + range(neta) + [neta-1]*3)
+  return points
 
-def TFIGradedSurface(curve, periodic1 = False, periodic2 = False):
-  """Construct a graded surface from four edge curves by using transfinite interpolation
-     @param curve: Surface edges
-     @type curve: List of Curve
-     @param perodic1: Whether or not surface is periodic in first direction
-     @type periodic1: Boolean
-     @param periodic2: Whether or not surface is periodic in second direction
-     @type periodic2: Boolean
-     @return: New surface
-     @rtype: Surface
+
+def OrthogonalSurface(curves, init_normalf, normalf=None, ranges=[],
+                      fac_blend=0.9, fac_smooth=0.98, nsweeps=0, bnd_layer=0):
+  """Performs orthogonalized transfinite interpolation between four curves to
+  form a surface.
+  @param curves: The curves, Curves 1 and 2 run from curve 3 to curve 4, and curves
+  3 and 4 run from curve 1 to curve 2. Orthogonalization is performed near curve 1.
+  @type curves: List of Curve
+  @param init_normalf: Function to compute the intial normal vectors.
+  @type init_normalf: Function
+  @param normalf: (Optional) Function to compute curve normals during the intermediate
+  stages Use this for performance if possible. Must be a function that takes two curves,
+  crv_prev and crv (the last two iterations) and returns the normals of crv, pointing
+  away from crv_prev.
+  @type normalf: Function or None
+  @param ranges: (Optional) A list of point ranges within which Laplacian smoothing
+  will be performed. Each range is a tuple of the form (start, end) following
+  regular Python range convention (i.e. start is included, end is not).
+  @type ranges: List of (Integer, Integer)
+  @param fac_blend: Determines how quickly the surface blends into linear TFI. If close
+  to 1, it will happen slowly. If close to 0, it will happen (very) quickly.
+  @type fac_blend: Float
+  @param fac_smooth: Determines how quickly the strength of the Laplacian smoothing will
+  increase. If close to 1, it will happen slowly. If close to 0, it will happen (very)
+  quickly.
+  @param nsweeps: (Optional, default 0) Number of Laplacian smoothing sweeps to perform.
+  @type nsweeps: Integer
+  @param bnd_layer: (Optional, default 0) Number of elements in the boundary layer.
+  Within this layer, there will be no blending with linear TFI and no smoothing.
+  @type bnd_layer: Integer
+  @return: The generated surface
+  @rtype: Surface
   """
-#     - 4 4 4 4 4 4 -
-#     1             2
-#     1             2
-#     1             2
-#     1             2
-#     - 3 3 3 3 3 3 -
 
-  # Smoothing factor for grid size
-  factor = 0.8
+  if normalf is None:
+    # The default normalf function computes (t % v) % t, where
+    # - t is the tangent vector at a point of the current curve
+    # - v is the difference between two corresponding points of
+    #   the current and previous curves
+    # - % is the cross product
+    def normalf(crv_prev, crv, kts):
+      pre = [crv_prev.Evaluate(k) for k in kts]
+      post = [crv.Evaluate(k) for k in kts]
+      outward = [(pb - pa).Normalize() for pa, pb in zip(pre, post)]
+      tangents = [crv.EvaluateTangent(k) for k in crv.GetKnots()]
+      return [((tng % out) % tng).Normalize() for tng, out in zip(tangents, outward)]
 
-  # Get knot vectots
-  knots1 = curve[0].GetKnots()
-  knots2 = curve[1].GetKnots()
-  knots3 = curve[2].GetKnots()
-  knots4 = curve[3].GetKnots()
+  crv, endcurve, left, right = curves
+  ekts = _GetExtKnots(crv)
+  startpts, endpts = map(_GetExtPoints, [crv, endcurve])
 
-  # Get points
-  x1 = []
-  y1 = []
-  pts1 = []
-  for xi in knots1:
-    pt = curve[0].Evaluate(xi)
-    pts1.append(pt)
-    x1.append(pt[0])
-    y1.append(pt[1])
-  x2 = []
-  y2 = []
-  pts2 = []
-  for xi in knots2:
-    pt = curve[1].Evaluate(xi)
-    pts2.append(pt)
-    x2.append(pt[0])
-    y2.append(pt[1])
-  x3 = []
-  y3 = []
-  pts3 = []
-  for eta in knots3:
-    pt = curve[2].Evaluate(eta)
-    pts3.append(pt)
-    x3.append(pt[0])
-    y3.append(pt[1])
-  x4 = []
-  y4 = []
-  pts4 = []
-  for eta in knots4:
-    pt = curve[3].Evaluate(eta)
-    pts4.append(pt)
-    x4.append(pt[0])
-    y4.append(pt[1])
+  left = left.Clone()
+  lkts = left.GetKnots()
+  left.InsertKnot((lkts[0] + lkts[1])/2)
+  left.InsertKnot((lkts[-2] + lkts[-1])/2)
 
-  # Curve length parametrization
-  ximin  = CurveLengthParametrization(pts1,True)
-  ximax  = CurveLengthParametrization(pts2,True)
-  etamin = CurveLengthParametrization(pts3,True)
-  etamax = CurveLengthParametrization(pts4,True)
+  right = right.Clone()
+  rkts = right.GetKnots()
+  right.InsertKnot((rkts[0] + rkts[1])/2)
+  right.InsertKnot((rkts[-2] + rkts[-1])/2)
 
-  x01 = x1
-  y01 = y1
-  x02 = x2
-  y02 = y2
-  x03 = x3
-  y03 = y3
-  x04 = x4
-  y04 = y4
+  pts = [startpts]
+  normals = init_normalf(crv, _GetExtKnots(crv))
 
-  imax = len(x1)
-  jmax = len(x3)
+  r_blend, r_smooth = 1.0, 1.0
+  for j in xrange(1, len(left.GetKnots()) - 1):
 
-  xvec = []
-  yvec = []
-  pts  = []
-  for j in range(0,jmax):
-    x01m = x01
-    y01m = y01
-    x02m = x02
-    y02m = y02
-    for i in range(0,imax):
-      x03m = x03
-      y03m = y03
-      x04m = x04
-      y04m = y04
+    # Increase strength of blending and smoothing
+    if j > bnd_layer:
+      r_blend *= fac_blend**2
+      r_smooth *= fac_smooth**2
 
-      p_ij = 1.0 - (ximax[i]-ximin[i])*(etamax[j]-etamin[j])
-      bxi  = (ximin[i] + etamin[j]*(ximax[i]-ximin[i]))/p_ij
-      beta = (etamin[j] + ximin[i]*(etamax[j]-etamin[j]))/p_ij
+    cl = left.GetSubCurve(left.GetKnots()[j-1], left.GetKnots()[-1])
+    cr = right.GetSubCurve(right.GetKnots()[j-1], right.GetKnots()[-1])
 
-      x = (1.0-beta)*x01m[i] + beta*x02m[i] + (1-bxi)*x03m[j] + bxi*x04m[j]
-      x = x - (1.0-beta)*(1.0-bxi)*x01m[0] - beta*(1.0-bxi)*x03m[-1]
-      x = x - (1.0-beta)*bxi*x01m[-1] - bxi*beta*x04m[-1]
-      xvec.append(x)
+    # Simple orthogonal projection
+    ptso = _OrthogonalCurve(crv, cl.Evaluate(cr.GetKnots()[1]),
+                            cr.Evaluate(cr.GetKnots()[1]), normals)
 
-      y = (1.0-beta)*y01m[i] + beta*y02m[i] + (1-bxi)*y03m[j] + bxi*y04m[j]
-      y = y - (1.0-beta)*(1.0-bxi)*y01m[0] - beta*(1.0-bxi)*y03m[-1]
-      y = y - (1.0-beta)*bxi*y01m[-1] - bxi*beta*y04m[-1]
-      yvec.append(y)
+    # Perform smoothing if needed
+    if j > bnd_layer and nsweeps > 0:
+      ptso = _CurveSmoothing(ptso, ranges, nsweeps=nsweeps, r=1.0-r_smooth)
 
-      pt = Point(list=[x,y,0.0])
-      pts.append(pt)
+    # Linear TFI
+    ptsi = LinearSurface([crv, endcurve, cl, cr], eval_eta=[1])
 
-  # Curve length parametrization
-  xi = []
-  s = 0.0
-  xi.append(s)
-  for i in range(0,imax-1):
-    ds = abs(pts1[i+1]-pts1[i])
-    s = s + ds
-    xi.append(s)
+    # Blend the two together
+    ptsc = [r_blend*pto + (1.0-r_blend)*pti for pto, pti in zip(ptso, ptsi)]
 
-  eta = []
-  s = 0.0
-  eta.append(s)
-  for j in range(0,jmax-1):
-    ds = abs(pts3[j+1]-pts3[j])
-    s = s + ds
-    eta.append(s)
+    # Create the new and the past curves
+    crv_prev = crv
 
-  # Interpolate points
-  surface  = InterpolateSurface(pts,xi,eta)
-  return surface
+    crv = ip.InterpolateCurve(ptsc, ekts, [ekts[0]]*4 + ekts[2:-2] + [ekts[-1]]*4)
 
-def _GetCurvePoints(curve):
-  knots = curve.GetKnots()
+    # Update the normals and save the new points
+    normals = normalf(crv_prev, crv, ekts)
+    pts.append(ptsc)
 
-  pts = []
-  for xi in knots:
-    pts.append(curve.Evaluate(xi))
+  pts.append(endpts)
 
-  return pts
+  nxi = len(ekts) - 2
+  neta = len(lkts)
+  return ip.InterpolateSurface(list(chain.from_iterable(pts)),
+                               [0, 0.5] + range(1, nxi-1) + [nxi-1.5, nxi-1],
+                               [0, 0.5] + range(1, neta-1) + [neta-1.5, neta-1],
+                               [0]*3 + range(nxi) + [nxi-1]*3,
+                               [0]*3 + range(neta) + [neta-1]*3)
 
-def _GetTangents(curve, normalize = False):
-  tangents = []
-  knots = curve.GetKnots()
-  for xi in knots:
-    tau = curve.EvaluateTangent(xi)
-    if (normalize):
-      tau = tau/abs(tau)
-    tangents.append(tau)
 
-  return tangents
+# def LinearVolume(surfaces, eval_xi=None, eval_eta=None, eval_zeta=None, interpolate=True, order=4):
+#   """Performs linear transfinite interpolation between six surfaces to form a volume.
+#   @param surfaces: The surfaces. Surfaces 1 and 2, 3 and 4, as well as 5 and 6 are
+#   opposite from each other and parametrized in the same direction. The first parameter
+#   direction of surfaces 1 through 4 runs from surface 5 to surface 6. The first parameter
+#   direction of surfaces 5 and 6 runs from surface 3 to surface 4.
+#   @type curves: List of Surface
+#   @param eval_xi: Evaluation indices in the u-direction (optional, default all)
+#   @type eval_xi: List of integer, or None
+#   @param eval_eta: Evaluation indices in the v-direction (optional, default all)
+#   @type eval_eta: List of integer, or None
+#   @param eval_zeta: Evaluation indices in the w-direction (optional, default all)
+#   @type eval_zeta: List of integer, or None
+#   @param interpolate: If true, returns an interpolated surface (optional, default true)
+#   @type interpolate: Bool
+#   @param order: Interpolation order, if interpolate is true (optional, default 4)
+#   @type order: Integer
+#   @return: The generated volume (if interpolate is true) or the point cloud
+#   @rtype: Volume or List of Point
+#   """
 
-def _GetNormals(curve,righthandsystem=True,normalize=False):
-  tangents = _GetTangents(curve,normalize)
-  normals = []
-  for t in tangents:
-    if (righthandsystem):
-      normals.append(Point(list=[-t[1],t[0],0.0]))
-    else:
-      normals.append(Point(list=[t[1],-t[0],0.0]))
-
-  return normals
-
-def _OrthogonalCurve(curve1,curve2,curve3,curve4,j=1):
-  pts1 = GetCurvePoints(curve1)
-  pts2 = GetCurvePoints(curve2)
-  pts3 = GetCurvePoints(curve3)
-  pts4 = GetCurvePoints(curve4)
-
-  n1 = len(pts1)
-
-  dy1 = abs(pts3[j]-pts3[j-1])
-  dy2 = abs(pts4[j]-pts4[j-1])
-  s1  = abs(pts3[-1]-pts3[j-1])
-  s2  = abs(pts4[-1]-pts4[j-1])
-
-  sn1 = CurveLengthParametrization(pts1,True)
-  normal1 = _GetNormals(curve1,True,True)
-
-  pts = []
-  pts.append(pts3[j])
-  for i in range(1,n1-1):
-    dy = sn1[i]*dy2 + (1.0-sn1[i])*dy1
-    pts.append(pts1[i]+normal1[i]*dy)
-  pts.append(pts4[j])
-
-  knots = CurveLengthParametrization(pts)
-  curve = InterpolateCurve(pts,knots)
-  return pts, curve
 
 def _UniformParametrization(pts):
-  n = len(pts)
-  knots = range(0,n)
+  return range(0, len(pts))
 
-  return knots
 
-def TFIOrthogonalSurface(curve ,rorto=0.9, no=0, r=0.0, nr=0, re=0.05, nre=0, ne1=0, ne2=0):
-  pts1 = GetCurvePoints(curve[0])
-  pts2 = GetCurvePoints(curve[1])
-  pts3 = GetCurvePoints(curve[2])
-  pts4 = GetCurvePoints(curve[3])
+def _OrthogonalCurve(curve, pa, pb, normals):
+  pre = _GetExtPoints(curve)
+  knots = CurveLengthParametrization(pre, True)
+  da, db = abs(pa - pre[0]), abs(pb - pre[-1])
 
-  n1 = len(pts1)
-  n2 = len(pts3)
+  post = [p + n * ((1.0-k)*da + k*db) for p, n, k in zip(pre, normals, knots)[1:-1]]
+  return [pa] + post + [pb]
 
-  pts = pts1
 
-  factoro = 1.0
-  factor = 1.0
-  factore = 1.0
-  crv = curve[0].Clone()
-  for j in range(1,n2-1):
-    ptsi, crvi = TFIcurve([crv,curve[1],curve[2],curve[3]],j,1.0)
-    WriteG2('crv.g2', crvi)
-    ptso, crvo = _OrthogonalCurve(crv,curve[1],curve[2],curve[3],j)
+def _CurveSmoothing(pts, ranges, nsweeps=1, r=0.2):
+  orig_knots = CurveLengthParametrization(pts, False)
+  curve = ip.InterpolateCurve(pts, orig_knots, [orig_knots[0]]*4 + orig_knots[2:-2] + [orig_knots[-1]]*4)
+  knots = list(orig_knots)
 
-    if (j > no):
-      factoro = factoro*rorto*rorto
-      factor = factor*r
-      factore = factore*re*re
+  N = len(orig_knots)
 
-    ptsc = []
-    for i in range(0,n1):
-      pt = factoro*ptso[i] + (1.0-factoro)*ptsi[i]
-      ptsc.append(pt)
+  for _ in xrange(0, nsweeps):
+    ks = list(knots)
 
-    knotsc = CurveLengthParametrization(ptsc)
-    ds = knotsc[-1]/(len(knotsc)-1)
-    crv = InterpolateCurve(ptsc,knotsc)
+    for rng in ranges:
+      indices = range(rng[0], rng[1])[1:-1]
+      for i in indices:
+        ks[i%N] = knots[i%N] + r/2 * (knots[(i+1)%N] + knots[(i-1)%N] - 2*knots[i%N])
 
-    ptsm = GetCurvePoints(crv)
-    kn = crv.GetKnots()
+    knots = ks
 
-    if (j > no):
-      if ((nre > 0) or (nr>0)):
-        if (nre > 0):
-          crv1 = crv.Clone()
-          crv = LaplaceSmoothingEnds(crv1,ne1,ne2,factore,nre)
+  return [pts[0]] + [curve.Evaluate(k) for k in knots[1:-1]] + [pts[-1]]
 
-        params = crv.GetKnots()
-        for xi in params:
-          pts.append(crv.Evaluate(xi))
-    else:
-      for pt in ptsc:
-        pts.append(pt)
 
-  for pt in pts2:
-    pts.append(pt)
+def _GetSurfacePoints(srf):
+  kus, kvs = srf.GetKnots()
+  return [[srf.Evaluate(ku, kv) for kv in kvs] for ku in kus]
 
-  xi = _UniformParametrization(pts1)
-  eta = _UniformParametrization(pts3)
 
-  surface = InterpolateSurface(pts,xi,eta)
-  return surface
+def _PtsToLists(pts):
+  return [map(itemgetter(i), pts) for i in xrange(3)]
+
+
+def _GetExtPoints(curve):
+  return [curve.Evaluate(k) for k in _GetExtKnots(curve)]
+
+
+def _GetExtKnots(thing):
+  def fix(kts):
+    return [kts[0], (kts[0]+kts[1])/2] + kts[1:-1] + [(kts[-2]+kts[-1])/2, kts[-1]]
+  kts = thing.GetKnots()
+  if isinstance(kts, tuple):
+    return tuple([fix(ks) for ks in kts])
+  return fix(kts)
