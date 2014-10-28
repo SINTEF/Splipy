@@ -282,20 +282,26 @@ def CubicCurve(x, y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[]):
         pts[n:,0] = derX            # derivative given at start/end (TANGENT)
         if len(derY) != 0:          # or at all internal knots (HERMITE)
             pts[n:,1]  = derY
+        else:
+            pts[n:,1]  = 0
         if len(derZ) != 0:
             pts[n:,2]  = derZ
+        else:
+            pts[n:,2]  = 0
     elif boundary == PERIODIC:
         dn   = getBasis([t[0], t[-1]], knot, 1)
         ddn  = getBasis([t[0], t[-1]], knot, 2)
         N    = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
         pts  = np.resize(pts, (pts.shape[0]+2, pts.shape[1]))
-        N[-2,:] =  dn[0,:] -  dn[1,:] # first derivative matching at start/end
-        N[-1,:] = ddn[0,:] - ddn[1,:] # second derivative matching
+        N[-2,:]    =  dn[0,:] -  dn[1,:] # first derivative matching at start/end
+        N[-1,:]    = ddn[0,:] - ddn[1,:] # second derivative matching
+        pts[-2:,:] = 0
     elif boundary == NATURAL:
         N    = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
         pts  = np.resize(pts, (pts.shape[0]+2, pts.shape[1]))
         ddn  = getBasis([t[0], t[-1]], knot, 2)
-        N[-2:,:] = ddn                # second deriative zero at start/end
+        N[-2:,:]   = ddn                # second derivative zero at start/end
+        pts[-2:,:] = 0
 
     # solve system to get controlpoints
     C = np.linalg.solve(N,pts)
