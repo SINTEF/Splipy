@@ -225,7 +225,8 @@ def LinearCurve(x=[], y=[], z=[], pts=[]):
     knot = [0]+t+[t[-1]]
     return InterpolateCurve(pts.transpose(), t, knot)
 
-def CubicCurve(x=[], y=[], z=[], pts=[], boundary=FREE, derX=[], derY=[], derZ=[], der=[]):
+def CubicCurve(x=[], y=[], z=[], pts=[], t=[],
+               boundary=FREE, derX=[], derY=[], derZ=[], der=[]):
     """Cubic spline interpolation a list of points by arclength parametrization
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats (n points)
@@ -235,6 +236,9 @@ def CubicCurve(x=[], y=[], z=[], pts=[], boundary=FREE, derX=[], derY=[], derZ=[
     @type z:  List of floats
     @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
     @type pts: List of Point
+    @param t: The parametric coordinates of the points above. Length n. If not given,
+              arclength parametrization is used.
+    @type t: List of floats
     @param boundary: Boundary conditions
     @type boundary:  FREE, NATURAL, HERMITE, PERIODIC or TANGENT
     @param derX: In case of Hermite or Tangent boundary conditions, one must supply tangent information
@@ -263,12 +267,13 @@ def CubicCurve(x=[], y=[], z=[], pts=[], boundary=FREE, derX=[], derY=[], derZ=[
     n = len(x)
 
     # create a knot vector based on arclength discretization
-    t   = [0]
-    for i in range(1,n):
-        x0 = pts[:,i-1]
-        x1 = pts[:,i]
-        dist = np.linalg.norm(x1-x0)  # eucledian distance between points i and (i-1)
-        t.append(t[i-1]+dist)
+    if not t:
+        t = [0]
+        for i in range(1,n):
+            x0 = pts[:,i-1]
+            x1 = pts[:,i]
+            dist = np.linalg.norm(x1-x0)  # eucledian distance between points i and (i-1)
+            t.append(t[i-1]+dist)
 
     # modify knot vector for chosen boundary conditions
     knot = [t[0]]*3 + t + [t[-1]]*3
