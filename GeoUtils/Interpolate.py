@@ -2,6 +2,7 @@ __doc__ = 'Implementation of various interpolation schemes.'
 
 import GoTools
 import numpy as np
+from operator import itemgetter
 
 FREE=1
 NATURAL=2
@@ -191,7 +192,7 @@ def ApproximateSurface(x, u, v, knotU, knotV):
                 k+=1
     return GoTools.Surface(p,q, knotU, knotV, controlpts.tolist(), False)
 
-def LinearCurve(x,y=[],z=[]):
+def LinearCurve(x=[], y=[], z=[], pts=[]):
     """Linear interpolate a list of points (arclength parametrization)
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats
@@ -199,9 +200,13 @@ def LinearCurve(x,y=[],z=[]):
     @type y:  List of floats
     @param z: z-coordinates
     @type z:  List of floats
+    @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
+    @type pts: List of Point
     @return:  Linear interpolated curve in 3 dimensions
     @rtype:   Curve
     """
+    if pts:
+        x, y, z = [map(itemgetter(i), pts) for i in xrange(3)]
 
     pts = np.matrix(np.zeros((3,len(x))))
     pts[0,:] = x
@@ -220,7 +225,7 @@ def LinearCurve(x,y=[],z=[]):
     knot = [0]+t+[t[-1]]
     return InterpolateCurve(pts.transpose(), t, knot)
 
-def CubicCurve(x, y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[]):
+def CubicCurve(x=[], y=[], z=[], pts=[], boundary=FREE, derX=[], derY=[], derZ=[], der=[]):
     """Cubic spline interpolation a list of points by arclength parametrization
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats (n points)
@@ -228,6 +233,8 @@ def CubicCurve(x, y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[]):
     @type y:  List of floats
     @param z: z-coordinates
     @type z:  List of floats
+    @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
+    @type pts: List of Point
     @param boundary: Boundary conditions
     @type boundary:  FREE, NATURAL, HERMITE, PERIODIC or TANGENT
     @param derX: In case of Hermite or Tangent boundary conditions, one must supply tangent information
@@ -236,9 +243,16 @@ def CubicCurve(x, y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[]):
     @type derY:  List of floats
     @param derZ: Z-component of tangent information
     @type derZ:  List of floats
+    @param der:  Derivatives (supersedes derX, derY and derZ)
+    @type der:   List of Point
     @return: Cubic interpolated curve in 3 dimensions
     @rtype: Curve
     """
+    if pts:
+        x, y, z = [map(itemgetter(i), pts) for i in xrange(3)]
+    if der:
+        derX, derY, derZ = [map(itemgetter(i), der) for i in xrange(3)]
+
     pts = np.matrix(np.zeros((3,len(x))))
     pts[0,:] = x
     if(len(y) != 0):
@@ -309,7 +323,7 @@ def CubicCurve(x, y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[]):
     # wrap it all into a GoTools curve and return
     return GoTools.Curve(4, knot, C.tolist(), False);
 
-def UniformCubicCurve(x, y=[], z=[]):
+def UniformCubicCurve(x=[], y=[], z=[], pts=[]):
     """Cubic spline interpolation a list of points by uniform parametrization
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats
@@ -317,9 +331,14 @@ def UniformCubicCurve(x, y=[], z=[]):
     @type y:  List of floats
     @param z: z-coordinates
     @type z:  List of floats
+    @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
+    @type pts: List of Point
     @return:  Cubic interpolated curve in 3 dimensions
     @rtype:   Curve
     """
+    if pts:
+        x, y, z = [map(itemgetter(i), pts) for i in xrange(3)]
+
     pts = np.matrix(np.zeros((3,len(x))))
     pts[0,:] = x
     if(len(y) != 0):
