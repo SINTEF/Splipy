@@ -192,8 +192,8 @@ def ApproximateSurface(x, u, v, knotU, knotV):
                 k+=1
     return GoTools.Surface(p,q, knotU, knotV, controlpts.tolist(), False)
 
-def LinearCurve(x=[], y=[], z=[], pts=[]):
-    """Linear interpolate a list of points (arclength parametrization)
+def LinearCurve(x=[], y=[], z=[], pts=[], t=[]):
+    """Linearly interpolate a list of points.
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats
     @param y: y-coordinates
@@ -202,6 +202,9 @@ def LinearCurve(x=[], y=[], z=[], pts=[]):
     @type z:  List of floats
     @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
     @type pts: List of Point
+    @param t: The parametric coordinates of the points above. Length n. If not given,
+              arclength parametrization is used.
+    @type t: List of floats
     @return:  Linear interpolated curve in 3 dimensions
     @rtype:   Curve
     """
@@ -215,19 +218,22 @@ def LinearCurve(x=[], y=[], z=[], pts=[]):
     if(len(z) != 0):
         pts[2,:] = z
 
-    n = len(x)
-    t   = [0]
-    for i in range(1,n):
-        x0 = pts[:,i-1]
-        x1 = pts[:,i]
-        dist = np.linalg.norm(x1-x0)  # eucledian distance between points i and (i-1)
-        t.append(t[i-1]+dist)
-    knot = [0]+t+[t[-1]]
+    if not t:
+        n = len(x)
+        t   = [0]
+        for i in range(1,n):
+            x0 = pts[:,i-1]
+            x1 = pts[:,i]
+            dist = np.linalg.norm(x1-x0)  # eucledian distance between points i and (i-1)
+            t.append(t[i-1]+dist)
+
+    knot = [t[0]] + t + [t[-1]]
+
     return InterpolateCurve(pts.transpose(), t, knot)
 
 def CubicCurve(x=[], y=[], z=[], pts=[], t=[],
                boundary=FREE, derX=[], derY=[], derZ=[], der=[]):
-    """Cubic spline interpolation a list of points by arclength parametrization
+    """Cubic spline interpolation of a list of points.
     @param x: The x-coordinate of the points to interpolate
     @type x:  List of floats (n points)
     @param y: y-coordinates
