@@ -7,6 +7,7 @@
 
 #if ENABLE_GPM
 #include <GPM/SplineModel.h>
+#include <GPM/TopologySet.h>
 #endif
 namespace GeoModeller {
 
@@ -113,8 +114,125 @@ PyObject* Preprocess_NaturalNodeNumbers(PyObject* self, PyObject* args, PyObject
 #endif
 }
 
+static size_t GetIdx(int face_idx, size_t i, size_t j,
+                     bool reverse_u, bool reverse_v, bool uv_flip,
+                     shared_ptr<Go::SplineVolume>& vol)
+{
+  size_t start, incu, incv, i2, j2, idxu, idxv;
+  if (face_idx == 0) {
+    start = 0;
+    incu = vol->numCoefs(0);
+    incv = vol->numCoefs(0)*vol->numCoefs(1);
+    idxu = uv_flip?2:1;
+    idxv = uv_flip?1:2;
+  } else if (face_idx == 1) {
+    start = vol->numCoefs(0)-1;
+    incu = vol->numCoefs(0);
+    incv = vol->numCoefs(0)*vol->numCoefs(1);
+    idxu = uv_flip?2:1;
+    idxv = uv_flip?1:2;
+  } else if (face_idx == 2) {
+    start = 0;
+    incu = 1;
+    incv = vol->numCoefs(0)*vol->numCoefs(1);
+    idxu = uv_flip?2:0;
+    idxv = uv_flip?0:2;
+  } else if (face_idx == 3) {
+    start = vol->numCoefs(0)*(vol->numCoefs(1)-1);
+    incu = 1;
+    incv = vol->numCoefs(0)*vol->numCoefs(1);
+    idxu = uv_flip?2:0;
+    idxv = uv_flip?0:2;
+  } else if (face_idx == 4) {
+    start = 0;
+    incu = 1;
+    incv = vol->numCoefs(0);
+    idxu = uv_flip?1:0;
+    idxv = uv_flip?0:1;
+  } else { // face_idx == 5
+    start = vol->numCoefs(0)*vol->numCoefs(1)*(vol->numCoefs(2)-1);
+    incu = 1;
+    incv = vol->numCoefs(0);
+    idxu = uv_flip?1:0;
+    idxv = uv_flip?0:1;
+  }
+
+  i2 = reverse_u?vol->numCoefs(idxu)-i-1:i;
+  j2 = reverse_v?vol->numCoefs(idxv)-j-1:j;
+  if (uv_flip)
+    std::swap(i2, j2);
+
+  return (start+i2*incu+j2*incv)*3;
+}
+
+static std::pair<size_t,size_t> GetSizes(int face_idx, shared_ptr<Go::SplineVolume>& vol)
+{
+  static const int sizes[][2] = {{1,2}, {0,2}, {0,1}};
+
+  return std::make_pair(sizes[face_idx/2][0], sizes[face_idx/2][1]);
+}
+
+PyDoc_STRVAR(preprocess_average_faces__doc__,"Try to make a model water tight by averaging over matching faces\n"
+                                             "@param patches: The patches to number\n"
+                                             "@type patches: List of (Surface or Volume)\n"
+                                             "@return: None\n");
+PyObject* Preprocess_AverageFaces(PyObject* self, PyObject* args, PyObject* kwds)
+{
+#ifndef ENABLE_GPM
+  std::cerr << "Compiled without GPM support - no averaging performed" << std::endl;
+#else
+  static const char* keyWords[] = {"patches", NULL };
+  PyObject* patcheso;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&patcheso))
+    return NULL;
+
+  // list of surfaces or volumes
+  if (PyObject_TypeCheck(patcheso,&PyList_Type)) {
+    PyObject* obj1 = PyList_GetItem(patcheso, 0);
+    if (PyObject_TypeCheck(obj1,&Volume_Type)) {
+      std::vector< shared_ptr<Go::SplineVolume> > data;
+      for (int i=0; i < PyList_Size(patcheso); ++i) {
+        PyObject* obj = PyList_GetItem(patcheso, i);
+        shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(obj);
+        shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+        if (!spVol)
+          continue;
+        data.push_back(spVol);
+      }
+      SplineModel model(data);
+      double difference=0.0;
+      for (auto it  = model.getTopology()->face_begin();
+                it != model.getTopology()->face_end();++it) {
+        if ((*it)->volume.size() > 1) {
+          shared_ptr<Go::SplineVolume> vol1 = data[(*it)->volume[0]->id];
+          shared_ptr<Go::SplineVolume> vol2 = data[(*it)->volume[1]->id];
+          pair<size_t, size_t> sizes = GetSizes((*it)->face[0], vol1);
+          for (size_t j=0;j<sizes.second;++j) {
+            for (size_t i=0;i<sizes.first;++i) {
+              int idx1 = GetIdx((*it)->face[0], i, j, (*it)->u_reverse[0], (*it)->v_reverse[0], (*it)->uv_flip[0], vol1);
+              int idx2 = GetIdx((*it)->face[1], i, j, (*it)->u_reverse[1], (*it)->v_reverse[1], (*it)->uv_flip[1], vol2);
+              Go::Point p1(*(vol1->coefs_begin()+idx1), *(vol1->coefs_begin()+idx1+1), *(vol1->coefs_begin()+idx1+2));
+              Go::Point p2(*(vol2->coefs_begin()+idx2), *(vol2->coefs_begin()+idx2+1), *(vol2->coefs_begin()+idx2+2));
+              difference = std::max(difference, (p1-p2).length());
+              Go::Point avg = (p1 + p2)*0.5;
+              vol1->replaceCoefficient(idx1/3, avg);
+              vol2->replaceCoefficient(idx2/3, avg);
+            }
+          }
+        }
+      }
+      std::cout << "Maximum pointwise difference found: " << difference << std::endl;
+    }
+  }
+#endif
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyMethodDef Preprocess_methods[] = {
      {(char*)"NaturalNodeNumbers",    (PyCFunction)Preprocess_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, preprocess_natural_node_numbers__doc__},
+     {(char*)"AverageFaces",          (PyCFunction)Preprocess_AverageFaces, METH_VARARGS|METH_KEYWORDS, preprocess_average_faces__doc__},
      {NULL,                           NULL,                                       0,                          NULL}
   };
 
