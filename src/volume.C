@@ -682,7 +682,7 @@ PyObject* Volume_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
 
   // Evaluate the spline surface at all points
   std::vector<double> XYZ(spVol->dimension()*ug.size()*vg.size()*wg.size());
-  spVol->gridEvaluator(XYZ,ug,vg,wg);
+  spVol->gridEvaluator(ug,vg,wg,XYZ);
 
   // Project the coordinates onto the new basis (the 2nd XYZ is dummy here)
   Volume* pySurf = (Volume*)self;
