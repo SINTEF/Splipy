@@ -1015,12 +1015,12 @@ class Numberer(object):
   def GetterFunction(self, source, target):
     _mapFE = {0: 3, 1: 1, 2: 0, 3: 2}
 
-    _mapVE = {0: [ 8,  6, 10,  4],
-              1: [ 9,  7, 11,  5],
-              2: [ 0,  5,  1,  4],
-              3: [ 2,  7,  3,  6],
-              4: [ 0,  9,  2,  8],
-              5: [ 1, 11,  3, 10]}
+    _mapVE = {0: [ 4, 10,  6,  8],
+              1: [ 5, 11,  7,  9],
+              2: [ 0,  9,  2,  8],
+              3: [ 1, 11,  3, 10],
+              4: [ 0,  5,  1,  4],
+              5: [ 2,  7,  3,  6]}
 
     # Gets vertex #i from the edge
     def GetEdgeVertex(edge, i):
@@ -1054,7 +1054,7 @@ class Numberer(object):
     # Pick the right getter
     if source == 'volume':
       if target == 'face':
-        return lambda p, i: p.GetFaces()[i]
+        return GetVolFace
       elif target == 'edge':
         return GetVolEdge
       elif target == 'vertex':
