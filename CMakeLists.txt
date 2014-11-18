@@ -180,3 +180,10 @@ add_custom_target(check-commits COMMAND ${CMAKE_COMMAND}
                                         -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
                                         -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
                                         -P ${PROJECT_SOURCE_DIR}/cmake/Scripts/CheckCommits.cmake)
+
+
+# PIP/Distutils Package
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/setup.py.in ${CMAKE_BINARY_DIR}/setup.py)
+FILE(COPY ${CMAKE_SOURCE_DIR}/GeoUtils DESTINATION ${CMAKE_BINARY_DIR})
+FILE(COPY ${CMAKE_SOURCE_DIR}/README DESTINATION ${CMAKE_BINARY_DIR})
+ADD_CUSTOM_TARGET(pip DEPENDS GoTools COMMAND python2 setup.py sdist --dist-dir ${CMAKE_BINARY_DIR})

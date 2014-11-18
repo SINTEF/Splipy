@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+from setuptools import setup
+
+setup(name='Geomodeler',
+      version='@GEOMODELLER_VERSION_MAJOR@.@GEOMODELLER_VERSION_MINOR@.@GEOMODELLER_VERSION_PATCH@',
+      description='Python bindings for GoTools',
+      maintainer='Arne Morten Kvarving',
+      maintainer_email='arne.morten.kvarving@sintef.no',
+      url='http://afem/geomod-wiki/index.php/Main_Page',
+      packages=['GeoUtils'],
+      package_data={'GeoUtils': ['../GoTools.so']},
+      )
