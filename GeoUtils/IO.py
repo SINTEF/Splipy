@@ -7,7 +7,7 @@ import json
 
 from collections import namedtuple
 from itertools import groupby
-from numpy import cumsum, prod
+from numpy import cumsum, prod, zeros, ones
 from operator import itemgetter, methodcaller
 from . import WallDistance
 
@@ -810,7 +810,7 @@ class Numberer(object):
     WriteG2(filename, items)
 
 
-  def Renumber(self, nprocs):
+  def Renumber(self, nprocs, outprocs=None):
     """ Generates a numbering of all the patches and assigns a range of patches
         to each processor. Doing this optimally is NP-complete, so this method
         uses a quasi-optimal greedy algorithm.
@@ -818,27 +818,50 @@ class Numberer(object):
         All patches must be added before calling Renumber(), but it's not necessary
         that all the topology sets are specified. Renumber() can be called several
         times if necessary.
+
         @param nprocs: Number of processors to optimize for
+        @param outprocs: Number of processors to write output for (optional)
         @type nprocs: Int
     """
+
+    if outprocs is None:
+      outprocs = nprocs
+
     items = [{'patch': p,
               'ndofs': prod(map(len, p.GetKnots()))}
              for p in self._patches]
+    tot_ndofs = sum(i['ndofs'] for i in items)
 
+    # List of temporary processor objects.  We will attempt to optimize for
+    # nprocs processors, but will output for more.
+    temp_procs = [Numberer.Proc() for _ in xrange(nprocs)]
+
+    # Add the patches in order of decreasing ndofs to the processor with
+    # lowest number of ndofs so far.  This produces a numbering that depends
+    # only on the patch list and nprocs. This is a greedy heuristic algorithm
+    # for an NP-complete problem.  It is guaranteed that no processor will
+    # get more than 4/3 of the optimal load.
     items.sort(key=itemgetter('ndofs'), reverse=True)
-
-    self._procs = [Numberer.Proc() for _ in xrange(nprocs)]
-
     for n in items:
-      self._procs[0].items.append(n)
-      self._procs.sort(key=methodcaller('ndofs'))
+      temp_procs[0].items.append(n)
+      temp_procs.sort(key=methodcaller('ndofs'))
 
+    # Establish the numbering.
     self._numbering = []
-    for procnum, proc in enumerate(self._procs):
+    for procnum, proc in enumerate(temp_procs):
       for i in proc.items:
-        i['procnum'] = procnum
         i['index'] = len(self._numbering)
         self._numbering.append(i)
+
+    # Distribute the patches to the correct number of processors, without
+    # changing the order.  Due to the order restriction, this problem can
+    # be solved optimally quite quickly.
+    self._procs = [Numberer.Proc() for _ in xrange(outprocs)]
+    ranges = _linpar([i['ndofs'] for i in self._numbering], outprocs)
+    for procnum, (rng, proc) in enumerate(zip(ranges, self._procs)):
+      for r in rng:
+        proc.items.append(self._numbering[r])
+        self._numbering[r]['procnum'] = procnum
 
     self._patchmap = {i['patch']: i['index'] for i in self._numbering}
 
@@ -1069,3 +1092,45 @@ class Numberer(object):
     elif source == 'edge':
       if target == 'vertex':
         return GetEdgeVertex
+
+
+
+# This utility function solves the linear partitioning problem.
+# Given an array of positive numbers [s_1, ..., s_n], find k
+# subintervals, so that the maximal sum over them is minimized.
+# This is a load balancing problem with restricted ordering.
+# It is solved using a dynamic programming algorithm as explained
+# here:
+# http://www8.cs.umu.se/kurser/TDBAfl/VT06/algorithms/BOOK/BOOK2/NODE45.HTM
+def _linpar(s, k):
+  prefixes = cumsum(s)
+  n = len(s)
+
+  M = zeros((n, k), dtype=int)  # Cost of each partition, we are interested in M[-1,-1]
+  D = -ones((n, k), dtype=int)  # Splits, used to reconstruct the solution afterwards
+  M[:,0] = prefixes
+  M[0,:] = s[0]
+
+  for i in xrange(1, n):
+    for j in xrange(1, k):
+      M[i,j] = -1
+      for x in xrange(0, i):
+        cost = max(M[x,j-1], prefixes[i] - prefixes[x])
+        if M[i,j] > cost or M[i,j] < 0:
+          M[i,j] = cost
+          D[i,j] = x
+
+  ranges = []
+
+  def reconstruct(n, k):
+    if k == 0:
+      ranges.append(xrange(0, n+1))
+    else:
+      split = D[n,k]
+      assert(split >= 0)
+      reconstruct(split, k-1)
+      ranges.append(xrange(split+1, n+1))
+
+  reconstruct(n-1, k-1)
+
+  return ranges
