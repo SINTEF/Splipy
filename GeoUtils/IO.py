@@ -64,6 +64,7 @@ def ParseArgs(args, defaults):
         defaults[k] = k == key
       elif k == key:
         if isinstance(v, bool):
+          value = {'True':True, 'False':False}.get( value, value ) # try string conversion
           defaults[k] = bool(value)
         elif isinstance(v, float):
           defaults[k] = float(value)
@@ -974,7 +975,7 @@ class Numberer(object):
     return ret
 
 
-  def WriteEverything(self, filename, indent=2):
+  def WriteEverything(self, filename, indent=2, periodic={}):
     """ All-in-one method for writing out everything you might need (g2 geometry file,
         natural node numbers and IFEM xml file.
         @param filename: The base filename to write to (no extension).
@@ -989,7 +990,7 @@ class Numberer(object):
 
     WriteG2('%s.g2' % filename, patchlist)
 
-    numbers = NaturalNodeNumbers(patchlist)
+    numbers = NaturalNodeNumbers(patchlist,**periodic)
     f = HDF5File('%s_nodenumbers' % filename)
     for i, (p, n) in enumerate(zip(patchlist, numbers)):
       f.AddGeometry('Common', i+1, 0, p)
