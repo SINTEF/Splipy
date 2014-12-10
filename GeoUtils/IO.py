@@ -64,6 +64,7 @@ def ParseArgs(args, defaults):
         defaults[k] = k == key
       elif k == key:
         if isinstance(v, bool):
+          value = {'True':True, 'False':False}.get( value, value ) # try string conversion
           defaults[k] = bool(value)
         elif isinstance(v, float):
           defaults[k] = float(value)
