@@ -687,13 +687,13 @@ class Numberer(object):
         @type allow_left: Bool
     """
     if not allow_left:
-      for p in patches:
+      for i, p in enumerate(patches):
         try:
           lhs = p.MakeRHS()
         except:
           lhs = False
         if lhs:
-          raise Exception("Left-handed patch added.")
+          raise Exception("Left-handed patch added (index %i)." % i)
 
     self._patches += patches
 
@@ -1093,6 +1093,8 @@ class Numberer(object):
     elif source == 'edge':
       if target == 'vertex':
         return GetEdgeVertex
+
+    raise Exception("No getter function from %s to %s" % (source, target))
 
 
 
