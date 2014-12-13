@@ -815,6 +815,41 @@ PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyObject* Volume_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  if (!parVol)
+    return NULL;
+
+  shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
+  if(!spVol)
+    return NULL;
+
+  PyObject* knots_u = PyList_New(0);
+  vector<double>::const_iterator kit;
+  for (kit = spVol->basis(0).begin(); kit != spVol->basis(0).end(); ++kit)
+    PyList_Append(knots_u, Py_BuildValue("d", *kit));
+
+  PyObject* knots_v = PyList_New(0);
+  for (kit = spVol->basis(1).begin(); kit != spVol->basis(1).end(); ++kit)
+    PyList_Append(knots_v, Py_BuildValue("d", *kit));
+
+  PyObject* knots_w = PyList_New(0);
+  for (kit = spVol->basis(2).begin(); kit != spVol->basis(2).end(); ++kit)
+    PyList_Append(knots_w, Py_BuildValue("d", *kit));
+
+  PyObject* coefs = PyList_New(0);
+  vector<double>::const_iterator cit = spVol->rational() ? spVol->rcoefs_begin() : spVol->coefs_begin();
+  vector<double>::const_iterator cit_end = spVol->rational() ? spVol->rcoefs_end() : spVol->coefs_end();
+  for (; cit != cit_end; ++cit)
+    PyList_Append(coefs, Py_BuildValue("d", *cit));
+  
+  return Py_BuildValue("(O(iiiOOOOO))", &Volume_Type,
+                       spVol->order(0), spVol->order(1), spVol->order(2),
+                       knots_u, knots_v, knots_w,
+                       coefs, spVol->rational() ? Py_True : Py_False);
+}
+
 PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
@@ -835,6 +870,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"Split",               (PyCFunction)Volume_Split,                 METH_VARARGS|METH_KEYWORDS, volume_split__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
      {(char*)"Translate",           (PyCFunction)Volume_Translate,             METH_VARARGS|METH_KEYWORDS, volume_translate__doc__},
+     {(char*)"__reduce__",          (PyCFunction)Volume_Reduce,                0,                          NULL},
      {NULL,                         NULL,                                      0,                          NULL}
    };
 

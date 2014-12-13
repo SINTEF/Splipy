@@ -906,6 +906,32 @@ PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyObject* Curve_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
+    return NULL;
+
+  shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
+  if (!spCrv)
+    return NULL;
+
+  PyObject* knots = PyList_New(0);
+  vector<double>::const_iterator kit;
+  for (kit = spCrv->knotsBegin(); kit != spCrv->knotsEnd(); ++kit)
+    PyList_Append(knots, Py_BuildValue("d", *kit));
+
+  PyObject* coefs = PyList_New(0);
+  vector<double>::const_iterator cit = spCrv->rational() ? spCrv->rcoefs_begin() : spCrv->coefs_begin();
+  vector<double>::const_iterator cit_end = spCrv->rational() ? spCrv->rcoefs_end() : spCrv->coefs_end();
+  for (; cit != cit_end; ++cit)
+    PyList_Append(coefs, Py_BuildValue("d", *cit));
+  
+  return Py_BuildValue("(O(iOOO))",
+                       &Curve_Type, spCrv->order(), knots, coefs,
+                       spCrv->rational() ? Py_True : Py_False);
+}
+
 PyObject* Curve_Add(PyObject* o1, PyObject* o2)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(o1);
@@ -993,6 +1019,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Rotate",              (PyCFunction)Curve_Rotate,              METH_VARARGS|METH_KEYWORDS, curve_rotate__doc__},
      {(char*)"Split",               (PyCFunction)Curve_Split,               METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
      {(char*)"Translate",           (PyCFunction)Curve_Translate,           METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
+     {(char*)"__reduce__",          (PyCFunction)Curve_Reduce,              0,                          NULL},
      {NULL,                         NULL,                                   0,                          NULL}
    };
 

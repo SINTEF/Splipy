@@ -956,6 +956,35 @@ PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyObject* Surface_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!parSurf)
+    return NULL;
+
+  shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
+  if(!spSurf)
+    return NULL;
+
+  PyObject* knots_u = PyList_New(0);
+  vector<double>::const_iterator kit;
+  for (kit = spSurf->basis_u().begin(); kit != spSurf->basis_u().end(); ++kit)
+    PyList_Append(knots_u, Py_BuildValue("d", *kit));
+
+  PyObject* knots_v = PyList_New(0);
+  for (kit = spSurf->basis_v().begin(); kit != spSurf->basis_v().end(); ++kit)
+    PyList_Append(knots_v, Py_BuildValue("d", *kit));
+
+  PyObject* coefs = PyList_New(0);
+  vector<double>::const_iterator cit = spSurf->rational() ? spSurf->rcoefs_begin() : spSurf->coefs_begin();
+  vector<double>::const_iterator cit_end = spSurf->rational() ? spSurf->rcoefs_end() : spSurf->coefs_end();
+  for (; cit != cit_end; ++cit)
+    PyList_Append(coefs, Py_BuildValue("d", *cit));
+  
+  return Py_BuildValue("(O(iiOOOO))", &Surface_Type, spSurf->order_u(), spSurf->order_v(),
+                       knots_u, knots_v, coefs, spSurf->rational() ? Py_True : Py_False);
+}
+
 PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(o1);
@@ -1025,6 +1054,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"Rotate",              (PyCFunction)Surface_Rotate,                METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Surface_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, surface_swap_parametrization__doc__},
      {(char*)"Translate",           (PyCFunction)Surface_Translate,             METH_VARARGS|METH_KEYWORDS, surface_translate__doc__},
+     {(char*)"__reduce__",          (PyCFunction)Surface_Reduce,                0,                          NULL},
      {NULL,           NULL,                     0,            NULL}
    };
 
