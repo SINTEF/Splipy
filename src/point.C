@@ -108,6 +108,19 @@ PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyObject* Point_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::Point> pt = PyObject_AsGoPoint(self);
+
+  PyObject* outArgs;
+  if (modState.dim == 2)
+    outArgs = Py_BuildValue("(dd)", (*pt)[0], (*pt)[1]);
+  else
+    outArgs = Py_BuildValue("(ddd)", (*pt)[0], (*pt)[1], (*pt)[2]);
+
+  return Py_BuildValue("(OO)", &Point_Type, outArgs);
+}
+
 PyObject* Point_Str(Point* self)
 {
   std::stringstream str;
@@ -256,6 +269,7 @@ PyMethodDef Point_methods[] = {
      {(char*)"Clone",     (PyCFunction)Point_Clone,     METH_VARARGS,               point_clone__doc__},
      {(char*)"Normalize", (PyCFunction)Point_Normalize, METH_VARARGS,               point_normalize__doc__},
      {(char*)"Rotate",    (PyCFunction)Point_Rotate,    METH_VARARGS|METH_KEYWORDS, point_rotate__doc__},
+     {(char*)"__reduce__",(PyCFunction)Point_Reduce,    0,                          NULL},
      {NULL,               NULL,                         0,                          NULL}
    };
 
