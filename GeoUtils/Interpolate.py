@@ -9,6 +9,7 @@ NATURAL=2
 HERMITE=3
 PERIODIC=4
 TANGENT=5
+TANGENTNATURAL=6
 UNIFORM=8
 
 def getBasis(t, knot, d=0, fromRight=True):
@@ -240,7 +241,7 @@ def CubicCurve(x=[], y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[], pts=[
     @param z: z-coordinates
     @type z:  List of floats
     @param boundary: Boundary conditions
-    @type boundary:  FREE, NATURAL, HERMITE, PERIODIC or TANGENT
+    @type boundary:  FREE, NATURAL, HERMITE, PERIODIC, TANGENT or TANGENTNATURAL
     @param derX: In case of Hermite or Tangent boundary conditions, one must supply tangent information
     @type derX:  List of floats (two points for Tangent, n points for Hermite)
     @param derY: Y-component of tangent information
@@ -293,11 +294,15 @@ def CubicCurve(x=[], y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[], pts=[
     pts = pts.transpose() # right-hand-side vector
 
     # add boundary conditions
-    if boundary==TANGENT or boundary==HERMITE:
+    if boundary==TANGENT or boundary==HERMITE or boundary==TANGENTNATURAL:
         if boundary == TANGENT:
             dn  = getBasis([t[0], t[-1]], knot, 1)
             N   = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
             pts = np.resize(pts, (pts.shape[0]+2, pts.shape[1]))
+        elif boundary == TANGENTNATURAL:
+            dn  = getBasis([t[0]], knot, 1)
+            N   = np.resize(N,   (N.shape[0]+1,   N.shape[1]))
+            pts = np.resize(pts, (pts.shape[0]+1, pts.shape[1]))
         elif boundary == HERMITE:
             dn  = getBasis(t, knot, 1)
             N   = np.resize(N,   (N.shape[0]+n,   N.shape[1]))
@@ -312,7 +317,8 @@ def CubicCurve(x=[], y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[], pts=[
             pts[n:,2]  = derZ
         else:
             pts[n:,2]  = 0
-    elif boundary == PERIODIC:
+
+    if boundary == PERIODIC:
         dn   = getBasis([t[0], t[-1]], knot, 1)
         ddn  = getBasis([t[0], t[-1]], knot, 2)
         N    = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
@@ -320,12 +326,18 @@ def CubicCurve(x=[], y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[], pts=[
         N[-2,:]    =  dn[0,:] -  dn[1,:] # first derivative matching at start/end
         N[-1,:]    = ddn[0,:] - ddn[1,:] # second derivative matching
         pts[-2:,:] = 0
-    elif boundary == NATURAL:
-        N    = np.resize(N,   (N.shape[0]+2,   N.shape[1]))
-        pts  = np.resize(pts, (pts.shape[0]+2, pts.shape[1]))
-        ddn  = getBasis([t[0], t[-1]], knot, 2)
-        N[-2:,:]   = ddn                # second derivative zero at start/end
-        pts[-2:,:] = 0
+
+    if boundary == NATURAL or boundary == TANGENTNATURAL:
+        if boundary == NATURAL:
+            ddn  = getBasis([t[0], t[-1]], knot, 2)
+            new  = 2
+        elif boundary == TANGENTNATURAL:
+            ddn  = getBasis([t[-1]], knot, 2)
+            new  = 1
+        N    = np.resize(N,   (N.shape[0]+new,   N.shape[1]))
+        pts  = np.resize(pts, (pts.shape[0]+new, pts.shape[1]))
+        N[-new:,:] = ddn
+        pts[-new:,:] = 0
 
     # solve system to get controlpoints
     C = np.linalg.solve(N,pts)
