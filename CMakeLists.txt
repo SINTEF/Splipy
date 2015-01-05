@@ -1,62 +1,63 @@
-PROJECT(GoTools-python-bindings)
+project(GoTools-python-bindings)
 
-SET(GEOMODELLER_VERSION_MAJOR 0)
-SET(GEOMODELLER_VERSION_MINOR 8)
-SET(GEOMODELLER_VERSION_PATCH 0)
-SET(GEOMODELLER_VERSION ${GEOMODELLER_VERSION_MAJOR}.${GEOMODELLER_VERSION_MINOR}.${GEOMODELLER_VERSION_PATCH})
+set(GEOMODELLER_VERSION_MAJOR 0)
+set(GEOMODELLER_VERSION_MINOR 8)
+set(GEOMODELLER_VERSION_PATCH 0)
+set(GEOMODELLER_VERSION ${GEOMODELLER_VERSION_MAJOR}.${GEOMODELLER_VERSION_MINOR}.${GEOMODELLER_VERSION_PATCH})
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+cmake_minimum_required(VERSION 2.6)
 
-ENABLE_LANGUAGE(CXX)
+enable_language(CXX)
 
-OPTION(USE_OPENNURBS "Use OpenNURBS?" ON)
-OPTION(USE_HDF5 "Use HDF5?" ON)
-OPTION(USE_GPM "Use GPM?" ON)
-OPTION(BUILD_PYTHON_MODULE "Build standalone python module?" ON)
+option(USE_OPENNURBS "Use OpenNURBS?" ON)
+option(USE_HDF5 "Use HDF5?" ON)
+option(USE_GPM "Use GPM?" ON)
+option(BUILD_PYTHON_MODULE "Build standalone python module?" ON)
 
 # Add local modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                       ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
-FIND_PACKAGE(PythonLibs REQUIRED)
-FIND_PACKAGE(PythonInterp REQUIRED)
-FIND_PACKAGE(GoTools REQUIRED)
-FIND_PACKAGE(GoTrivariate REQUIRED)
-FIND_PACKAGE(GoTrivariateModel REQUIRED)
-FIND_PACKAGE(GoCompositeModel REQUIRED)
-FIND_PACKAGE(Parametrization REQUIRED)
-FIND_PACKAGE(TTL REQUIRED)
-FIND_PACKAGE(Newmat REQUIRED)
-FIND_PACKAGE(GoIgeslib REQUIRED)
-FIND_PACKAGE(SISL REQUIRED)
-FIND_PACKAGE(GoTopology REQUIRED)
-FIND_PACKAGE(GoImplicitization REQUIRED)
-FIND_PACKAGE(GoIntersections REQUIRED)
-FIND_PACKAGE(LATEX)
-FIND_PACKAGE(EpyDoc)
+find_package(PythonLibs REQUIRED)
+find_package(PythonInterp REQUIRED)
+find_package(GoTools REQUIRED)
+find_package(GoTrivariate REQUIRED)
+find_package(GoTrivariateModel REQUIRED)
+find_package(GoCompositeModel REQUIRED)
+find_package(Parametrization REQUIRED)
+find_package(TTL REQUIRED)
+find_package(Newmat REQUIRED)
+find_package(GoIgeslib REQUIRED)
+find_package(SISL REQUIRED)
+find_package(GoTopology REQUIRED)
+find_package(GoImplicitization REQUIRED)
+find_package(GoIntersections REQUIRED)
+find_package(LATEX)
+find_package(EpyDoc)
+find_package(LRSpline)
 
-IF(USE_OPENNURBS)
-  FIND_PACKAGE(OpenNURBS)
-ENDIF(USE_OPENNURBS)
-IF(USE_HDF5)
-  FIND_PACKAGE(HDF5)
-ENDIF(USE_HDF5)
+if(USE_OPENNURBS)
+  find_package(OpenNURBS)
+endif()
+if(USE_HDF5)
+  find_package(HDF5)
+endif()
 
-IF(USE_GPM)
-  FIND_PACKAGE(GPM)
-ENDIF(USE_GPM)
+if(USE_GPM)
+  find_package(GPM)
+endif()
 
 # Generate header with version info
-CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/geomodversion.h.in
+configure_file(${PROJECT_SOURCE_DIR}/include/geomodversion.h.in
                geomodversion.h @ONLY)
 
 # Mimimum GoTools version
-IF(GoTools_VERSION_MAJOR LESS 4 OR NOT GoTools_VERSION_MAJOR)
-  MESSAGE(FATAL_ERROR "GoTools >= 4.0.0 required. bailing")
-ENDIF(GoTools_VERSION_MAJOR LESS 4 OR NOT GoTools_VERSION_MAJOR)
+if(GoTools_VERSION_MAJOR LESS 4 OR NOT GoTools_VERSION_MAJOR)
+  message(FATAL_ERROR "GoTools >= 4.0.0 required. bailing")
+endif()
 
 # Order of GoTools libraries is not random!
-SET(DEPLIBS ${PYTHON_LIBRARIES}
+set(DEPLIBS ${PYTHON_LIBRARIES}
             ${GoTrivariateModel_LIBRARIES}
             ${GoCompositeModel_LIBRARIES}
             ${Parametrization_LIBRARIES}
@@ -71,110 +72,115 @@ SET(DEPLIBS ${PYTHON_LIBRARIES}
             ${GoTrivariate_LIBRARIES})
 
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS} -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS} -fPIC")
 SET(INCLUDE_DIRS ${GoTools_INCLUDE_DIRS}
                  ${PYTHON_INCLUDE_DIRS} 
                  ${PROJECT_SOURCE_DIR}/include)
 
-IF(OpenNURBS_LIBRARIES AND OpenNURBS_INCLUDE_DIRS)
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS}
+if(OpenNURBS_LIBRARIES AND OpenNURBS_INCLUDE_DIRS)
+  set(INCLUDE_DIRS ${INCLUDE_DIRS}
                    ${OpenNURBS_INCLUDE_DIRS})
-  SET(DEPLIBS ${DEPLIBS}
+  set(DEPLIBS ${DEPLIBS}
               ${OpenNURBS_LIBRARIES})
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_OPENNURBS=1")
-ENDIF(OpenNURBS_LIBRARIES AND OpenNURBS_INCLUDE_DIRS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_OPENNURBS=1")
+endif()
 
-IF(HDF5_LIBRARIES AND HDF5_INCLUDE_DIRS)
-  SET(DEPLIBS ${DEPLIBS}
+if(HDF5_LIBRARIES AND HDF5_INCLUDE_DIRS)
+  set(DEPLIBS ${DEPLIBS}
               ${HDF5_LIBRARIES})
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS}
+  set(INCLUDE_DIRS ${INCLUDE_DIRS}
                    ${HDF5_INCLUDE_DIRS})
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_HDF5=1")
-ENDIF(HDF5_LIBRARIES AND HDF5_INCLUDE_DIRS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_HDF5=1")
+endif()
 
-IF(GPM_LIBRARIES AND GPM_INCLUDES)
-  IF(GPM_VERSION_MINOR GREATER 3 OR GPM_VERSION_PATCH GREATER 0)
-    LIST(APPEND DEPLIBS ${GPM_LIBRARIES})
-    LIST(APPEND INCLUDE_DIRS ${GPM_INCLUDES})
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_GPM=1")
-  ENDIF()
-ENDIF(GPM_LIBRARIES AND GPM_INCLUDES)
+if(GPM_LIBRARIES AND GPM_INCLUDES)
+  if(GPM_VERSION_MINOR GREATER 3 OR GPM_VERSION_PATCH GREATER 0)
+    list(APPEND DEPLIBS ${GPM_LIBRARIES})
+    list(APPEND INCLUDE_DIRS ${GPM_INCLUDES})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_GPM=1")
+  endif()
+endif()
 
-INCLUDE_DIRECTORIES(${INCLUDE_DIRS} ${CMAKE_BINARY_DIR})
+if(LRSpline_FOUND)
+  list(APPEND DEPLIBS ${LRSpline_LIBRARIES})
+  list(APPEND INCLUDE_DIRS ${LRSpline_INCLUDE_DIRS})
+endif()
+
+include_directories(${INCLUDE_DIRS} ${CMAKE_BINARY_DIR})
 
 # Additional compiler flags required by GoTools
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS}")
 
-FILE(GLOB_RECURSE SRCS src/*.C)
+file(GLOB_RECURSE SRCS src/*.C)
 
-IF(BUILD_PYTHON_MODULE)
-  PYTHON_ADD_MODULE(GoTools ${SRCS})
-  TARGET_LINK_LIBRARIES(GoTools ${DEPLIBS})
-ENDIF()
+if(BUILD_PYTHON_MODULE)
+  python_add_module(GoTools ${SRCS})
+  target_link_libraries(GoTools ${DEPLIBS})
+endif()
 
-ADD_EXECUTABLE(geoModeler app/geoModeler.C ${SRCS})
-TARGET_LINK_LIBRARIES(geoModeler ${DEPLIBS})
+add_executable(geoModeler app/geoModeler.C ${SRCS})
+target_link_libraries(geoModeler ${DEPLIBS})
 
-EXECUTE_PROCESS(COMMAND python2 -c "import sys; print sys.version[:3]" OUTPUT_VARIABLE PYTHON_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND python2 -c "import sys; print sys.version[:3]" OUTPUT_VARIABLE PYTHON_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-IF(EPYDOC_EXECUTABLE)
-  ADD_CUSTOM_TARGET(doc PYTHONPATH=${CMAKE_BINARY_DIR}:${PROJECT_SOURCE_DIR} ${PYTHON_EXECUTABLE}
+if(EPYDOC_EXECUTABLE)
+  add_custom_target(doc PYTHONPATH=${CMAKE_BINARY_DIR}:${PROJECT_SOURCE_DIR} ${PYTHON_EXECUTABLE}
                         ${CMAKE_SOURCE_DIR}/doc/gendocumentation.py
                         DEPENDS GoTools
                         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                         COMMENT "Generating API documentation" VERBATIM)
-ENDIF()
-IF(PDFLATEX_COMPILER)
-  ADD_CUSTOM_TARGET(pdfdoc ${PDFLATEX_COMPILER} api.tex
+endif()
+if(PDFLATEX_COMPILER)
+  add_custom_target(pdfdoc ${PDFLATEX_COMPILER} api.tex
                     DEPENDS doc
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc/latex
                     COMMENT "Compiling documentation to PDF (doc/latex/api.pdf)" VERBATIM)
-ENDIF()
+endif()
 
-SET(TAR_BALL GoTools-python-bindings-${GEOMODELLER_VERSION_MAJOR}.${GEOMODELLER_VERSION_MINOR}.${GEOMODELLER_VERSION_PATCH}.tar.bz2)
-FILE(GLOB_RECURSE DIST_SRCS RELATIVE ${PROJECT_SOURCE_DIR} CMakeLists.txt src/*.C include/*.h include/*.in app/*.C doc/gendocumentation.py cmake/*.cmake)
-STRING(REGEX REPLACE "include/geomodversion.h;" "" DIST_SRCS "${DIST_SRCS}")
-ADD_CUSTOM_TARGET(dist tar jcvf ${TAR_BALL} ${DIST_SRCS} > /dev/null
+set(TAR_BALL GoTools-python-bindings-${GEOMODELLER_VERSION_MAJOR}.${GEOMODELLER_VERSION_MINOR}.${GEOMODELLER_VERSION_PATCH}.tar.bz2)
+file(GLOB_RECURSE DIST_SRCS RELATIVE ${PROJECT_SOURCE_DIR} CMakeLists.txt src/*.C include/*.h include/*.in app/*.C doc/gendocumentation.py cmake/*.cmake)
+string(REGEX REPLACE "include/geomodversion.h;" "" DIST_SRCS "${DIST_SRCS}")
+add_custom_target(dist tar jcvf ${TAR_BALL} ${DIST_SRCS} > /dev/null
                   DEPENDS GoTools
                   COMMENT "Building tar ball \"${TAR_BALL}\"" VERBATIM)
-SET_DIRECTORY_PROPERTIES(${PROJECT_SOURCE_DIR} ADDITIONAL_MAKE_CLEAN_FILES ${TAR_BALL})
-SET_DIRECTORY_PROPERTIES(${PROJECT_SOURCE_DIR}/doc ADDITIONAL_MAKE_CLEAN_DIRECTORIES html)
+set_directory_properties(${PROJECT_SOURCE_DIR} ADDITIONAL_MAKE_CLEAN_FILES ${TAR_BALL})
+set_directory_properties(${PROJECT_SOURCE_DIR}/doc ADDITIONAL_MAKE_CLEAN_DIRECTORIES html)
 
 # 'install' target
 # Make install force doc build
-IF(EPYDOC_EXECUTABLE)
-  INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${CMAKE_BUILD_TOOL} doc WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")" COMPONENT doc)
-  INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools
+if(EPYDOC_EXECUTABLE)
+  install(CODE "EXECUTE_PROCESS(COMMAND ${CMAKE_BUILD_TOOL} doc WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")" COMPONENT doc)
+  install(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/html DESTINATION share/doc/python-GoTools
           COMPONENT doc)
-ENDIF()
-IF(BUILD_PYTHON_MODULE)
-  IF(EXISTS "/etc/debian_version")
-    INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/ COMPONENT bin)
-  ELSE(EXISTS "/etc/debian_version")
-    INSTALL(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/site-packages/ COMPONENT bin)
-  ENDIF(EXISTS "/etc/debian_version")
-ENDIF()
+endif()
+if(BUILD_PYTHON_MODULE)
+  if(EXISTS "/etc/debian_version")
+    install(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/ COMPONENT bin)
+  else()
+    install(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/site-packages/ COMPONENT bin)
+  endif()
+endif()
 
-INSTALL(TARGETS geoModeler DESTINATION bin COMPONENT bin)
+install(TARGETS geoModeler DESTINATION bin COMPONENT bin)
 
 # Add correct path to the geomod binary for convenience
-SET(GEOMOD_BINARY ${CMAKE_BINARY_DIR}/geoModeler)
-SET(PROJECT_PATH ${PROJECT_SOURCE_DIR})
-CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/tests/makereg.in
+set(GEOMOD_BINARY ${CMAKE_BINARY_DIR}/geoModeler)
+set(PROJECT_PATH ${PROJECT_SOURCE_DIR})
+configure_file(${PROJECT_SOURCE_DIR}/tests/makereg.in
                makereg)
-CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/tests/dotest.in
+configure_file(${PROJECT_SOURCE_DIR}/tests/dotest.in
                dotest)
 
-FILE(GLOB GEOUTILS_SRCS RELATIVE ${PROJECT_SOURCE_DIR} GeoUtils/*.py)
-INSTALL(FILES ${GEOUTILS_SRCS} DESTINATION lib/python${PYTHON_VERSION}/dist-packages/GeoUtils
+file(GLOB GEOUTILS_SRCS RELATIVE ${PROJECT_SOURCE_DIR} GeoUtils/*.py)
+install(FILES ${GEOUTILS_SRCS} DESTINATION lib/python${PYTHON_VERSION}/dist-packages/GeoUtils
         COMPONENT bin)
 
-ENABLE_TESTING()
-FILE(GLOB_RECURSE GEOMOD_TESTFILES RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*.reg)
-FOREACH(TESTFILE ${GEOMOD_TESTFILES})
-  STRING(REGEX REPLACE ".reg" ".py" TESTSCRIPT ${TESTFILE})
-  ADD_TEST(${TESTFILE} ${CMAKE_BINARY_DIR}/dotest ${CMAKE_BINARY_DIR}/geoModeler ${PROJECT_SOURCE_DIR}/scripts/${TESTSCRIPT} ${PROJECT_SOURCE_DIR}/tests/${TESTFILE})
-ENDFOREACH()
+enable_testing()
+file(GLOB_RECURSE GEOMOD_TESTFILES RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*.reg)
+foreach(TESTFILE ${GEOMOD_TESTFILES})
+  string(REGEX REPLACE ".reg" ".py" TESTSCRIPT ${TESTFILE})
+  add_test(${TESTFILE} ${CMAKE_BINARY_DIR}/dotest ${CMAKE_BINARY_DIR}/geoModeler ${PROJECT_SOURCE_DIR}/scripts/${TESTSCRIPT} ${PROJECT_SOURCE_DIR}/tests/${TESTFILE})
+endforeach()
 
 add_custom_target(check-commits COMMAND ${CMAKE_COMMAND}
                                         -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
@@ -183,7 +189,7 @@ add_custom_target(check-commits COMMAND ${CMAKE_COMMAND}
 
 
 # PIP/Distutils Package
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/setup.py.in ${CMAKE_BINARY_DIR}/setup.py)
-FILE(COPY ${CMAKE_SOURCE_DIR}/GeoUtils DESTINATION ${CMAKE_BINARY_DIR})
-FILE(COPY ${CMAKE_SOURCE_DIR}/README DESTINATION ${CMAKE_BINARY_DIR})
-ADD_CUSTOM_TARGET(pip DEPENDS GoTools COMMAND python2 setup.py sdist --dist-dir ${CMAKE_BINARY_DIR})
+configure_file(${CMAKE_SOURCE_DIR}/setup.py.in ${CMAKE_BINARY_DIR}/setup.py)
+file(COPY ${CMAKE_SOURCE_DIR}/GeoUtils DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/README DESTINATION ${CMAKE_BINARY_DIR})
+add_custom_target(pip DEPENDS GoTools COMMAND python2 setup.py sdist --dist-dir ${CMAKE_BINARY_DIR})
