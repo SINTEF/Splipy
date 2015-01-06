@@ -108,12 +108,41 @@ void Surface_Dealloc(Surface* self)
 }
 
 PyDoc_STRVAR(surface_clone__doc__,"Clone a surface\n"
-                                  "@return: New copy of surface\n");
+                                  "@param coefs: Coefficients for new surface\n"
+                                  "@type coefs: List of (list of float)\n"
+                                  "@return: New (copy of) surface\n");
 PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  Surface* res = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  static const char* keyWords[] = {"coefs", NULL};
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
-  res->data.reset(parSurf->clone());
+
+  PyObject* coefso=NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|O",
+                                   (char**)keyWords,&coefso))
+    return NULL;
+
+  Surface* res = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
+  if (coefso) {
+    shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+    int nCoefs = surf->numCoefs_u()*surf->numCoefs_v();
+    if (PyList_Size(coefso) != nCoefs)
+      return NULL;
+
+    int dim = 1;
+    std::vector<double> coefs;
+    for (int i=0;i<nCoefs;++i) {
+      PyObject* o = PyList_GetItem(coefso,i);
+      if (PyObject_TypeCheck(o,&PyList_Type)) {
+        dim = PyList_Size(o);
+        for (size_t l=0;l<PyList_Size(o);++l)
+          coefs.push_back(PyFloat_AsDouble(PyList_GetItem(o,l)));
+      } else
+        coefs.push_back(PyFloat_AsDouble(o));
+    }
+    res->data.reset(new Go::SplineSurface(surf->basis_u(), surf->basis_v(),
+                                          coefs.begin(), dim, false));
+  } else
+    res->data.reset(parSurf->clone());
  
   return (PyObject*)res;
 }

@@ -120,9 +120,35 @@ PyDoc_STRVAR(volume_clone__doc__,"Clone a volume\n"
                                  "@return: New copy of volume\n");
 PyObject* Volume_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  static const char* keyWords[] = {"coefs", NULL};
   Volume* res = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
-  res->data.reset(parVol->clone());
+  PyObject* coefso=NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|O",
+                                   (char**)keyWords,&coefso))
+    return NULL;
+
+  if (coefso) {
+    shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
+    int nCoefs = vol->numCoefs(0)*vol->numCoefs(1)*vol->numCoefs(2);
+    if (PyList_Size(coefso) != nCoefs)
+      return NULL;
+
+    int dim = 1;
+    std::vector<double> coefs;
+    for (int i=0;i<nCoefs;++i) {
+      PyObject* o = PyList_GetItem(coefso,i);
+      if (PyObject_TypeCheck(o,&PyList_Type)) {
+        dim = PyList_Size(o);
+        for (size_t l=0;l<PyList_Size(o);++l)
+          coefs.push_back(PyFloat_AsDouble(PyList_GetItem(o,l)));
+      } else
+        coefs.push_back(PyFloat_AsDouble(o));
+    }
+   res->data.reset(new Go::SplineVolume(vol->basis(0), vol->basis(1), vol->basis(2),
+                                        coefs.begin(), dim, false));
+  } else
+    res->data.reset(parVol->clone());
  
   return (PyObject*)res;
 }
