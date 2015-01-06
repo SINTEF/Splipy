@@ -202,6 +202,45 @@ PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(surface_evaluategrid__doc__,"Evaluate surface on a tensor-product grid\n"
+                                         "@param param_u: The u parameters\n"
+                                         "@type param_u: List of float\n"
+                                         "@param param_v: The v parameters\n"
+                                         "@type param_v: List of float\n"
+                                         "@return: The values of the surface at the given parameters\n"
+                                         "@rtype: List of floats");
+PyObject* Surface_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"param_u", "param_v", NULL };
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+  PyObject* paramuo;
+  PyObject* paramvo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&paramuo,&paramvo) || !parSurf)
+    return NULL;
+
+  if (!PyObject_TypeCheck(paramuo,&PyList_Type) ||
+      !PyObject_TypeCheck(paramvo,&PyList_Type))
+    return NULL;
+
+  std::vector<double> paramu;
+  for (int i=0;i<PyList_Size(paramuo);++i)
+    paramu.push_back(PyFloat_AsDouble(PyList_GetItem(paramuo,i)));
+  std::vector<double> paramv;
+  for (int i=0;i<PyList_Size(paramvo);++i)
+    paramv.push_back(PyFloat_AsDouble(PyList_GetItem(paramvo,i)));
+
+  std::vector<double> res(paramu.size()*paramv.size()*surf->dimension());
+  surf->gridEvaluator(res, paramu, paramv);
+
+  PyObject* result = PyList_New(res.size());
+  for (size_t i=0;i<res.size();++i)
+    PyList_SetItem(result, i, Py_BuildValue((char*)"d",res[i]));
+
+  return result;
+}
+
 PyDoc_STRVAR(surface_evaluate_normal__doc__,"Evaluate surface normal at given parameter values\n"
                                             "@param value_u: The u parameter value\n"
                                             "@type value_u: float\n"
@@ -1064,6 +1103,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"Append",              (PyCFunction)Surface_Append,                METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
+     {(char*)"EvaluateGrid",        (PyCFunction)Surface_EvaluateGrid,          METH_VARARGS|METH_KEYWORDS, surface_evaluategrid__doc__},
      {(char*)"EvaluateNormal",      (PyCFunction)Surface_EvaluateNormal,        METH_VARARGS|METH_KEYWORDS, surface_evaluate_normal__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Surface_EvaluateTangent,       METH_VARARGS|METH_KEYWORDS, surface_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},

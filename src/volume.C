@@ -205,6 +205,53 @@ PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(volume_evaluategrid__doc__,"Evaluate volume on a tensor-product grid\n"
+                                        "@param param_u: The u parameters\n"
+                                        "@type param_u: List of float\n"
+                                        "@param param_v: The v parameters\n"
+                                        "@type param_v: List of float\n"
+                                        "@param param_w: The w parameters\n"
+                                        "@type param_w: List of float\n"
+                                        "@return: The values of the volume at the given parameters\n"
+                                        "@rtype: List of floats");
+PyObject* Volume_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"param_u", "param_v", "param_w", NULL };
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
+  PyObject* paramuo;
+  PyObject* paramvo;
+  PyObject* paramwo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO",
+                                   (char**)keyWords,&paramuo,&paramvo,&paramwo))
+    return NULL;
+
+  if (!PyObject_TypeCheck(paramuo,&PyList_Type) ||
+      !PyObject_TypeCheck(paramvo,&PyList_Type) ||
+      !PyObject_TypeCheck(paramwo,&PyList_Type) ||
+      !parVol)
+    return NULL;
+
+  std::vector<double> paramu;
+  for (int i=0;i<PyList_Size(paramuo);++i)
+    paramu.push_back(PyFloat_AsDouble(PyList_GetItem(paramuo,i)));
+  std::vector<double> paramv;
+  for (int i=0;i<PyList_Size(paramvo);++i)
+    paramv.push_back(PyFloat_AsDouble(PyList_GetItem(paramvo,i)));
+  std::vector<double> paramw;
+  for (int i=0;i<PyList_Size(paramwo);++i)
+    paramw.push_back(PyFloat_AsDouble(PyList_GetItem(paramwo,i)));
+
+  std::vector<double> res(paramu.size()*paramv.size()*paramw.size()*vol->dimension());
+  vol->gridEvaluator(paramu, paramv, paramw, res);
+
+  PyObject* result = PyList_New(res.size());
+  for (size_t i=0;i<res.size();++i)
+    PyList_SetItem(result, i, Py_BuildValue((char*)"d",res[i]));
+
+  return result;
+}
+
 PyDoc_STRVAR(volume_flip_parametrization__doc__,"Flip (or reverse) volume parametrization\n"
                                                 "@param direction: The parametric direction to flip (0=u, 1=v, 2=w)\n"
                                                 "@type direction: int\n"
@@ -879,6 +926,7 @@ PyObject* Volume_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
 PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
+     {(char*)"EvaluateGrid",        (PyCFunction)Volume_EvaluateGrid,          METH_VARARGS|METH_KEYWORDS, volume_evaluategrid__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetBoundingBox",      (PyCFunction)Volume_GetBoundingBox,        METH_VARARGS              , volume_get_bounding_box__doc__},
      {(char*)"GetConstParSurf",     (PyCFunction)Volume_GetConstParSurf,       METH_VARARGS|METH_KEYWORDS, volume_get_const_par_surf__doc__},

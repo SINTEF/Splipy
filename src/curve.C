@@ -200,6 +200,38 @@ PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
+PyDoc_STRVAR(curve_evaluategrid__doc__,"Evaluate curve on a grid\n"
+                                       "@param params: The parameters\n"
+                                       "@type params: List of float\n"
+                                       "@return: The values of the curve at the given parameters\n"
+                                       "@rtype: List of floats");
+PyObject* Curve_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"params", NULL};
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
+  PyObject* paramso;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&paramso) || !parCrv)
+    return NULL;
+
+  if (!PyObject_TypeCheck(paramso,&PyList_Type))
+    return NULL;
+
+  std::vector<double> params;
+  for (int i=0;i<PyList_Size(paramso);++i)
+    params.push_back(PyFloat_AsDouble(PyList_GetItem(paramso,i)));
+
+  std::vector<double> res(params.size()*crv->dimension());
+  crv->gridEvaluator(res, params);
+
+  PyObject* result = PyList_New(res.size());
+  for (size_t i=0;i<res.size();++i)
+    PyList_SetItem(result, i, Py_BuildValue((char*)"d",res[i]));
+
+  return result;
+}
+
 PyDoc_STRVAR(curve_evaluate_tangent__doc__,"Evaluate the curve tangent at a parameter value\n"
                                            "@param value: The parameter value\n"
                                            "@type value: float\n"
@@ -1028,6 +1060,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"AppendCurve",         (PyCFunction)Curve_AppendCurve,         METH_VARARGS|METH_KEYWORDS, curve_append_curve__doc__},
      {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS,               curve_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
+     {(char*)"EvaluateGrid",        (PyCFunction)Curve_EvaluateGrid,        METH_VARARGS|METH_KEYWORDS, curve_evaluategrid__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Curve_EvaluateTangent,     METH_VARARGS|METH_KEYWORDS, curve_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"ForceRational",       (PyCFunction)Curve_ForceRational,       METH_VARARGS,               curve_force_rational__doc__},
