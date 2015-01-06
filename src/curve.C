@@ -430,6 +430,31 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
   return result;
 }
 
+PyDoc_STRVAR(curve_get_tesselationparams__doc__,"Obtain tesselation parameters for a curve\n"
+                                                "@param n: Number of tesselation points per knotspan\n"
+                                                "@type n: Int\n"
+                                                "@rtype: List of float");
+PyObject* Curve_GetTesselationParams(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
+  static const char* keyWords[] = {"n", NULL};
+  int np = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|i",
+                                   (char**)keyWords,&np))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::vector<double> gpar = Tesselate(crv->basis().begin(), crv->basis().end(), np);
+
+  size_t nx = gpar.size();
+  PyObject* result = PyList_New(nx);
+  for (size_t i=0;i<nx;++i)
+    PyList_SetItem(result, i, Py_BuildValue((char*)"d",gpar[i]));
+
+  return result;
+}
+
 PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve\n"
                                       "@param knot: The knot to insert\n"
                                       "@type knot: float\n"
@@ -935,6 +960,56 @@ PyObject* Curve_GetSubCurve(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) result;
 }
 
+PyDoc_STRVAR(curve_tesselate__doc__,"Tesselate a curve\n"
+                                    "@param n: Number of tesselation points per knotspan\n"
+                                    "@type n: Int\n"
+                                    "@rtype: Tuple with (list of nodes, list of elements)");
+PyObject* Curve_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"n", NULL};
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
+  int np = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|i",
+                                   (char**)keyWords,&np))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::vector<double> gpar = Tesselate(crv->basis().begin(), crv->basis().end(), np);
+
+  // Evaluate the surface at all points
+  size_t nx = gpar.size();
+  std::vector<double> XYZ(crv->dimension()*nx);
+  crv->gridEvaluator(XYZ,gpar);
+
+  // Establish the block grid coordinates
+  PyObject* gc = PyList_New(XYZ.size());
+  for (int i=0;i<XYZ.size();++i)
+    PyList_SetItem(gc, i, Py_BuildValue((char*)"d", XYZ[i]));
+
+
+  // Establish the block grid topology
+  PyObject* ge = PyList_New(0);
+  int nse1 = np;
+  int n[2], ie = 1, ip = 0;
+  n[0] = 0;
+  n[1] = n[0] + 1;
+  size_t i, l;
+  for (i = 1; i < nx; i++)
+  {
+    for (l = 0; l < 2; l++)
+      PyList_Append(ge, Py_BuildValue((char*)"i",n[l]++));
+    if (i%nse1 == 0) ie++;
+  }
+
+  PyObject* result = PyTuple_New(2);
+  PyTuple_SetItem(result, 0, gc);
+  PyTuple_SetItem(result, 1, ge);
+
+  return result;
+}
+
+
 PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
                                     "@param vector: The vector to translate along\n"
                                     "@type axis: Point, list of floats or tuple of floats\n"
@@ -1068,6 +1143,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS|METH_KEYWORDS, curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
+     {(char*)"GetTesselationParams",(PyCFunction)Curve_GetTesselationParams,METH_VARARGS|METH_KEYWORDS, curve_get_tesselationparams__doc__},
      {(char*)"GetSubCurve",         (PyCFunction)Curve_GetSubCurve,         METH_VARARGS|METH_KEYWORDS, curve_get_sub_curve__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Curve_Interpolate,         METH_VARARGS|METH_KEYWORDS, curve_interpolate__doc__},
@@ -1079,6 +1155,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Rebuild",             (PyCFunction)Curve_Rebuild,             METH_VARARGS|METH_KEYWORDS, curve_rebuild__doc__},
      {(char*)"Rotate",              (PyCFunction)Curve_Rotate,              METH_VARARGS|METH_KEYWORDS, curve_rotate__doc__},
      {(char*)"Split",               (PyCFunction)Curve_Split,               METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
+     {(char*)"Tesselate",           (PyCFunction)Curve_Tesselate,           METH_VARARGS|METH_KEYWORDS, curve_tesselate__doc__},
      {(char*)"Translate",           (PyCFunction)Curve_Translate,           METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
      {(char*)"__reduce__",          (PyCFunction)Curve_Reduce,              0,                          NULL},
      {NULL,                         NULL,                                   0,                          NULL}
