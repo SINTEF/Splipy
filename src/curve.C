@@ -138,7 +138,6 @@ PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   if (coefso) {
     shared_ptr<Go::SplineCurve> curv = convertSplineCurve(parCrv);
     int nCoefs = curv->numCoefs();
-    std::cout << "size is apparently " << PyList_Size(coefso) << std::endl;
     if (PyList_Size(coefso) != nCoefs)
       return NULL;
 

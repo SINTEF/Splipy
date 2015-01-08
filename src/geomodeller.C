@@ -529,8 +529,6 @@ PyObject* GeoMod_ReadHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
   char* fname = 0;
   char* fldname = 0;
   char* group = 0;
-  int patch=1;
-  int level=0;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"sss",
                                    (char**)keyWords,&fname,&fldname,&group))
     return NULL;
