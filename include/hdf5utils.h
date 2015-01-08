@@ -12,7 +12,7 @@ void DoWriteHDF5Geometry(const std::string& fname, const std::string& fldname,
                          int patch, int level, PyObject* data, bool trunc);
 
 PyObject* DoReadHDF5Field(const std::string& fname, const std::string& fldname,
-                          int patch, int level);
+                          const std::string& group);
 PyObject* DoReadHDF5Geometry(const std::string& fname, const std::string& fldname,
                              int patch, int level);
 }

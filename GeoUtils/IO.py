@@ -560,7 +560,7 @@ class IFEMResultDatabase:
 
     res = []
     for i in range(1, patches+1):
-      res.append(ReadHDF5Field(self.path+'.hdf5', field, i, level))
+      res.append(ReadHDF5Field(self.path+'.hdf5', field, "%i/%i" %(i, level)))
 
     return res
 
@@ -581,7 +581,7 @@ class IFEMResultDatabase:
 
     res = []
     for i in range(len(geom)):
-      coefs = ReadHDF5Field(self.path+'.hdf5', field, i+1, level)
+      coefs = ReadHDF5Field(self.path+'.hdf5', field, "%i/%i" %(i+1, level))
       if isinstance(geom[0], Volume):
         k1, k2, k3 = geom[i].GetKnots(True)
         order = geom[i].GetOrder()

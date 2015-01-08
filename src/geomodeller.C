@@ -514,10 +514,8 @@ PyDoc_STRVAR(read_hdf5field__doc__,"Read a field from a HDF5 file\n"
                                    "@type  filename: string\n"
                                    "@param fieldname: Field name\n"
                                    "@type fieldname: string \n"
-                                   "@param patch: patch number\n"
-                                   "@type patch: integer (>= 1)\n"
-                                   "@param level: time level\n"
-                                   "@type level: integer\n"
+                                   "@param groupname: Group to read dataset from\n"
+                                   "@type: groupname: string\n"
                                    "@return: The requested field\n"
                                    "@rtype: List of float");
 PyObject* GeoMod_ReadHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
@@ -527,19 +525,20 @@ PyObject* GeoMod_ReadHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
   Py_INCREF(Py_None);
   return Py_None;
 #else
-  static const char* keyWords[] = {"filename", "fieldname", "patch", "level", NULL };
+  static const char* keyWords[] = {"filename", "fieldname", "group", NULL };
   char* fname = 0;
   char* fldname = 0;
+  char* group = 0;
   int patch=1;
   int level=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ssii",
-                                   (char**)keyWords,&fname,&fldname,&patch,&level))
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"sss",
+                                   (char**)keyWords,&fname,&fldname,&group))
     return NULL;
 
-  if (!fname || !fldname || patch < 1)
+  if (!fname || !fldname || !group)
     return NULL;
 
-  return DoReadHDF5Field(fname, fldname, patch, level);
+  return DoReadHDF5Field(fname, fldname, group);
 #endif
 }
 

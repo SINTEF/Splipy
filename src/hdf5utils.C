@@ -26,12 +26,10 @@ static bool checkGroupExistence(int parent, const char* path)
 }
 
 PyObject* DoReadHDF5Field(const std::string& fname, const std::string& fldname,
-                          int patch, int level)
+                          const std::string& groupname)
 {
   hid_t file = H5Fopen(fname.c_str(),H5F_ACC_RDONLY,H5P_DEFAULT);
-  std::stringstream str;
-  str << level << "/" << patch;
-  hid_t group = H5Gopen2(file,str.str().c_str(),H5P_DEFAULT);
+  hid_t group = H5Gopen2(file,groupname.c_str(),H5P_DEFAULT);
 
   hid_t set = H5Dopen2(group,fldname.c_str(),H5P_DEFAULT);
   hsize_t siz = H5Dget_storage_size(set) / 8;
