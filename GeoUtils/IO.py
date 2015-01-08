@@ -606,6 +606,13 @@ class IFEMResultDatabase:
     """
     return int(self.dom.getElementsByTagName('levels')[0].firstChild.nodeValue)
 
+  def GetTime(self, level):
+    """ Read the time value for a given level
+        @return: The time value
+        @rtype: Float
+    """
+    return ReadHDF5Field(self.path+'.hdf5', timeinfo, "%i", level)[0]
+
 class Numberer(object):
   """ Handles specification of topology sets and automatic renumbering of patches.
   """
