@@ -60,7 +60,8 @@ PyObject* DoReadHDF5Geometry(const std::string& fname, const std::string& geonam
   str2 << patch;
   hid_t set = H5Dopen2(group,str2.str().c_str(),H5P_DEFAULT);
   hsize_t siz = H5Dget_storage_size(set);
-  char* temp = new char[siz];
+  char* temp = new char[siz+1];
+  temp[siz] = '\0';
   H5Dread(set,H5T_NATIVE_CHAR,H5S_ALL,H5S_ALL,H5P_DEFAULT,temp);
   H5Dclose(set);
   H5Gclose(group);
