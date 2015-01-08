@@ -138,6 +138,7 @@ PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   if (coefso) {
     shared_ptr<Go::SplineCurve> curv = convertSplineCurve(parCrv);
     int nCoefs = curv->numCoefs();
+    std::cout << "size is apparently " << PyList_Size(coefso) << std::endl;
     if (PyList_Size(coefso) != nCoefs)
       return NULL;
 
@@ -467,7 +468,7 @@ PyObject* Curve_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
                                                     false,
                                                     weights);
 
-  PyObject* result = PyList_New(coefs.size());
+  PyObject* result = PyList_New(0);
   for (std::vector<double>::const_iterator it  = res->coefs_begin();
                                            it != res->coefs_end();++it)
     PyList_Append(result,Py_BuildValue((char*)"d",*it));
