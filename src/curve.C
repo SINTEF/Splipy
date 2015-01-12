@@ -122,28 +122,30 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
                                 "@param coefs: Coefficients for new curve\n"
                                 "@type coefs: List of (list of float)\n"
+                                "@param ncomp: Number of components in coefficients\n"
+                                "@type ncomp: Integer\n"
                                 "@return: New (copy of) curve\n"
                                 "@rtype: Curve\n");
 PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"coefs", NULL};
+  static const char* keyWords[] = {"coefs", "ncomp", NULL};
   Curve* res = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
 
   PyObject* coefso=NULL;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|O",
-                                   (char**)keyWords,&coefso))
+  int dim = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|Oi",
+                                   (char**)keyWords,&coefso,&dim))
     return NULL;
 
   if (coefso) {
     shared_ptr<Go::SplineCurve> curv = convertSplineCurve(parCrv);
     int nCoefs = curv->numCoefs();
-    if (PyList_Size(coefso) != nCoefs)
+    if (PyList_Size(coefso)/nCoefs == 0)
       return NULL;
 
-    int dim = 1;
     std::vector<double> coefs;
-    for (int i=0;i<nCoefs;++i) {
+    for (int i=0;i<PyList_Size(coefso);++i) {
       PyObject* o = PyList_GetItem(coefso,i);
       if (PyObject_TypeCheck(o,&PyList_Type)) {
         dim = PyList_Size(o);
