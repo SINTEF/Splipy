@@ -494,6 +494,7 @@ class IFEMResultDatabase:
       @param path: The path to the xml/hdf5 pair (no extension)
       @type path: String
   """
+  FieldInfo = namedtuple("FieldInfo","basis patches components fieldtype once description")
   def __init__(self, path):
     self.dom = xml.dom.minidom.parse(path+'.xml')
     self.path = path
@@ -601,6 +602,38 @@ class IFEMResultDatabase:
 
     return res
 
+  def GetFieldInfo(self, field):
+    """ Extract info for a given field
+        @param field: The field name
+        @type field: String
+        @return: Field infos for given name
+        @rtype: List of FieldInfo
+    """
+    result = []
+    nodes = self.dom.getElementsByTagName('entry')
+    for node in nodes:
+      if node.getAttributeNode('name').nodeValue == field:
+        name    = field
+        desc    = node.getAttributeNode('description').nodeValue
+        ftype   = node.getAttributeNode('type').nodeValue
+        basis   = node.getAttributeNode('basis').nodeValue
+        patches = int(node.getAttributeNode('patches').nodeValue)
+        comp    = int(node.getAttributeNode('components').nodeValue)
+        once    = False
+        if node.getAttributeNode('once'):
+          once = node.getAttributeNode('once').nodeValue == 'true'
+        result.append(IFEMResultDatabase.FieldInfo(basis,patches,comp,ftype,once,desc))
+
+    return result
+
+  def GetFields(self):
+    result = []
+    nodes = self.dom.getElementsByTagName('entry')
+    for node in nodes:
+      result.append(node.getAttributeNode('name').nodeValue)
+
+    return list(set(result)) # to get unique values
+
   def GetTimeLevels(self):
     """ Extract number of timelevels in result data set
         @return: Number of time levels
@@ -613,7 +646,7 @@ class IFEMResultDatabase:
         @return: The time value
         @rtype: Float
     """
-    return ReadHDF5Field(self.path+'.hdf5', timeinfo, "%i", level)[0]
+    return ReadHDF5Field(self.path+'.hdf5', 'timeinfo/SIMbase-1', '%i'%(level))[0]
 
 class Numberer(object):
   """ Handles specification of topology sets and automatic renumbering of patches.
