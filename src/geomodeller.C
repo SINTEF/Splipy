@@ -525,18 +525,19 @@ PyObject* GeoMod_ReadHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
   Py_INCREF(Py_None);
   return Py_None;
 #else
-  static const char* keyWords[] = {"filename", "fieldname", "group", NULL };
+  static const char* keyWords[] = {"filename", "fieldname", "group", "ints", NULL };
   char* fname = 0;
   char* fldname = 0;
   char* group = 0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"sss",
-                                   (char**)keyWords,&fname,&fldname,&group))
+  bool ints=false;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"sss|b",
+                                   (char**)keyWords,&fname,&fldname,&group,&ints))
     return NULL;
 
   if (!fname || !fldname || !group)
     return NULL;
 
-  return DoReadHDF5Field(fname, fldname, group);
+  return DoReadHDF5Field(fname, fldname, group, ints);
 #endif
 }
 
