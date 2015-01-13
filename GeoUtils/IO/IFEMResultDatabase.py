@@ -40,8 +40,11 @@ class IFEMResultDatabase:
     fields = self.dom.getElementsByTagName('entry')
     patches = 1
     for field in fields:
-      if field.getAttributeNode('basis').nodeValue == basis:
-        patches = int(field.getAttributeNode('patches').nodeValue)
+      try:
+        if field.getAttributeNode('basis').nodeValue == basis:
+          patches = int(field.getAttributeNode('patches').nodeValue)
+      except:
+        pass
 
     return patches
 
@@ -131,9 +134,18 @@ class IFEMResultDatabase:
         name    = field
         desc    = node.getAttributeNode('description').nodeValue
         ftype   = node.getAttributeNode('type').nodeValue
-        basis   = node.getAttributeNode('basis').nodeValue
-        patches = int(node.getAttributeNode('patches').nodeValue)
-        comp    = int(node.getAttributeNode('components').nodeValue)
+        try:
+          basis   = node.getAttributeNode('basis').nodeValue
+        except:
+           basis = ''
+        try:
+          patches = int(node.getAttributeNode('patches').nodeValue)
+        except:
+          patches = 1
+        try:
+          comp    = int(node.getAttributeNode('components').nodeValue)
+        except:
+          comp = 1
         once    = False
         if node.getAttributeNode('once'):
           once = node.getAttributeNode('once').nodeValue == 'true'
