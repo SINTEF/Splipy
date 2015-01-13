@@ -175,3 +175,9 @@ class IFEMResultDatabase:
     """
     return ReadHDF5Field(self.path+'.hdf5', 'timeinfo/SIMbase-1', '%i'%(level))[0]
 
+  def GetIntField(self, level, name):
+    """ Read an integer field for a given level
+        @return: The field
+        @rtype: List of int
+    """
+    return ReadHDF5Field(self.path+'.hdf5', name, '%i' %(level), True)
