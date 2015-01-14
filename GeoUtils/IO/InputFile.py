@@ -1,5 +1,7 @@
 __doc__ == 'Class for working with IFEM input (.xinp) files'
 
+import os
+import xml.dom.minidom
 from collections import namedtuple
 
 class InputFile:
@@ -92,7 +94,7 @@ class InputFile:
                   result[patch].edge.extend([remap[v-1] for v in values])
               elif typ == 'face':
                 if toptype == 'face' or len(toptype) == 0:
-                  remap = [1,2,5,6,3,4]
+                  remap = [1,2,3,4,5,6]
                   result[patch].face.extend([remap[v-1] for v in values])
               else:
                 result[patch].vertex.extend(values)
