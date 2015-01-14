@@ -1,5 +1,7 @@
 __doc__ = 'Utility I/O functions'
 
+import json
+
 def topologystring(geotype, name, patches, entries):
   xml = '  <set name="%s" type="%s">\n' % (name, geotype)
   for patch in patches:

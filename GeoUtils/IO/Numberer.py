@@ -1,5 +1,16 @@
 __doc__ = 'Class for handling specification of topology sets and automatic renumbering of patches'
 
+import os
+
+from itertools import groupby
+from numpy import cumsum, ones, prod, zeros
+from operator import itemgetter, methodcaller
+
+from . import HDF5File, InputFile
+from .. import WallDistance
+from GoTools import *
+from GoTools.Preprocess import NaturalNodeNumbers
+
 class Numberer(object):
   """ Handles specification of topology sets and automatic renumbering of patches.
   """
