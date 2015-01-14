@@ -5,7 +5,7 @@ from GoTools import *
 
 from itertools import product
 from operator import attrgetter
-from InputFile import *
+from GeoUtils.IO import InputFile, IFEMResultDatabase
 from matplotlib import pyplot
 
 class SurfacePlot:

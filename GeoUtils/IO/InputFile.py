@@ -1,5 +1,7 @@
 __doc__ == 'Class for working with IFEM input (.xinp) files'
 
+import os
+import xml.dom.minidom
 from collections import namedtuple
 
 class InputFile:
