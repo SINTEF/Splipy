@@ -1135,7 +1135,7 @@ PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
 
 PyMethodDef Curve_methods[] = {
      {(char*)"AppendCurve",         (PyCFunction)Curve_AppendCurve,         METH_VARARGS|METH_KEYWORDS, curve_append_curve__doc__},
-     {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS,               curve_clone__doc__},
+     {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS|METH_KEYWORDS, curve_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
      {(char*)"EvaluateGrid",        (PyCFunction)Curve_EvaluateGrid,        METH_VARARGS|METH_KEYWORDS, curve_evaluategrid__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Curve_EvaluateTangent,     METH_VARARGS|METH_KEYWORDS, curve_evaluate_tangent__doc__},
