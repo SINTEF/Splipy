@@ -92,4 +92,17 @@ void PyMethods_Append(std::vector<PyMethodDef>& defs, PyMethodDef* start)
   }
 }
 
+void VectorToPyPointList(PyObject* result, const std::vector<double>& data, int dim)
+{
+  for (size_t i=0;i<data.size()/dim;++i) {
+    if (dim == 1)
+      PyList_SetItem(result, i, PyFloat_FromDouble(data[i]));
+    else {
+      Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type, 0);
+      pt->data.reset(new Go::Point(data.begin()+i*dim, data.begin()+(i+1)*dim));
+      PyList_SetItem(result, i, (PyObject*)pt);
+    }
+  }
+}
+
 }

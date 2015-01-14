@@ -22,6 +22,13 @@ shared_ptr<Go::VolumeModel> PyObject_AsGoVolumeModel(PyObject* obj);
 
 void PyMethods_Append(std::vector<PyMethodDef>& defs, PyMethodDef* start);
 
+//! \brief Convert a vector of doubles to a python point list
+//! \param result The resulting PyList. Needs to be resized up front!
+//! \param data The data
+//! \param dim The dimensionality of the data
+void VectorToPyPointList(PyObject* result,
+                         const std::vector<double>& data, int dim);
+
 //! \brief Tesselate a spline basis
 //! \param begin Iterator to starting parameter
 //! \param end Iterator past ending parameter
