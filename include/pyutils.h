@@ -29,6 +29,47 @@ void PyMethods_Append(std::vector<PyMethodDef>& defs, PyMethodDef* start);
 void VectorToPyPointList(PyObject* result,
                          const std::vector<double>& data, int dim);
 
+//! \brief Convert a python point list to a flat vector
+//! \param list The PyList
+//!\ return The pair with the flat vector and the number of components
+//! \details If components > 1, result will be padded to 3 components
+  template<typename T=double>
+std::pair<std::vector<T>, int> PyPointListToVector(PyObject* list)
+{
+  std::pair<std::vector<T>, int> result;
+  for (int i=0;i<PyList_Size(list);++i) {
+    PyObject* o = PyList_GetItem(list, i);
+    if (PyObject_TypeCheck(o, &PyFloat_Type)) {
+      result.first.push_back(PyFloat_AsDouble(o));
+      result.second = 1;
+    } else if (PyObject_TypeCheck(o,&PyInt_Type)) {
+      result.first.push_back(PyInt_AsLong(o));
+      result.second = 1;
+    } else if (PyObject_TypeCheck(o, &Point_Type)) {
+      Point* pt = (Point*)o;
+      for (size_t j=0;j<pt->data->size();++j)
+        result.first.push_back((*pt->data)[j]);
+      result.second = pt->data->size();
+    }
+    else if (PyObject_TypeCheck(o, &PyList_Type)) {
+      for (size_t j=0;j<PyList_Size(o);++j) {
+        PyObject* o2 = PyList_GetItem(o, j);
+        result.second = PyList_Size(o2);
+        if (PyObject_TypeCheck(o2, &PyFloat_Type))
+          result.first.push_back(PyFloat_AsDouble(o2));
+        else if (PyObject_TypeCheck(o2,&PyInt_Type))
+          result.first.push_back(PyInt_AsLong(o2));
+      }
+    }
+    if (result.second > 1) {
+      for (size_t j=result.second;j<3;++j)
+        result.first.push_back(0.0);
+    }
+  }
+
+  return result;
+}
+
 //! \brief Tesselate a spline basis
 //! \param begin Iterator to starting parameter
 //! \param end Iterator past ending parameter
