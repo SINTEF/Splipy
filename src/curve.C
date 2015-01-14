@@ -122,28 +122,30 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
                                 "@param coefs: Coefficients for new curve\n"
                                 "@type coefs: List of (list of float)\n"
+                                "@param ncomp: Number of components in coefficients\n"
+                                "@type ncomp: Integer\n"
                                 "@return: New (copy of) curve\n"
                                 "@rtype: Curve\n");
 PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"coefs", NULL};
+  static const char* keyWords[] = {"coefs", "ncomp", NULL};
   Curve* res = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
 
   PyObject* coefso=NULL;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|O",
-                                   (char**)keyWords,&coefso))
+  int dim = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|Oi",
+                                   (char**)keyWords,&coefso,&dim))
     return NULL;
 
   if (coefso) {
     shared_ptr<Go::SplineCurve> curv = convertSplineCurve(parCrv);
     int nCoefs = curv->numCoefs();
-    if (PyList_Size(coefso) != nCoefs)
+    if (PyList_Size(coefso)/nCoefs == 0)
       return NULL;
 
-    int dim = 1;
     std::vector<double> coefs;
-    for (int i=0;i<nCoefs;++i) {
+    for (int i=0;i<PyList_Size(coefso);++i) {
       PyObject* o = PyList_GetItem(coefso,i);
       if (PyObject_TypeCheck(o,&PyList_Type)) {
         dim = PyList_Size(o);
@@ -198,6 +200,37 @@ PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   parCrv->point(*result->data,value);
 
   return (PyObject*)result;
+}
+
+PyDoc_STRVAR(curve_evaluategrid__doc__,"Evaluate curve on a grid\n"
+                                       "@param params: The parameters\n"
+                                       "@type params: List of float\n"
+                                       "@return: The values of the curve at the given parameters\n"
+                                       "@rtype: List of floats");
+PyObject* Curve_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"params", NULL};
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
+  PyObject* paramso;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&paramso) || !parCrv)
+    return NULL;
+
+  if (!PyObject_TypeCheck(paramso,&PyList_Type))
+    return NULL;
+
+  std::vector<double> params;
+  for (int i=0;i<PyList_Size(paramso);++i)
+    params.push_back(PyFloat_AsDouble(PyList_GetItem(paramso,i)));
+
+  std::vector<double> res(params.size()*crv->dimension());
+  crv->gridEvaluator(res, params);
+
+  PyObject* result = PyList_New(res.size()/crv->dimension());
+  VectorToPyPointList(result, res, crv->dimension());
+
+  return result;
 }
 
 PyDoc_STRVAR(curve_evaluate_tangent__doc__,"Evaluate the curve tangent at a parameter value\n"
@@ -395,6 +428,31 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
     PyList_Append(result,Py_BuildValue((char*)"d",parPts[i]));
   }
                 
+  return result;
+}
+
+PyDoc_STRVAR(curve_get_tesselationparams__doc__,"Obtain tesselation parameters for a curve\n"
+                                                "@param n: Number of tesselation points per knotspan\n"
+                                                "@type n: Int\n"
+                                                "@rtype: List of float");
+PyObject* Curve_GetTesselationParams(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
+  static const char* keyWords[] = {"n", NULL};
+  int np = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|i",
+                                   (char**)keyWords,&np))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::vector<double> gpar = Tesselate(crv->basis().begin(), crv->basis().end(), np);
+
+  size_t nx = gpar.size();
+  PyObject* result = PyList_New(nx);
+  for (size_t i=0;i<nx;++i)
+    PyList_SetItem(result, i, Py_BuildValue((char*)"d",gpar[i]));
+
   return result;
 }
 
@@ -903,6 +961,56 @@ PyObject* Curve_GetSubCurve(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) result;
 }
 
+PyDoc_STRVAR(curve_tesselate__doc__,"Tesselate a curve\n"
+                                    "@param n: Number of tesselation points per knotspan\n"
+                                    "@type n: Int\n"
+                                    "@rtype: Tuple with (list of nodes, list of elements)");
+PyObject* Curve_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"n", NULL};
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
+  int np = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|i",
+                                   (char**)keyWords,&np))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::vector<double> gpar = Tesselate(crv->basis().begin(), crv->basis().end(), np);
+
+  // Evaluate the surface at all points
+  size_t nx = gpar.size();
+  std::vector<double> XYZ(crv->dimension()*nx);
+  crv->gridEvaluator(XYZ,gpar);
+
+  // Establish the block grid coordinates
+  PyObject* gc = PyList_New(XYZ.size());
+  for (int i=0;i<XYZ.size();++i)
+    PyList_SetItem(gc, i, Py_BuildValue((char*)"d", XYZ[i]));
+
+
+  // Establish the block grid topology
+  PyObject* ge = PyList_New(0);
+  int nse1 = np;
+  int n[2], ie = 1, ip = 0;
+  n[0] = 0;
+  n[1] = n[0] + 1;
+  size_t i, l;
+  for (i = 1; i < nx; i++)
+  {
+    for (l = 0; l < 2; l++)
+      PyList_Append(ge, Py_BuildValue((char*)"i",n[l]++));
+    if (i%nse1 == 0) ie++;
+  }
+
+  PyObject* result = PyTuple_New(2);
+  PyTuple_SetItem(result, 0, gc);
+  PyTuple_SetItem(result, 1, ge);
+
+  return result;
+}
+
+
 PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
                                     "@param vector: The vector to translate along\n"
                                     "@type axis: Point, list of floats or tuple of floats\n"
@@ -1026,8 +1134,9 @@ PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
 
 PyMethodDef Curve_methods[] = {
      {(char*)"AppendCurve",         (PyCFunction)Curve_AppendCurve,         METH_VARARGS|METH_KEYWORDS, curve_append_curve__doc__},
-     {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS,               curve_clone__doc__},
+     {(char*)"Clone",               (PyCFunction)Curve_Clone,               METH_VARARGS|METH_KEYWORDS, curve_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Curve_Evaluate,            METH_VARARGS|METH_KEYWORDS, curve_evaluate__doc__},
+     {(char*)"EvaluateGrid",        (PyCFunction)Curve_EvaluateGrid,        METH_VARARGS|METH_KEYWORDS, curve_evaluategrid__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Curve_EvaluateTangent,     METH_VARARGS|METH_KEYWORDS, curve_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"ForceRational",       (PyCFunction)Curve_ForceRational,       METH_VARARGS,               curve_force_rational__doc__},
@@ -1035,6 +1144,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS|METH_KEYWORDS, curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
+     {(char*)"GetTesselationParams",(PyCFunction)Curve_GetTesselationParams,METH_VARARGS|METH_KEYWORDS, curve_get_tesselationparams__doc__},
      {(char*)"GetSubCurve",         (PyCFunction)Curve_GetSubCurve,         METH_VARARGS|METH_KEYWORDS, curve_get_sub_curve__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Curve_Interpolate,         METH_VARARGS|METH_KEYWORDS, curve_interpolate__doc__},
@@ -1046,6 +1156,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Rebuild",             (PyCFunction)Curve_Rebuild,             METH_VARARGS|METH_KEYWORDS, curve_rebuild__doc__},
      {(char*)"Rotate",              (PyCFunction)Curve_Rotate,              METH_VARARGS|METH_KEYWORDS, curve_rotate__doc__},
      {(char*)"Split",               (PyCFunction)Curve_Split,               METH_VARARGS|METH_KEYWORDS, curve_split__doc__},
+     {(char*)"Tesselate",           (PyCFunction)Curve_Tesselate,           METH_VARARGS|METH_KEYWORDS, curve_tesselate__doc__},
      {(char*)"Translate",           (PyCFunction)Curve_Translate,           METH_VARARGS|METH_KEYWORDS, curve_translate__doc__},
      {(char*)"__reduce__",          (PyCFunction)Curve_Reduce,              0,                          NULL},
      {NULL,                         NULL,                                   0,                          NULL}

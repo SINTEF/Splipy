@@ -110,27 +110,29 @@ void Surface_Dealloc(Surface* self)
 PyDoc_STRVAR(surface_clone__doc__,"Clone a surface\n"
                                   "@param coefs: Coefficients for new surface\n"
                                   "@type coefs: List of (list of float)\n"
+                                  "@param ncomp: Number of components in coefficients\n"
+                                  "@type ncomp: Integer\n"
                                   "@return: New (copy of) surface\n");
 PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"coefs", NULL};
+  static const char* keyWords[] = {"coefs", "ncomp", NULL};
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
 
   PyObject* coefso=NULL;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|O",
-                                   (char**)keyWords,&coefso))
+  int dim = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|Oi",
+                                   (char**)keyWords,&coefso,&dim))
     return NULL;
 
   Surface* res = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   if (coefso) {
     shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
     int nCoefs = surf->numCoefs_u()*surf->numCoefs_v();
-    if (PyList_Size(coefso) != nCoefs)
+    if (PyList_Size(coefso)/nCoefs == 0)
       return NULL;
 
-    int dim = 1;
     std::vector<double> coefs;
-    for (int i=0;i<nCoefs;++i) {
+    for (int i=0;i<PyList_Size(coefso);++i) {
       PyObject* o = PyList_GetItem(coefso,i);
       if (PyObject_TypeCheck(o,&PyList_Type)) {
         dim = PyList_Size(o);
@@ -200,6 +202,44 @@ PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   parSurf->point(*result->data,value_u,value_v);
 
   return (PyObject*)result;
+}
+
+PyDoc_STRVAR(surface_evaluategrid__doc__,"Evaluate surface on a tensor-product grid\n"
+                                         "@param param_u: The u parameters\n"
+                                         "@type param_u: List of float\n"
+                                         "@param param_v: The v parameters\n"
+                                         "@type param_v: List of float\n"
+                                         "@return: The values of the surface at the given parameters\n"
+                                         "@rtype: List of Points (floats for scalars)");
+PyObject* Surface_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"param_u", "param_v", NULL };
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+  PyObject* paramuo;
+  PyObject* paramvo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OO",
+                                   (char**)keyWords,&paramuo,&paramvo) || !parSurf)
+    return NULL;
+
+  if (!PyObject_TypeCheck(paramuo,&PyList_Type) ||
+      !PyObject_TypeCheck(paramvo,&PyList_Type))
+    return NULL;
+
+  std::vector<double> paramu;
+  for (int i=0;i<PyList_Size(paramuo);++i)
+    paramu.push_back(PyFloat_AsDouble(PyList_GetItem(paramuo,i)));
+  std::vector<double> paramv;
+  for (int i=0;i<PyList_Size(paramvo);++i)
+    paramv.push_back(PyFloat_AsDouble(PyList_GetItem(paramvo,i)));
+
+  std::vector<double> res(paramu.size()*paramv.size()*surf->dimension());
+  surf->gridEvaluator(res, paramu, paramv);
+
+  PyObject* result = PyList_New(res.size()/surf->dimension());
+  VectorToPyPointList(result, res, surf->dimension());
+
+  return result;
 }
 
 PyDoc_STRVAR(surface_evaluate_normal__doc__,"Evaluate surface normal at given parameter values\n"
@@ -1014,6 +1054,112 @@ PyObject* Surface_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
                        knots_u, knots_v, coefs, spSurf->rational() ? Py_True : Py_False);
 }
 
+static std::array<std::vector<double>,2>
+  getTesselationParams(shared_ptr<Go::SplineSurface>& surf, int n[2])
+{
+  // Grab parameter values in evaluation points
+  std::array<std::vector<double>,2> gpar;
+  gpar[0] = Tesselate(surf->basis(0).begin(), surf->basis(0).end(), n[0]);
+  gpar[1] = Tesselate(surf->basis(1).begin(), surf->basis(1).end(), n[1]);
+
+  return gpar;
+}
+
+PyDoc_STRVAR(surface_get_tesselationparams__doc__,"Obtain tesselation parameters for a surface\n"
+                                                  "@param n1: Number of tesselation points per knotspan in u\n"
+                                                  "@type n1: Int\n"
+                                                  "@param n2: Number of tesselation points per knotspan in v\n"
+                                                  "@type n2: Int\n"
+                                                  "@rtype: Tuple with (list of float, list of float)");
+PyObject* Surface_GetTesselationParams(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+  static const char* keyWords[] = {"n1", "n2", NULL};
+  int np[2] = {1,1};
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|ii",
+                                   (char**)keyWords,np,np+1))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::array<std::vector<double>,2> gpar = getTesselationParams(surf, np);
+
+  size_t nx = gpar[0].size();
+  size_t ny = gpar[1].size();
+
+  PyObject* g1 = PyList_New(nx);
+  for (size_t i=0;i<nx;++i)
+    PyList_SetItem(g1, i, Py_BuildValue((char*)"d",gpar[0][i]));
+  PyObject* g2 = PyList_New(ny);
+  for (size_t i=0;i<ny;++i)
+    PyList_SetItem(g2, i, Py_BuildValue((char*)"d",gpar[1][i]));
+
+  PyObject* result = PyTuple_New(2);
+  PyTuple_SetItem(result, 0, g1);
+  PyTuple_SetItem(result, 1, g2);
+
+  return result;
+}
+
+PyDoc_STRVAR(surface_tesselate__doc__,"Tesselate a surface\n"
+                                      "@param n1: Number of tesselation points per knotspan in u\n"
+                                      "@type n1: Int\n"
+                                      "@param n2: Number of tesselation points per knotspan in v\n"
+                                      "@type n2: Int\n"
+                                      "@rtype: Tuple with (list of nodes, list of elements)");
+PyObject* Surface_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+  static const char* keyWords[] = {"n1", "n2", NULL};
+  int np[2] = {1,1};
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|ii",
+                                   (char**)keyWords,np,np+1))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::array<std::vector<double>,2> gpar = getTesselationParams(surf, np);
+
+  // Evaluate the surface at all points
+  size_t nx = gpar[0].size();
+  size_t ny = gpar[1].size();
+  std::vector<double> XYZ(surf->dimension()*nx*ny);
+  surf->gridEvaluator(XYZ,gpar[0],gpar[1]);
+
+  // Establish the block grid coordinates
+  PyObject* gc = PyList_New(XYZ.size());
+  for (int i=0;i<XYZ.size();++i)
+    PyList_SetItem(gc, i, Py_BuildValue((char*)"d", XYZ[i]));
+
+  PyObject* ge = PyList_New(0);
+  // Establish the block grid topology
+  int ie, nse1 = np[0];
+  int je, nse2 = np[1];
+  int nel1 = (nx-1)/nse1;
+  int n[4], ip = 0;
+  size_t i, j, l;
+  for (j = je = 1, n[1] = 0; j < ny; j++)
+  {
+    n[0] = n[1];
+    n[1] = n[0] + 1;
+    n[2] = n[1] + nx;
+    n[3] = n[1] + nx-1;
+    for (i = ie = 1; i < nx; i++)
+    {
+      for (l = 0; l < 4; l++)
+        PyList_Append(ge, Py_BuildValue((char*)"i",n[l]++));
+      if (i%nse1 == 0) ie++;
+    }
+    if (j%nse2 == 0) je++;
+  }
+
+  PyObject* result = PyTuple_New(2);
+  PyTuple_SetItem(result, 0, gc);
+  PyTuple_SetItem(result, 1, ge);
+
+  return result;
+}
+
 PyObject* Surface_Add(PyObject* o1, PyObject* o2)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(o1);
@@ -1064,6 +1210,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"Append",              (PyCFunction)Surface_Append,                METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Clone",               (PyCFunction)Surface_Clone,                 METH_VARARGS|METH_KEYWORDS, surface_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Surface_Evaluate,              METH_VARARGS|METH_KEYWORDS, surface_evaluate__doc__},
+     {(char*)"EvaluateGrid",        (PyCFunction)Surface_EvaluateGrid,          METH_VARARGS|METH_KEYWORDS, surface_evaluategrid__doc__},
      {(char*)"EvaluateNormal",      (PyCFunction)Surface_EvaluateNormal,        METH_VARARGS|METH_KEYWORDS, surface_evaluate_normal__doc__},
      {(char*)"EvaluateTangent",     (PyCFunction)Surface_EvaluateTangent,       METH_VARARGS|METH_KEYWORDS, surface_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
@@ -1073,6 +1220,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
      {(char*)"GetSubSurf",          (PyCFunction)Surface_GetSubSurf,            METH_VARARGS|METH_KEYWORDS, surface_get_sub_surf__doc__},
+     {(char*)"GetTesselationParams",(PyCFunction)Surface_GetTesselationParams,  METH_VARARGS|METH_KEYWORDS, surface_get_tesselationparams__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Surface_Interpolate,           METH_VARARGS|METH_KEYWORDS, surface_interpolate__doc__},
      {(char*)"Intersect",           (PyCFunction)Surface_Intersect,             METH_VARARGS|METH_KEYWORDS, surface_intersect__doc__},
@@ -1082,6 +1230,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"ReParametrize",       (PyCFunction)Surface_ReParametrize,         METH_VARARGS|METH_KEYWORDS, surface_reparametrize__doc__},
      {(char*)"Rotate",              (PyCFunction)Surface_Rotate,                METH_VARARGS|METH_KEYWORDS, surface_rotate__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Surface_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, surface_swap_parametrization__doc__},
+     {(char*)"Tesselate",           (PyCFunction)Surface_Tesselate,             METH_VARARGS|METH_KEYWORDS, surface_tesselate__doc__},
      {(char*)"Translate",           (PyCFunction)Surface_Translate,             METH_VARARGS|METH_KEYWORDS, surface_translate__doc__},
      {(char*)"__reduce__",          (PyCFunction)Surface_Reduce,                0,                          NULL},
      {NULL,           NULL,                     0,            NULL}

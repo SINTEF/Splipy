@@ -26,24 +26,33 @@ static bool checkGroupExistence(int parent, const char* path)
 }
 
 PyObject* DoReadHDF5Field(const std::string& fname, const std::string& fldname,
-                          const std::string& groupname)
+                          const std::string& groupname, bool ints)
 {
   hid_t file = H5Fopen(fname.c_str(),H5F_ACC_RDONLY,H5P_DEFAULT);
   hid_t group = H5Gopen2(file,groupname.c_str(),H5P_DEFAULT);
 
   hid_t set = H5Dopen2(group,fldname.c_str(),H5P_DEFAULT);
-  hsize_t siz = H5Dget_storage_size(set) / 8;
-  double* data = new double[siz];
-  H5Dread(set,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,data);
+  hsize_t siz = H5Dget_storage_size(set) / (ints?4:8);
+  int* idata=NULL;
+  double* data=NULL;
+  if (ints) {
+    idata = new int[siz];
+    H5Dread(set,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,idata);
+  } else {
+    data = new double[siz];
+    H5Dread(set,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,data);
+  }
   H5Dclose(set);
   H5Gclose(group);
   H5Fclose(file);
 
   PyObject* result = PyList_New(0); 
   for (int i=0;i<siz;++i)
-    PyList_Append(result, PyFloat_FromDouble(data[i]));
+    PyList_Append(result,
+                  ints?PyInt_FromLong(idata[i]):PyFloat_FromDouble(data[i]));
 
   delete[] data;
+  delete[] idata;
 
   return result;
 }

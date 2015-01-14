@@ -120,23 +120,23 @@ PyDoc_STRVAR(volume_clone__doc__,"Clone a volume\n"
                                  "@return: New copy of volume\n");
 PyObject* Volume_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"coefs", NULL};
+  static const char* keyWords[] = {"coefs", "ncomp", NULL};
   Volume* res = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   PyObject* coefso=NULL;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|O",
-                                   (char**)keyWords,&coefso))
+  int dim = 1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|Oi",
+                                   (char**)keyWords,&coefso,&dim))
     return NULL;
 
   if (coefso) {
     shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
     int nCoefs = vol->numCoefs(0)*vol->numCoefs(1)*vol->numCoefs(2);
-    if (PyList_Size(coefso) != nCoefs)
+    if (PyList_Size(coefso)/nCoefs == 0)
       return NULL;
 
-    int dim = 1;
     std::vector<double> coefs;
-    for (int i=0;i<nCoefs;++i) {
+    for (int i=0;i<PyList_Size(coefso);++i) {
       PyObject* o = PyList_GetItem(coefso,i);
       if (PyObject_TypeCheck(o,&PyList_Type)) {
         dim = PyList_Size(o);
@@ -203,6 +203,52 @@ PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   parVol->point(*result->data, value_u, value_v, value_w);
 
   return (PyObject*)result;
+}
+
+PyDoc_STRVAR(volume_evaluategrid__doc__,"Evaluate volume on a tensor-product grid\n"
+                                        "@param param_u: The u parameters\n"
+                                        "@type param_u: List of float\n"
+                                        "@param param_v: The v parameters\n"
+                                        "@type param_v: List of float\n"
+                                        "@param param_w: The w parameters\n"
+                                        "@type param_w: List of float\n"
+                                        "@return: The values of the volume at the given parameters\n"
+                                        "@rtype: List of floats");
+PyObject* Volume_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"param_u", "param_v", "param_w", NULL };
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
+  PyObject* paramuo;
+  PyObject* paramvo;
+  PyObject* paramwo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"OOO",
+                                   (char**)keyWords,&paramuo,&paramvo,&paramwo))
+    return NULL;
+
+  if (!PyObject_TypeCheck(paramuo,&PyList_Type) ||
+      !PyObject_TypeCheck(paramvo,&PyList_Type) ||
+      !PyObject_TypeCheck(paramwo,&PyList_Type) ||
+      !parVol)
+    return NULL;
+
+  std::vector<double> paramu;
+  for (int i=0;i<PyList_Size(paramuo);++i)
+    paramu.push_back(PyFloat_AsDouble(PyList_GetItem(paramuo,i)));
+  std::vector<double> paramv;
+  for (int i=0;i<PyList_Size(paramvo);++i)
+    paramv.push_back(PyFloat_AsDouble(PyList_GetItem(paramvo,i)));
+  std::vector<double> paramw;
+  for (int i=0;i<PyList_Size(paramwo);++i)
+    paramw.push_back(PyFloat_AsDouble(PyList_GetItem(paramwo,i)));
+
+  std::vector<double> res(paramu.size()*paramv.size()*paramw.size()*vol->dimension());
+  vol->gridEvaluator(paramu, paramv, paramw, res);
+
+  PyObject* result = PyList_New(res.size()/vol->dimension());
+  VectorToPyPointList(result, res, vol->dimension());
+
+  return result;
 }
 
 PyDoc_STRVAR(volume_flip_parametrization__doc__,"Flip (or reverse) volume parametrization\n"
@@ -455,6 +501,61 @@ PyObject* Volume_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
 
   return result;
 }
+
+static std::array<std::vector<double>,3>
+  getTesselationParams(shared_ptr<Go::SplineVolume>& vol, int n[3])
+{
+  // Grab parameter values in evaluation points
+  std::array<std::vector<double>,3> gpar;
+  for (size_t i=0;i<3;++i)
+    gpar[i] = Tesselate(vol->basis(i).begin(), vol->basis(i).end(), n[i]);
+
+  return gpar;
+}
+
+PyDoc_STRVAR(volume_get_tesselationparams__doc__,"Obtain tesselation parameters for a volume\n"
+                                                 "@param n1: Number of tesselation points per knotspan in u\n"
+                                                 "@type n1: Int\n"
+                                                 "@param n2: Number of tesselation points per knotspan in v\n"
+                                                 "@type n2: Int\n"
+                                                 "@param n3: Number of tesselation points per knotspan in w\n"
+                                                 "@type n3: Int\n"
+                                                 "@rtype: Tuple with (list of float, list of float, list of float)");
+PyObject* Volume_GetTesselationParams(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
+  static const char* keyWords[] = {"n1", "n2", "n3", NULL};
+  int np[3] = {1,1,1};
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|iii",
+                                   (char**)keyWords,np,np+1,np+2))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::array<std::vector<double>,3> gpar = getTesselationParams(vol, np);
+
+  size_t nx = gpar[0].size();
+  size_t ny = gpar[1].size();
+  size_t nz = gpar[2].size();
+
+  PyObject* g1 = PyList_New(nx);
+  for (size_t i=0;i<nx;++i)
+    PyList_SetItem(g1, i, Py_BuildValue((char*)"d",gpar[0][i]));
+  PyObject* g2 = PyList_New(ny);
+  for (size_t i=0;i<ny;++i)
+    PyList_SetItem(g2, i, Py_BuildValue((char*)"d",gpar[1][i]));
+  PyObject* g3 = PyList_New(nz);
+  for (size_t i=0;i<nz;++i)
+    PyList_SetItem(g3, i, Py_BuildValue((char*)"d",gpar[2][i]));
+
+  PyObject* result = PyTuple_New(3);
+  PyTuple_SetItem(result, 0, g1);
+  PyTuple_SetItem(result, 1, g2);
+  PyTuple_SetItem(result, 2, g3);
+
+  return result;
+}
+
 
 PyDoc_STRVAR(volume_insert_knot__doc__,"Insert a knot in a spline volume\n"
                                        "@param direction: Direction to insert knot in\n"
@@ -810,6 +911,78 @@ PyObject* Volume_Scale(PyObject* o1, PyObject* o2)
   return o1;
 }
 
+PyDoc_STRVAR(volume_tesselate__doc__,"Tesselate a volume\n"
+                                     "@param n1: Number of tesselation points per knotspan in u\n"
+                                     "@type n1: Int\n"
+                                     "@param n2: Number of tesselation points per knotspan in v\n"
+                                     "@type n2: Int\n"
+                                     "@param n3: Number of tesselation points per knotspan in w\n"
+                                     "@type n3: Int\n"
+                                     "@rtype: Tuple with (list of nodes, list of elements)");
+PyObject* Volume_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
+  static const char* keyWords[] = {"n1", "n2", "n3", NULL};
+  int np[3] = {1,1,1};
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|iii",
+                                   (char**)keyWords,np,np+1,np+2))
+    return NULL;
+
+  // Grab parameter values in evaluation points
+  std::array<std::vector<double>,3> gpar = getTesselationParams(vol, np);
+
+  // Evaluate the surface at all points
+  size_t nx = gpar[0].size();
+  size_t ny = gpar[1].size();
+  size_t nz = gpar[2].size();
+  std::vector<double> XYZ(vol->dimension()*nx*ny*nz);
+  vol->gridEvaluator(gpar[0],gpar[1],gpar[2],XYZ);
+
+  // Establish the block grid coordinates
+  PyObject* gc = PyList_New(XYZ.size());
+  for (int i=0;i<XYZ.size();++i)
+    PyList_SetItem(gc, i, Py_BuildValue((char*)"d", XYZ[i]));
+
+  // Establish the block grid topology
+  PyObject* ge = PyList_New(0);
+  int ie, nse1 = np[0];
+  int je, nse2 = np[1];
+  int ke, nse3 = np[2];
+  int nel1 = (nx-1)/nse1;
+  int nel2 = (ny-1)/nse2;
+  int n[8], ip = 0;
+  size_t i,j,k,l;
+  for (k = ke = 1, n[2] = 0; k < nz; k++)
+  {
+    for (j = je = 1, n[1] = n[2]; j < ny; j++)
+    {
+      n[0] = n[1];
+      n[1] = n[0] + 1;
+      n[2] = n[1] + nx;
+      n[3] = n[1] + nx-1;
+      n[4] = n[0] + nx*ny;
+      n[5] = n[4] + 1;
+      n[6] = n[5] + nx;
+      n[7] = n[5] + nx-1;
+      for (i = ie = 1; i < nx; i++)
+      {
+	for (l = 0; l < 8; l++)
+          PyList_Append(ge,Py_BuildValue((char*)"i",n[l]++));
+	if (i%nse1 == 0) ie++;
+      }
+      if (j%nse2 == 0) je++;
+    }
+    if (k%nse3 == 0) ke++;
+  }
+
+  PyObject* result = PyTuple_New(2);
+  PyTuple_SetItem(result, 0, gc);
+  PyTuple_SetItem(result, 1, ge);
+
+  return result;
+}
+
 PyDoc_STRVAR(volume_translate__doc__,"Translate a volume along a given vector\n"
                                      "@param vector: The vector to translate along\n"
                                      "@type vector: Point, list of floats or tuple of floats\n"
@@ -879,6 +1052,7 @@ PyObject* Volume_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
 PyMethodDef Volume_methods[] = {
      {(char*)"Clone",               (PyCFunction)Volume_Clone,                 METH_VARARGS|METH_KEYWORDS, volume_clone__doc__},
      {(char*)"Evaluate",            (PyCFunction)Volume_Evaluate,              METH_VARARGS|METH_KEYWORDS, volume_evaluate__doc__},
+     {(char*)"EvaluateGrid",        (PyCFunction)Volume_EvaluateGrid,          METH_VARARGS|METH_KEYWORDS, volume_evaluategrid__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Volume_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, volume_flip_parametrization__doc__},
      {(char*)"GetBoundingBox",      (PyCFunction)Volume_GetBoundingBox,        METH_VARARGS              , volume_get_bounding_box__doc__},
      {(char*)"GetConstParSurf",     (PyCFunction)Volume_GetConstParSurf,       METH_VARARGS|METH_KEYWORDS, volume_get_const_par_surf__doc__},
@@ -887,6 +1061,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"GetGreville",         (PyCFunction)Volume_GetGreville,           0,                          volume_get_greville__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
+     {(char*)"GetTesselationParams",(PyCFunction)Volume_GetTesselationParams,  METH_VARARGS|METH_KEYWORDS, volume_get_tesselationparams__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Volume_Interpolate,           METH_VARARGS|METH_KEYWORDS, volume_interpolate__doc__},
      {(char*)"LowerOrder",          (PyCFunction)Volume_LowerOrder,            METH_VARARGS|METH_KEYWORDS, volume_lower_order__doc__},
@@ -895,6 +1070,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"ReParametrize",       (PyCFunction)Volume_ReParametrize,         METH_VARARGS|METH_KEYWORDS, volume_reparametrize__doc__},
      {(char*)"Split",               (PyCFunction)Volume_Split,                 METH_VARARGS|METH_KEYWORDS, volume_split__doc__},
      {(char*)"SwapParametrization", (PyCFunction)Volume_SwapParametrization,   METH_VARARGS|METH_KEYWORDS, volume_swap_parametrization__doc__},
+     {(char*)"Tesselate",           (PyCFunction)Volume_Tesselate,             METH_VARARGS|METH_KEYWORDS, volume_tesselate__doc__},
      {(char*)"Translate",           (PyCFunction)Volume_Translate,             METH_VARARGS|METH_KEYWORDS, volume_translate__doc__},
      {(char*)"__reduce__",          (PyCFunction)Volume_Reduce,                0,                          NULL},
      {NULL,                         NULL,                                      0,                          NULL}
