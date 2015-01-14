@@ -9,6 +9,7 @@
 #include "volumemodel.h"
 #include "stlutils.h"
 #include "volume.h"
+#include "vtf.h"
 
 #include "GoTools/geometry/GoTools.h"
 #include "GoTools/geometry/ObjectHeader.h"
@@ -720,6 +721,7 @@ void InitGoToolsTypes()
   init_SurfaceFactory_Module();
   init_SurfaceModel_Type();
   init_VolumeModel_Type();
+  init_PyVTF_Type();
   init_SurfaceModelFactory_Module();
   init_Volume_Type();
   init_VolumeFactory_Module();
@@ -746,6 +748,7 @@ initGoTools()
   PyModule_AddObject(geoModule,(char*)"Volume",(PyObject*)&Volume_Type);
   PyModule_AddObject(geoModule,(char*)"VolumeFactory",VolumeFactory_module);
   PyModule_AddObject(geoModule,(char*)"VolumeModel",(PyObject*)&VolumeModel_Type);
+  PyModule_AddObject(geoModule,(char*)"VTF",(PyObject*)&VTF_Type);
   modState.addInfo(geoModule);
 }
 

@@ -12,6 +12,7 @@ enable_language(CXX)
 option(USE_OPENNURBS "Use OpenNURBS?" ON)
 option(USE_HDF5 "Use HDF5?" ON)
 option(USE_GPM "Use GPM?" ON)
+option(USE_VTF "Use VTF?" ON)
 option(BUILD_PYTHON_MODULE "Build standalone python module?" ON)
 
 # Add local modules
@@ -47,6 +48,10 @@ if(USE_GPM)
   find_package(GPM)
 endif()
 
+if(USE_VTF)
+  find_package(VTFWriter)
+endif()
+
 # Generate header with version info
 configure_file(${PROJECT_SOURCE_DIR}/include/geomodversion.h.in
                geomodversion.h @ONLY)
@@ -70,7 +75,6 @@ set(DEPLIBS ${PYTHON_LIBRARIES}
             ${Newmat_LIBRARIES}
             ${GoTools_LIBRARIES}
             ${GoTrivariate_LIBRARIES})
-
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS} -fPIC")
 SET(INCLUDE_DIRS ${GoTools_INCLUDE_DIRS}
@@ -104,6 +108,12 @@ endif()
 if(LRSpline_FOUND)
   list(APPEND DEPLIBS ${LRSpline_LIBRARIES})
   list(APPEND INCLUDE_DIRS ${LRSpline_INCLUDE_DIRS})
+endif()
+
+if(VTFWRITER_LIBRARIES AND VTFWRITER_INCLUDES)
+  list(APPEND DEPLIBS ${VTFWRITER_LIBRARIES})
+  list(APPEND INCLUDE_DIRS ${VTFWRITER_INCLUDE_DIRS})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_VTF=1")
 endif()
 
 include_directories(${INCLUDE_DIRS} ${CMAKE_BINARY_DIR})
