@@ -245,9 +245,8 @@ PyObject* Volume_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
   std::vector<double> res(paramu.size()*paramv.size()*paramw.size()*vol->dimension());
   vol->gridEvaluator(paramu, paramv, paramw, res);
 
-  PyObject* result = PyList_New(res.size());
-  for (size_t i=0;i<res.size();++i)
-    PyList_SetItem(result, i, Py_BuildValue((char*)"d",res[i]));
+  PyObject* result = PyList_New(res.size()/vol->dimension());
+  VectorToPyPointList(result, res, vol->dimension());
 
   return result;
 }

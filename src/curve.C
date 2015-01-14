@@ -227,9 +227,8 @@ PyObject* Curve_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
   std::vector<double> res(params.size()*crv->dimension());
   crv->gridEvaluator(res, params);
 
-  PyObject* result = PyList_New(res.size());
-  for (size_t i=0;i<res.size();++i)
-    PyList_SetItem(result, i, Py_BuildValue((char*)"d",res[i]));
+  PyObject* result = PyList_New(res.size()/crv->dimension());
+  VectorToPyPointList(result, res, crv->dimension());
 
   return result;
 }

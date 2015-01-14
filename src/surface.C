@@ -210,7 +210,7 @@ PyDoc_STRVAR(surface_evaluategrid__doc__,"Evaluate surface on a tensor-product g
                                          "@param param_v: The v parameters\n"
                                          "@type param_v: List of float\n"
                                          "@return: The values of the surface at the given parameters\n"
-                                         "@rtype: List of floats");
+                                         "@rtype: List of Points (floats for scalars)");
 PyObject* Surface_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"param_u", "param_v", NULL };
@@ -236,9 +236,8 @@ PyObject* Surface_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
   std::vector<double> res(paramu.size()*paramv.size()*surf->dimension());
   surf->gridEvaluator(res, paramu, paramv);
 
-  PyObject* result = PyList_New(res.size());
-  for (size_t i=0;i<res.size();++i)
-    PyList_SetItem(result, i, Py_BuildValue((char*)"d",res[i]));
+  PyObject* result = PyList_New(res.size()/surf->dimension());
+  VectorToPyPointList(result, res, surf->dimension());
 
   return result;
 }
