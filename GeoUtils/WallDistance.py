@@ -126,17 +126,12 @@ def _distanceFunction2D(surfaces, wallset, patches=[]):
     else:
       worksurfaces = surfaces
 
-    wallsurfaces = []
-    for idx in wallset:
-        wallsurfaces.append(surfaces[idx-1])
+    walledges = []
+    for idx, info in wallset.iteritems():
+      for edge in info.edge:
+        walledges.append( surfaces[idx-1].GetEdges()[edge-1] )
 
-    wallcurves = []
-
-    for idx in wallset:
-      for edge in wallset[idx].edge:
-        wallcurves.append(_getWallCurve(surfaces[idx-1], _edgeNumber(edge-1)))
-
-    D = _calcDistScipy(wallcurves, worksurfaces)
+    D = _calcDistScipy(walledges, worksurfaces)
     return D
 
 def _calcDistScipy(wallcurves, worksurfaces):
@@ -198,28 +193,6 @@ def _getWallFace(volume, idx):
     faces = volume.GetFaces()
     return faces[idx]
 
-def _edgeNumber(edgeID):
-    """
-    Convert edge number to parametric order
-    """
-
-    if edgeID == 0:
-        return 3
-    elif edgeID == 1:
-        return 1
-    elif edgeID == 2:
-        return 0
-    elif edgeID == 3:
-        return 2
-
-def _faceNumber(edgeID):
-    """
-    Convert face number to parametric order
-    """
-
-    remap = [1,2,5,6,3,4]
-    return remap[edgeID]-1
-
 def _calcPtsDistance(pt1, pt2):
     """
     Calculate shortest distance between two points
@@ -261,19 +234,14 @@ def _distanceFunction3D(volumes, wallset, patches=[]):
     workvolumes = []
     if len(patches):
       for patch in patches:
-          workvolumes.append(volumes[patch-1])
+        workvolumes.append(volumes[patch-1])
     else:
       workvolumes = volumes
 
-    wallvolumes = []
-    for idx in wallset:
-        wallvolumes.append(volumes[idx-1])
-
     wallfaces = []
-
-    for idx in wallset:
-      for face in wallset[idx].face:
-        wallfaces.append(_getWallFace(volumes[idx-1], _faceNumber(face-1)))
+    for idx, info in wallset.iteritems():
+      for face in info.face:
+        wallfaces.append( volumes[idx-1].GetFaces()[face-1] )
 
     D = _calcDistScipy3D(wallfaces, workvolumes)
 
