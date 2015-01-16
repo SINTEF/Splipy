@@ -155,8 +155,13 @@ PyObject* VTF_AddGeometryBlock(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(vtf_addgeometrydescriptor__doc__,"Add a block connecting geometry blocks\n"
                                               "@param size: Number of blocks in part\n"
                                               "@type size: Int\n"
-                                              "@return: Self");
-PyObject* VTF_AddGeometryPart(PyObject* self, PyObject* args, PyObject* kwds)
+                                              "@param blockid: ID of block being added\n"
+                                              "@type blockid: Integer\n"
+                                              "@param dim: Dimensionality of geometry block\n"
+                                              "@type dim: Integer\n"
+                                              "@return: Self\n"
+                                              "@rtype: VTFFile");
+PyObject* VTF_AddGeometryDescriptor(PyObject* self, PyObject* args, PyObject* kwds)
 {
   PyVTF* vtf = (PyVTF*)self;
 #ifdef ENABLE_VTF
@@ -236,16 +241,13 @@ PyObject* VTF_AddField(PyObject* self, PyObject* args, PyObject* kwds)
 #ifdef ENABLE_VTF
   static const char* keyWords[] = {"coefs", "block", NULL};
   PyObject* coefso=NULL;
-  int comp=1;
   int block=0;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"Oi|i",
-                                   (char**)keyWords,&coefso,&block,&comp))
+                                   (char**)keyWords,&coefso,&block))
     return NULL;
 
   if (!PyObject_TypeCheck(coefso,&PyList_Type))
     return NULL;
-
-  int nodes = PyList_Size(coefso)/comp;
 
   std::pair<std::vector<float>, int> resVec = PyPointListToVector<float>(coefso);
 
@@ -355,13 +357,13 @@ PyObject* VTF_AddState(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyMethodDef VTF_methods[] = {
-     {(char*)"AddGeometryBlock",      (PyCFunction)VTF_AddGeometryBlock, METH_VARARGS|METH_KEYWORDS, vtf_addgeometryblock__doc__},
-     {(char*)"AddGeometryDescriptor", (PyCFunction)VTF_AddGeometryPart,  METH_VARARGS|METH_KEYWORDS, vtf_addgeometrydescriptor__doc__},
-     {(char*)"AddGeometrySet",        (PyCFunction)VTF_AddGeometrySet,   METH_VARARGS|METH_KEYWORDS, vtf_addgeometryset__doc__},
-     {(char*)"AddField",              (PyCFunction)VTF_AddField,         METH_VARARGS|METH_KEYWORDS, vtf_addfield__doc__},
-     {(char*)"AddFieldBlocks",        (PyCFunction)VTF_AddFieldBlocks,   METH_VARARGS|METH_KEYWORDS, vtf_addfieldblocks__doc__},
-     {(char*)"AddState",              (PyCFunction)VTF_AddState,         METH_VARARGS|METH_KEYWORDS, vtf_addstate__doc__},
-     {NULL,                           NULL,                             0,                          NULL}
+     {(char*)"AddGeometryBlock",      (PyCFunction)VTF_AddGeometryBlock,      METH_VARARGS|METH_KEYWORDS, vtf_addgeometryblock__doc__},
+     {(char*)"AddGeometryDescriptor", (PyCFunction)VTF_AddGeometryDescriptor, METH_VARARGS|METH_KEYWORDS, vtf_addgeometrydescriptor__doc__},
+     {(char*)"AddGeometrySet",        (PyCFunction)VTF_AddGeometrySet,        METH_VARARGS|METH_KEYWORDS, vtf_addgeometryset__doc__},
+     {(char*)"AddField",              (PyCFunction)VTF_AddField,              METH_VARARGS|METH_KEYWORDS, vtf_addfield__doc__},
+     {(char*)"AddFieldBlocks",        (PyCFunction)VTF_AddFieldBlocks,        METH_VARARGS|METH_KEYWORDS, vtf_addfieldblocks__doc__},
+     {(char*)"AddState",              (PyCFunction)VTF_AddState,              METH_VARARGS|METH_KEYWORDS, vtf_addstate__doc__},
+     {NULL,                           NULL,                                   0,                          NULL}
    };
 
 PyNumberMethods VTF_operators = {0};
