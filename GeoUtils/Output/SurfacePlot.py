@@ -1,16 +1,17 @@
 __doc__ = 'Class for plots from HDF5 data'
 
-import xml.dom.minidom
-from GoTools import *
-
-from itertools import product
-from operator import attrgetter
 from GeoUtils.IO import InputFile, IFEMResultDatabase
+from GoTools import *
+from itertools import product
 from matplotlib import pyplot
+from numpy import sqrt, inf, log10
+from operator import attrgetter
+from xml.dom import minidom
 
 class SurfacePlot:
   """Plot (flow) data from one topologyset in an HDF5 file."""
 
+  # Basic operations
   def __init__( self, hdf5, topo, surf, level=-1, setup=None, opts={} ):
     """Constructor
        @param hdf5: HDF5-file with data
@@ -39,7 +40,7 @@ class SurfacePlot:
     output = IFEMResultDatabase( hdf5 )
     basis = output.GetBasisForField( 'pressure' )
     level = output.GetTimeLevels() if level<0 else level
-    self.setup = xml.dom.minidom.parse( setup )
+    self.setup = minidom.parse( setup )
 
     # translate to boundary data
     geom = output.GetGeometry( basis, 0 ) # domain geometry, assert level=0
@@ -68,48 +69,81 @@ class SurfacePlot:
     # Order reversal [::-1] in _astuple makes __iter__ run fastest along the
     # first direction as is the convention in geomodeler.py (but not itertools)
     _astuple = lambda arg: arg[::-1] if isinstance(arg,tuple) else (arg,)
+    funcs = self.geom, self.velo, self.pres
     for i, patch in enumerate(self.geom):
       for knot in product( *_astuple(patch.GetGreville()) ):
-        yield i, _astuple(knot) # reverse order back
+        args = [func[i].Evaluate( *_astuple(knot) ) for func in funcs] \
+             + [func[i].EvaluateTangent( *_astuple(knot) ) for func in funcs]
+        yield i, args
 
-  def getField( self, func ):
-    """Get generic evaluable field for use in self.plot(),
-       for examples of use, see the built-ins below.
-       @param: a function of geometry, velocity and pressure
-       @type: function
+  def min( self, f ):
+    """The minimum value of f (considering only Greville points)"""
+    min_f = inf
+    for i, arg in self:
+      min_f = min( f(*arg), min_f )
+    return min_f
+
+  def max( self, f ):
+    """The maximum value of f (considering only Greville points)"""
+    max_f = -inf
+    for i, arg in self:
+      max_f = max( f(*arg), max_f )
+    return max_f
+
+  def interpolate( self, f ):
+    """Interpolate a function onto the basis of self.geom, not necessary
+       in general.
+       @param f: function of primary variables to be interpolated
+       @type f: function
+       @return: interpolated function, a clone of self.geom
+       @rtype: list of Curve/Surface
     """
     i0, data = None, len(self.geom)*[[]]
-    for i, coord in self:
+    for i, args in self:
       if not i0==i: # for every new patch i
         if isinstance( i0, int ): # skip i0==None
           data[i0] = self.geom[i0].Clone( self.geom[i0].Interpolate(datai) )
-        i0, coordi, datai = i, [], []
-      g = self.geom[i].Evaluate(*coord)
-      v = self.velo[i].Evaluate(*coord)
-      p = self.pres[i].Evaluate(*coord)[0]
-      coordi.append( map(float,coord) )
-      datai.append( func(g,v,p) )
+        i0, datai = i, []
+      datai.append( evaluable(*args) )
     data[i] = self.geom[i].Clone( self.geom[i].Interpolate(datai) )
     return data
 
   # Built-in plottable fields
-  x = lambda self: self.getField( lambda g, v, p: g[0] )
-  y = lambda self: self.getField( lambda g, v, p: g[1] )
-  z = lambda self: self.getField( lambda g, v, p: g[2] )
+  x = lambda self: lambda g, v, p, dg, dv, dp: g[0]
+  y = lambda self: lambda g, v, p, dg, dv, dp: g[1]
+  z = lambda self: lambda g, v, p, dg, dv, dp: g[2]
+
+  def normal( self ):
+    """Normal vector assuming 2D or extrusion in 3rd direction, as well as
+       left-handed patches."""
+    return (lambda g, v, p, dg, dv, dp:  dg[1]/sqrt(dg[0]**2+g[1]**2),
+            lambda g, v, p, dg, dv, dp: -dg[0]/sqrt(dg[0]**2+g[1]**2))
+
   def pressureCoefficient( self, pinf=0, Uinf=1 ):
     params = self.setup.getElementsByTagName('fluidproperties')[0]
     rho = float( params.getAttribute('rho') )
-    Cp = lambda g, v, p: (p-pinf)/(.5*rho*Uinf**2)
-    return self.getField( Cp )
+    return lambda g, v, p, dg, dv, dp: (p[0]-pinf)/(.5*rho*Uinf**2)
 
+  def logCp( self, pinf=0, Uinf=1 ):
+    params = self.setup.getElementsByTagName('fluidproperties')[0]
+    rho = float( params.getAttribute('rho') )
+    denom = .5*rho*Uinf**2
+    def logCp( g, v, p, dg, dv, dp ):
+      num = p[0]-pinf
+      return log10(1+num/denom) if num>0 else -log10(1-num/denom)
+    return logCp
+
+  # Built-in plot commands
   def plot( self, x, y, fmt='k.-', axis=None, **kwargs ):
-    """Built-in plotting function for SurfacePlot.getField output similar
-       but not identical in behavior to matplotlib.pyplot.plot, namely,
-       requires both x and y data, and accepts an axis to plot inside.
-       @param data: x-coordinates, output of self.getField()
-       @type data: list of Surface/Curve
-       @param data: y-coordinates, output of self.getField()
-       @type data: list of Surface/Curve
+    """Built-in plotting function similar but not identical in behavior to
+       matplotlib.pyplot.plot, namely, requires both x and y arguments, and
+       accepts an axis to plot inside. The x, y arguments here are moreover
+       simply function objects that take the primary variables as arguments,
+       see the built-in examples.
+       @param data: x-coordinate
+       @type data: function
+       @param data: y-coordinate
+       @type data: function
        @param fmt: line format string, optional (as pyplot.plot)
        @type fmt: str
        @param axis: axis to plot inside, optional (default creates new axis)
@@ -122,13 +156,47 @@ class SurfacePlot:
     # This way a new axis is made for each function call (without axis arg).
     axis = pyplot.figure().gca() if axis is None else axis
     label = kwargs.pop( 'label', '_nolabel_' )
+    funcs = self.geom, self.velo, self.pres
     i0 = None
-    for i, coord in self:
+    for i, args in self:
       if not i0==i: # for every new patch i
         if isinstance( i0, int ): # skip i0==None
           axis.plot( xi, yi, fmt, label='_nolabel_', **kwargs )
         i0, xi, yi = i, [], []
-        evalf = lambda func: func[i].Evaluate( *coord ) # can go up-scope as coord a pointer
-      xi.append( evalf(x) )
-      yi.append( evalf(y) )
+      xi.append( x(*args) )
+      yi.append( y(*args) )
     axis.plot( xi, yi, fmt, label=label, **kwargs )
+
+  def quiver( self, x, y, u, v, axis=None, **kwargs ):
+    """Built-in plotting function similar but not identical in behavior to
+       matplotlib.pyplot.quiver, namely, requires x, y, u and v arguments,
+       and accepts an axis to plot inside. The x, y, u, v arguments here
+       are moreover simply function objects that take the primary variables
+       as arguments, see the built-in examples.
+       @param data: x-coordinate
+       @type data: function
+       @param data: y-coordinate
+       @type data: function
+       @param data: u-component of arrow
+       @type data: function
+       @param data: y-component of arrow
+       @type data: function
+       @param axis: axis to plot inside, optional (default creates new axis)
+       @type axis: matplotlib.axes.AxesSubplot
+       @param kwargs: any other options for matplotlib.pyplot.plot
+       @type kwargs: dict
+    """
+    axis = pyplot.figure().gca() if axis is None else axis
+    label = kwargs.pop( 'label', '_nolabel_' )
+    funcs = self.geom, self.velo, self.pres
+    i0 = None
+    for i, args in self:
+      if not i0==i: # for every new patch i
+        if isinstance( i0, int ): # skip i0==None
+          axis.quiver( xi, yi, ui, vi, label='_nolabel_', **kwargs )
+        i0, xi, yi, ui, vi = i, [], [], [], []
+      xi.append( x(*args) )
+      yi.append( y(*args) )
+      ui.append( u(*args) )
+      vi.append( v(*args) )
+    axis.quiver( xi, yi, ui, vi, label=label, **kwargs )
