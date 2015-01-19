@@ -165,10 +165,11 @@ if(EPYDOC_EXECUTABLE)
 endif()
 if(BUILD_PYTHON_MODULE)
   if(EXISTS "/etc/debian_version")
-    install(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/dist-packages/ COMPONENT bin)
+    set(PYTHON_DESTDIR lib/python${PYTHON_VERSION}/dist-packages/)
   else()
-    install(TARGETS GoTools DESTINATION lib/python${PYTHON_VERSION}/site-packages/ COMPONENT bin)
+    set(PYTHON_DESTDIR lib/python${PYTHON_VERSION}/site-packages/)
   endif()
+  install(TARGETS GoTools DESTINATION ${PYTHON_DESTDIR} COMPONENT bin)
 endif()
 
 install(TARGETS geoModeler DESTINATION bin COMPONENT bin)
@@ -181,7 +182,7 @@ configure_file(${PROJECT_SOURCE_DIR}/tests/makereg.in
 configure_file(${PROJECT_SOURCE_DIR}/tests/dotest.in
                dotest)
 
-install(DIRECTORY GeoUtils DESTINATION lib/python${PYTHON_VERSION}/dist-packages
+install(DIRECTORY GeoUtils DESTINATION ${PYTHON_DESTDIR}
         COMPONENT bin FILES_MATCHING PATTERN *.py)
 
 enable_testing()
