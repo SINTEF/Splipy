@@ -181,9 +181,8 @@ configure_file(${PROJECT_SOURCE_DIR}/tests/makereg.in
 configure_file(${PROJECT_SOURCE_DIR}/tests/dotest.in
                dotest)
 
-file(GLOB GEOUTILS_SRCS RELATIVE ${PROJECT_SOURCE_DIR} GeoUtils/*.py)
-install(FILES ${GEOUTILS_SRCS} DESTINATION lib/python${PYTHON_VERSION}/dist-packages/GeoUtils
-        COMPONENT bin)
+install(DIRECTORY GeoUtils DESTINATION lib/python${PYTHON_VERSION}/dist-packages
+        COMPONENT bin FILES_MATCHING PATTERN *.py)
 
 enable_testing()
 file(GLOB_RECURSE GEOMOD_TESTFILES RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*.reg)
