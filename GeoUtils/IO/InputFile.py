@@ -14,6 +14,12 @@ class InputFile:
     self.path = path
     self.abspath = os.path.abspath(path)
     self.dom = xml.dom.minidom.parse(path)
+    for i in range(10): # max recursion depth
+      elems = self.dom.getElementsByTagName('include')
+      if not len(elems): break
+      for elem in elems:
+        include = xml.dom.minidom.parse( elem.firstChild.nodeValue ).firstChild
+        elem.parentNode.replaceChild( include, elem )
 
   def GetGeometryFile(self):
     """ Extract the geometry definition (.g2 file)
