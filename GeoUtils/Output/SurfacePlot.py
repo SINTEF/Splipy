@@ -4,7 +4,7 @@ from GeoUtils.IO import InputFile, IFEMResultDatabase
 from GoTools import *
 from itertools import product
 from matplotlib import pyplot
-from numpy import sqrt, inf, log10
+from numpy import array, inf, log10, sqrt
 from operator import attrgetter
 from xml.dom import minidom
 
@@ -36,19 +36,34 @@ class SurfacePlot:
             setup if setup.endswith('.xinp') else \
             setup+'.xinp'
 
+    # find the field
+    dom = minidom.parse( hdf5+'.xml' )
+    for elem in dom.firstChild.getElementsByTagName( 'entry' ):
+      if elem.getAttribute('description')=='velocity' and not \
+         elem.getAttribute('name')=='restart': break
+    tag = elem.getAttribute('name')
+    ischorin = not tag.endswith('+p')
+
     # prepare data
     output = IFEMResultDatabase( hdf5 )
-    basis = output.GetBasisForField( 'pressure' )
+    basis = output.GetBasisForField( tag )
     level = output.GetTimeLevels() if level<0 else level
     self.setup = minidom.parse( setup )
-
-    # translate to boundary data
     geom = output.GetGeometry( basis, 0 ) # domain geometry, assert level=0
     self.dim = len(geom[0].GetOrder()) # dimension of domain
+    if ischorin:
+      velo = output.GetField( tag, level, geom )
+      pres = output.GetField( 'pressure', level, geom )
+    else:
+      velo, pres = [], []
+      for geomi, coefi in zip( geom, output.GetFieldCoefs(tag,level) ):
+        vdofs = array( coefi ).reshape( self.dim+1, -1 )[:-1,:].flatten().tolist()
+        pdofs = array( coefi ).reshape( self.dim+1, -1 )[-1:,:].flatten().tolist()
+        velo.append( geomi.Clone( vdofs ) )
+        pres.append( geomi.Clone( pdofs ) )
+
+    # translate to boundary data
     self.surf = InputFile(topo).GetTopologySet( surf, convention="gotools" )
-    field = 'u_x+u_y+u_z' if self.dim==3 else 'u_x+u_y' # assert Chorin
-    velo = output.GetField( field, level, geom )
-    pres = output.GetField( 'pressure', level, geom )
     name = 'Face' if self.dim==3 else 'Edge'
     self.geom, self.velo, self.pres = [], [], []
     for i, patchinfo in self.surf.iteritems():
