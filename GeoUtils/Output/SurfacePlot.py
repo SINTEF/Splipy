@@ -4,7 +4,7 @@ from GeoUtils.IO import InputFile, IFEMResultDatabase
 from GoTools import *
 from itertools import product
 from matplotlib import pyplot
-from numpy import sqrt, inf, log10
+from numpy import array, inf, log10, sqrt
 from operator import attrgetter
 from xml.dom import minidom
 
@@ -12,7 +12,7 @@ class SurfacePlot:
   """Plot (flow) data from one topologyset in an HDF5 file."""
 
   # Basic operations
-  def __init__( self, hdf5, topo, surf, level=-1, setup=None, opts={} ):
+  def __init__( self, hdf5, topo, surf, levels=-1, setup=None, opts={} ):
     """Constructor
        @param hdf5: HDF5-file with data
        @type hdf5: str
@@ -20,8 +20,8 @@ class SurfacePlot:
        @type topo: str
        @param surf: surface to extract data at
        @type surf: list of tuple of (patch, face) numbers
-       @param level: time level in hdf5, default to last
-       @type level: int
+       @param levels: time levels in hdf5, default to last
+       @type levels: int, list of ints, None
        @param dim: 2D or 3D
        @type dim: int
        @param setup: XINP-file with <fluidproperties> tag
@@ -36,19 +36,49 @@ class SurfacePlot:
             setup if setup.endswith('.xinp') else \
             setup+'.xinp'
 
+    # find fieldname
+    dom = minidom.parse( hdf5+'.xml' )
+    for elem in dom.firstChild.getElementsByTagName( 'entry' ):
+      if elem.getAttribute('description')=='velocity' and not \
+         elem.getAttribute('name')=='restart': break
+    tag = elem.getAttribute('name')
+    ischorin = not tag.endswith('+p')
+
     # prepare data
     output = IFEMResultDatabase( hdf5 )
-    basis = output.GetBasisForField( 'pressure' )
-    level = output.GetTimeLevels() if level<0 else level
+    basis = output.GetBasisForField( tag )
+    # if levels is iterable/None, average over specified/all time levels
+    levels = levels if hasattr( levels, '__iter__' ) else \
+            range(output.GetTimeLevels()+1) if levels is None else \
+            [output.GetTimeLevels() if levels<0 else levels]
     self.setup = minidom.parse( setup )
-
-    # translate to boundary data
     geom = output.GetGeometry( basis, 0 ) # domain geometry, assert level=0
     self.dim = len(geom[0].GetOrder()) # dimension of domain
+
+    # average if multiple time levels (TODO: inefficiently for whole volume)
+    def _deinterleave( level ):
+      if ischorin:
+        return output.GetFieldCoefs(tag,level), output.GetFieldCoefs('pressure',level)
+      else:
+        vdofs, pdofs = [], []
+        for coef in output.GetFieldCoefs(tag,level):
+          vdofs.append( array( coef ).reshape( -1, self.dim+1 )[:,:-1].flatten().tolist() )
+          pdofs.append( array( coef ).reshape( -1, self.dim+1 )[:,-1:].flatten().tolist() )
+        return vdofs, pdofs
+    vdofs, pdofs = [0]*len(geom), [0]*len(geom)
+    for level in levels:
+      vdofs_l, pdofs_l = _deinterleave( level )
+      for i, (vdofs_li, pdofs_li) in enumerate(zip(vdofs_l, pdofs_l)):
+        vdofs[i] += array( vdofs_li )
+        pdofs[i] += array( pdofs_li )
+    _average = lambda arr: ( arr/float(len(levels)) ).tolist()
+    velo, pres = [], []
+    for i, (geom_i, vdofs_i, pdofs_i) in enumerate(zip(geom, vdofs, pdofs)):
+      velo.append( geom_i.Clone(_average(vdofs_i)) )
+      pres.append( geom_i.Clone(_average(pdofs_i)) )
+
+    # translate to boundary data
     self.surf = InputFile(topo).GetTopologySet( surf, convention="gotools" )
-    field = 'u_x+u_y+u_z' if self.dim==3 else 'u_x+u_y' # assert Chorin
-    velo = output.GetField( field, level, geom )
-    pres = output.GetField( 'pressure', level, geom )
     name = 'Face' if self.dim==3 else 'Edge'
     self.geom, self.velo, self.pres = [], [], []
     for i, patchinfo in self.surf.iteritems():
