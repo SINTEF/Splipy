@@ -8,6 +8,51 @@ from numpy import array, inf, log10, sqrt
 from operator import attrgetter
 from xml.dom import minidom
 
+
+def Plot2DPatches(patches, tess=3, *args, **kwargs):
+  """ Plots a collection of 2D patches (in the xy-plane) using matplotlib.
+      Remaining arguments are passed to the matplotlib plot() function.
+      @param patches: The patches to plot.
+      @type patches: Iterable collection of Surface.
+      @param tess: Number of tesselation points to use per knotspan.
+      @type tess: Integer > 0.
+  """
+  def plot(xs, ys):
+    for i, (x, y) in enumerate(zip(xs, ys)):
+      lw = 0.2
+      if i == 0 or i == len(xs) - 1:
+        lw = 1.0
+      pyplot.plot(x, y, 'k-', linewidth=lw, *args, **kwargs)
+
+  for patch in patches:
+    ku, kv = patch.GetTesselationParams(tess, 1)
+    points = patch.EvaluateGrid(ku, kv)
+    points = [points[i*len(ku) : (i+1)*len(ku)] for i in xrange(len(kv))]
+
+    xs = [[p[0] for p in ps] for ps in points]
+    ys = [[p[1] for p in ps] for ps in points]
+    plot(xs, ys)
+
+    ku, kv = patch.GetTesselationParams(1, tess)
+    points = patch.EvaluateGrid(ku, kv)
+    points = [points[i*len(ku) : (i+1)*len(ku)] for i in xrange(len(kv))]
+
+    xs = zip(*[[p[0] for p in ps] for ps in points])
+    ys = zip(*[[p[1] for p in ps] for ps in points])
+    plot(xs, ys)
+
+  model = SurfaceModel(patches)
+  xmin, xmax, ymin, ymax, _, _ = model.GetBoundingBox()
+  dx = (xmax - xmin) * 0.02
+  dy = (ymax - ymin) * 0.02
+
+  pyplot.xlim([xmin - dx, xmax + dx])
+  pyplot.ylim([ymin - dy, ymax + dy])
+
+  pyplot.axes().set_aspect('equal', 'datalim')
+  pyplot.show()
+
+
 class SurfacePlot:
   """Plot (flow) data from one topologyset in an HDF5 file."""
 
