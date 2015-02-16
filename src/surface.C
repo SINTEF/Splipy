@@ -450,6 +450,40 @@ PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyDoc_STRVAR(surface_get_const_par_curve__doc__,
+             "Generate and return a SplineCurve that represents a constant parameter curve on the surface\n"
+             "@param parameter: Value of the fixed parameter\n"
+             "@type parameter: float\n"
+             "@param pardir: 0 for constant u-parameter, 1 for v\n"
+             "@type pardir: int\n"
+             "@return A newly constructed SplineCurve representing the specific constant parameter curve\n"
+             "@rtype: Curve");
+PyObject* Surface_GetConstParCurve(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  int parDir = 0;
+  double parameter = 0;
+
+  static const char* keyWords[] = {"parameter", "pardir", NULL};
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, (char*)"di",
+                                   (char**)keyWords, &parameter, &parDir) || !parSurf)
+    return NULL;
+
+  if (!parSurf->isSpline()) {
+    Surface *pySurf = (Surface*)self;
+    pySurf->data = convertSplineSurface(parSurf);
+    parSurf = pySurf->data;
+  }
+
+  shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
+  Go::SplineCurve* spCurve = spSurf->constParamCurve(parameter, parDir == 0);
+
+  Curve* pyCurve = (Curve*)Curve_Type.tp_alloc(&Curve_Type, 0);
+  pyCurve->data = shared_ptr<Go::ParamCurve>(spCurve);
+
+  return (PyObject*)pyCurve;
+}
+
 PyDoc_STRVAR(surface_get_edges__doc__,"Return the four edge curves in (parametric) order: bottom, right, top, left\n"
                                       "@return: The four edges\n"
                                       "@rtype: List of Curve");
@@ -1215,6 +1249,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"EvaluateTangent",     (PyCFunction)Surface_EvaluateTangent,       METH_VARARGS|METH_KEYWORDS, surface_evaluate_tangent__doc__},
      {(char*)"FlipParametrization", (PyCFunction)Surface_FlipParametrization,   METH_VARARGS|METH_KEYWORDS, surface_flip_parametrization__doc__},
      {(char*)"ForceRational",       (PyCFunction)Surface_ForceRational,         METH_VARARGS,               surface_force_rational__doc__},
+     {(char*)"GetConstParCurve",    (PyCFunction)Surface_GetConstParCurve,      METH_VARARGS|METH_KEYWORDS, surface_get_const_par_curve__doc__},
      {(char*)"GetEdges",            (PyCFunction)Surface_GetEdges,              METH_VARARGS|METH_KEYWORDS, surface_get_edges__doc__},
      {(char*)"GetGreville",         (PyCFunction)Surface_GetGreville,           0,                          surface_get_greville__doc__},
      {(char*)"GetKnots",            (PyCFunction)Surface_GetKnots,              METH_VARARGS|METH_KEYWORDS, surface_get_knots__doc__},
