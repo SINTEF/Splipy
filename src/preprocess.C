@@ -34,6 +34,12 @@ PyObject* Preprocess_module;
 PyDoc_STRVAR(preprocess_natural_node_numbers__doc__,"Generate natural node numbers for a model\n"
                                                     "@param patches: The patches to number\n"
                                                     "@type patches: List of (Surface or Volume)\n"
+                                                    "param perX (optional): If true, model is periodic in X\n"
+                                                    "@type perX: Boolean\n"
+                                                    "param perY (optional): If true, model is periodic in Y\n"
+                                                    "@type perY: Boolean\n"
+                                                    "param perZ (optional): If true, model is periodic in Z\n"
+                                                    "@type perZ: Boolean\n"
                                                     "@return: Node numbers\n"
                                                     "@rtype: List of (list of integer)");
 PyObject* Preprocess_NaturalNodeNumbers(PyObject* self, PyObject* args, PyObject* kwds)
