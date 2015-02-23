@@ -237,8 +237,8 @@ PyObject* Preprocess_AverageFaces(PyObject* self, PyObject* args, PyObject* kwds
 }
 
 PyMethodDef Preprocess_methods[] = {
-     {(char*)"NaturalNodeNumbers",    (PyCFunction)Preprocess_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, preprocess_natural_node_numbers__doc__},
      {(char*)"AverageFaces",          (PyCFunction)Preprocess_AverageFaces, METH_VARARGS|METH_KEYWORDS, preprocess_average_faces__doc__},
+     {(char*)"NaturalNodeNumbers",    (PyCFunction)Preprocess_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, preprocess_natural_node_numbers__doc__},
      {NULL,                           NULL,                                       0,                          NULL}
   };
 
