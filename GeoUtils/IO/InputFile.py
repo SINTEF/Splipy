@@ -1,7 +1,6 @@
 __doc__ == 'Class for working with IFEM input (.xinp) files'
 
-import os
-import xml.dom.minidom
+import os, subprocess, time, xml.dom.minidom
 from collections import namedtuple
 
 class InputFile:
@@ -14,12 +13,36 @@ class InputFile:
     self.path = path
     self.abspath = os.path.abspath(path)
     self.dom = xml.dom.minidom.parse(path)
+
+    # helper function
+    def split_header( xml ):
+      j = xml.find( '?>' )
+      return (xml[:j+2],xml[j+2:]) if j>0 else ('',xml)
+
+    # handle <include> tags
     for i in range(10): # max recursion depth
       elems = self.dom.getElementsByTagName('include')
       if not len(elems): break
       for elem in elems:
-        include = xml.dom.minidom.parse( elem.firstChild.nodeValue ).firstChild
-        elem.parentNode.replaceChild( include, elem )
+        try:
+          include = xml.dom.minidom.parse( elem.firstChild.nodeValue ).firstChild
+          elem.parentNode.replaceChild( include, elem )
+        except xml.parsers.expat.ExpatError: # multiple root elements
+          name = 'InputFile.%s.tmp' % time.strftime('%s')
+          parent = elem.parentNode
+          # Create copy and heal it
+          f = open( elem.firstChild.nodeValue, 'r' )
+          g = open( name, 'w' )
+          g.write( '%s\n<xml>%s</xml>\n'%split_header(f.read()) )
+          f.close()
+          g.close()
+          # Inject included xml
+          parent.removeChild( elem )
+          for include in xml.dom.minidom.parse( name ).firstChild.childNodes:
+            if isinstance( include, xml.dom.minidom.Element ):
+              parent.appendChild( include )
+          # Remove copy
+          subprocess.call( 'rm %s'%name, shell=True )
 
   def GetGeometryFile(self):
     """ Extract the geometry definition (.g2 file)
