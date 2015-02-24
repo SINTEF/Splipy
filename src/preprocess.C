@@ -28,6 +28,97 @@ static std::vector<std::vector<int> >
   return numbers;
 }
 
+static PyObject* GenerateElements1D(const shared_ptr<Go::SplineCurve>& curv)
+{
+  const int n1 = curv->numCoefs();
+  const int p1 = curv->order();
+
+ size_t nnod = 0;
+ PyObject* result = PyList_New(0);
+ for (int i1 = 1; i1 <= n1; i1++) {
+   if (i1 >= p1) {
+     std::vector<double>::const_iterator uit = curv->basis().begin() + i1-1;
+     double knotspan = *(uit+1) - *uit;
+     if (knotspan > 0.0) {
+       PyObject* elist = PyList_New(0);
+       for (int j1 = p1-1; j1 >= 0; j1--)
+         PyList_Append(elist, Py_BuildValue((char*) "i", nnod - j1));
+       PyList_Append(result, elist);
+     }
+   }
+   ++nnod;
+ }
+
+ return result;
+}
+
+static PyObject* GenerateElements2D(const shared_ptr<Go::SplineSurface>& surf)
+{
+  const int n1 = surf->numCoefs_u();
+  const int n2 = surf->numCoefs_v();
+  const int p1 = surf->order_u();
+  const int p2 = surf->order_v();
+  size_t nnod = 0;
+  PyObject* result = PyList_New(0);
+  for (int i2 = 1; i2 <= n2; i2++) {
+    for (int i1 = 1; i1 <= n1; i1++) {
+      if (i1 >= p1 && i2 >= p2) {
+        if (surf->knotSpan(0,i1-1) > 0.0) {
+          if (surf->knotSpan(1,i2-1) > 0.0) {
+            PyObject* elist = PyList_New(0);
+            for (int j2 = p2-1; j2 >= 0; j2--) {
+              for (int j1 = p1-1; j1 >= 0; j1--)
+                PyList_Append(elist, Py_BuildValue((char*) "i", nnod - n1*j2 - j1));
+            }
+            PyList_Append(result, elist);
+          }
+        }
+      }
+      ++nnod;
+    }
+  }
+
+  return result;
+}
+
+static PyObject* GenerateElements3D(const shared_ptr<Go::SplineVolume>& svol)
+{
+  const int n1 = svol->numCoefs(0);
+  const int n2 = svol->numCoefs(1);
+  const int n3 = svol->numCoefs(2);
+  const int p1 = svol->order(0);
+  const int p2 = svol->order(1);
+  const int p3 = svol->order(2);
+
+  size_t nnod = 0;
+  PyObject* result = PyList_New(0);
+  for (int i3 = 1; i3 <= n3; i3++) {
+    for (int i2 = 1; i2 <= n2; i2++) {
+      for (int i1 = 1; i1 <= n1; i1++) {
+        if (i1 >= p1 && i2 >= p2 && i3 >= p3) {
+          if (svol->knotSpan(0,i1-1) > 0.0) {
+            if (svol->knotSpan(1,i2-1) > 0.0) {
+              if (svol->knotSpan(2,i3-1) > 0.0) {
+                PyObject* elist = PyList_New(0);
+                for (int j3 = p3-1; j3 >= 0; j3--) {
+                  for (int j2 = p2-1; j2 >= 0; j2--) {
+                    for (int j1 = p1-1; j1 >= 0; j1--)
+                      PyList_Append(elist, Py_BuildValue((char*) "i", nnod - n1*n2*j3 - n1*j2 - j1));
+                   }
+                }
+                PyList_Append(result, elist);
+              }
+            }
+          }
+        }
+        ++nnod;
+      }
+    }
+  }
+
+  return result;
+}
+
 extern "C" {
 PyObject* Preprocess_module;
 
@@ -236,9 +327,49 @@ PyObject* Preprocess_AverageFaces(PyObject* self, PyObject* args, PyObject* kwds
   return Py_None;
 }
 
+PyDoc_STRVAR(preprocess_element_connectivities__doc__,"Generate element connectivities for a model\n"
+                                                      "@param patches: The patches to find connectivities for\n"
+                                                      "@type patches: List of (Surface or Volume)\n"
+                                                      "@return: Element connectivities based on patch-local node numbers\n"
+                                                      "@rtype: List of (list of (list of integer))");
+PyObject* Preprocess_ElementConnectivities(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"patches", NULL };
+  PyObject* patcheso;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords,&patcheso))
+    return NULL;
+
+  // list of surfaces or volumes
+  if (!PyObject_TypeCheck(patcheso,&PyList_Type))
+    return NULL;
+
+  PyObject* result = PyList_New(0);
+  for (int i=0;i<PyList_Size(patcheso);++i) {
+    PyObject* obj = PyList_GetItem(patcheso, i);
+    if (PyObject_TypeCheck(obj, &Curve_Type)) {
+      Curve* p = (Curve*)obj;
+      shared_ptr<Go::SplineCurve> data = convertSplineCurve(p->data);
+      PyList_Append(result, GenerateElements1D(data));
+    } else if (PyObject_TypeCheck(obj, &Surface_Type)) {
+      Surface* p = (Surface*)obj;
+      shared_ptr<Go::SplineSurface> data = convertSplineSurface(p->data);
+      PyList_Append(result, GenerateElements2D(data));
+    } else if (PyObject_TypeCheck(obj, &Volume_Type)) {
+      Volume* p = (Volume*)obj;
+      shared_ptr<Go::SplineVolume> data = convertSplineVolume(p->data);
+      PyList_Append(result, GenerateElements3D(data));
+    } else
+      std::cerr << "Warning: Unknown data type in list, skipping" << std::endl;
+  }
+
+  return result;
+}
+
 PyMethodDef Preprocess_methods[] = {
      {(char*)"AverageFaces",          (PyCFunction)Preprocess_AverageFaces, METH_VARARGS|METH_KEYWORDS, preprocess_average_faces__doc__},
      {(char*)"NaturalNodeNumbers",    (PyCFunction)Preprocess_NaturalNodeNumbers, METH_VARARGS|METH_KEYWORDS, preprocess_natural_node_numbers__doc__},
+     {(char*)"ElementConnectivities", (PyCFunction)Preprocess_ElementConnectivities, METH_VARARGS|METH_KEYWORDS, preprocess_element_connectivities__doc__},
      {NULL,                           NULL,                                       0,                          NULL}
   };
 
