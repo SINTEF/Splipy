@@ -107,12 +107,15 @@ class Numberer(object):
     """ Adds patches to a group. The patches must also be added to the model
         using `AddPatches`.
         @param name: The name of the group (will be created if it doesn't exist).
+        Names beginning with two underscores are reserved!
         @type name: String
-        @param kind: The kind of the group.
+        @param kind: The kind of the group.  Optional.
         @type kind: 'volume', 'face' or 'edge'
         @param objects: The patches to add.
         @type objects: List of patches
     """
+    if kind is None:
+      kind = {Curve: 'edge', Surface: 'face', Volume: 'volume'}[type(objects[0])]
     if not name in self._groups:
       self._groups[name] = Numberer.Group(name, kind)
     for o in objects:
@@ -139,9 +142,13 @@ class Numberer(object):
   def AddBoundary(self, name, components):
     """ Adds boundary components to a boundary. Each component must be a tuple on the
         form (groupname, kind, indexes), which will add, for each patch in the given group,
-        the sub-components of the given kind with the given indexes.
+        the sub-components of the given kind with the given indexes.  Indexes may be a list
+        or a single element.
 
         E.g. ('mygroup', 'edge', [1,2,3]) will add edges 1-3 from each patch in mygroup.
+
+        Alternatively, the first element of the comoponent may be a single patch or a list of
+        patches, in which case a group will automatically be made with the appropriate kind.
 
         The indices are zero-indexed and must conform to the IFEM convention. (NOT the
         GoTools convention.)
@@ -149,13 +156,27 @@ class Numberer(object):
         @param name: The name of the topology set (will be created if it doesn't exist).
         @type name: String
         @param components: Components to add.
-        @type components: List of Tuple of (String, String, List of Int)
+        @type components: List of Tuple of (String | Patch | List of Patch, String, Int | List of
+        Int), or a single tuple.
     """
     if not name in self._boundaries:
       self._boundaries[name] = Numberer.Boundary(name)
     bnd = self._boundaries[name]
+
+    if type(components) is tuple:
+      components = [components]
+
     for cname, ckind, cidxs in components:
-      group = self._groups[cname]
+      if type(cidxs) is not list:
+        cidxs = [cidxs]
+      if type(cname) is str:
+        group = self._groups[cname]
+      else:
+        if type(cname) in [Curve, Surface, Volume]:
+          cname = [cname]
+        groupname = '__%i' % len(self._groups)
+        self.AddGroup(groupname, None, cname)
+        group = self._groups[groupname]
       bnd.components.append(Numberer.BoundaryComponent(group, cidxs, ckind))
 
 
@@ -226,8 +247,9 @@ class Numberer(object):
         times if necessary.
 
         @param nprocs: Number of processors to optimize for
-        @param outprocs: Number of processors to write output for (optional)
         @type nprocs: Int
+        @param outprocs: Number of processors to write output for (optional)
+        @type outprocs: Int
     """
 
     if outprocs is None:
