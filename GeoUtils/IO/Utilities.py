@@ -1,6 +1,7 @@
 __doc__ = 'Utility I/O functions'
 
 import json
+import yaml
 
 def topologystring(geotype, name, patches, entries):
   xml = '  <set name="%s" type="%s">\n' % (name, geotype)
@@ -62,8 +63,13 @@ def ParseArgs(args, defaults):
 
   for arg in args:
     if arg.startswith('paramfile=') :
-      with open(arg[10:], 'r') as f:
-        dc = json.load(f)
+      fn = arg[10:]
+      extension = fn.split('.')[-1]
+      with open(fn, 'r') as f:
+        if extension == 'json':
+          dc = json.load(f)
+        elif extension == 'yaml':
+          dc = yaml.load(f)
       for k, v in dc.iteritems():
         set_def(k, v)
 
