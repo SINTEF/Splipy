@@ -139,6 +139,15 @@ class Numberer(object):
     WriteG2(filename, self._groups[name].patches)
 
 
+  def WriteGroups(self, filename):
+    """ Writes all the groups to files.
+        @param filename: The filename base to write to.
+        @param filename: String
+    """
+    for grp in self._groups.keys():
+      self.WriteGroup(grp, '%s-grp-%s.g2' % (filename, grp))
+
+
   def AddBoundary(self, name, components):
     """ Adds boundary components to a boundary. Each component must be a tuple on the
         form (groupname, kind, indexes), which will add, for each patch in the given group,
@@ -235,6 +244,15 @@ class Numberer(object):
         for cidx in bcmp.indexes:
           items.append(fn(patch, cidx))
     WriteG2(filename, items)
+
+
+  def WriteBoundaries(self, filename):
+    """ Writes all the boundaries to files.
+        @param filename: The filename base to write to.
+        @type filename: String
+    """
+    for bnd in self._boundaries.keys():
+      self.WriteBoundary(bnd, '%s-bnd-%s.g2' % (filename, bnd))
 
 
   def Renumber(self, nprocs, outprocs=None):
