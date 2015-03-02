@@ -818,6 +818,7 @@ PyObject* Volume_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
                                                                   spVol->dimension(),
                                                                   false, XYZ));
 
+  Py_INCREF(self);
   return self;
 }
 
