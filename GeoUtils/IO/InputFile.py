@@ -1,7 +1,11 @@
 __doc__ == 'Class for working with IFEM input (.xinp) files'
 
-import os, subprocess, time, xml.dom.minidom
+import os, subprocess, time, xml.dom.minidom, sys
 from collections import namedtuple
+from itertools import groupby
+from operator import itemgetter
+from GoTools import ReadG2
+from GoTools.Preprocess import NaturalNodeNumbers
 
 class InputFile:
   """Class for working with IFEM input (.xinp) files.
