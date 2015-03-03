@@ -420,13 +420,15 @@ class Numberer(object):
     return ret
 
 
-  def WriteEverything(self, filename, indent=2, periodic={}):
+  def WriteEverything(self, filename, indent=2, periodic={}, display=True):
     """ All-in-one method for writing out everything you might need (g2 geometry file,
         natural node numbers and IFEM xml file.
         @param filename: The base filename to write to (no extension).
         @type filename: String
         @param indent: Number of spaces to add for each indentation level in the XML file.
         @type indent: Int
+        @param display: (Optional) Write walldistance progress to stdout
+        @type display: Boolean
     """
     self.CheckNumbering()
 
@@ -455,7 +457,7 @@ class Numberer(object):
 
     if hasattr( self, 'wallsuffix' ):
       wallinfo = InputFile( filename+'.xinp' ).GetTopologySet( self.wallgroup )
-      dist = WallDistance.distanceFunction( patchlist, wallinfo )
+      dist = WallDistance.distanceFunction( patchlist, wallinfo, display=display )
       g = HDF5File( filename+self.wallsuffix )
       for i, (p, d) in enumerate(zip(patchlist, dist)):
         g.AddGeometry('Common', i+1, 0, p)
