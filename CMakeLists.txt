@@ -36,6 +36,7 @@ find_package(GoIntersections REQUIRED)
 find_package(LATEX)
 find_package(EpyDoc)
 find_package(LRSpline)
+find_package(OpenMP)
 
 if(USE_OPENNURBS)
   find_package(OpenNURBS)
@@ -114,6 +115,10 @@ if(VTFWRITER_LIBRARIES AND VTFWRITER_INCLUDES)
   list(APPEND DEPLIBS ${VTFWRITER_LIBRARIES})
   list(APPEND INCLUDE_DIRS ${VTFWRITER_INCLUDES})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_VTF=1")
+endif()
+
+if(OPENMP_FOUND)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 include_directories(${INCLUDE_DIRS} ${CMAKE_BINARY_DIR})
