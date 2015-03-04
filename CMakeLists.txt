@@ -5,6 +5,8 @@ set(GEOMODELLER_VERSION_MINOR 8)
 set(GEOMODELLER_VERSION_PATCH 0)
 set(GEOMODELLER_VERSION ${GEOMODELLER_VERSION_MAJOR}.${GEOMODELLER_VERSION_MINOR}.${GEOMODELLER_VERSION_PATCH})
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1) # Export compile commands to JSON for vim-ycm
+
 cmake_minimum_required(VERSION 2.6)
 
 enable_language(CXX)
@@ -36,6 +38,7 @@ find_package(GoIntersections REQUIRED)
 find_package(LATEX)
 find_package(EpyDoc)
 find_package(LRSpline)
+find_package(OpenMP)
 
 if(USE_OPENNURBS)
   find_package(OpenNURBS)
@@ -114,6 +117,10 @@ if(VTFWRITER_LIBRARIES AND VTFWRITER_INCLUDES)
   list(APPEND DEPLIBS ${VTFWRITER_LIBRARIES})
   list(APPEND INCLUDE_DIRS ${VTFWRITER_INCLUDES})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_VTF=1")
+endif()
+
+if(OPENMP_FOUND)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 include_directories(${INCLUDE_DIRS} ${CMAKE_BINARY_DIR})
