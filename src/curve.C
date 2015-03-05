@@ -291,6 +291,57 @@ PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
+PyDoc_STRVAR(curve_lower_order__doc__,
+             "Lower the order of a spline curve (need full continuity)\n"
+             "@param lower: Lower of order\n"
+             "@type lower: int (>= 0)\n"
+             "@returns The curve\n"
+             "@rtype: Curve");
+PyObject* Curve_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  static const char* keyWords[] = {"lower", NULL};
+  int lower = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, (char*)"i", (char**)keyWords, &lower))
+    return NULL;
+
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
+    return NULL;
+  if (!parCrv->geometryCurve()) {
+    Curve* pyCrv = (Curve*)self;
+    pyCrv->data = convertSplineCurve(parCrv);
+    parCrv = pyCrv->data;
+  }
+
+  shared_ptr<Go::SplineCurve> spCrv = static_pointer_cast<Go::SplineCurve>(parCrv);
+  std::vector<double>::const_iterator first = spCrv->basis().begin() + lower;
+  std::vector<double>::const_iterator last  = spCrv->basis().end() - lower;
+  Go::BsplineBasis basis = Go::BsplineBasis(spCrv->order() - lower, first, last);
+
+  if (spCrv->rational())
+    std::cout << "WARNING: The geometry basis is rational (using NURBS)\n."
+              << "         The basis for the unknown fields of one degree"
+              << "         higher will however be non-rational.\n"
+              << "         This may affect accuracy.\n"<< std::endl;
+
+  std::vector<double> greville(basis.numCoefs());
+  for (size_t i = 0; i < greville.size(); i++)
+    greville[i] = basis.grevilleParameter(i);
+
+  // Evaluate the spline curve at all points
+  std::vector<double> XYZ(spCrv->dimension() * greville.size());
+  spCrv->gridEvaluator(XYZ, greville);
+  
+  // Project the coordinates onto the new basis (the second XYZ is dummy here)
+  Curve* pyCrv = (Curve*)self;
+  pyCrv->data = convertSplineCurve(parCrv);
+  pyCrv->data.reset(Go::CurveInterpolator::regularInterpolation(basis, greville, XYZ,
+                                                                spCrv->dimension(), false, XYZ));
+
+  Py_INCREF(self);
+  return self;
+}
+
 PyDoc_STRVAR(curve_get_greville__doc__,"Return Greville points for a spline curve\n"
                                        "@return: List with the parameter values\n"
                                        "@rtype: List of float");
@@ -1152,6 +1203,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
+     {(char*)"LowerOrder",          (PyCFunction)Curve_LowerOrder,          METH_VARARGS|METH_KEYWORDS, curve_lower_order__doc__},
      {(char*)"ReParametrize",       (PyCFunction)Curve_ReParametrize,       METH_VARARGS|METH_KEYWORDS, curve_reparametrize__doc__},
      {(char*)"Rebuild",             (PyCFunction)Curve_Rebuild,             METH_VARARGS|METH_KEYWORDS, curve_rebuild__doc__},
      {(char*)"Rotate",              (PyCFunction)Curve_Rotate,              METH_VARARGS|METH_KEYWORDS, curve_rotate__doc__},
