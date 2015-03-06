@@ -148,6 +148,28 @@ class Numberer(object):
       self.WriteGroup(grp, '%s-grp-%s.g2' % (filename, grp))
 
 
+  def WriteOutputGroup(self, name, filename):
+    """ Writes the patches of an output group to a file.
+        @param name: The group name.
+        @type name: String
+        @param filename: The filename to write to.
+        @type filename: String
+    """
+    patches = []
+    for component in self._outputgroups[name].components:
+      patches.extend(component.patches)
+    WriteG2(filename, patches)
+
+
+  def WriteOutputGroups(self, filename):
+    """ Writes all the output groups to files.
+        @param filename: The filename base to write to.
+        @param filename: String
+    """
+    for grp in self._outputgroups.keys():
+      self.WriteOutputGroup(grp, '%s-outgrp-%s.g2' % (filename, grp))
+
+
   def AddBoundary(self, name, components):
     """ Adds boundary components to a boundary. Each component must be a tuple on the
         form (groupname, kind, indexes), which will add, for each patch in the given group,
@@ -194,13 +216,23 @@ class Numberer(object):
         it will produce a topology set, but it produces a topology set of whole patches,
         not of subcomponents.
 
+        The component may be either the name of a group or a list of such, or a patch or
+        list of patches.  In the latter case, the group will automatically be made.
+
         @param name: The name of the topology set (will be created if it doesn't exist).
         @type name: String
         @param kind: The kind of the topology set.
         @type kind: 'volume', 'face' or 'edge'
         @param components: The groups to add.
-        @type components: List of String
+        @type components: String | Patch | List of String | List of Patch
     """
+    if type(components) in [Curve, Volume, Surface, str]:
+      components = [components]
+    if type(components[0]) in [Curve, Volume, Surface]:
+      groupname = '__%i' % len(self._groups)
+      self.AddGroup(groupname, None, components)
+      components = [groupname]
+
     if not name in self._outputgroups:
       self._outputgroups[name] = Numberer.OutputGroup(name, kind)
     outgroup = self._outputgroups[name]
