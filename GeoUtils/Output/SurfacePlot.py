@@ -9,13 +9,15 @@ from operator import attrgetter
 from xml.dom import minidom
 
 
-def Plot2DPatches(patches, tess=3, *args, **kwargs):
+def Plot2DPatches(patches, tess=3, bbox=None, *args, **kwargs):
   """ Plots a collection of 2D patches (in the xy-plane) using matplotlib.
       Remaining arguments are passed to the matplotlib plot() function.
       @param patches: The patches to plot.
       @type patches: Iterable collection of Surface.
       @param tess: Number of tesselation points to use per knotspan.
       @type tess: Integer > 0.
+      @param bbox: Optional bounding box (xmin, xmax, ymin and ymax)
+      @type bbox: List of float
   """
   def plot(xs, ys):
     for i, (x, y) in enumerate(zip(xs, ys)):
@@ -41,8 +43,11 @@ def Plot2DPatches(patches, tess=3, *args, **kwargs):
     ys = zip(*[[p[1] for p in ps] for ps in points])
     plot(xs, ys)
 
-  model = SurfaceModel(patches)
-  xmin, xmax, ymin, ymax, _, _ = model.GetBoundingBox()
+  if not bbox:
+    model = SurfaceModel(patches)
+    xmin, xmax, ymin, ymax, _, _ = model.GetBoundingBox()
+  else:
+    xmin, xmax, ymin, ymax = bbox
   dx = (xmax - xmin) * 0.02
   dy = (ymax - ymin) * 0.02
 
