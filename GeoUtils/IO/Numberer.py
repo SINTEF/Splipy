@@ -148,6 +148,28 @@ class Numberer(object):
       self.WriteGroup(grp, '%s-grp-%s.g2' % (filename, grp))
 
 
+  def WriteOutputGroup(self, name, filename):
+    """ Writes the patches of an output group to a file.
+        @param name: The group name.
+        @type name: String
+        @param filename: The filename to write to.
+        @type filename: String
+    """
+    patches = []
+    for component in self._outputgroups[name].components:
+      patches.extend(component.patches)
+    WriteG2(filename, patches)
+
+
+  def WriteOutputGroups(self, filename):
+    """ Writes all the output groups to files.
+        @param filename: The filename base to write to.
+        @param filename: String
+    """
+    for grp in self._outputgroups.keys():
+      self.WriteOutputGroup(grp, '%s-outgrp-%s.g2' % (filename, grp))
+
+
   def AddBoundary(self, name, components):
     """ Adds boundary components to a boundary. Each component must be a tuple on the
         form (groupname, kind, indexes), which will add, for each patch in the given group,
@@ -194,13 +216,23 @@ class Numberer(object):
         it will produce a topology set, but it produces a topology set of whole patches,
         not of subcomponents.
 
+        The component may be either the name of a group or a list of such, or a patch or
+        list of patches.  In the latter case, the group will automatically be made.
+
         @param name: The name of the topology set (will be created if it doesn't exist).
         @type name: String
         @param kind: The kind of the topology set.
         @type kind: 'volume', 'face' or 'edge'
         @param components: The groups to add.
-        @type components: List of String
+        @type components: String | Patch | List of String | List of Patch
     """
+    if type(components) in [Curve, Volume, Surface, str]:
+      components = [components]
+    if type(components[0]) in [Curve, Volume, Surface]:
+      groupname = '__%i' % len(self._groups)
+      self.AddGroup(groupname, None, components)
+      components = [groupname]
+
     if not name in self._outputgroups:
       self._outputgroups[name] = Numberer.OutputGroup(name, kind)
     outgroup = self._outputgroups[name]
@@ -273,31 +305,38 @@ class Numberer(object):
     if outprocs is None:
       outprocs = nprocs
 
-    items = [{'patch': p,
-              'ndofs': prod(map(len, p.GetKnots()))}
-             for p in self._patches]
-    tot_ndofs = sum(i['ndofs'] for i in items)
+    if nprocs == 1:
+      # Do no special renumbering for nprocs = 1
+      self._numbering = [{'patch': p,
+                          'ndofs': prod(map(len, p.GetKnots())),
+                          'index': i}
+                         for i, p in enumerate(self._patches)]
+    else:
+      items = [{'patch': p,
+                'ndofs': prod(map(len, p.GetKnots()))}
+               for p in self._patches]
+      tot_ndofs = sum(i['ndofs'] for i in items)
 
-    # List of temporary processor objects.  We will attempt to optimize for
-    # nprocs processors, but will output for more.
-    temp_procs = [Numberer.Proc() for _ in xrange(nprocs)]
+      # List of temporary processor objects.  We will attempt to optimize for
+      # nprocs processors, but will output for more.
+      temp_procs = [Numberer.Proc() for _ in xrange(nprocs)]
 
-    # Add the patches in order of decreasing ndofs to the processor with
-    # lowest number of ndofs so far.  This produces a numbering that depends
-    # only on the patch list and nprocs. This is a greedy heuristic algorithm
-    # for an NP-complete problem.  It is guaranteed that no processor will
-    # get more than 4/3 of the optimal load.
-    items.sort(key=itemgetter('ndofs'), reverse=True)
-    for n in items:
-      temp_procs[0].items.append(n)
-      temp_procs.sort(key=methodcaller('ndofs'))
+      # Add the patches in order of decreasing ndofs to the processor with
+      # lowest number of ndofs so far.  This produces a numbering that depends
+      # only on the patch list and nprocs. This is a greedy heuristic algorithm
+      # for an NP-complete problem.  It is guaranteed that no processor will
+      # get more than 4/3 of the optimal load.
+      items.sort(key=itemgetter('ndofs'), reverse=True)
+      for n in items:
+        temp_procs[0].items.append(n)
+        temp_procs.sort(key=methodcaller('ndofs'))
 
-    # Establish the numbering.
-    self._numbering = []
-    for procnum, proc in enumerate(temp_procs):
-      for i in proc.items:
-        i['index'] = len(self._numbering)
-        self._numbering.append(i)
+      # Establish the numbering.
+      self._numbering = []
+      for procnum, proc in enumerate(temp_procs):
+        for i in proc.items:
+          i['index'] = len(self._numbering)
+          self._numbering.append(i)
 
     # Distribute the patches to the correct number of processors, without
     # changing the order.  Due to the order restriction, this problem can
