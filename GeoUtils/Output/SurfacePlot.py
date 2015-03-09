@@ -4,7 +4,7 @@ from GeoUtils.IO import InputFile, IFEMResultDatabase
 from GoTools import *
 from itertools import product
 from matplotlib import pyplot
-from numpy import array, inf, log10, sqrt
+from numpy import array, inf, log10, newaxis, sqrt
 from operator import attrgetter
 from xml.dom import minidom
 
@@ -72,11 +72,9 @@ class SurfacePlot:
        @type surf: list of tuple of (patch, face) numbers
        @param levels: time levels in hdf5, default to last
        @type levels: int, list of ints, None
-       @param dim: 2D or 3D
-       @type dim: int
        @param setup: XINP-file with <fluidproperties> tag
        @type setup: str
-       @param opts: options
+       @param opts: options, e.g. plot only on edge of Surface
        @type opts: dict
     """
     # fix filenames if necessary
@@ -128,32 +126,32 @@ class SurfacePlot:
       pres.append( geom_i.Clone(_average(pdofs_i)) )
 
     # translate to boundary data
-    self.surf = InputFile(topo).GetTopologySet( surf, convention="gotools" )
+    surf = InputFile(topo).GetTopologySet( surf, convention="gotools" )
     name = 'Face' if self.dim==3 else 'Edge'
-    self.geom, self.velo, self.pres = [], [], []
-    for i, patchinfo in self.surf.iteritems():
+    self.geom, velocity, pressure = [], [], []
+    for i, patchinfo in surf.iteritems():
       for face in attrgetter(name.lower())( patchinfo ):
         faces = lambda field: attrgetter('Get%ss'%name)( field )()
         if self.dim==3 and opts.has_key('edge#'):
           for j in opts['edge#']:
             self.geom.append( faces(geom[i-1])[face-1].GetEdges()[j] )
-            self.velo.append( faces(velo[i-1])[face-1].GetEdges()[j] )
-            self.pres.append( faces(pres[i-1])[face-1].GetEdges()[j] )
+            velocity.append( faces(velo[i-1])[face-1].GetEdges()[j] )
+            pressure.append( faces(pres[i-1])[face-1].GetEdges()[j] )
         else:
           self.geom.append( faces(geom[i-1])[face-1] )
-          self.velo.append( faces(velo[i-1])[face-1] )
-          self.pres.append( faces(pres[i-1])[face-1] )
+          velocity.append( faces(velo[i-1])[face-1] )
+          pressure.append( faces(pres[i-1])[face-1] )
+    self.funcs = self.geom, velocity, pressure
 
   def __iter__( self ):
     "Iterate over control points of 2D/3D surface"
     # Order reversal [::-1] in _astuple makes __iter__ run fastest along the
     # first direction as is the convention in geomodeler.py (but not itertools)
     _astuple = lambda arg: arg[::-1] if isinstance(arg,tuple) else (arg,)
-    funcs = self.geom, self.velo, self.pres
     for i, patch in enumerate(self.geom):
       for knot in product( *_astuple(patch.GetGreville()) ):
-        args = [func[i].Evaluate( *_astuple(knot) ) for func in funcs] \
-             + [func[i].EvaluateTangent( *_astuple(knot) ) for func in funcs]
+        args = [func[i].Evaluate( *_astuple(knot) ) for func in self.funcs] \
+             + [func[i].EvaluateTangent( *_astuple(knot) ) for func in self.funcs]
         yield i, args
 
   def min( self, f ):
@@ -236,7 +234,6 @@ class SurfacePlot:
     # This way a new axis is made for each function call (without axis arg).
     axis = pyplot.figure().gca() if axis is None else axis
     label = kwargs.pop( 'label', '_nolabel_' )
-    funcs = self.geom, self.velo, self.pres
     i0 = None
     for i, args in self:
       if not i0==i: # for every new patch i
@@ -268,7 +265,6 @@ class SurfacePlot:
     """
     axis = pyplot.figure().gca() if axis is None else axis
     label = kwargs.pop( 'label', '_nolabel_' )
-    funcs = self.geom, self.velo, self.pres
     i0 = None
     for i, args in self:
       if not i0==i: # for every new patch i
@@ -280,3 +276,31 @@ class SurfacePlot:
       ui.append( u(*args) )
       vi.append( v(*args) )
     axis.quiver( xi, yi, ui, vi, label=label, **kwargs )
+
+
+class LinePlot( SurfacePlot ):
+  'Similar to SurfacePlot for beam structures, no dimensional reduction (Vol->Surf).'
+
+  def __init__( self, hdf5 ):
+    beam = IFEMResultDatabase( hdf5 )
+    geom, = beam.GetGeometry( 'structure Structure-1', 0 )
+    knot_indices = beam.GetIntField( 0, 'beam_nodes' )
+    knot_values = map( geom.GetKnots().__getitem__, knot_indices )
+    self.geom = [CurveFactory.ResampleCurve( geom, knot_values, 2 )]
+    self.funcs = self.geom, None, None
+
+  def forcedata( self, paths, level=0 ):
+    'Add force data from some level'
+    def parse_force( path ):
+      f = open( path, 'r' )
+      for i, line in enumerate( iter(f) ):
+        if i-2 == level: break
+      f.close()
+      data = map( float, line.strip().split() )
+      return list( data[1:] )
+
+    nknots = len( self.geom[0].GetKnots() )
+    data = array( [parse_force(paths%(i+1)) for i in range(nknots)] )
+    fx = self.geom[0].Clone( data[:,0].tolist() )
+    fy = self.geom[0].Clone( data[:,1].tolist() )
+    self.funcs = self.geom, [fx], [fy]
