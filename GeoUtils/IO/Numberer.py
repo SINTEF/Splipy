@@ -1,6 +1,6 @@
 __doc__ = 'Class for handling specification of topology sets and automatic renumbering of patches'
 
-import os
+import os, sys
 
 from itertools import groupby
 from numpy import cumsum, ones, prod, zeros
@@ -10,6 +10,14 @@ from . import HDF5File, InputFile
 from .. import WallDistance
 from GoTools import *
 from GoTools.Preprocess import NaturalNodeNumbers
+
+def deprecated(fun, name):
+  def fn(*args, **kwargs):
+    print >> sys.stderr, '%s is deprecated. Please use %s instead.' % (name, fun.__name__)
+  return fn
+
+def deprecate(name):
+  return lambda fn: deprecated(fn, name)
 
 class Numberer(object):
   """ Handles specification of topology sets and automatic renumbering of patches.
@@ -25,8 +33,8 @@ class Numberer(object):
       self.patches = []
 
 
-  # A boundary is a named collection of boundary components.
-  class Boundary:
+  # A topology set is a named collection of components.
+  class TopologySet:
 
     def __init__(self, name):
       self.name = name
@@ -42,13 +50,13 @@ class Numberer(object):
       return kinds
 
 
-  # A boundary component has a group (applies to all patches in that group),
+  # A topology set component has a group (applies to all patches in that group),
   # a kind ('face', 'edge', etc.), and a collection of indices.
   #
   # It corresponds to number of <item> entries in a topology set, e.g.
   # for patch in group:
   #   <item patch="patchnumber">indexes</item>
-  class BoundaryComponent:
+  class TopologySetComponent:
 
     def __init__(self, group, indexes, kind):
       self.group = group
@@ -79,7 +87,7 @@ class Numberer(object):
   def __init__(self):
     self._patches = []
     self._groups = {}
-    self._boundaries = {}
+    self._topsets = {}
     self._outputgroups = {}
     self._numbering = None
 
@@ -148,6 +156,7 @@ class Numberer(object):
       self.WriteGroup(grp, '%s-grp-%s.g2' % (filename, grp))
 
 
+  @deprecate('WriteTopologySet')
   def WriteOutputGroup(self, name, filename):
     """ Writes the patches of an output group to a file.
         @param name: The group name.
@@ -161,6 +170,7 @@ class Numberer(object):
     WriteG2(filename, patches)
 
 
+  @deprecate('WriteTopologySets')
   def WriteOutputGroups(self, filename):
     """ Writes all the output groups to files.
         @param filename: The filename base to write to.
@@ -170,13 +180,15 @@ class Numberer(object):
       self.WriteOutputGroup(grp, '%s-outgrp-%s.g2' % (filename, grp))
 
 
-  def AddBoundary(self, name, components):
-    """ Adds boundary components to a boundary. Each component must be a tuple on the
-        form (groupname, kind, indexes), which will add, for each patch in the given group,
+  def AddTopologySet(self, name, components):
+    """ Adds components to a topology set. Each component must be a tuple on the form
+        (groupname, kind, indexes), which will add, for each patch in the given group,
         the sub-components of the given kind with the given indexes.  Indexes may be a list
-        or a single element.
+        or a single element.  If the list is empty, the kind of the set should be equal
+        to the kind of the group, in which case the patches themselves will be included.
 
         E.g. ('mygroup', 'edge', [1,2,3]) will add edges 1-3 from each patch in mygroup.
+             ('mygroup', 'volume', []) will add the patches (which are volumes) in mygroup.
 
         Alternatively, the first element of the comoponent may be a single patch or a list of
         patches, in which case a group will automatically be made with the appropriate kind.
@@ -190,9 +202,9 @@ class Numberer(object):
         @type components: List of Tuple of (String | Patch | List of Patch, String, Int | List of
         Int), or a single tuple.
     """
-    if not name in self._boundaries:
-      self._boundaries[name] = Numberer.Boundary(name)
-    bnd = self._boundaries[name]
+    if not name in self._topsets:
+      self._topsets[name] = Numberer.TopologySet(name)
+    ts = self._topsets[name]
 
     if type(components) is tuple:
       components = [components]
@@ -208,9 +220,13 @@ class Numberer(object):
         groupname = '__%i' % len(self._groups)
         self.AddGroup(groupname, None, cname)
         group = self._groups[groupname]
-      bnd.components.append(Numberer.BoundaryComponent(group, cidxs, ckind))
+      ts.components.append(Numberer.TopologySetComponent(group, cidxs, ckind))
 
 
+  AddBoundary = deprecated(AddTopologySet, 'AddBoundary')
+
+
+  @deprecate('AddTopologySet')
   def AddOutputGroup(self, name, kind, components):
     """ Adds groups to an output group. An output group is like a boundary, in that
         it will produce a topology set, but it produces a topology set of whole patches,
@@ -244,47 +260,58 @@ class Numberer(object):
 
 
   def AddWallGroup(self, wallgroup, suffix='_walldist' ):
-    """Looks up the namesake boundary group and prepares to write wall distance upon invoking WriteEveryting
-       @param wallgroup: name of an existing boundary group
+    """Looks up the namesake topology set and prepares to write wall distance upon invoking WriteEveryting.
+       @param wallgroup: name of an existing topology set
        @type wallgroup: str
        @param suffix: suffix to file basename for wall dist file
        @type suffix: str"""
-    assert self._boundaries.has_key( wallgroup ), 'Wall group has to be added to boundary groups first'
+    assert self._topsets.has_key( wallgroup ), 'Wall group has to be added to topology sets first'
     self.wallgroup = wallgroup
     self.wallsuffix = suffix
 
 
-  def Boundaries(self):
-    """ @return: The already defined boundary names.
+  def TopologySets(self):
+    """ @return: The already defined topology set names.
         @rtype: List of String
     """
-    return self._boundaries.keys()
+    return self._topsets.keys()
 
 
-  def WriteBoundary(self, name, filename):
-    """ Writes the geometry of a boundary to a file.
-        @param name: The boundary name.
+  Boundaries = deprecated(TopologySets, 'Boundaries')
+
+
+  def WriteTopologySet(self, name, filename):
+    """ Writes the geometry of a topology set to a file.
+        @param name: The set name.
         @type name: String
         @param filename: The filename to write to.
         @type filename: String
     """
     items = []
-    bnd = self._boundaries[name]
+    bnd = self._topsets[name]
     for bcmp in bnd.components:
-      fn = self.GetterFunction(bcmp.group.kind, bcmp.kind)
-      for patch in bcmp.group.patches:
-        for cidx in bcmp.indexes:
-          items.append(fn(patch, cidx))
+      if bcmp.group.kind == bcmp.kind:
+        items.extend(bcmp.group.patches)
+      else:
+        fn = self.GetterFunction(bcmp.group.kind, bcmp.kind)
+        for patch in bcmp.group.patches:
+          items.extend(fn(patch, cidx) for cidx in bcmp.indexes)
     WriteG2(filename, items)
 
 
-  def WriteBoundaries(self, filename):
-    """ Writes all the boundaries to files.
+  WriteBoundary = deprecated(WriteTopologySet, 'WriteBoundary')
+
+
+  def WriteTopologySets(self, filename):
+    """ Writes all the topology sets to files.
         @param filename: The filename base to write to.
         @type filename: String
     """
-    for bnd in self._boundaries.keys():
-      self.WriteBoundary(bnd, '%s-bnd-%s.g2' % (filename, bnd))
+    for bnd in self._topsets.keys():
+      self.WriteTopologySet(bnd, '%s-bnd-%s.g2' % (filename, bnd))
+
+
+  WriteBoundaries = deprecated(WriteTopologySets, 'WriteBoundaries')
 
 
   def Renumber(self, nprocs, outprocs=None):
@@ -405,7 +432,7 @@ class Numberer(object):
     return ret
 
 
-  def TopologySets(self, sets, base_indent=0, indent=2, include_header=True):
+  def OutputTopologySets(self, sets, base_indent=0, indent=2, include_header=True):
     """ Returns the XML representation the topology sets.
         @param sets: The names of the topology sets to write.
         @type sets: List of String
@@ -429,10 +456,10 @@ class Numberer(object):
       lst.append(base(0) + '<topologysets>')
 
     for s in sets:
-      if s in self._boundaries:
-        bnd = self._boundaries[s]
-        for kind, comps in bnd.KindsAndComponents().iteritems():
-          lst.append(base(1) + '<set name="%s" type="%s">' % (bnd.name, kind))
+      if s in self._topsets:
+        ts = self._topsets[s]
+        for kind, comps in ts.KindsAndComponents().iteritems():
+          lst.append(base(1) + '<set name="%s" type="%s">' % (ts.name, kind))
           for comp in comps:
             for patch in comp.group.patches:
               num = self.GetNumber(patch)
@@ -489,8 +516,8 @@ class Numberer(object):
       f.write(self.Partitioning(indent, indent, True))
       f.write(' '*indent + '<patchfile>%s.g2</patchfile>\n' % basename)
       f.write(' '*indent + '<nodefile>%s_nodenumbers.hdf5</nodefile>\n' % basename)
-      f.write(self.TopologySets(self._boundaries.keys() + self._outputgroups.keys(),
-                                indent, indent, True))
+      f.write(self.OutputTopologySets(self._topsets.keys() + self._outputgroups.keys(),
+                                      indent, indent, True))
 
       f.write('</geometry>\n')
 
