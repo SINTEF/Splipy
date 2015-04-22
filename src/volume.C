@@ -116,8 +116,9 @@ PyObject* Volume_Str(Volume* self)
   return PyString_FromString(str.str().c_str());
 }
 
-PyDoc_STRVAR(volume_clone__doc__,"Clone a volume\n"
-                                 "@return: New copy of volume\n");
+PyDoc_STRVAR(volume_clone__doc__,
+             "Clone a volume\n"
+             "@return: New copy of volume\n");
 PyObject* Volume_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"coefs", "ncomp", NULL};
@@ -181,15 +182,16 @@ PyObject* Volume_Sub(PyObject* o1, PyObject* o2)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(volume_evaluate__doc__,"Evaluate volume at given parameter values\n"
-                                     "@param value_u: The u parameter value\n"
-                                     "@type value_u: float\n"
-                                     "@param value_v: The v parameter value\n"
-                                     "@type value_v: float\n"
-                                     "@param value_w: The w parameter value\n"
-                                     "@type value_w: float\n"
-                                     "@return: The value of the volume\n"
-                                     "@rtype: Point");
+PyDoc_STRVAR(volume_evaluate__doc__,
+             "Evaluate volume at given parameter values\n"
+             "@param value_u: The u parameter value\n"
+             "@type value_u: float\n"
+             "@param value_v: The v parameter value\n"
+             "@type value_v: float\n"
+             "@param value_w: The w parameter value\n"
+             "@type value_w: float\n"
+             "@return: The value of the volume\n"
+             "@rtype: Point");
 PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value_u", "value_v", "value_w", NULL };
@@ -207,15 +209,16 @@ PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(volume_evaluategrid__doc__,"Evaluate volume on a tensor-product grid\n"
-                                        "@param param_u: The u parameters\n"
-                                        "@type param_u: List of float\n"
-                                        "@param param_v: The v parameters\n"
-                                        "@type param_v: List of float\n"
-                                        "@param param_w: The w parameters\n"
-                                        "@type param_w: List of float\n"
-                                        "@return: The values of the volume at the given parameters\n"
-                                        "@rtype: List of floats");
+PyDoc_STRVAR(volume_evaluategrid__doc__,
+             "Evaluate volume on a tensor-product grid\n"
+             "@param param_u: The u parameters\n"
+             "@type param_u: List of float\n"
+             "@param param_v: The v parameters\n"
+             "@type param_v: List of float\n"
+             "@param param_w: The w parameters\n"
+             "@type param_w: List of float\n"
+             "@return: The values of the volume at the given parameters\n"
+             "@rtype: List of floats");
 PyObject* Volume_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"param_u", "param_v", "param_w", NULL };
@@ -257,11 +260,12 @@ PyObject* Volume_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(volume_flip_parametrization__doc__,"Flip (or reverse) volume parametrization\n"
-                                                "@param direction: The parametric direction to flip (0=u, 1=v, 2=w)\n"
-                                                "@type direction: int\n"
-                                                "@return: The volume\n"
-                                                "@rtype: Volume");
+PyDoc_STRVAR(volume_flip_parametrization__doc__,
+             "Flip (or reverse) volume parametrization\n"
+             "@param direction: The parametric direction to flip (0=u, 1=v, 2=w)\n"
+             "@type direction: int\n"
+             "@return: The volume\n"
+             "@rtype: Volume");
 PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"direction", NULL };
@@ -287,9 +291,10 @@ PyObject* Volume_FlipParametrization(PyObject* self, PyObject* args, PyObject* k
   return self;
 }
 
-PyDoc_STRVAR(volume_get_bounding_box__doc__,"Generate and return the Spline Volume bounding box\n"
-                                            "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,..."
-                                            "@rtype: List of floats");
+PyDoc_STRVAR(volume_get_bounding_box__doc__,
+             "Generate and return the Spline Volume bounding box\n"
+             "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,..."
+             "@rtype: List of floats");
 PyObject* Volume_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -318,13 +323,14 @@ PyObject* Volume_GetBoundingBox(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(volume_get_const_par_surf__doc__,"Generate and return a SplineSurface that represents a constant parameter surface on the volume\n"
-                                              "@param parameter: Value of the fixed parameter\n"
-                                              "@type parameter: float\n"
-                                              "@param pardir: 0 for constant u-parameter, 1 for v and 2 for w-parameter\n"
-                                              "@type pardir: int\n"
-                                              "@return: A newly constructed SplineSurface representing the specified constant parameter surface\n"
-                                              "@rtype: Surface");
+PyDoc_STRVAR(volume_get_const_par_surf__doc__,
+             "Generate and return a SplineSurface that represents a constant parameter surface on the volume\n"
+             "@param parameter: Value of the fixed parameter\n"
+             "@type parameter: float\n"
+             "@param pardir: 0 for constant u-parameter, 1 for v and 2 for w-parameter\n"
+             "@type pardir: int\n"
+             "@return: A newly constructed SplineSurface representing the specified constant parameter surface\n"
+             "@rtype: Surface");
 PyObject* Volume_GetConstParSurf(PyObject* self, PyObject* args, PyObject* kwds)
 {
   int    parDir    = 0;
@@ -351,9 +357,10 @@ PyObject* Volume_GetConstParSurf(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) pySurf;
 }
 
-PyDoc_STRVAR(volume_get_faces__doc__,"Return the six faces\n"
-                                     "@return: A list of the six faces\n"
-                                     "@rtype: List of Surface");
+PyDoc_STRVAR(volume_get_faces__doc__,
+             "Return the six faces\n"
+             "@return: A list of the six faces\n"
+             "@rtype: List of Surface");
 PyObject* Volume_GetFaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -379,13 +386,14 @@ PyObject* Volume_GetFaces(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(volume_get_sub_vol__doc__,"Get a Spline Volume which represent a part of 'this' Volume\n"
-	                               "@param from_par: The parametric lower left corner of the sub volume\n"
-                                       "@type  from_par: Point, list of floats or triple of floats\n"
-                                       "@param to_par:   The parametric upper right corner of the sub volume\n"
-                                       "@type  to_par:   Point, list of floats or triple of floats\n"
-                                       "@return: A parametric rectangular subregion of this Volume represented as a Spline Volume\n"
-                                         "@rtype: Volume");
+PyDoc_STRVAR(volume_get_sub_vol__doc__,
+             "Get a Spline Volume which represent a part of 'this' Volume\n"
+             "@param from_par: The parametric lower left corner of the sub volume\n"
+             "@type  from_par: Point, list of floats or triple of floats\n"
+             "@param to_par:   The parametric upper right corner of the sub volume\n"
+             "@type  to_par:   Point, list of floats or triple of floats\n"
+             "@return: A parametric rectangular subregion of this Volume represented as a Spline Volume\n"
+             "@rtype: Volume");
 PyObject* Volume_GetSubVol(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -418,9 +426,10 @@ PyObject* Volume_GetSubVol(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) result;
 }
 
-PyDoc_STRVAR(volume_get_greville__doc__,"Return Greville points for a spline volume\n"
-                                         "@return: List with the parameter values\n"
-                                         "@rtype: Tuple with List of float");
+PyDoc_STRVAR(volume_get_greville__doc__,
+             "Return Greville points for a spline volume\n"
+             "@return: List with the parameter values\n"
+             "@rtype: Tuple with List of float");
 PyObject* Volume_GetGreville(PyObject* self)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -444,11 +453,12 @@ PyObject* Volume_GetGreville(PyObject* self)
   return result;
 }
 
-PyDoc_STRVAR(volume_get_knots__doc__,"Return knots for a spline volume\n"
-                                     "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
-                                     "@type with_multiplicities: Boolean\n"
-                                     "@return: List with the knot values\n"
-                                     "@rtype: Tuple with List of float");
+PyDoc_STRVAR(volume_get_knots__doc__,
+             "Return knots for a spline volume\n"
+             "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
+             "@type with_multiplicities: Boolean\n"
+             "@return: List with the knot values\n"
+             "@rtype: Tuple with List of float");
 PyObject* Volume_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"with_multiplicities", NULL };
@@ -485,9 +495,10 @@ PyObject* Volume_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(volume_get_order__doc__,"Return spline volume order (polynomial degree + 1) in all parametric directions\n"
-                                     "@return: B-Spline order \n"
-                                     "@rtype: List of three integers");
+PyDoc_STRVAR(volume_get_order__doc__,
+             "Return spline volume order (polynomial degree + 1) in all parametric directions\n"
+             "@return: B-Spline order \n"
+             "@rtype: List of three integers");
 PyObject* Volume_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -521,14 +532,15 @@ static std::array<std::vector<double>,3>
   return gpar;
 }
 
-PyDoc_STRVAR(volume_get_tesselationparams__doc__,"Obtain tesselation parameters for a volume\n"
-                                                 "@param n1: Number of tesselation points per knotspan in u\n"
-                                                 "@type n1: Int\n"
-                                                 "@param n2: Number of tesselation points per knotspan in v\n"
-                                                 "@type n2: Int\n"
-                                                 "@param n3: Number of tesselation points per knotspan in w\n"
-                                                 "@type n3: Int\n"
-                                                 "@rtype: Tuple with (list of float, list of float, list of float)");
+PyDoc_STRVAR(volume_get_tesselationparams__doc__,
+             "Obtain tesselation parameters for a volume\n"
+             "@param n1: Number of tesselation points per knotspan in u\n"
+             "@type n1: Int\n"
+             "@param n2: Number of tesselation points per knotspan in v\n"
+             "@type n2: Int\n"
+             "@param n3: Number of tesselation points per knotspan in w\n"
+             "@type n3: Int\n"
+             "@rtype: Tuple with (list of float, list of float, list of float)");
 PyObject* Volume_GetTesselationParams(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -565,13 +577,14 @@ PyObject* Volume_GetTesselationParams(PyObject* self, PyObject* args, PyObject* 
 }
 
 
-PyDoc_STRVAR(volume_insert_knot__doc__,"Insert a knot in a spline volume\n"
-                                       "@param direction: Direction to insert knot in\n"
-                                       "@type direction: int (0, 1 or 2)\n"
-                                       "@param knot: The knot to insert\n"
-                                       "@type knot: float\n"
-                                       "@return: The volume\n"
-                                       "@rtype: Volume");
+PyDoc_STRVAR(volume_insert_knot__doc__,
+             "Insert a knot in a spline volume\n"
+             "@param direction: Direction to insert knot in\n"
+             "@type direction: int (0, 1 or 2)\n"
+             "@param knot: The knot to insert\n"
+             "@type knot: float\n"
+             "@return: The volume\n"
+             "@rtype: Volume");
 PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"direction", "knot", NULL };
@@ -595,11 +608,12 @@ PyObject* Volume_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(volume_interpolate__doc__,"Interpolate a field onto the volume's basis\n"
-                                       "@param coefs: The values to interpolate (sample in the Greville points)\n"
-                                       "@type coefs: List of Float"
-                                       "@return: New basis coefficients\n"
-                                       "@rtype: List of float");
+PyDoc_STRVAR(volume_interpolate__doc__,
+             "Interpolate a field onto the volume's basis\n"
+             "@param coefs: The values to interpolate (sample in the Greville points)\n"
+             "@type coefs: List of Float"
+             "@return: New basis coefficients\n"
+             "@rtype: List of float");
 PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"coefs", NULL };
@@ -664,9 +678,10 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(volume_make_rhs__doc__,"Make sure volume has a right-hand coordinate system\n"
-                                    "@return: True if the third parameter direction was changed\n"
-                                    "@rtype: Bool");
+PyDoc_STRVAR(volume_make_rhs__doc__,
+             "Make sure volume has a right-hand coordinate system\n"
+             "@return: True if the third parameter direction was changed\n"
+             "@rtype: Bool");
 PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -692,13 +707,14 @@ PyObject* Volume_MakeRHS(PyObject* self, PyObject* args)
   return Py_False;
 }
 
-PyDoc_STRVAR(volume_split__doc__, "Split the volume into segments\n"
-                                  "@param params: The parameter values to split at\n"
-                                  "@type params: Float or list of floats\n"
-                                  "@param pardir: The direction to split along (0,1 or 2)\n"
-                                  "@type pardir: int\n"
-                                  "@return: The resulting volumes\n"
-                                  "@rtype: List of Volume");
+PyDoc_STRVAR(volume_split__doc__,
+             "Split the volume into segments\n"
+             "@param params: The parameter values to split at\n"
+             "@type params: Float or list of floats\n"
+             "@param pardir: The direction to split along (0,1 or 2)\n"
+             "@type pardir: int\n"
+             "@return: The resulting volumes\n"
+             "@rtype: List of Volume");
 PyObject* Volume_Split(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"params", "pardir", NULL };
@@ -740,15 +756,16 @@ PyObject* Volume_Split(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(volume_raise_order__doc__,"Raise order of a spline volume\n"
-                                       "@param raise_u: Raise of order in u\n"
-                                       "@type raise_u: int (>= 0)\n"
-                                       "@param raise_v: Raise of order in v\n"
-                                       "@type raise_v: int (>= 0)\n"
-                                       "@param raise_w: Raise of order in w\n"
-                                       "@type raise_w: int (>= 0)\n"
-                                       "@returns: The volume\n"
-                                       "@rtype: Volume");
+PyDoc_STRVAR(volume_raise_order__doc__,
+             "Raise order of a spline volume\n"
+             "@param raise_u: Raise of order in u\n"
+             "@type raise_u: int (>= 0)\n"
+             "@param raise_v: Raise of order in v\n"
+             "@type raise_v: int (>= 0)\n"
+             "@param raise_w: Raise of order in w\n"
+             "@type raise_w: int (>= 0)\n"
+             "@returns: The volume\n"
+             "@rtype: Volume");
 PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"raise_u", "raise_v", "raise_w", NULL };
@@ -771,15 +788,16 @@ PyObject* Volume_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(volume_lower_order__doc__,"Lower order of a spline volume\n"
-                                       "@param lower_u: Lower of order in u\n"
-                                       "@type lower_u: int (>= 0)\n"
-                                       "@param Lower_v: Lower of order in v\n"
-                                       "@type lower_v: int (>= 0)\n"
-                                       "@param Lower_w: Lower of order in w\n"
-                                       "@type lower_w: int (>= 0)\n"
-                                       "@returns: The volume\n"
-                                       "@rtype: Volume");
+PyDoc_STRVAR(volume_lower_order__doc__,
+             "Lower order of a spline volume\n"
+             "@param lower_u: Lower of order in u\n"
+             "@type lower_u: int (>= 0)\n"
+             "@param Lower_v: Lower of order in v\n"
+             "@type lower_v: int (>= 0)\n"
+             "@param Lower_w: Lower of order in w\n"
+             "@type lower_w: int (>= 0)\n"
+             "@returns: The volume\n"
+             "@rtype: Volume");
 PyObject* Volume_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"lower_u", "lower_v", "lower_w", NULL };
@@ -839,21 +857,22 @@ PyObject* Volume_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(volume_reparametrize__doc__,"Re-parametrize a volume\n"
-                                         "@param umin: The minimum u value\n"
-                                         "@type umin: float\n"
-                                         "@param umax: The maximum u value\n"
-                                         "@type umax: float\n"
-                                         "@param vmin: The minimum v value\n"
-                                         "@type vmin: float\n"
-                                         "@param vmax: The maximum v value\n"
-                                         "@type vmax: float\n"
-                                         "@param wmin: The minimum w value\n"
-                                         "@type wmin: float\n"
-                                         "@param wmax: The maximum w value\n"
-                                         "@type wmax: float\n"
-                                         "@return: The volume\n"
-                                         "@rtype: Volume");
+PyDoc_STRVAR(volume_reparametrize__doc__,
+             "Re-parametrize a volume\n"
+             "@param umin: The minimum u value\n"
+             "@type umin: float\n"
+             "@param umax: The maximum u value\n"
+             "@type umax: float\n"
+             "@param vmin: The minimum v value\n"
+             "@type vmin: float\n"
+             "@param vmax: The maximum v value\n"
+             "@type vmax: float\n"
+             "@param wmin: The minimum w value\n"
+             "@type wmin: float\n"
+             "@param wmax: The maximum w value\n"
+             "@type wmax: float\n"
+             "@return: The volume\n"
+             "@rtype: Volume");
 PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"umin", "umax", "vmin", "vmax", "wmin", "wmax", NULL };
@@ -874,13 +893,14 @@ PyObject* Volume_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(volume_swap_parametrization__doc__,"Swaps two of the parametric directions\n"
-                                                "@param pardir1: The first parametric direction \n"
-                                                "@type pardir1: int\n"
-                                                "@param pardir2: The second parametric direction \n"
-                                                "@type pardir2: int\n"
-                                                "@return: The volume\n"
-                                                "@rtype: Volume");
+PyDoc_STRVAR(volume_swap_parametrization__doc__,
+             "Swaps two of the parametric directions\n"
+             "@param pardir1: The first parametric direction \n"
+             "@type pardir1: int\n"
+             "@param pardir2: The second parametric direction \n"
+             "@type pardir2: int\n"
+             "@return: The volume\n"
+             "@rtype: Volume");
 PyObject* Volume_SwapParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"pardir1", "pardir2", NULL };
@@ -929,14 +949,15 @@ PyObject* Volume_Scale(PyObject* o1, PyObject* o2)
   return o1;
 }
 
-PyDoc_STRVAR(volume_tesselate__doc__,"Tesselate a volume\n"
-                                     "@param n1: Number of tesselation points per knotspan in u\n"
-                                     "@type n1: Int\n"
-                                     "@param n2: Number of tesselation points per knotspan in v\n"
-                                     "@type n2: Int\n"
-                                     "@param n3: Number of tesselation points per knotspan in w\n"
-                                     "@type n3: Int\n"
-                                     "@rtype: Tuple with (list of nodes, list of elements)");
+PyDoc_STRVAR(volume_tesselate__doc__,
+             "Tesselate a volume\n"
+             "@param n1: Number of tesselation points per knotspan in u\n"
+             "@type n1: Int\n"
+             "@param n2: Number of tesselation points per knotspan in v\n"
+             "@type n2: Int\n"
+             "@param n3: Number of tesselation points per knotspan in w\n"
+             "@type n3: Int\n"
+             "@rtype: Tuple with (list of nodes, list of elements)");
 PyObject* Volume_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
@@ -1001,11 +1022,12 @@ PyObject* Volume_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(volume_translate__doc__,"Translate a volume along a given vector\n"
-                                     "@param vector: The vector to translate along\n"
-                                     "@type vector: Point, list of floats or tuple of floats\n"
-                                     "@return: The volume\n"
-                                     "@rtype: Volume");
+PyDoc_STRVAR(volume_translate__doc__,
+             "Translate a volume along a given vector\n"
+             "@param vector: The vector to translate along\n"
+             "@type vector: Point, list of floats or tuple of floats\n"
+             "@return: The volume\n"
+             "@rtype: Volume");
 PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"vector", NULL };

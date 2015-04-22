@@ -107,12 +107,13 @@ void Surface_Dealloc(Surface* self)
   self->ob_type->tp_free((PyObject*)self);
 }
 
-PyDoc_STRVAR(surface_clone__doc__,"Clone a surface\n"
-                                  "@param coefs: Coefficients for new surface\n"
-                                  "@type coefs: List of (list of float)\n"
-                                  "@param ncomp: Number of components in coefficients\n"
-                                  "@type ncomp: Integer\n"
-                                  "@return: New (copy of) surface\n");
+PyDoc_STRVAR(surface_clone__doc__,
+             "Clone a surface\n"
+             "@param coefs: Coefficients for new surface\n"
+             "@type coefs: List of (list of float)\n"
+             "@param ncomp: Number of components in coefficients\n"
+             "@type ncomp: Integer\n"
+             "@return: New (copy of) surface\n");
 PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"coefs", "ncomp", NULL};
@@ -151,9 +152,10 @@ PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)res;
 }
 
-PyDoc_STRVAR(surface_append__doc__,"Append another surface to this surface\n"
-                                  "@return: The surface\n"
-                                  "@rtype: Surface\n");
+PyDoc_STRVAR(surface_append__doc__,
+             "Append another surface to this surface\n"
+             "@return: The surface\n"
+             "@rtype: Surface\n");
 PyObject* Surface_Append(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"other", "dir", NULL };
@@ -189,13 +191,14 @@ PyObject* Surface_Str(Surface* self)
   return PyString_FromString(str.str().c_str());
 }
 
-PyDoc_STRVAR(surface_evaluate__doc__,"Evaluate surface at given parameter values\n"
-                                     "@param value_u: The u parameter value\n"
-                                     "@type value_u: float\n"
-                                     "@param value_v: The v parameter value\n"
-                                     "@type value_v: float\n"
-                                     "@return: The value of the surface at the given parameters\n"
-                                     "@rtype: Point");
+PyDoc_STRVAR(surface_evaluate__doc__,
+             "Evaluate surface at given parameter values\n"
+             "@param value_u: The u parameter value\n"
+             "@type value_u: float\n"
+             "@param value_v: The v parameter value\n"
+             "@type value_v: float\n"
+             "@return: The value of the surface at the given parameters\n"
+             "@rtype: Point");
 PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value_u", "value_v", NULL };
@@ -212,13 +215,14 @@ PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(surface_evaluategrid__doc__,"Evaluate surface on a tensor-product grid\n"
-                                         "@param param_u: The u parameters\n"
-                                         "@type param_u: List of float\n"
-                                         "@param param_v: The v parameters\n"
-                                         "@type param_v: List of float\n"
-                                         "@return: The values of the surface at the given parameters\n"
-                                         "@rtype: List of Points (floats for scalars)");
+PyDoc_STRVAR(surface_evaluategrid__doc__,
+             "Evaluate surface on a tensor-product grid\n"
+             "@param param_u: The u parameters\n"
+             "@type param_u: List of float\n"
+             "@param param_v: The v parameters\n"
+             "@type param_v: List of float\n"
+             "@return: The values of the surface at the given parameters\n"
+             "@rtype: List of Points (floats for scalars)");
 PyObject* Surface_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"param_u", "param_v", NULL };
@@ -252,13 +256,14 @@ PyObject* Surface_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(surface_evaluate_normal__doc__,"Evaluate surface normal at given parameter values\n"
-                                            "@param value_u: The u parameter value\n"
-                                            "@type value_u: float\n"
-                                            "@param value_v: The v parameter value\n"
-                                            "@type value_v: float\n"
-                                            "@return: The value of the surface normal at the given parameters\n"
-                                            "@rtype: Point");
+PyDoc_STRVAR(surface_evaluate_normal__doc__,
+             "Evaluate surface normal at given parameter values\n"
+             "@param value_u: The u parameter value\n"
+             "@type value_u: float\n"
+             "@param value_v: The v parameter value\n"
+             "@type value_v: float\n"
+             "@return: The value of the surface normal at the given parameters\n"
+             "@rtype: Point");
 PyObject* Surface_EvaluateNormal(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value_u", "value_v", NULL };
@@ -275,17 +280,18 @@ PyObject* Surface_EvaluateNormal(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(surface_evaluate_tangent__doc__,"Evaluate the two tangent vectors of the surface at given parameter values\n"
-                                             "@param value_u: The u parameter value\n"
-                                             "@type value_u: float\n"
-                                             "@param value_v: The v parameter value\n"
-                                             "@type value_v: float\n"
-                                             "@param from_right_u: Evaluate u in the limit from positive direction (Optional) \n"
-                                             "@type from_right_u: bool\n"
-                                             "@param from_right_v: Evaluate v in the limit from positive direction (Optional) \n"
-                                             "@type from_right_v: bool\n"
-                                             "@return: The value of the two tangents at the given parameters\n"
-                                             "@rtype: Tuple of two Point");
+PyDoc_STRVAR(surface_evaluate_tangent__doc__,
+             "Evaluate the two tangent vectors of the surface at given parameter values\n"
+             "@param value_u: The u parameter value\n"
+             "@type value_u: float\n"
+             "@param value_v: The v parameter value\n"
+             "@type value_v: float\n"
+             "@param from_right_u: Evaluate u in the limit from positive direction (Optional)\n"
+             "@type from_right_u: bool\n"
+             "@param from_right_v: Evaluate v in the limit from positive direction (Optional)\n"
+             "@type from_right_v: bool\n"
+             "@return: The value of the two tangents at the given parameters\n"
+             "@rtype: Tuple of two Point");
 PyObject* Surface_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value_u", "value_v", "from_right_u", "from_right_v", NULL };
@@ -318,11 +324,12 @@ PyObject* Surface_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds
   return result;
 }
 
-PyDoc_STRVAR(surface_flip_parametrization__doc__,"Flip surface parametrization\n"
-                                                 "@param direction: The parametric direction to flip (0=u, 1=v)\n"
-                                                 "@type direction: int\n"
-                                                 "@return: The surface\n"
-                                                 "@rtype: Surface");
+PyDoc_STRVAR(surface_flip_parametrization__doc__,
+             "Flip surface parametrization\n"
+             "@param direction: The parametric direction to flip (0=u, 1=v)\n"
+             "@type direction: int\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"direction", NULL };
@@ -349,9 +356,10 @@ PyObject* Surface_FlipParametrization(PyObject* self, PyObject* args, PyObject* 
   return self;
 }
 
-PyDoc_STRVAR(surface_force_rational__doc__,"Enforce a rational representation of the spline surface\n"
-                                           "@return: The surface\n"
-                                           "@rtype: Surface");
+PyDoc_STRVAR(surface_force_rational__doc__,
+             "Enforce a rational representation of the spline surface\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -371,13 +379,14 @@ PyObject* Surface_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(surface_lower_order__doc__,"Lower the order of a spline surface (need full continuity)\n"
-                                        "@param lower_u: Lower of order in u\n"
-                                        "@type lower_u: int (>= 0)\n"
-                                        "@param lower_v: Lower of order in v\n"
-                                        "@type lower_v: int (>= 0)\n"
-                                        "@returns: The surface\n"
-                                        "@rtype: Surface");
+PyDoc_STRVAR(surface_lower_order__doc__,
+             "Lower the order of a spline surface (need full continuity)\n"
+             "@param lower_u: Lower of order in u\n"
+             "@type lower_u: int (>= 0)\n"
+             "@param lower_v: Lower of order in v\n"
+             "@type lower_v: int (>= 0)\n"
+             "@returns: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"lower_u", "lower_v", NULL };
@@ -434,13 +443,14 @@ PyObject* Surface_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(surface_raise_order__doc__,"Raise order of a spline surface\n"
-                                        "@param raise_u: Raise of order in u\n"
-                                        "@type raise_u: int (>= 0)\n"
-                                        "@param raise_v: Raise of order in v\n"
-                                        "@type raise_v: int (>= 0)\n"
-                                        "@returns: The surface\n"
-                                        "@rtype: Surface");
+PyDoc_STRVAR(surface_raise_order__doc__,
+             "Raise order of a spline surface\n"
+             "@param raise_u: Raise of order in u\n"
+             "@type raise_u: int (>= 0)\n"
+             "@param raise_v: Raise of order in v\n"
+             "@type raise_v: int (>= 0)\n"
+             "@returns: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"raise_u", "raise_v", NULL };
@@ -497,9 +507,10 @@ PyObject* Surface_GetConstParCurve(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)pyCurve;
 }
 
-PyDoc_STRVAR(surface_get_edges__doc__,"Return the four edge curves in (parametric) order: bottom, right, top, left\n"
-                                      "@return: The four edges\n"
-                                      "@rtype: List of Curve");
+PyDoc_STRVAR(surface_get_edges__doc__,
+             "Return the four edge curves in (parametric) order: bottom, right, top, left\n"
+             "@return: The four edges\n"
+             "@rtype: List of Curve");
 PyObject* Surface_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -531,11 +542,12 @@ PyObject* Surface_GetEdges(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 
-PyDoc_STRVAR(surface_get_knots__doc__,"Return knots for a spline surface\n"
-                                      "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
-                                      "@type with_multiplicities: Boolean\n"
-                                      "@return: List with the knot values\n"
-                                      "@rtype: Tuple with List of float");
+PyDoc_STRVAR(surface_get_knots__doc__,
+             "Return knots for a spline surface\n"
+             "@param with_multiplicities: (optional) Set to true to obtain the knot vectors with multiplicities\n"
+             "@type with_multiplicities: Boolean\n"
+             "@return: List with the knot values\n"
+             "@rtype: Tuple with List of float");
 PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"with_multiplicities", NULL };
@@ -573,9 +585,10 @@ PyObject* Surface_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(surface_get_greville__doc__,"Return Greville points for a spline surface\n"
-                                         "@return: List with the parameter values\n"
-                                         "@rtype: Tuple with List of float");
+PyDoc_STRVAR(surface_get_greville__doc__,
+             "Return Greville points for a spline surface\n"
+             "@return: List with the parameter values\n"
+             "@rtype: Tuple with List of float");
 PyObject* Surface_GetGreville(PyObject* self)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -600,9 +613,10 @@ PyObject* Surface_GetGreville(PyObject* self)
   return result;
 }
 
-PyDoc_STRVAR(surface_get_order__doc__,"Return spline surface order (polynomial degree + 1) in all parametric directions\n"
-                                      "@return: B-Spline order\n"
-                                      "@rtype: List of two integers");
+PyDoc_STRVAR(surface_get_order__doc__,
+             "Return spline surface order (polynomial degree + 1) in all parametric directions\n"
+             "@return: B-Spline order\n"
+             "@rtype: List of two integers");
 PyObject* Surface_GetOrder(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -628,13 +642,14 @@ PyObject* Surface_GetOrder(PyObject* self, PyObject* args)
   return result;
 }
 
-PyDoc_STRVAR(surface_get_sub_surf__doc__,"Get a Spline Surface which represent a part of 'this' Surface\n"
-                                         "@param from_par: The parametric lower left corner of the sub surface\n"
-                                         "@type  from_par: Point, list of floats or tuple of floats\n"
-                                         "@param to_par:   The parametric upper right corner of the sub surface\n"
-                                         "@type  to_par:   Point, list of floats or tuple of floats\n"
-                                         "@return: A parametric rectangular subregion of this Surface represented as a Spline Surface\n"
-                                         "@rtype: Surface");
+PyDoc_STRVAR(surface_get_sub_surf__doc__,
+             "Get a Spline Surface which represent a part of 'this' Surface\n"
+             "@param from_par: The parametric lower left corner of the sub surface\n"
+             "@type  from_par: Point, list of floats or tuple of floats\n"
+             "@param to_par:   The parametric upper right corner of the sub surface\n"
+             "@type  to_par:   Point, list of floats or tuple of floats\n"
+             "@return: A parametric rectangular subregion of this Surface represented as a Spline Surface\n"
+             "@rtype: Surface");
 PyObject* Surface_GetSubSurf(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -667,13 +682,14 @@ PyObject* Surface_GetSubSurf(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) result;
 }
 
-PyDoc_STRVAR(surface_insert_knot__doc__,"Insert a knot in a spline surface\n"
-                                        "@param direction: Direction to insert knot in\n"
-                                        "@type direction: int (0 or 1)\n"
-                                        "@param knot: The knot to insert\n"
-                                        "@type knot: float\n"
-                                        "@return: The surface\n"
-                                        "@rtype: Surface");
+PyDoc_STRVAR(surface_insert_knot__doc__,
+             "Insert a knot in a spline surface\n"
+             "@param direction: Direction to insert knot in\n"
+             "@type direction: int (0 or 1)\n"
+             "@param knot: The knot to insert\n"
+             "@type knot: float\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"direction", "knot", NULL };
@@ -700,11 +716,12 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(surface_interpolate__doc__,"Interpolate a field onto the surface' basis\n"
-                                        "@param coefs: The values to interpolate (sample in the Greville points)\n"
-                                        "@type coefs: List of Float"
-                                        "@return: New basis coefficients\n"
-                                        "@rtype: List of float");
+PyDoc_STRVAR(surface_interpolate__doc__,
+             "Interpolate a field onto the surface' basis\n"
+             "@param coefs: The values to interpolate (sample in the Greville points)\n"
+             "@type coefs: List of Float"
+             "@return: New basis coefficients\n"
+             "@rtype: List of float");
 PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"coefs", NULL };
@@ -764,12 +781,13 @@ PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(surface_intersect__doc__,"Check if this surface intersects another surface or surface.\n"
-                                      "Set tolerance 'gap' for intersection tolerance \n"
-                                      "@param obj: The object to test against\n"
-                                      "@type obj: Curve or Surface\n"
-                                      "@return: True if the surface intersects obj\n"
-                                      "@rtype: Bool");
+PyDoc_STRVAR(surface_intersect__doc__,
+             "Check if this surface intersects another surface or surface.\n"
+             "Set tolerance 'gap' for intersection tolerance \n"
+             "@param obj: The object to test against\n"
+             "@type obj: Curve or Surface\n"
+             "@return: True if the surface intersects obj\n"
+             "@rtype: Bool");
 PyObject* Surface_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"obj", NULL };
@@ -882,11 +900,12 @@ PyObject* Surface_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
   return NULL;
 }
 
-PyDoc_STRVAR(surface_project__doc__,"Project the surface onto an axis or plane parallel to the cartesian coordinate system\n"
-                                    "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a combination of these)\n"
-                                    "@type axis: string\n"
-                                    "@return: The surface\n"
-                                    "@rtype: Surface");
+PyDoc_STRVAR(surface_project__doc__,
+             "Project the surface onto an axis or plane parallel to the cartesian coordinate system\n"
+             "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a combination of these)\n"
+             "@type axis: string\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_Project(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", NULL };
@@ -935,17 +954,18 @@ PyObject* Surface_Project(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(surface_reparametrize__doc__,"Re-parametrize a surface\n"
-                                          "@param umin: The minimum u value\n"
-                                          "@type umin: float\n"
-                                          "@param umax: The maximum u value\n"
-                                          "@type umax: float\n"
-                                          "@param vmin: The minimum v value\n"
-                                          "@type vmin: float\n"
-                                          "@param vmax: The maximum v value\n"
-                                          "@type vmax: float\n"
-                                          "@return: The surface\n"
-                                          "@rtype: Surface");
+PyDoc_STRVAR(surface_reparametrize__doc__,
+             "Re-parametrize a surface\n"
+             "@param umin: The minimum u value\n"
+             "@type umin: float\n"
+             "@param umax: The maximum u value\n"
+             "@type umax: float\n"
+             "@param vmin: The minimum v value\n"
+             "@type vmin: float\n"
+             "@param vmax: The maximum v value\n"
+             "@type vmax: float\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"umin", "umax", "vmin", "vmax", NULL };
@@ -966,13 +986,14 @@ PyObject* Surface_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 
-PyDoc_STRVAR(surface_rotate__doc__,"Rotate a surface around an axis\n"
-                                   "@param axis: The axis to rotate around\n"
-                                   "@type axis: Point, list of floats or tuple of floats\n"
-                                   "@param angle: Angle to rotate surface with in radians\n"
-                                   "@type angle: float\n"
-                                   "@return: The surface\n"
-                                   "@rtype: Surface");
+PyDoc_STRVAR(surface_rotate__doc__,
+             "Rotate a surface around an axis\n"
+             "@param axis: The axis to rotate around\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param angle: Angle to rotate surface with in radians\n"
+             "@type angle: float\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", "angle", NULL };
@@ -1028,9 +1049,10 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(surface_swap_parametrization__doc__,"Swaps the two surface parameter directions\n"
-                                                 "@return: The surface\n"
-                                                 "@rtype: Surface");
+PyDoc_STRVAR(surface_swap_parametrization__doc__,
+             "Swaps the two surface parameter directions\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_SwapParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -1050,11 +1072,12 @@ PyObject* Surface_SwapParametrization(PyObject* self, PyObject* args, PyObject* 
   return self;
 }
 
-PyDoc_STRVAR(surface_translate__doc__,"Translate a surface along a given vector\n"
-                                      "@param vector: The vector to translate along\n"
-                                      "@type vector: Point, list of floats or tuple of floats\n"
-                                      "@return: The surface\n"
-                                      "@rtype: Surface");
+PyDoc_STRVAR(surface_translate__doc__,
+             "Translate a surface along a given vector\n"
+             "@param vector: The vector to translate along\n"
+             "@type vector: Point, list of floats or tuple of floats\n"
+             "@return: The surface\n"
+             "@rtype: Surface");
 PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"vector", NULL };
@@ -1148,12 +1171,13 @@ static std::array<std::vector<double>,2>
   return gpar;
 }
 
-PyDoc_STRVAR(surface_get_tesselationparams__doc__,"Obtain tesselation parameters for a surface\n"
-                                                  "@param n1: Number of tesselation points per knotspan in u\n"
-                                                  "@type n1: Int\n"
-                                                  "@param n2: Number of tesselation points per knotspan in v\n"
-                                                  "@type n2: Int\n"
-                                                  "@rtype: Tuple with (list of float, list of float)");
+PyDoc_STRVAR(surface_get_tesselationparams__doc__,
+             "Obtain tesselation parameters for a surface\n"
+             "@param n1: Number of tesselation points per knotspan in u\n"
+             "@type n1: Int\n"
+             "@param n2: Number of tesselation points per knotspan in v\n"
+             "@type n2: Int\n"
+             "@rtype: Tuple with (list of float, list of float)");
 PyObject* Surface_GetTesselationParams(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -1184,12 +1208,13 @@ PyObject* Surface_GetTesselationParams(PyObject* self, PyObject* args, PyObject*
   return result;
 }
 
-PyDoc_STRVAR(surface_tesselate__doc__,"Tesselate a surface\n"
-                                      "@param n1: Number of tesselation points per knotspan in u\n"
-                                      "@type n1: Int\n"
-                                      "@param n2: Number of tesselation points per knotspan in v\n"
-                                      "@type n2: Int\n"
-                                      "@rtype: Tuple with (list of nodes, list of elements)");
+PyDoc_STRVAR(surface_tesselate__doc__,
+             "Tesselate a surface\n"
+             "@param n1: Number of tesselation points per knotspan in u\n"
+             "@type n1: Int\n"
+             "@param n2: Number of tesselation points per knotspan in v\n"
+             "@type n2: Int\n"
+             "@rtype: Tuple with (list of nodes, list of elements)");
 PyObject* Surface_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
@@ -1377,7 +1402,8 @@ PyObject* Surface_GetComponent(PyObject* self, Py_ssize_t i)
 PyNumberMethods Surface_operators = {0};
 PySequenceMethods Surface_seq_operators = {0};
 
-PyDoc_STRVAR(surface__doc__, "A parametric description of a surface");
+PyDoc_STRVAR(surface__doc__,
+             "A parametric description of a surface");
 void init_Surface_Type()
 {
   Surface_seq_operators.sq_item = Surface_GetComponent;

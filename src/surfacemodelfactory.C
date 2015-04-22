@@ -14,11 +14,12 @@ namespace GeoModeller {
 extern "C" {
 PyObject* SurfaceModelFactory_module;
 
-PyDoc_STRVAR(generate_regularize_surface__doc__, "Regularize a surface\n"
-                                                 "@param surface: Surface to regularize\n"
-                                                 "@type surface: Surface\n"
-                                                 "@return: The resulting multi-surface model\n"
-                                                 "@rtype: SurfaceModel");
+PyDoc_STRVAR(generate_regularize_surface__doc__,
+             "Regularize a surface\n"
+             "@param surface: Surface to regularize\n"
+             "@type surface: Surface\n"
+             "@return: The resulting multi-surface model\n"
+             "@rtype: SurfaceModel");
 PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", NULL };
@@ -62,7 +63,8 @@ PyMethodDef SurfaceModelFactory_methods[] = {
      {NULL,                       0,                                       0,                          NULL}
   };
 
-PyDoc_STRVAR(surface_model_factory__doc__,"A module with methods for generating surface models");
+PyDoc_STRVAR(surface_model_factory__doc__,
+             "A module with methods for generating surface models");
 
 PyMODINIT_FUNC
 init_SurfaceModelFactory_Module()

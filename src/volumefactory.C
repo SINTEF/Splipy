@@ -24,21 +24,22 @@ namespace GeoModeller {
 extern "C" {
 PyObject* VolumeFactory_module;
 
-PyDoc_STRVAR(generate_box__doc__, "Generate a box\n"
-                                  "@param corner: A corner of the box\n"
-                                  "@type corner: Point, list of floats or tuple of floats\n"
-                                  "@param u_axis: First axis of the box\n"
-                                  "@type u_axis: Point, list of floats or tuple of floats\n"
-                                  "@param v_axis: Second axis of the box\n"
-                                  "@type v_axis: Point, list of floats or tuple of floats\n"
-                                  "@param u_length: Length of the box along the first axis\n"
-                                  "@type u_length: float\n"
-                                  "@param v_length: Length of the box along the second axis\n"
-                                  "@type v_length: float\n"
-                                  "@param w_length: Length of the box along the third axis\n"
-                                  "@type w_length: float\n"
-                                  "@return: The box\n"
-                                  "@rtype: Volume");
+PyDoc_STRVAR(generate_box__doc__,
+             "Generate a box\n"
+             "@param corner: A corner of the box\n"
+             "@type corner: Point, list of floats or tuple of floats\n"
+             "@param u_axis: First axis of the box\n"
+             "@type u_axis: Point, list of floats or tuple of floats\n"
+             "@param v_axis: Second axis of the box\n"
+             "@type v_axis: Point, list of floats or tuple of floats\n"
+             "@param u_length: Length of the box along the first axis\n"
+             "@type u_length: float\n"
+             "@param v_length: Length of the box along the second axis\n"
+             "@type v_length: float\n"
+             "@param w_length: Length of the box along the third axis\n"
+             "@type w_length: float\n"
+             "@return: The box\n"
+             "@rtype: Volume");
 PyObject* Generate_Box(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"corner", "u_axis", "v_axis", "u_length", "v_length", "w_length", NULL };
@@ -69,19 +70,20 @@ PyObject* Generate_Box(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_cone__doc__, "Generate a cone\n"
-                                   "@param apex: The apex of the cone\n"
-                                   "@type apex: Point, list of floats or tuple of floats\n"
-                                   "@param axis: The axis of the cone\n"
-                                   "@type axis: Point, list of floats or tuple of floats\n"
-                                   "@param angle: The angle of the cone in radians\n"
-                                   "@type angle: float\n"
-                                   "@param height: (optional) The height of the cone\n"
-                                   "@type height: float\n"
-                                   "@param radius: (optional) The radius of the cone\n"
-                                   "@type radius: float\n"
-                                   "@return: The cone\n"
-                                   "@rtype: Volume");
+PyDoc_STRVAR(generate_cone__doc__,
+             "Generate a cone\n"
+             "@param apex: The apex of the cone\n"
+             "@type apex: Point, list of floats or tuple of floats\n"
+             "@param axis: The axis of the cone\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param angle: The angle of the cone in radians\n"
+             "@type angle: float\n"
+             "@param height: (optional) The height of the cone\n"
+             "@type height: float\n"
+             "@param radius: (optional) The radius of the cone\n"
+             "@type radius: float\n"
+             "@return: The cone\n"
+             "@rtype: Volume");
 PyObject* Generate_Cone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"apex", "axis", "angle", "height", "radius", NULL };
@@ -109,13 +111,14 @@ PyObject* Generate_Cone(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_contract_surf_to__doc__,"Generate a volume by contracting a surface to a point\n"
-                                              "@param surface: The surface\n"
-                                              "@type surface: Surface\n"
-                                              "@param point: The point to contract to\n"
-                                              "@type point: Point, list of floats or tuple of floats\n"
-                                              "@return: The resulting geometry\n"
-                                              "@rtype: Volume");
+PyDoc_STRVAR(generate_contract_surf_to__doc__,
+             "Generate a volume by contracting a surface to a point\n"
+             "@param surface: The surface\n"
+             "@type surface: Surface\n"
+             "@param point: The point to contract to\n"
+             "@type point: Point, list of floats or tuple of floats\n"
+             "@return: The resulting geometry\n"
+             "@rtype: Volume");
 PyObject* Generate_ContractSurfaceTo(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "point", NULL };
@@ -166,17 +169,18 @@ PyObject* Generate_ContractSurfaceTo(PyObject* self, PyObject* args, PyObject* k
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_cylinder__doc__, "Generate a cylinder\n"
-                                       "@param center: The center of the cylinder\n"
-                                       "@type center: Point, list of floats or tuple of floats\n"
-                                       "@param boundarypoint: A point on the boundary of the cylinder\n"
-                                       "@type boundarypoint: Point, list of floats or tuple of floats\n"
-                                       "@param normal: The normal of the cylinder\n"
-                                       "@type center: Point, list of floats or tuple of floats\n"
-                                       "@param height: (optional) The height of the cylinder\n"
-                                       "@type height: float\n"
-                                       "@return: The cylinder\n"
-                                       "@rtype: Volume");
+PyDoc_STRVAR(generate_cylinder__doc__,
+             "Generate a cylinder\n"
+             "@param center: The center of the cylinder\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param boundarypoint: A point on the boundary of the cylinder\n"
+             "@type boundarypoint: Point, list of floats or tuple of floats\n"
+             "@param normal: The normal of the cylinder\n"
+             "@type normal: Point, list of floats or tuple of floats\n"
+             "@param height: (optional) The height of the cylinder\n"
+             "@type height: float\n"
+             "@return: The cylinder\n"
+             "@rtype: Volume");
 PyObject* Generate_Cylinder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "boundarypoint", "normal", "height", NULL };
@@ -209,15 +213,16 @@ PyObject* Generate_Cylinder(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_extrude_surface__doc__, "Generate a volume by extruding along a given direction\n"
-                                              "@param surface: The surface to extrude\n"
-                                              "@type surface: Surface\n"
-                                              "@param direction: The direction to extrude\n"
-                                              "@type direction: Point, list of floats or tuple of floats\n"
-                                              "@param amount: (optional) Scaling factor of direction\n"
-                                              "@type amount: float\n"
-                                              "@return: The extruded volume\n"
-                                              "@rtype: Volume");
+PyDoc_STRVAR(generate_extrude_surface__doc__,
+             "Generate a volume by extruding along a given direction\n"
+             "@param surface: The surface to extrude\n"
+             "@type surface: Surface\n"
+             "@param direction: The direction to extrude\n"
+             "@type direction: Point, list of floats or tuple of floats\n"
+             "@param amount: (optional) Scaling factor of direction\n"
+             "@type amount: float\n"
+             "@return: The extruded volume\n"
+             "@rtype: Volume");
 PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "direction", "amount", NULL };
@@ -259,15 +264,16 @@ PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds
 }
 
 
-PyDoc_STRVAR(generate_loft_surfaces__doc__, "Generate a volume by lofting surfaces\n"
-                                            "@param surfaces: The surfaces to loft\n"
-                                            "@type surfaces: List of Surface\n"
-                                            "@param params: parametrization in lofting direction\n"
-                                            "@type params: List of float\n"
-                                            "@param order: Order in lofting direction\n"
-                                            "@type order: Integer\n"
-                                            "@return: The lofted surfaces\n"
-                                            "@rtype: Volume");
+PyDoc_STRVAR(generate_loft_surfaces__doc__,
+             "Generate a volume by lofting surfaces\n"
+             "@param surfaces: The surfaces to loft\n"
+             "@type surfaces: List of Surface\n"
+             "@param params: parametrization in lofting direction\n"
+             "@type params: List of float\n"
+             "@param order: Order in lofting direction\n"
+             "@type order: Integer\n"
+             "@return: The lofted surfaces\n"
+             "@rtype: Volume");
 PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surfaces", "params", "order", NULL };
@@ -357,15 +363,16 @@ PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_linear_surface_sweep__doc__, "Generate a volume by sweeping a surface along a curve\n"
-                                                   "@param surface: The surface to sweep along\n"
-                                                   "@type surface: Surface\n"
-                                                   "@param curve: The curve to sweep\n"
-                                                   "@type curve: Curve\n"
-                                                   "@param point: The starting point of the sweep\n"
-                                                   "@type point: Point, list of floats or tuple of floats\n"
-                                                   "@return: The swept volume\n"
-                                                   "@rtype: Volume");
+PyDoc_STRVAR(generate_linear_surface_sweep__doc__,
+             "Generate a volume by sweeping a surface along a curve\n"
+             "@param surface: The surface to sweep along\n"
+             "@type surface: Surface\n"
+             "@param curve: The curve to sweep\n"
+             "@type curve: Curve\n"
+             "@param point: The starting point of the sweep\n"
+             "@type point: Point, list of floats or tuple of floats\n"
+             "@return: The swept volume\n"
+             "@rtype: Volume");
 PyObject* Generate_LinearSurfaceSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "curve", "point", NULL };
@@ -399,11 +406,12 @@ PyObject* Generate_LinearSurfaceSweep(PyObject* self, PyObject* args, PyObject* 
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_volnonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline volume\n"
-                                            "@param original: The initial (rational) volume\n"
-                                            "@type original: Volume\n"
-                                            "@return: Non-rational B-spline representation\n"
-                                            "@rtype: Volume");
+PyDoc_STRVAR(generate_volnonrational__doc__,
+             "Generate a non-rational representation (approximation) of a rational spline volume\n"
+             "@param original: The initial (rational) volume\n"
+             "@type original: Volume\n"
+             "@return: Non-rational B-spline representation\n"
+             "@rtype: Volume");
 PyObject* Generate_VolNonRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", NULL };
@@ -472,13 +480,14 @@ PyObject* Generate_VolNonRational(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_resample_volume__doc__,"Generate a volume by sampling another with a given w-parametrization\n"
-                                             "@param volume: The volume to sample\n"
-                                             "@type volume: Volume\n"
-                                             "@param curve: Curve to sample in w\n"
-                                             "@type curve: Curve\n"
-                                             "@return: The resampled volume\n"
-                                              "@rtype: Volume");
+PyDoc_STRVAR(generate_resample_volume__doc__,
+             "Generate a volume by sampling another with a given w-parametrization\n"
+             "@param volume: The volume to sample\n"
+             "@type volume: Volume\n"
+             "@param curve: Curve to sample in w\n"
+             "@type curve: Curve\n"
+             "@return: The resampled volume\n"
+             "@rtype: Volume");
 PyObject* Generate_ResampleVolume(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"volume", "curve", NULL };
@@ -543,17 +552,18 @@ PyObject* Generate_ResampleVolume(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_rotational_surface_sweep__doc__, "Generate a volume by rotating a surface\n"
-                                                       "@param surface: The surface to rotate\n"
-                                                       "@type surface: Surface\n"
-                                                       "@param position: The starting position of the surface\n"
-                                                       "@type position: Point, list of floats or tuple of floats\n"
-                                                       "@param axis: The axis to rotate the around\n"
-                                                       "@type axis: Point, list of floats or tuple of floats\n"
-                                                       "@param angle: (optional) The angle to rotate with in radians. Defaults to a full rotation\n"
-                                                       "@type angle: float\n"
-                                                       "@return: The rotated surface\n"
-                                                       "@rtype: Volume");
+PyDoc_STRVAR(generate_rotational_surface_sweep__doc__,
+             "Generate a volume by rotating a surface\n"
+             "@param surface: The surface to rotate\n"
+             "@type surface: Surface\n"
+             "@param position: The starting position of the surface\n"
+             "@type position: Point, list of floats or tuple of floats\n"
+             "@param axis: The axis to rotate the around\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param angle: (optional) The angle to rotate with in radians. Defaults to a full rotation\n"
+             "@type angle: float\n"
+             "@return: The rotated surface\n"
+             "@rtype: Volume");
 PyObject* Generate_RotationalSurfaceSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "position", "axis", "angle", NULL };
@@ -584,23 +594,24 @@ PyObject* Generate_RotationalSurfaceSweep(PyObject* self, PyObject* args, PyObje
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_parallelepiped__doc__, "Generate a parallelepiped\n"
-                                             "@param corner: A corner of the parallelepiped\n"
-                                             "@type corner: Point, list of floats or tuple of floats\n"
-                                             "@param u_axis: First axis of the parallelepiped\n"
-                                             "@type u_axis: Point, list of floats or tuple of floats\n"
-                                             "@param v_axis: Second axis of the parallelepiped\n"
-                                             "@type v_axis: Point, list of floats or tuple of floats\n"
-                                             "@param v_axis: Third axis of the parallelepiped\n"
-                                             "@type v_axis: Point, list of floats or tuple of floats\n"
-                                             "@param u_length: Length of the box along the first axis\n"
-                                             "@type u_length: float\n"
-                                             "@param v_length: Length of the box along the second axis\n"
-                                             "@type v_length: float\n"
-                                             "@param w_length: Length of the box along the third axis\n"
-                                             "@type w_length: float\n"
-                                             "@return: The parallellepiped\n"
-                                             "@rtype: Volume");
+PyDoc_STRVAR(generate_parallelepiped__doc__,
+             "Generate a parallelepiped\n"
+             "@param corner: A corner of the parallelepiped\n"
+             "@type corner: Point, list of floats or tuple of floats\n"
+             "@param u_axis: First axis of the parallelepiped\n"
+             "@type u_axis: Point, list of floats or tuple of floats\n"
+             "@param v_axis: Second axis of the parallelepiped\n"
+             "@type v_axis: Point, list of floats or tuple of floats\n"
+             "@param w_axis: Third axis of the parallelepiped\n"
+             "@type w_axis: Point, list of floats or tuple of floats\n"
+             "@param u_length: Length of the box along the first axis\n"
+             "@type u_length: float\n"
+             "@param v_length: Length of the box along the second axis\n"
+             "@type v_length: float\n"
+             "@param w_length: Length of the box along the third axis\n"
+             "@type w_length: float\n"
+             "@return: The parallellepiped\n"
+             "@rtype: Volume");
 PyObject* Generate_Parallelepiped(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"corner", "u_axis", "v_axis", "w_axis", "u_length", "v_length", "w_length", NULL };
@@ -632,13 +643,14 @@ PyObject* Generate_Parallelepiped(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_sphere__doc__, "Generate a sphere\n"
-                                     "@param center: Center of the sphere\n"
-                                     "@type center: Point, list of floats or tuple of floats\n"
-                                     "@param radius: Radius of the sphere\n"
-                                     "@type radius: float\n"
-                                     "@return: The sphere\n"
-                                     "@rtype: Volume");
+PyDoc_STRVAR(generate_sphere__doc__,
+             "Generate a sphere\n"
+             "@param center: Center of the sphere\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param radius: Radius of the sphere\n"
+             "@type radius: float\n"
+             "@return: The sphere\n"
+             "@rtype: Volume");
 PyObject* Generate_Sphere(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "radius", NULL };
@@ -664,17 +676,18 @@ PyObject* Generate_Sphere(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_torus__doc__, "Generate a torus\n"
-                                    "@param center: Center of the torus\n"
-                                    "@type center: Point, list of floats or tuple of floats\n"
-                                    "@param axis: Center axis of the torus\n"
-                                    "@type axis: Point, list of floats or tuple of floats\n"
-                                    "@param major_radius: Major radius of the torus\n"
-                                    "@type major_radius: float\n"
-                                    "@param minor_radius: Minor radius of the torus\n"
-                                    "@type minor_radius: float\n"
-                                    "@return: The torus\n"
-                                    "@rtype: Volume");
+PyDoc_STRVAR(generate_torus__doc__,
+             "Generate a torus\n"
+             "@param center: Center of the torus\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param axis: Center axis of the torus\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param major_radius: Major radius of the torus\n"
+             "@type major_radius: float\n"
+             "@param minor_radius: Minor radius of the torus\n"
+             "@type minor_radius: float\n"
+             "@return: The torus\n"
+             "@rtype: Volume");
 PyObject* Generate_Torus(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "axis", "major_radius", "minor_radius", NULL };

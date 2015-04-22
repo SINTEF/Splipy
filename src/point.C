@@ -38,8 +38,9 @@ void Point_Dealloc(Point* self)
   self->ob_type->tp_free((PyObject*)self);
 }
 
-PyDoc_STRVAR(point_normalize__doc__,"Normalize a point (vector) to have eucledian length one\n"
-                                    "@return: None");
+PyDoc_STRVAR(point_normalize__doc__,
+             "Normalize a point (vector) to have eucledian length one\n"
+             "@return: None");
 PyObject* Point_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(self);
@@ -52,9 +53,10 @@ PyObject* Point_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(point_clone__doc__,"Clone a point\n"
-                                "@return: New copy of point\n"
-                                "@rtype: Point\n");
+PyDoc_STRVAR(point_clone__doc__,
+             "Clone a point\n"
+             "@return: New copy of point\n"
+             "@rtype: Point\n");
 PyObject* Point_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   Point* res = (Point*)Point_Type.tp_alloc(&Point_Type,0);
@@ -64,12 +66,13 @@ PyObject* Point_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)res;
 }
 
-PyDoc_STRVAR(point_rotate__doc__,"Rotate a point around an axis\n"
-                                 "@param axis: The axis to rotate around\n"
-                                 "@type axis: Point, list of floats or tuple of floats\n"
-                                 "@param angle: Angle to rotate point with in radians\n"
-                                 "@type angle: float\n"
-                                 "@return: None");
+PyDoc_STRVAR(point_rotate__doc__,
+             "Rotate a point around an axis\n"
+             "@param axis: The axis to rotate around\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param angle: Angle to rotate point with in radians\n"
+             "@type angle: float\n"
+             "@return: None");
 PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", "angle", NULL };

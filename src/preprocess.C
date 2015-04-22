@@ -122,17 +122,18 @@ static PyObject* GenerateElements3D(const shared_ptr<Go::SplineVolume>& svol)
 extern "C" {
 PyObject* Preprocess_module;
 
-PyDoc_STRVAR(preprocess_natural_node_numbers__doc__,"Generate natural node numbers for a model\n"
-                                                    "@param patches: The patches to number\n"
-                                                    "@type patches: List of (Surface or Volume)\n"
-                                                    "param perX (optional): If true, model is periodic in X\n"
-                                                    "@type perX: Boolean\n"
-                                                    "param perY (optional): If true, model is periodic in Y\n"
-                                                    "@type perY: Boolean\n"
-                                                    "param perZ (optional): If true, model is periodic in Z\n"
-                                                    "@type perZ: Boolean\n"
-                                                    "@return: Node numbers\n"
-                                                    "@rtype: List of (list of integer)");
+PyDoc_STRVAR(preprocess_natural_node_numbers__doc__,
+             "Generate natural node numbers for a model\n"
+             "@param patches: The patches to number\n"
+             "@type patches: List of (Surface or Volume)\n"
+             "param perX (optional): If true, model is periodic in X\n"
+             "@type perX: Boolean\n"
+             "param perY (optional): If true, model is periodic in Y\n"
+             "@type perY: Boolean\n"
+             "param perZ (optional): If true, model is periodic in Z\n"
+             "@type perZ: Boolean\n"
+             "@return: Node numbers\n"
+             "@rtype: List of (list of integer)");
 PyObject* Preprocess_NaturalNodeNumbers(PyObject* self, PyObject* args, PyObject* kwds)
 {
 #ifndef ENABLE_GPM
@@ -269,10 +270,11 @@ static std::pair<size_t,size_t> GetSizes(int face_idx, shared_ptr<Go::SplineVolu
   return std::make_pair(sizes[face_idx/2][0], sizes[face_idx/2][1]);
 }
 
-PyDoc_STRVAR(preprocess_average_faces__doc__,"Try to make a model water tight by averaging over matching faces\n"
-                                             "@param patches: The patches to number\n"
-                                             "@type patches: List of (Surface or Volume)\n"
-                                             "@return: None\n");
+PyDoc_STRVAR(preprocess_average_faces__doc__,
+             "Try to make a model water tight by averaging over matching faces\n"
+             "@param patches: The patches to number\n"
+             "@type patches: List of (Surface or Volume)\n"
+             "@return: None\n");
 PyObject* Preprocess_AverageFaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
 #ifndef ENABLE_GPM
@@ -327,11 +329,12 @@ PyObject* Preprocess_AverageFaces(PyObject* self, PyObject* args, PyObject* kwds
   return Py_None;
 }
 
-PyDoc_STRVAR(preprocess_element_connectivities__doc__,"Generate element connectivities for a model\n"
-                                                      "@param patches: The patches to find connectivities for\n"
-                                                      "@type patches: List of (Surface or Volume)\n"
-                                                      "@return: Element connectivities based on patch-local node numbers\n"
-                                                      "@rtype: List of (list of (list of integer))");
+PyDoc_STRVAR(preprocess_element_connectivities__doc__,
+             "Generate element connectivities for a model\n"
+             "@param patches: The patches to find connectivities for\n"
+             "@type patches: List of (Surface or Volume)\n"
+             "@return: Element connectivities based on patch-local node numbers\n"
+             "@rtype: List of (list of (list of integer))");
 PyObject* Preprocess_ElementConnectivities(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"patches", NULL };
@@ -377,7 +380,8 @@ PyMethodDef Preprocess_methods[] = {
      {NULL,                           NULL,                                       0,                          NULL}
   };
 
-PyDoc_STRVAR(preprocess__doc__,"A module with methods for preprocessing models");
+PyDoc_STRVAR(preprocess__doc__,
+             "A module with methods for preprocessing models");
 
 PyMODINIT_FUNC
 init_Preprocess_Module()

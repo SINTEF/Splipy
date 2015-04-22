@@ -21,15 +21,16 @@ namespace GeoModeller {
 extern "C" {
 PyObject* CurveFactory_module;
 
-PyDoc_STRVAR(generate_circle__doc__, "Generate a circle\n"
-                                     "@param center: The center of the circle\n"
-                                     "@type center: Point, list of floats or tuple of floats\n"
-                                     "@param radius: The radius of the circle\n"
-                                     "@type radius: float\n"
-                                     "@param normal: The normal of the circle\n"
-                                     "@type normal: Point, list of floats or tuple of floats\n"
-                                     "@return: The circle\n"
-                                     "@rtype: Curve");
+PyDoc_STRVAR(generate_circle__doc__,
+             "Generate a circle\n"
+             "@param center: The center of the circle\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param radius: The radius of the circle\n"
+             "@type radius: float\n"
+             "@param normal: The normal of the circle\n"
+             "@type normal: Point, list of floats or tuple of floats\n"
+             "@return: The circle\n"
+             "@rtype: Curve");
 PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "radius", "normal", NULL };
@@ -99,17 +100,18 @@ PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_circle_segment__doc__, "Generate a circle segment\n"
-                                             "@param center: The center of the circle\n"
-                                             "@type center: Point, list of floats or tuple of floats\n"
-                                             "@param start: The starting point\n"
-                                             "@type start: Point, list of floats or tuple of floats\n"
-                                             "@param angle: The angle of the circle segment in radians\n"
-                                             "@type angle: float\n"
-                                             "@param normal: The normal of the circle\n"
-                                             "@type normal: Point, list of floats or tuple of floats\n"
-                                             "@return: The circle segment\n"
-                                             "@rtype: Curve");
+PyDoc_STRVAR(generate_circle_segment__doc__,
+             "Generate a circle segment\n"
+             "@param center: The center of the circle\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param start: The starting point\n"
+             "@type start: Point, list of floats or tuple of floats\n"
+             "@param angle: The angle of the circle segment in radians\n"
+             "@type angle: float\n"
+             "@param normal: The normal of the circle\n"
+             "@type normal: Point, list of floats or tuple of floats\n"
+             "@return: The circle segment\n"
+             "@rtype: Curve");
 PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "angle", "normal", NULL };
@@ -194,19 +196,20 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
 #endif
 }
 
-PyDoc_STRVAR(generate_ellipse__doc__, "Generate an ellipse\n"
-                                      "@param center: Center of ellipse\n"
-                                      "@type center: Point, list of floats or tuple of floats\n"
-                                      "@param semi_axis: The semi-axis of the ellipse\n"
-                                      "@type semi_axis: Point, list of floats or tuple of floats\n"
-                                      "@param radius1: The first radius of the ellipse\n"
-                                      "@type radius1: float\n"
-                                      "@param radius2: The second radius of the ellipse\n"
-                                      "@type radius2: float\n"
-                                      "@param normal: Normal of ellipse\n"
-                                      "@type normal: Point, list of floats or tuple of floats\n"
-                                      "@return: The ellipse\n"
-                                      "@rtype: Curve");
+PyDoc_STRVAR(generate_ellipse__doc__,
+             "Generate an ellipse\n"
+             "@param center: Center of ellipse\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param semi_axis: The semi-axis of the ellipse\n"
+             "@type semi_axis: Point, list of floats or tuple of floats\n"
+             "@param radius1: The first radius of the ellipse\n"
+             "@type radius1: float\n"
+             "@param radius2: The second radius of the ellipse\n"
+             "@type radius2: float\n"
+             "@param normal: Normal of ellipse\n"
+             "@type normal: Point, list of floats or tuple of floats\n"
+             "@return: The ellipse\n"
+             "@rtype: Curve");
 PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2", "normal", NULL };
@@ -243,23 +246,24 @@ PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_elliptic_segment__doc__, "Generate an elliptic segment\n"
-                                               "@param center: Center of ellipse\n"
-                                               "@type center: Point, list of floats or tuple of floats\n"
-                                               "@param semi_axis: The semi-axis of the ellipse\n"
-                                               "@type semi_axis: Point, list of floats or tuple of floats\n"
-                                               "@param radius1: The first radius of the ellipse\n"
-                                               "@type radius1: float\n"
-                                               "@param radius2: The second radius of the ellipse\n"
-                                               "@type radius2: float\n"
-                                               "@param startangle: The starting angle of the elliptic segment\n"
-                                               "@type startangle: float\n"
-                                               "@param endangle: The ending angle of the elliptic segment\n"
-                                               "@type endangle: float\n"
-                                               "@param normal: Normal of ellipse\n"
-                                               "@type normal: Point, list of floats or tuple of floats\n"
-                                               "@return: The ellipse\n"
-                                               "@rtype: Curve");
+PyDoc_STRVAR(generate_elliptic_segment__doc__,
+             "Generate an elliptic segment\n"
+             "@param center: Center of ellipse\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param semi_axis: The semi-axis of the ellipse\n"
+             "@type semi_axis: Point, list of floats or tuple of floats\n"
+             "@param radius1: The first radius of the ellipse\n"
+             "@type radius1: float\n"
+             "@param radius2: The second radius of the ellipse\n"
+             "@type radius2: float\n"
+             "@param startangle: The starting angle of the elliptic segment\n"
+             "@type startangle: float\n"
+             "@param endangle: The ending angle of the elliptic segment\n"
+             "@type endangle: float\n"
+             "@param normal: Normal of ellipse\n"
+             "@type normal: Point, list of floats or tuple of floats\n"
+             "@return: The ellipse\n"
+             "@rtype: Curve");
 PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "semi_axis", "radius1", "radius2",
@@ -313,19 +317,20 @@ PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_helix__doc__, "Generate a helix\n"
-                                    "@param center: Center of helix\n"
-                                    "@type center: Point, list of floats or tuple of floats\n"
-                                    "@param start: Starting point of helix\n"
-                                    "@type start: Point, list of floats or tuple of floats\n"
-                                    "@param axis: Center axis of helix\n"
-                                    "@type axis: Point, list of floats or tuple of floats\n"
-                                    "@param frequency: Frequency of helix\n"
-                                    "@type frequency: float\n"
-                                    "@param quadrants: Number of quadrants in helix\n"
-                                    "@type quadrants: 1 <= int <= 4\n"
-                                    "@return: The helix\n"
-                                    "@rtype: Curve");
+PyDoc_STRVAR(generate_helix__doc__,
+             "Generate a helix\n"
+             "@param center: Center of helix\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param start: Starting point of helix\n"
+             "@type start: Point, list of floats or tuple of floats\n"
+             "@param axis: Center axis of helix\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param frequency: Frequency of helix\n"
+             "@type frequency: float\n"
+             "@param quadrants: Number of quadrants in helix\n"
+             "@type quadrants: 1 <= int <= 4\n"
+             "@return: The helix\n"
+             "@rtype: Curve");
 PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "start", "axis", "frequency", "quadrants", NULL };
@@ -358,14 +363,15 @@ PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_intersect_curve__doc__,"Generate the intersection points between two curves\n"
-                                             "Set the 'gap' tolerance for more accurate results\n"
-                                             "@param curve1: the first curve\n"
-                                             "@type curve1: Curve\n"
-                                             "@param curve2: the second curve\n"
-                                             "@type curve2: Curve\n"
-                                             "@return: The intersection curves and/or points\n"
-                                             "@rtype: A tuple with a List of Curves and a List of Points");
+PyDoc_STRVAR(generate_intersect_curve__doc__,
+             "Generate the intersection points between two curves\n"
+             "Set the 'gap' tolerance for more accurate results\n"
+             "@param curve1: the first curve\n"
+             "@type curve1: Curve\n"
+             "@param curve2: the second curve\n"
+             "@type curve2: Curve\n"
+             "@return: The intersection curves and/or points\n"
+             "@rtype: A tuple with a List of Curves and a List of Points");
 PyObject* Generate_IntersectCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve1", "curve2", NULL };
@@ -467,14 +473,15 @@ PyObject* Generate_IntersectCurve(PyObject* self, PyObject* args, PyObject* kwds
   return result;
 }
 
-PyDoc_STRVAR(generate_intersect_cylinder__doc__,"Generate the intersection curve between a surface and the infinite extension of a cylinder\n"
-                                                "Set the gap tolerance for more accurate results\n"
-                                                "@param surface: a surface to intersect with\n"
-                                                "@type surface: Surface\n"
-                                                "@param cylinder: the cylinder to intersect with \n"
-                                                "@type cylinder: Cylinder\n"
-                                                "@return: The intersection curves and/or points\n"
-                                                "@rtype: A tuple with a List of Curves and a List of Points");
+PyDoc_STRVAR(generate_intersect_cylinder__doc__,
+             "Generate the intersection curve between a surface and the infinite extension of a cylinder\n"
+             "Set the gap tolerance for more accurate results\n"
+             "@param surface: a surface to intersect with\n"
+             "@type surface: Surface\n"
+             "@param cylinder: the cylinder to intersect with \n"
+             "@type cylinder: Cylinder\n"
+             "@return: The intersection curves and/or points\n"
+             "@rtype: A tuple with a List of Curves and a List of Points");
 PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "cylinder", NULL };
@@ -600,13 +607,14 @@ PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* k
   return result;
 }
 
-PyDoc_STRVAR(generate_line__doc__, "Generate an infinite line\n"
-                                   "@param p0: The starting point of the line\n"
-                                   "@type p0: Point, list of floats or tuple of floats\n"
-                                   "@param direction: The direction of the line\n"
-                                   "@type direction: Point, list of floats or tuple of floats\n"
-                                   "@return: The line\n"
-                                   "@rtype: Curve");
+PyDoc_STRVAR(generate_line__doc__,
+             "Generate an infinite line\n"
+             "@param p0: The starting point of the line\n"
+             "@type p0: Point, list of floats or tuple of floats\n"
+             "@param direction: The direction of the line\n"
+             "@type direction: Point, list of floats or tuple of floats\n"
+             "@return: The line\n"
+             "@rtype: Curve");
 PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "dir", NULL };
@@ -629,15 +637,16 @@ PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_line_segment__doc__, "Generate a line segment\n"
-                                           "@param p0: The starting point of the line\n"
-                                           "@type p0: Point, list of floats or tuple of floats\n"
-                                           "@param p1: The ending point of the line\n"
-                                           "@type p1: Point, list of floats or tuple of floats\n"
-                                           "@param relative: (optional) p1 is relative to p0\n"
-                                           "@type relative: bool\n"
-                                           "@return: The line segment\n"
-                                           "@rtype: Curve");
+PyDoc_STRVAR(generate_line_segment__doc__,
+             "Generate a line segment\n"
+             "@param p0: The starting point of the line\n"
+             "@type p0: Point, list of floats or tuple of floats\n"
+             "@param p1: The ending point of the line\n"
+             "@type p1: Point, list of floats or tuple of floats\n"
+             "@param relative: (optional) p1 is relative to p0\n"
+             "@type relative: bool\n"
+             "@return: The line segment\n"
+             "@rtype: Curve");
 PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "p1", "relative", NULL };
@@ -665,11 +674,12 @@ PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_crvnonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline curve\n"
-                                            "@param original: The initial (rational) curve\n"
-                                            "@type original: Curve\n"
-                                            "@return: Non-rational B-spline representation\n"
-                                            "@rtype: Curve");
+PyDoc_STRVAR(generate_crvnonrational__doc__,
+             "Generate a non-rational representation (approximation) of a rational spline curve\n"
+             "@param original: The initial (rational) curve\n"
+             "@type original: Curve\n"
+             "@return: Non-rational B-spline representation\n"
+             "@rtype: Curve");
 PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", NULL };
@@ -724,15 +734,16 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_resample_curve__doc__,"Generate a curve by sampling another\n"
-                                            "@param curve : The curve to sample\n"
-                                            "@type curve: Curve\n"
-                                            "@param knots: The knot vector for the new curve\n"
-                                            "@type knots: List of float\n"
-                                            "@param order: The order of the new curve\n"
-                                            "@type order: Integer\n"
-                                            "@return: The resampled curve\n"
-                                            "@rtype: Curve");
+PyDoc_STRVAR(generate_resample_curve__doc__,
+             "Generate a curve by sampling another\n"
+             "@param curve : The curve to sample\n"
+             "@type curve: Curve\n"
+             "@param knots: The knot vector for the new curve\n"
+             "@type knots: List of float\n"
+             "@param order: The order of the new curve\n"
+             "@type order: Integer\n"
+             "@return: The resampled curve\n"
+             "@rtype: Curve");
 PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve", "knots", "order", NULL };
@@ -785,19 +796,20 @@ PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_spline_curve__doc__, "Generate a spline curve\n"
-                                           "@param params: The parameter values\n"
-                                           "@type params: List of float\n"
-                                           "@param knots: The knot values\n"
-                                           "@type knots: List of float\n"
-                                           "@param coeffs: The coefficients\n"
-                                           "@type coeffs: List of float\n"
-                                           "@param order: The order of the curve (1+p)\n"
-                                           "@type order: integer\n"
-                                           "@param rational: Is the curve rational?\n"
-                                           "@type rational: Boolean\n"
-                                           "@return: The spline curve\n"
-                                           "@rtype: Curve");
+PyDoc_STRVAR(generate_spline_curve__doc__,
+             "Generate a spline curve\n"
+             "@param params: The parameter values\n"
+             "@type params: List of float\n"
+             "@param knots: The knot values\n"
+             "@type knots: List of float\n"
+             "@param coeffs: The coefficients\n"
+             "@type coeffs: List of float\n"
+             "@param order: The order of the curve (1+p)\n"
+             "@type order: integer\n"
+             "@param rational: Is the curve rational?\n"
+             "@type rational: Boolean\n"
+             "@return: The spline curve\n"
+             "@rtype: Curve");
 PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"params", "knots", "coeffs", "order", "rational", NULL };
