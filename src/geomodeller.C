@@ -392,8 +392,8 @@ PyObject* GeoMod_WriteSTL(PyObject* self, PyObject* args, PyObject* kwds)
       } else if(PyObject_TypeCheck(obj, &PyFloat_Type) ) {
         resolution[i] = PyFloat_AsDouble(obj);
       } else {
-        std::cerr << "Invalid resolution. No file written" << std::endl;
-        return Py_None;
+        PyErr_SetString(PyExc_ValueError, "Invalid resolution. No file written");
+        return NULL;
       }
     }
   } else if(PyObject_TypeCheck(objectRes, &PyInt_Type) ) {
@@ -403,8 +403,8 @@ PyObject* GeoMod_WriteSTL(PyObject* self, PyObject* args, PyObject* kwds)
     for(int i=0; i<3; i++)
       resolution[i] = PyFloat_AsDouble(objectRes);
   } else {
-    std::cerr << "Invalid resolution. No file written" << std::endl;
-    return Py_None;
+    PyErr_SetString(PyExc_ValueError, "Invalid resolution. No file written");
+    return NULL;
   }
 
   DoWriteSTL(fname,ascii,objectso,resolution);
@@ -458,8 +458,12 @@ PyObject* GeoMod_ReadG2(PyObject* self, PyObject* args, PyObject* kwds)
   if (result && PyObject_TypeCheck(result,&PyList_Type))
     PyList_Append(result,curr);
 
-  if (!result)
-    std::cerr << "Failed to load " << fname << std::endl;
+  if (!result) {
+    std::ostringstream ss;
+    ss << "Failed to load " << fname;
+    PyErr_SetString(PyExc_IOError, ss.str().c_str());
+    return NULL;
+  }
 
   return result;
 }
@@ -569,8 +573,10 @@ PyObject* GeoMod_ReadHDF5Geometry(PyObject* self, PyObject* args, PyObject* kwds
                                    (char**)keyWords,&fname,&geoname,&patch,&level))
     return NULL;
 
-  if (!fname || !geoname || patch < 1)
+  if (!fname || !geoname || patch < 1) {
+    PyErr_SetString(PyExc_ValueError, "Invalid filename, geometry name or patch number");
     return NULL;
+  }
 
   return DoReadHDF5Geometry(fname, geoname, patch, level);
 #endif
@@ -607,9 +613,15 @@ PyObject* GeoMod_WriteHDF5Field(PyObject* self, PyObject* args, PyObject* kwds)
                                                     &level,&coefso,&truncate))
     return NULL;
 
-  if (!coefso || !PyObject_TypeCheck(coefso, &PyList_Type) ||
-      !fname || !fldname || patch < 1)
+  if (!coefso || !fname || !fldname || patch < 1) {
+    PyErr_SetString(PyExc_ValueError, "Invalid coefficients, filename, field name or patch number");
     return NULL;
+  }
+
+  if (!PyObject_TypeCheck(coefso, &PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for coefs: expected list");
+    return NULL;
+  }
 
   DoWriteHDF5Field(fname, fldname, patch, level, coefso, truncate);
 #endif
@@ -648,8 +660,10 @@ PyObject* GeoMod_WriteHDF5Geometry(PyObject* self, PyObject* args, PyObject* kwd
                                                     &level,&objecto,&truncate))
     return NULL;
 
-  if (!objecto || !fname || !geoname || patch < 1)
+  if (!objecto || !fname || !geoname || patch < 1) {
+    PyErr_SetString(PyExc_ValueError, "Invalid object, filename, geometry name or patch number");
     return NULL;
+  }
 
   DoWriteHDF5Geometry(fname, geoname, patch, level, objecto, truncate);
 #endif

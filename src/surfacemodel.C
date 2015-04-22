@@ -36,8 +36,10 @@ PyObject* SurfaceModel_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
         continue;
       surfaces.push_back(shared_ptr<Go::ftSurface>(new Go::ftSurface(spSurf,-1)));
     }
-    if (surfaces.size() < 1)
+    if (surfaces.size() < 1) {
+      PyErr_SetString(PyExc_ValueError, "Needs more than one surface");
       return NULL;
+    }
 
     self->data.reset(new Go::SurfaceModel(modState.approxTolerance,
                                           modState.gapTolerance,
@@ -75,8 +77,10 @@ PyObject* SurfaceModel_Append(PyObject* o1, PyObject* o2)
   shared_ptr<Go::SurfaceModel> model = PyObject_AsGoSurfaceModel(o1);
   shared_ptr<Go::ParamSurface> surf  = PyObject_AsGoSurface(o2);
 
-  if (!model || !surf)
+  if (!model || !surf) {
+    PyErr_SetString(PyExc_TypeError, "Expected SurfaceModel += Surface");
     return NULL;
+  }
 
   model->append(shared_ptr<Go::ftSurface>(new Go::ftSurface(surf,-1)));
 
@@ -104,8 +108,13 @@ PyDoc_STRVAR(surfacemodel_get__doc__,"Returns the i'th Surface of this SurfaceMo
 PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
-  if (!sm || i < 0 || i >= sm->nmbEntities())
+  if (!sm)
     return NULL;
+
+  if (i < 0 || i >= sm->nmbEntities()) {
+    PyErr_SetString(PyExc_IndexError, "Index out of bounds");
+    return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data = sm->getFace(i)->getUntrimmed(modState.gapTolerance,

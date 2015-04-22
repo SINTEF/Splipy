@@ -132,8 +132,10 @@ PyObject* Volume_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   if (coefso) {
     shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
     int nCoefs = vol->numCoefs(0)*vol->numCoefs(1)*vol->numCoefs(2);
-    if (PyList_Size(coefso)/nCoefs == 0)
+    if (PyList_Size(coefso)/nCoefs == 0) {
+      PyErr_SetString(PyExc_ValueError, "Too few coefficients");
       return NULL;
+    }
 
     std::vector<double> coefs;
     for (int i=0;i<PyList_Size(coefso);++i) {
@@ -226,11 +228,15 @@ PyObject* Volume_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&paramuo,&paramvo,&paramwo))
     return NULL;
 
+  if (!parVol)
+    return NULL;
+
   if (!PyObject_TypeCheck(paramuo,&PyList_Type) ||
       !PyObject_TypeCheck(paramvo,&PyList_Type) ||
-      !PyObject_TypeCheck(paramwo,&PyList_Type) ||
-      !parVol)
+      !PyObject_TypeCheck(paramwo,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for param_u, param_v or param_w: expected list");
     return NULL;
+  }
 
   std::vector<double> paramu;
   for (int i=0;i<PyList_Size(paramuo);++i)
@@ -396,8 +402,10 @@ PyObject* Volume_GetSubVol(PyObject* self, PyObject* args, PyObject* kwds)
     parVol = pyVol->data;
   }
   shared_ptr<Go::SplineVolume> spVol = static_pointer_cast<Go::SplineVolume>(parVol);
-  if(!spVol)
+  if(!spVol) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineVolume");
     return NULL;
+  }
 
   shared_ptr<Go::Point> lowerLeft  = PyObject_AsGoPoint(lowerLefto);
   shared_ptr<Go::Point> upperRight = PyObject_AsGoPoint(upperRighto);
@@ -601,8 +609,12 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
-  if (!parVol || !PyObject_TypeCheck(pycoefs,&PyList_Type))
+  if (!parVol)
     return NULL;
+  if (!PyObject_TypeCheck(pycoefs,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for coefs: expected list");
+    return NULL;
+  }
 
   if (!parVol->isSpline()) {
     Volume* pyVol = (Volume*)self;
@@ -696,8 +708,10 @@ PyObject* Volume_Split(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&params,&pardir) || !params)
     return NULL;
 
-  if (pardir < 0 || pardir > 2)
+  if (pardir < 0 || pardir > 2) {
+    PyErr_SetString(PyExc_ValueError, "Invalid value for pardir: should be 0, 1 or 2");
     return NULL;
+  }
 
   std::vector<double> p;
   if (PyObject_TypeCheck(params,&PyList_Type)) {
@@ -793,11 +807,14 @@ PyObject* Volume_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
   last  =  spVol->basis(2).end()-lower_w;
   Go::BsplineBasis b3 = Go::BsplineBasis(spVol->order(2)-lower_w,first,last);
 
-  if (spVol->rational())
-    std::cout << "WARNING: The geometry basis is rational (using NURBS)\n."
-              << "         The basis for the unknown fields of one degree"
-              << "         lower will however be non-rational.\n"
-              << "         This may affect accuracy.\n"<< std::endl;
+  if (spVol->rational()) {
+    if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                     "The geometry basis is rational (using NURBS). "
+                     "The basis for the unknown fields of one degree "
+                     "higher will however be non-rational. "
+                     "This may affect accuracy.", 1) == -1)
+      return NULL;
+  }
 
   std::vector<double> ug(b1.numCoefs()), vg(b2.numCoefs()), wg(b3.numCoefs());
   for (size_t i = 0; i < ug.size(); i++)
@@ -999,9 +1016,14 @@ PyObject* Volume_Translate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
-  shared_ptr<Go::Point>       vec = PyObject_AsGoPoint(veco);
-  if (!parVol || !vec)
+  if (!parVol)
     return NULL;
+
+  shared_ptr<Go::Point>       vec = PyObject_AsGoPoint(veco);
+  if (!vec) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for vector: expected pointlike");
+    return NULL;
+  }
 
   if (!parVol->isSpline()) {
     Volume* volum = (Volume*)self;
@@ -1022,8 +1044,10 @@ PyObject* Volume_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
-  if(!spVol)
+  if(!spVol) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtian Go::SplineVolume");
     return NULL;
+  }
 
   PyObject* knots_u = PyList_New(0);
   vector<double>::const_iterator kit;
@@ -1097,16 +1121,22 @@ PyObject* Volume_GetComponent(PyObject* self, Py_ssize_t i)
   if (!parVol)
     return NULL;
 
-  if(parVol->dimension() != 3) 
+  if(parVol->dimension() != 3) {
+    PyErr_SetString(PyExc_ValueError, "Not a three-dimensional volume");
     return NULL;
+  }
 
   shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
-  if(!spVol)
-    return NULL;
+  if(!spVol) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineVolume");
+    return 0;
+  }
   
   int nComp =  spVol->numCoefs(0)*spVol->numCoefs(1)*spVol->numCoefs(2);
-  if(i < 0 || i >= nComp) 
+  if(i < 0 || i >= nComp) {
+    PyErr_SetString(PyExc_IndexError, "Index out of bounds");
     return NULL;
+  }
 
   double x,y,z,w;
   int dim = spVol->dimension();

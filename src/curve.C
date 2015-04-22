@@ -102,15 +102,18 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::ParamCurve> parCrv2 = PyObject_AsGoCurve(self);
   shared_ptr<Go::ParamCurve> parCrv;
   if (parCrv2->instanceType() != Go::Class_SplineCurve) {
-    std::cerr << "Converting param curve to a spline curve (append not implemented for param curves)" << std::endl;
+    if (!PyErr_WarnEx(PyExc_RuntimeWarning, "Converting parametric curve to spline curve", 1) == -1)
+      return NULL;
     parCrv = ((Curve*)self)->data = convertSplineCurve(parCrv2);
   }
   else
     parCrv = dynamic_pointer_cast<Go::SplineCurve,Go::ParamCurve>(parCrv2);
 
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(PyObject_AsGoCurve(oCrv));
-  if (!parCrv || !spCrv)
+  if (!parCrv || !spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   double dist;
   parCrv->appendCurve(spCrv.get(), continuity, dist, reparam);
@@ -141,8 +144,10 @@ PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   if (coefso) {
     shared_ptr<Go::SplineCurve> curv = convertSplineCurve(parCrv);
     int nCoefs = curv->numCoefs();
-    if (PyList_Size(coefso)/nCoefs == 0)
+    if (PyList_Size(coefso)/nCoefs == 0) {
+      PyErr_SetString(PyExc_ValueError, "Too few coefficients");
       return NULL;
+    }
 
     std::vector<double> coefs;
     for (int i=0;i<PyList_Size(coefso);++i) {
@@ -217,8 +222,10 @@ PyObject* Curve_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&paramso) || !parCrv)
     return NULL;
 
-  if (!PyObject_TypeCheck(paramso,&PyList_Type))
+  if (!PyObject_TypeCheck(paramso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for params: expected list");
     return NULL;
+  }
 
   std::vector<double> params;
   for (int i=0;i<PyList_Size(paramso);++i)
@@ -281,8 +288,10 @@ PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
-  if(!spCrv)
+  if(!spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
   ((Curve*)self)->data = spCrv;
 
   spCrv->representAsRational();
@@ -318,11 +327,14 @@ PyObject* Curve_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
   std::vector<double>::const_iterator last  = spCrv->basis().end() - lower;
   Go::BsplineBasis basis = Go::BsplineBasis(spCrv->order() - lower, first, last);
 
-  if (spCrv->rational())
-    std::cout << "WARNING: The geometry basis is rational (using NURBS)\n."
-              << "         The basis for the unknown fields of one degree"
-              << "         higher will however be non-rational.\n"
-              << "         This may affect accuracy.\n"<< std::endl;
+  if (spCrv->rational()) {
+    if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                     "The geometry basis is rational (using NURBS). "
+                     "The basis for the unknown fields of one degree "
+                     "higher will however be non-rational. "
+                     "This may affect accuracy.", 1) == -1)
+      return NULL;
+  }
 
   std::vector<double> greville(basis.numCoefs());
   for (size_t i = 0; i < greville.size(); i++)
@@ -373,6 +385,7 @@ PyDoc_STRVAR(curve_get_knots__doc__,"Get the knots of a spline curve\n"
 PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"with_multiplicities", NULL };
+
   bool withmult=false;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|b",
                                    (char**)keyWords, &withmult))
@@ -407,8 +420,10 @@ PyObject* Curve_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
-  if(!spCrv)
+  if(!spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   return Py_BuildValue((char*)"i",spCrv->order());
 }
@@ -429,8 +444,10 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
 
   // get Point from Python object
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
-  if(!point)
+  if(!point) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for point: expected pointlike");
     return NULL;
+  }
 
   // get ParamCurve from Python object
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -439,13 +456,17 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
 
   // get SplineCurve from ParamCurve
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
-  if (!spCrv)
+  if (!spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   // get SISL curve from SplineCurve
   SISLCurve *sislCrv = Curve2SISL(*spCrv, true);
-  if (!sislCrv) 
+  if (!sislCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain SISLCurve");
     return NULL;
+  }
 
   // setup SISL parameters
   double *pt      = &((*point)[0]);        // pointer to the data of the geometric point
@@ -465,11 +486,18 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
         &status);                 // output errors
 
   // error handling
-  if (status > 0) { // warning
-    std::cerr << __FUNCTION__ << " WARNING: " << status << std::endl;
-  } else if (status < 0) { // error
-    std::cerr << __FUNCTION__ << " ERROR: " << status << std::endl;
-    return NULL;
+  if (status != 0) {
+    std::ostringstream ss;
+    ss << "SISL returned " << (status > 0 ? "warning" : "error") << " code " << status;
+    if (status > 0) {
+      // Warnings may throw exceptions, depending on user settings,
+      // in that case we are obliged to treat it as one
+      if (PyErr_WarnEx(PyExc_RuntimeWarning, ss.str().c_str(), 1) == -1)
+        return NULL;
+    } else {
+      PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+      return NULL;
+    }
   }
 
   // return results
@@ -545,8 +573,13 @@ PyObject* Curve_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  if (!parCrv || !PyObject_TypeCheck(pycoefs,&PyList_Type))
+  if (!parCrv)
     return NULL;
+
+  if (!PyObject_TypeCheck(pycoefs,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for coefs: expected list");
+    return NULL;
+  }
 
   if (!parCrv->geometryCurve()) {
     Curve* pyCrv = (Curve*)self;
@@ -605,8 +638,10 @@ PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
 
   if(PyObject_TypeCheck(pyObj, &Curve_Type) ) {
     shared_ptr<Go::ParamCurve> parCrv2 = PyObject_AsGoCurve(pyObj);
-    if(!parCrv2)
+    if(!parCrv2) {
+      PyErr_SetString(PyExc_TypeError, "Unable to treat obj as curve");
       return NULL;
+    }
     double par1, par2, dist;
     Go::Point ptc1, ptc2;
     Go::ClosestPoint::closestPtCurves(parCrv.get(), parCrv2.get(), par1, par2, dist, ptc1, ptc2);
@@ -620,8 +655,10 @@ PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
     }
   } else if(PyObject_TypeCheck(pyObj, &Surface_Type) ) {
     shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(pyObj);
-    if(!parSurf)
+    if(!parSurf) {
+      PyErr_SetString(PyExc_TypeError, "Unable to treat obj as surface");
       return NULL;
+    }
     // input arguments
     double         geomRes       = modState.gapTolerance;
     double         startCrv      = parCrv->startparam();
@@ -653,6 +690,8 @@ PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
       return Py_None;
     }
   }
+
+  PyErr_SetString(PyExc_TypeError, "Invalid type for obj: expected Curve or Surface");
   return NULL;
 }
 
@@ -768,8 +807,10 @@ PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
-  if(!spCrv)
+  if(!spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   spCrv->setParameterInterval(umin, umax);
 
@@ -797,9 +838,11 @@ PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords, &n, &p))
     return NULL;
 
-  if(n < p || p < 1 || n-4 < 0)
+  if (n < p || p < 1 || n-4 < 0) {
+    PyErr_SetString(PyExc_ValueError, "Invalid argument values (requires n >= max(p,4), p > 0)");
     return NULL;
-  
+  }
+
   // get a few needed curve values
   int    dim = parCrv->dimension();
   double u0  = parCrv->startparam();
@@ -917,9 +960,14 @@ PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
-  if (!parCrv || !axis)
+  if (!parCrv)
     return NULL;
+
+  shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
+  if (!axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for axis: expected pointlike");
+    return NULL;
+  }
 
    Curve* pyCurve = (Curve*)self;
    pyCurve->data = convertSplineCurve(parCrv);
@@ -956,8 +1004,10 @@ PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
              PyObject_TypeCheck(params,&PyInt_Type))
     p.push_back(PyFloat_AsDouble(params));
 
-  if (p.empty())
+  if (p.empty()) {
+    PyErr_SetString(PyExc_ValueError, "No valid parameter values found");
     return NULL;
+  }
 
   std::vector<shared_ptr<Go::ParamCurve> > curves;
   if (p.size() > 1) {
@@ -1001,8 +1051,10 @@ PyObject* Curve_GetSubCurve(PyObject* self, PyObject* args, PyObject* kwds)
     parCrv = pyCrv->data;
   }
   shared_ptr<Go::SplineCurve> spCrv = static_pointer_cast<Go::SplineCurve>(parCrv);
-  if(!spCrv)
+  if(!spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   Go::SplineCurve *subCrv = spCrv->subCurve(Left, Right);
 
@@ -1077,9 +1129,14 @@ PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  shared_ptr<Go::Point>      vec   = PyObject_AsGoPoint(veco);
-  if (!parCrv || !vec)
+  if (!parCrv)
     return NULL;
+
+  shared_ptr<Go::Point> vec = PyObject_AsGoPoint(veco);
+  if (!vec) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for vector: expected pointlike");
+    return NULL;
+  }
 
   if (parCrv->geometryCurve() != NULL) {
     Curve* pyCrv = (Curve*)self;
@@ -1100,8 +1157,10 @@ PyObject* Curve_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
-  if (!spCrv)
+  if (!spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   PyObject* knots = PyList_New(0);
   vector<double>::const_iterator kit;
@@ -1124,6 +1183,7 @@ PyObject* Curve_Add(PyObject* o1, PyObject* o2)
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(o1);
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(o2);
   Curve* pyCrv = NULL;
+
   if (parCrv && point) {
     pyCrv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
     if (parCrv->instanceType() == Go::Class_SplineCurve)
@@ -1134,6 +1194,10 @@ PyObject* Curve_Add(PyObject* o1, PyObject* o2)
 
     Go::GeometryTools::translateSplineCurve(*point, 
                          *static_pointer_cast<Go::SplineCurve>(pyCrv->data));
+  }
+
+  if (!pyCrv) {
+    PyErr_SetString(PyExc_TypeError, "Expected Curve + Point");
   }
 
   return (PyObject*) pyCrv;
@@ -1158,15 +1222,21 @@ PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
   if (!parCrv)
     return NULL;
 
-  if(parCrv->dimension() != 3) 
+  if(parCrv->dimension() != 3) {
+    PyErr_SetString(PyExc_ValueError, "Not a three-dimensional curve");
     return NULL;
+  }
 
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
-  if(!spCrv)
+  if(!spCrv) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtian Go::SplineCurve");
     return NULL;
-  
-  if(i < 0 || i >= spCrv->numCoefs())
+  }
+
+  if(i < 0 || i >= spCrv->numCoefs()) {
+    PyErr_SetString(PyExc_IndexError, "Index out of bounds");
     return NULL;
+  }
 
   int dim = spCrv->dimension();
   Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);

@@ -341,8 +341,10 @@ PyObject* Preprocess_ElementConnectivities(PyObject* self, PyObject* args, PyObj
     return NULL;
 
   // list of surfaces or volumes
-  if (!PyObject_TypeCheck(patcheso,&PyList_Type))
+  if (!PyObject_TypeCheck(patcheso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for patches: expected list");
     return NULL;
+  }
 
   PyObject* result = PyList_New(0);
   for (int i=0;i<PyList_Size(patcheso);++i) {
@@ -359,8 +361,10 @@ PyObject* Preprocess_ElementConnectivities(PyObject* self, PyObject* args, PyObj
       Volume* p = (Volume*)obj;
       shared_ptr<Go::SplineVolume> data = convertSplineVolume(p->data);
       PyList_Append(result, GenerateElements3D(data));
-    } else
-      std::cerr << "Warning: Unknown data type in list, skipping" << std::endl;
+    } else {
+      if (PyErr_WarnEx(PyExc_RuntimeWarning, "Unknown data type in list, skipping", 1) == -1)
+        return NULL;
+    }
   }
 
   return result;

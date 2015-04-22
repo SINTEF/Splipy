@@ -128,8 +128,10 @@ PyObject* Surface_Clone(PyObject* self, PyObject* args, PyObject* kwds)
   if (coefso) {
     shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
     int nCoefs = surf->numCoefs_u()*surf->numCoefs_v();
-    if (PyList_Size(coefso)/nCoefs == 0)
+    if (PyList_Size(coefso)/nCoefs == 0) {
+      PyErr_SetString(PyExc_ValueError, "Too few coefficients");
       return NULL;
+    }
 
     std::vector<double> coefs;
     for (int i=0;i<PyList_Size(coefso);++i) {
@@ -164,8 +166,14 @@ PyObject* Surface_Append(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamSurface> otherPar = PyObject_AsGoSurface(other);
-  if (!otherPar || dir > 2 || dir < 0)
+  if (!otherPar) {
+    PyErr_SetString(PyExc_TypeError, "Expected surface");
     return NULL;
+  }
+  if (dir > 2 || dir < 0) {
+    PyErr_SetString(PyExc_ValueError, "Invalid value for `dir`");
+    return NULL;
+  }
 
   double dist;
   surf->appendSurface(otherPar.get(), dir, 0, dist, false);
@@ -223,8 +231,10 @@ PyObject* Surface_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   if (!PyObject_TypeCheck(paramuo,&PyList_Type) ||
-      !PyObject_TypeCheck(paramvo,&PyList_Type))
+      !PyObject_TypeCheck(paramvo,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Expected list");
     return NULL;
+  }
 
   std::vector<double> paramu;
   for (int i=0;i<PyList_Size(paramuo);++i)
@@ -393,11 +403,14 @@ PyObject* Surface_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
   last  =  spSurf->basis(1).end()-lower_v;
   Go::BsplineBasis b2 = Go::BsplineBasis(spSurf->order_v()-lower_v,first,last);
 
-  if (spSurf->rational())
-    std::cout << "WARNING: The geometry basis is rational (using NURBS)\n."
-              << "         The basis for the unknown fields of one degree"
-              << "         higher will however be non-rational.\n"
-              << "         This may affect accuracy.\n"<< std::endl;
+  if (spSurf->rational()) {
+    if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                     "The geometry basis is rational (using NURBS). "
+                     "The basis for the unknown fields of one degree "
+                     "higher will however be non-rational. "
+                     "This may affect accuracy.", 1) == -1)
+      return NULL;
+  }
 
   std::vector<double> ug(b1.numCoefs()), vg(b2.numCoefs());
   for (size_t i = 0; i < ug.size(); i++)
@@ -602,8 +615,10 @@ PyObject* Surface_GetOrder(PyObject* self, PyObject* args)
   }
 
   shared_ptr<Go::SplineSurface> spline = static_pointer_cast<Go::SplineSurface>(parSurf);
-  if(!spline)
+  if(!spline) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to coerce surface to spline form");
     return NULL;
+  }
 
   PyObject* result = PyList_New(0);
 
@@ -636,8 +651,10 @@ PyObject* Surface_GetSubSurf(PyObject* self, PyObject* args, PyObject* kwds)
     parSurf = pySurf->data;
   }
   shared_ptr<Go::SplineSurface> spSurf = static_pointer_cast<Go::SplineSurface>(parSurf);
-  if(!spSurf)
+  if(!spSurf) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface");
     return NULL;
+  }
 
   shared_ptr<Go::Point> lowerLeft  = PyObject_AsGoPoint(lowerLefto);
   shared_ptr<Go::Point> upperRight = PyObject_AsGoPoint(upperRighto);
@@ -697,8 +714,12 @@ PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
-  if (!parSurf || !PyObject_TypeCheck(pycoefs,&PyList_Type))
+  if (!parSurf)
     return NULL;
+  if (!PyObject_TypeCheck(pycoefs,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Expected list");
+    return NULL;
+  }
 
   if (!parSurf->isSpline()) {
     Surface* pySurf = (Surface*)self;
@@ -762,8 +783,11 @@ PyObject* Surface_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
 
   if(PyObject_TypeCheck(pyObj, &Curve_Type) ) {
     shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(pyObj);
-    if(!parCrv)
+    if(!parCrv) {
+      PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::ParamCurve");
       return NULL;
+    }
+
     // input arguments
     double         geomRes       = modState.gapTolerance;
     double         startCrv      = parCrv->startparam();
@@ -798,18 +822,24 @@ PyObject* Surface_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
     }
   } else if(PyObject_TypeCheck(pyObj, &Surface_Type) ) {
     shared_ptr<Go::ParamSurface> parSurf2 = PyObject_AsGoSurface(pyObj);
-    if(!parSurf2)
+    if(!parSurf2) {
+      PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::ParamSurface");
       return NULL;
+    }
     // convert to spline surfaces
     shared_ptr<Go::SplineSurface> spSurf1 = convertSplineSurface(parSurf);
     shared_ptr<Go::SplineSurface> spSurf2 = convertSplineSurface(parSurf2);
-    if(!spSurf1 || !spSurf2)
+    if(!spSurf1 || !spSurf2) {
+      PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface");
       return NULL;
+    }
     // convert to SISL surfaces
     SISLSurf* sislSurf1 = GoSurf2SISL(*spSurf1, true);
     SISLSurf* sislSurf2 = GoSurf2SISL(*spSurf2, true);
-    if(!sislSurf1 || !sislSurf2)
+    if(!sislSurf1 || !sislSurf2) {
+      PyErr_SetString(PyExc_RuntimeError, "Unable to obtain SISLSurf");
       return NULL;
+    }
     // setup parameters
     double epsco = 0.0;                   // Computational resolution (not used)
     double epsge = modState.gapTolerance; // Geometry resolution
@@ -827,11 +857,18 @@ PyObject* Surface_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
           &status);                           // output errors
 
     // error handling
-    if (status > 0) { // warning
-      std::cerr << __FUNCTION__ << " WARNING: " << status << std::endl;
-    } else if (status < 0) { // error
-      std::cerr << __FUNCTION__ << " ERROR: " << status << std::endl;
-      return NULL;
+    if (status != 0) {
+      std::ostringstream ss;
+      ss << "SISL returned " << (status > 0 ? "warning" : "error") << " code " << status;
+      if (status > 0) {
+        // Warnings may throw exceptions, depending on user settings,
+        // in that case we are obliged to treat it as one
+        if (PyErr_WarnEx(PyExc_RuntimeWarning, ss.str().c_str(), 1) == -1)
+          return NULL;
+      } else {
+        PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+        return NULL;
+      }
     }
 
     // return results
@@ -946,9 +983,14 @@ PyObject* Surface_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
-  shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
-  if (!parSurf || !axis)
+  if (!parSurf)
     return NULL;
+
+  shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
+  if (!axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for axis: expected pointlike");
+    return NULL;
+  }
 
   if (parSurf->instanceType() == Go::Class_Cylinder) { 
     // since we can't move cylinders, we have to create a new one and trash the old one
@@ -1023,9 +1065,14 @@ PyObject* Surface_Translate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
-  shared_ptr<Go::Point>        vec     = PyObject_AsGoPoint(veco);
-  if (!parSurf || !vec)
+  if (!parSurf)
     return NULL;
+
+  shared_ptr<Go::Point> vec = PyObject_AsGoPoint(veco);
+  if (!vec) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for vector: expected pointlike");
+    return NULL;
+  }
 
   if (parSurf->instanceType() == Go::Class_Cylinder) { 
     // since we can't move cylinders, we have to create a new one and trash the old one
@@ -1066,8 +1113,10 @@ PyObject* Surface_Reduce(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
-  if(!spSurf)
+  if(!spSurf) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface");
     return NULL;
+  }
 
   PyObject* knots_u = PyList_New(0);
   vector<double>::const_iterator kit;
@@ -1211,6 +1260,10 @@ PyObject* Surface_Add(PyObject* o1, PyObject* o2)
                          *static_pointer_cast<Go::SplineSurface>(result->data));
   }
 
+  if (!result) {
+    PyErr_SetString(PyExc_TypeError, "Expected Surface + Point");
+  }
+
   return (PyObject*) result;
 }
 
@@ -1290,12 +1343,16 @@ PyObject* Surface_GetComponent(PyObject* self, Py_ssize_t i)
   if (!parSurf)
     return NULL;
 
-  if(parSurf->dimension() != 3) 
+  if(parSurf->dimension() != 3) {
+    PyErr_SetString(PyExc_ValueError, "Not a three-dimensional surface");
     return NULL;
+  }
 
   shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
-  if(!spSurf)
+  if(!spSurf) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface");
     return NULL;
+  }
   
   int nCoefs = spSurf->numCoefs_u() * spSurf->numCoefs_v();
   if(i < 0 || i >= nCoefs)

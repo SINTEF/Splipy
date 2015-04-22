@@ -107,7 +107,7 @@ PyObject* VTF_AddGeometryBlock(PyObject* self, PyObject* args, PyObject* kwds)
 
   if (!PyObject_TypeCheck(nodeso,&PyList_Type) ||
       !PyObject_TypeCheck(elementso,&PyList_Type)) {
-    std::cerr << "Invalid parameters in VTF.AddGeometryBlock()" << std::endl;
+    PyErr_SetString(PyExc_TypeError, "Invalid type for nodes, elements: expected list");
     return NULL;
   }
 
@@ -206,8 +206,14 @@ PyObject* VTF_AddGeometrySet(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&elemso,&block,&sname))
     return NULL;
 
-  if (!PyObject_TypeCheck(elemso,&PyList_Type) || !sname)
+  if (!PyObject_TypeCheck(elemso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for elems: expected list");
     return NULL;
+  }
+  if (!sname) {
+    PyErr_SetString(PyExc_ValueError, "Name of set not given");
+    return NULL;
+  }
 
   std::vector<int> elemIds;
   for (int i=0;i<PyList_Size(elemso);++i)
@@ -246,8 +252,10 @@ PyObject* VTF_AddField(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&coefso,&block))
     return NULL;
 
-  if (!PyObject_TypeCheck(coefso,&PyList_Type))
+  if (!PyObject_TypeCheck(coefso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for coefs: expected list");
     return NULL;
+  }
 
   std::pair<std::vector<float>, int> resVec = PyPointListToVector<float>(coefso);
 
@@ -293,8 +301,14 @@ PyObject* VTF_AddFieldBlocks(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&blockso,&sname,&comp,&displacement))
     return NULL;
 
-  if (!PyObject_TypeCheck(blockso,&PyList_Type) || !sname)
+  if (!PyObject_TypeCheck(blockso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for blocks: expected list");
     return NULL;
+  }
+  if (!sname) {
+    PyErr_SetString(PyExc_ValueError, "Name of field not given");
+    return NULL;
+  }
 
   std::string name(sname);
 

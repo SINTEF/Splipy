@@ -80,9 +80,14 @@ PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(self);
-  shared_ptr<Go::Point> axis  = PyObject_AsGoPoint(axiso);
-  if (!point || !axis)
+  if (!point)
     return NULL;
+
+  shared_ptr<Go::Point> axis  = PyObject_AsGoPoint(axiso);
+  if (!axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for axis: expected pointlike");
+    return NULL;
+  }
 
   // special case 4D points as rational control points with weights
   if(point->dimension() == 4) { 
@@ -90,8 +95,10 @@ PyObject* Point_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
     (*point)[0] /= w;
     (*point)[1] /= w;
     (*point)[2] /= w;
-  } else if(point->dimension() != 3)
+  } else if(point->dimension() != 3) {
+    PyErr_SetString(PyExc_ValueError, "Incorrect dimension");
     return NULL;
+  }
 
   Go::GeometryTools::rotatePoint(*axis, angle, point->begin());
 
@@ -141,6 +148,10 @@ PyObject* Point_Add(PyObject* o1, PyObject* o2)
     result->data.reset(new Go::Point(*p1+*p2));
   }
 
+  if (!result) {
+    PyErr_SetString(PyExc_TypeError, "Expected Point + Point");
+  }
+
   return (PyObject*)result;
 }
 
@@ -152,6 +163,10 @@ PyObject* Point_Sub(PyObject* o1, PyObject* o2)
   if (p1 && p2) {
     result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
     result->data.reset(new Go::Point(*p1-*p2));
+  }
+
+  if (!result) {
+    PyErr_SetString(PyExc_TypeError, "Expected Point - Point");
   }
 
   return (PyObject*)result;
@@ -185,6 +200,10 @@ PyObject* Point_Mul(PyObject* o1, PyObject* o2)
     result->data.reset(new Go::Point(*p1*PyInt_AsLong(o2r)));
   }
 
+  if (!result) {
+    PyErr_SetString(PyExc_TypeError, "Incompatible types");
+  }
+
   return (PyObject*)result;
 }
 
@@ -198,6 +217,10 @@ PyObject* Point_Div(PyObject* o1, PyObject* o2)
   } else if (PyObject_TypeCheck(o2,&PyInt_Type)) {
     result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
     result->data.reset(new Go::Point(*p1/PyInt_AsLong(o2)));
+  }
+
+  if (!result) {
+    PyErr_SetString(PyExc_TypeError, "Incompatible types");
   }
 
   return (PyObject*)result;
@@ -223,6 +246,10 @@ PyObject* Point_Mod(PyObject* o1, PyObject* o2)
     result->data.reset(new Go::Point((*p1) % (*p2)));
   }
 
+  if (!result) {
+    PyErr_SetString(PyExc_TypeError, "Expected Point % Point");
+  }
+
   return (PyObject*)result;
 }
 
@@ -232,6 +259,10 @@ PyObject* Point_Abs(PyObject* o1)
   Point* result = NULL;
   if (p1)
     result = (Point*)Py_BuildValue((char*)"d",p1->length());
+
+  if (!result) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type: expected pointlike");
+  }
 
   return (PyObject*)result;
 }
@@ -248,8 +279,10 @@ Py_ssize_t Point_NmbComponent(PyObject* self)
 PyObject* Point_GetComponent(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::Point> sm = PyObject_AsGoPoint(self);
-  if (!sm || i < 0 || i >= sm->size())
+  if (!sm || i < 0 || i >= sm->size()) {
+    PyErr_SetString(PyExc_IndexError, "Index out of bounds");
     return NULL;
+  }
 
   return PyFloat_FromDouble((*sm)[i]);
 }

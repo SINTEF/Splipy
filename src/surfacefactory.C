@@ -45,8 +45,10 @@ PyObject* Generate_AddLoop(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamSurface> par_surf = PyObject_AsGoSurface(originalo);
-  if (!par_surf)
+  if (!par_surf) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for original: expected Surface");
     return NULL;
+  }
 
   std::vector<shared_ptr<Go::ParamCurve> > loops;
   shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(loopo);
@@ -178,8 +180,10 @@ PyObject* Generate_CircularDisc(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> bpoint = PyObject_AsGoPoint(bpointo);
-  if (!center || !bpoint)
+  if (!center || !bpoint) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or boundayrpoint: expected pointlike");
     return NULL;
+  }
 
   Go::Point normal(0.0,0.0);
   if (modState.dim == 3) {
@@ -227,8 +231,10 @@ PyObject* Generate_ConeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
+  if (!center || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for apex or axis: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
 
@@ -251,8 +257,10 @@ PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* k
                                    (char**)keyWords,&curveso))
     return NULL;
 
-  if (!PyObject_TypeCheck(curveso,&PyList_Type))
+  if (!PyObject_TypeCheck(curveso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curves: expected list");
     return NULL;
+  }
 
   std::vector<shared_ptr<Go::ParamCurve> > curves;
   for (int i=0; i < PyList_Size(curveso); ++i) {
@@ -263,15 +271,18 @@ PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* k
     if (curve->instanceType() == Go::Class_SplineCurve) {
       shared_ptr<Go::SplineCurve> crv = convertSplineCurve(curve);
       if (crv->rational()) {
-        std::cerr << "Cannot generate a coons-surface for rational curves." << std::endl
-                  << "Consider CurveFactory.NonRationalCurve()" << std::endl;
+        PyErr_SetString(PyExc_ValueError,
+                        "Cannot generate a coons-surface for rational curves. "
+                        "Consider CurveFactory.NonRationalCurve()");
         return NULL;
       }
     }
     curves.push_back(convertSplineCurve(curve));
   }
-  if (curves.size() != 4)
+  if (curves.size() != 4) {
+    PyErr_SetString(PyExc_ValueError, "Expected exactly four curves");
     return NULL;
+  }
 
   Go::CurveLoop loop(curves, modState.gapTolerance);
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
@@ -297,9 +308,15 @@ PyObject* Generate_ContractCurveTo(PyObject* self, PyObject* args, PyObject* kwd
     return NULL;
 
   shared_ptr<Go::SplineCurve> curve = convertSplineCurve(PyObject_AsGoCurve(curveo));
-  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
-  if (!curve || !point)
+  if (!curve) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curve: expected Curve");
     return NULL;
+  }
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
+  if (!point) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for point: expected pointlike");
+    return NULL;
+  }
 
   // create "basis" for the point
   std::vector<double> knots;
@@ -357,8 +374,10 @@ PyObject* Generate_CylinderSurface(PyObject* self, PyObject* args, PyObject* kwd
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
+  if (!center || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or axis: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data.reset(new Go::Cylinder(radius,*center,*axis,someNormal(*axis)));
@@ -399,8 +418,10 @@ PyObject* Generate_CylinderSection(PyObject* self, PyObject* args, PyObject* kwd
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
+  if (!center || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or axis: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data.reset(new Go::Cylinder(radius,*center,*axis,someNormal(*axis)));
@@ -430,9 +451,16 @@ PyObject* Generate_LinearCurveSweep(PyObject* self, PyObject* args, PyObject* kw
 
   shared_ptr<Go::ParamCurve> curve1 = PyObject_AsGoCurve(curve1o);
   shared_ptr<Go::ParamCurve> curve2 = PyObject_AsGoCurve(curve2o);
-  shared_ptr<Go::Point> point       = PyObject_AsGoPoint(pointo);
-  if (!curve1 || !curve2 || !point)
+  if (!curve1 || !curve2) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curve1 or curve2: expected Curve");
     return NULL;
+  }
+
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
+  if (!point) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for point: expected pointlike");
+    return NULL;
+  }
 
   Go::Point pt(*point);
   pt *= -1;
@@ -462,8 +490,10 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&curveso,&paramso,&order))
     return NULL;
 
-  if (!PyObject_TypeCheck(curveso,&PyList_Type))
+  if (!PyObject_TypeCheck(curveso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curves: expected list");
     return NULL;
+  }
 
   std::vector<SISLCurve*> curves;
   std::vector<int> types;
@@ -476,8 +506,10 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
     curves.push_back(Curve2SISL(*splnCrv));
     types.push_back(1);
   }
-  if (curves.size() < 2)
+  if (curves.size() < 2) {
+    PyErr_SetString(PyExc_ValueError, "Expected at least two curves");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
 
@@ -493,9 +525,19 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
   } else
     s1538(curves.size(), &curves[0], &types[0], 0.0, 1, order, 0,
           &srf, &gpar, &jstat);
+
   if (jstat != 0) {
-    std::cerr << "Lofting curves failed" << std::endl;
-    exit(1);
+    std::ostringstream ss;
+    ss << "SISL returned " << (jstat > 0 ? "warning" : "error") << " code " << jstat;
+    if (jstat > 0) {
+      // Warnings may throw exceptions, depending on user settings,
+      // in that case we are obliged to treat it as one
+      if (PyErr_WarnEx(PyExc_RuntimeWarning, ss.str().c_str(), 1) == -1)
+        return NULL;
+    } else {
+      PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+      return NULL;
+    }
   }
 
   free(gpar);
@@ -525,17 +567,24 @@ PyObject* Generate_MirrorSurface(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(surfaceo);
+  if (!surface) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for original: expected Surface");
+    return NULL;
+  }
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
   shared_ptr<Go::Point> normal = PyObject_AsGoPoint(normalo);
 
-  if (!surface || !point || !normal)
+  if (!point || !normal) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for point or normal: expected pointlike");
     return NULL;
+  }
 
   if (surface->instanceType() == Go::Class_SplineSurface) {
     shared_ptr<Go::SplineSurface> srf = convertSplineSurface(surface);
     if (srf->rational()) {
-      std::cerr << "Cannot mirror a rational surface.\n"
-                   "Consider SurfaceFactory.NonRationalSurface" << std::endl;
+      PyErr_SetString(PyExc_ValueError,
+                      "Cannot mirror a rational surface, "
+                      "consider SurfaceFactory.NonRationalSurface.");
       return NULL;
     }
   }
@@ -560,13 +609,16 @@ PyObject* Generate_SrfNonRational(PyObject* self, PyObject* args, PyObject* kwds
     return NULL;
 
   shared_ptr<Go::ParamSurface> surf = PyObject_AsGoSurface(originalo);
-  if (!surf)
+  if (!surf) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for original: expected Surface");
     return NULL;
+  }
 
   shared_ptr<Go::SplineSurface> surf_base = convertSplineSurface(surf);
-
-  if (!surf_base)
+  if (!surf_base) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface");
     return NULL;
+  }
 
   // if it's already B-spline, just return itself
   if(!surf_base->rational()) {
@@ -625,8 +677,10 @@ PyObject* Generate_Plane(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::Point> p0     = PyObject_AsGoPoint(p0o);
   shared_ptr<Go::Point> normal = PyObject_AsGoPoint(normalo);
-  if (!p0o || !normal)
+  if (!p0o || !normal) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for p0 or center: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   result->data.reset(new Go::Plane(*p0,*normal));
@@ -662,8 +716,10 @@ PyObject* Generate_Rectangle(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::Point> corner = PyObject_AsGoPoint(cornero);
   shared_ptr<Go::Point> axisx  = PyObject_AsGoPoint(axisxo);
   shared_ptr<Go::Point> axisy  = PyObject_AsGoPoint(axisyo);
-  if (!corner || !axisx || !axisy)
+  if (!corner || !axisx || !axisy) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for corner, u_axis or v_axis: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
 
@@ -697,9 +753,15 @@ PyObject* Generate_ResampleSurface(PyObject* self, PyObject* args, PyObject* kwd
     return NULL;
 
   shared_ptr<Go::SplineSurface> surface = convertSplineSurface(PyObject_AsGoSurface(surfaceo));
-
-  if (!surface || n1 < 1 || p1 < 1 || n2 < 1 || p2 < 1)
+  if (!surface) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for surface: expected Surface");
     return NULL;
+  }
+
+  if (n1 < 1 || p1 < 1 || n2 < 1 || p2 < 1) {
+    PyErr_SetString(PyExc_ValueError, "Invalid values for n1, p1, n2 or p2: should be > 0");
+    return NULL;
+  }
 
   // create basis functions and evaluation points
   int dimension = surface->dimension();
@@ -776,9 +838,10 @@ PyObject* Generate_ProjectSurface(PyObject* self, PyObject* args, PyObject* kwds
 
   shared_ptr<Go::SplineSurface> src = convertSplineSurface(PyObject_AsGoSurface(srco));
   shared_ptr<Go::SplineSurface> dst = convertSplineSurface(PyObject_AsGoSurface(dsto));
-
-  if (!src || !dst)
+  if (!src || !dst) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for src or dst: expected Surface");
     return NULL;
+  }
 
   // clone and project
   shared_ptr<Go::SplineSurface> srcp = shared_ptr<Go::SplineSurface>(new Go::SplineSurface(*src));
@@ -855,11 +918,17 @@ PyObject* Generate_RotationalCurveSweep(PyObject* self, PyObject* args, PyObject
     return NULL;
 
   shared_ptr<Go::ParamCurve> curve = PyObject_AsGoCurve(curveo);
+  if (!curve) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curve: expected Curve");
+    return NULL;
+  }
+
   shared_ptr<Go::Point> pos   = PyObject_AsGoPoint(poso);
   shared_ptr<Go::Point> axis  = PyObject_AsGoPoint(axiso);
-
-  if (!curve || !pos || !axis)
+  if (!pos || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for pos or axis: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   shared_ptr<Go::SplineCurve> c = convertSplineCurve(curve);
@@ -885,8 +954,10 @@ PyObject* Generate_SphereSurface(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  if (!center)
+  if (!center) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
   Go::Point x_axis(1.0, 0.0, 0.0);
@@ -922,8 +993,10 @@ PyObject* Generate_TorusSurface(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
+  if (!center || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or axis: expected pointlike");
     return NULL;
+  }
 
   Surface* result = (Surface*)Surface_Type.tp_alloc(&Surface_Type,0);
 
@@ -951,8 +1024,10 @@ PyObject* Generate_TrimSurface(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::ParamSurface> surf1 = PyObject_AsGoSurface(originalo);
   shared_ptr<Go::ParamSurface> surf2 = PyObject_AsGoSurface(trimo);
-  if (!surf1 || !surf2)
+  if (!surf1 || !surf2) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for original or trim: expected Surface");
     return NULL;
+  }
 
   shared_ptr<Go::SplineSurface> surf_base = convertSplineSurface(surf1);
   shared_ptr<Go::SplineSurface> surf_remove = convertSplineSurface(surf2);

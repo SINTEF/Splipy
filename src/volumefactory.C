@@ -54,8 +54,10 @@ PyObject* Generate_Box(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::Point> corner = PyObject_AsGoPoint(cornero);
   shared_ptr<Go::Point> axisx  = PyObject_AsGoPoint(axisxo);
   shared_ptr<Go::Point> axisy  = PyObject_AsGoPoint(axisyo);
-  if (!corner || !axisx || !axisy)
+  if (!corner || !axisx || !axisy) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for corner, u_axis or v_axis: expected pointlike");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   
@@ -93,8 +95,10 @@ PyObject* Generate_Cone(PyObject* self, PyObject* args, PyObject* kwds)
        
   shared_ptr<Go::Point> apex = PyObject_AsGoPoint(apexo);
   shared_ptr<Go::Point> axis  = PyObject_AsGoPoint(axiso);
-  if (!apex || !axis)
+  if (!apex || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for apex or axis: expected pointlike");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   
@@ -122,9 +126,15 @@ PyObject* Generate_ContractSurfaceTo(PyObject* self, PyObject* args, PyObject* k
     return NULL;
 
   shared_ptr<Go::SplineSurface> surf = convertSplineSurface(PyObject_AsGoSurface(surfaceo));
-  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
-  if (!surf || !point)
+  if (!surf) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface");
     return NULL;
+  }
+  shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
+  if (!point) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for point: expected pointlike");
+    return NULL;
+  }
 
   // create "basis" for the point
   double knots[] = {0,0,1,1};
@@ -182,8 +192,10 @@ PyObject* Generate_Cylinder(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> bpoint = PyObject_AsGoPoint(bpointo);
   shared_ptr<Go::Point> normal = PyObject_AsGoPoint(normalo);
-  if (!center || !bpoint || !normal)
+  if (!center || !bpoint || !normal) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center, boundarypoint or normal: expected pointlike");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   
@@ -217,8 +229,10 @@ PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds
     return NULL;
 
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
-  if (!point)
+  if (!point) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for direction: expected pointlike");
     return NULL;
+  }
 
   Volume* result = NULL;
   shared_ptr<Go::ParamSurface> s1 = PyObject_AsGoSurface(surfo);
@@ -264,8 +278,10 @@ PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
                                    (char**)keyWords,&surfaceso,&paramso,&order))
     return NULL;
 
-  if (!PyObject_TypeCheck(surfaceso,&PyList_Type))
+  if (!PyObject_TypeCheck(surfaceso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for surfaces: expected list");
     return NULL;
+  }
 
   std::vector<shared_ptr<Go::SplineSurface> > surfaces;
   for (int i=0; i < PyList_Size(surfaceso); ++i) {
@@ -275,8 +291,10 @@ PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
       continue;
     surfaces.push_back(convertSplineSurface(surf));
   }
-  if (surfaces.size() < 2)
+  if (surfaces.size() < 2) {
+    PyErr_SetString(PyExc_ValueError, "Expected at least two surfaces");
     return NULL;
+  }
 
   std::vector<double> params;
   if (paramso) {
@@ -309,10 +327,19 @@ PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
         &rc, &gpar, &jnbpar, &jstat);
 
   if (jstat != 0) {
-    std::cerr << "lofting volumes failed" << std::endl;
-    exit(1);
+    std::ostringstream ss;
+    ss << "SISL returned " << (jstat > 0 ? "warning" : "error") << " code " << jstat;
+    if (jstat > 0) {
+      // Warnings may throw exceptions, depending on user settings,
+      // in that case we are obliged to treat it as one
+      if (PyErr_WarnEx(PyExc_RuntimeWarning, ss.str().c_str(), 1) == -1)
+        return NULL;
+    } else {
+      PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+      return NULL;
+    }
   }
-  
+
   std::vector<double> knot3;
   knot3.resize(rc->in+rc->ik);
   std::copy(rc->et, rc->et+knot3.size(), knot3.begin());
@@ -350,8 +377,10 @@ PyObject* Generate_LinearSurfaceSweep(PyObject* self, PyObject* args, PyObject* 
     return NULL;
 
   shared_ptr<Go::Point> point = PyObject_AsGoPoint(pointo);
-  if (!point)
+  if (!point) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for point: expected pointlike");
     return NULL;
+  }
 
   Volume* result = NULL;
   shared_ptr<Go::ParamSurface> s = PyObject_AsGoSurface(o1);
@@ -384,13 +413,17 @@ PyObject* Generate_VolNonRational(PyObject* self, PyObject* args, PyObject* kwds
     return NULL;
 
   shared_ptr<Go::ParamVolume> vol = PyObject_AsGoVolume(originalo);
-  if (!vol)
+  if (!vol) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for original: expected volume");
     return NULL;
+  }
 
   shared_ptr<Go::SplineVolume> vol_base = convertSplineVolume(vol);
 
-  if (!vol_base)
+  if (!vol_base) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineVolume:");
     return NULL;
+  }
 
   // if it's already B-spline, just return itself
   if(!vol_base->rational()) {
@@ -461,8 +494,15 @@ PyObject* Generate_ResampleVolume(PyObject* self, PyObject* args, PyObject* kwds
   shared_ptr<Go::SplineCurve> curve= 
                 convertSplineCurve(PyObject_AsGoCurve(curveo));
 
-  if (!volume || !curve)
+  if (!volume) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for volume: expected Volume");
     return NULL;
+  }
+
+  if (!curve) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curve: expected Curve");
+    return NULL;
+  }
 
   const Go::BsplineBasis& basis_u = volume->basis(0);
   const Go::BsplineBasis& basis_v = volume->basis(1);
@@ -527,10 +567,15 @@ PyObject* Generate_RotationalSurfaceSweep(PyObject* self, PyObject* args, PyObje
     return NULL;
 
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(surfaceo);
+  if (!surface) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for surface: expected Surface");
+  }
   shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
   shared_ptr<Go::Point> pos = PyObject_AsGoPoint(poso);
-  if (!surface || !axis || !pos)
+  if (!axis || !pos) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for axis or position: expected pointlike");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   result->data.reset(Go::SweepVolumeCreator::rotationalSweptVolume(*convertSplineSurface(surface),
@@ -574,8 +619,10 @@ PyObject* Generate_Parallelepiped(PyObject* self, PyObject* args, PyObject* kwds
   shared_ptr<Go::Point> axisx  = PyObject_AsGoPoint(axisxo);
   shared_ptr<Go::Point> axisy  = PyObject_AsGoPoint(axisyo);
   shared_ptr<Go::Point> axisz  = PyObject_AsGoPoint(axiszo);
-  if (!corner || !axisx || !axisy || !axisz)
+  if (!corner || !axisx || !axisy || !axisz) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for corner, u_axis, v_axis or w_axis: expected pointlike");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   
@@ -602,8 +649,10 @@ PyObject* Generate_Sphere(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
        
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  if (!center)
+  if (!center) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center: expected pointlike");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
 
@@ -639,8 +688,10 @@ PyObject* Generate_Torus(PyObject* self, PyObject* args, PyObject* kwds)
        
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> axis   = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
+  if (!center || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or axis: expected pointlike");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
 
