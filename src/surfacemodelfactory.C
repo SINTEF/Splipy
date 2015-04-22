@@ -28,8 +28,10 @@ PyObject* Generate_RegularizeSurface(PyObject* self, PyObject* args, PyObject* k
     return NULL;
 
   shared_ptr<Go::ParamSurface> surface = PyObject_AsGoSurface(surfaceo);
-  if (!surface)
+  if (!surface) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::ParamSurface");
     return NULL;
+  }
 
   SurfaceModel* result = (SurfaceModel*)Surface_Type.tp_alloc(&SurfaceModel_Type,0);
   shared_ptr<Go::BoundedSurface> par_surf_bd = 

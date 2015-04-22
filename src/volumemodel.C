@@ -38,8 +38,10 @@ PyObject* VolumeModel_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
         continue;
       volumes.push_back(shared_ptr<Go::ftVolume>(new Go::ftVolume(static_pointer_cast<Go::ParamVolume>(spVol),-1)));
     }
-    if (volumes.size() < 1)
+    if (volumes.size() < 1) {
+      PyErr_SetString(PyExc_ValueError, "Expected more than one volume");
       return NULL;
+    }
 
     self->data.reset(new Go::VolumeModel(volumes,
                                          modState.gapTolerance,
@@ -76,8 +78,10 @@ PyObject* VolumeModel_Append(PyObject* o1, PyObject* o2)
   shared_ptr<Go::VolumeModel> model = PyObject_AsGoVolumeModel(o1);
   shared_ptr<Go::ParamVolume> surf  = PyObject_AsGoVolume(o2);
 
-  if (!model || !surf)
+  if (!model || !surf) {
+    PyErr_SetString(PyExc_TypeError, "Expected VolumeModel += Volume");
     return NULL;
+  }
 
   model->append(shared_ptr<Go::ftVolume>(new Go::ftVolume(surf,-1)));
 
@@ -105,8 +109,10 @@ PyDoc_STRVAR(volumemodel_get__doc__,"Returns the i'th Volume of this VolumeModel
 PyObject* VolumeModel_Get(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::VolumeModel> vm = PyObject_AsGoVolumeModel(self);
-  if (!vm || i < 0 || i >= vm->nmbEntities())
+  if (!vm || i < 0 || i >= vm->nmbEntities()) {
+    PyErr_SetString(PyExc_IndexError, "Index out of bounds");
     return NULL;
+  }
 
   Volume* result = (Volume*)Volume_Type.tp_alloc(&Volume_Type,0);
   result->data   = vm->getSplineVolume(i);

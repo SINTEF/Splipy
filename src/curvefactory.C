@@ -41,14 +41,18 @@ PyObject* Generate_Circle(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
-  if (!center)
+  if (!center) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center: expected pointlike");
     return NULL;
+  }
 
   Go::Point normal(0.0,0.0);
   if (modState.dim == 3) {
     shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
-    if (!norm)
+    if (!norm) {
+      PyErr_SetString(PyExc_TypeError, "Invalid type for normal: expected pointlike");
       return NULL;
+    }
     normal = *norm;
   } else if(modState.dim == 2) {
     // WORKAROUND FIX, due to GoTools bug.
@@ -119,13 +123,17 @@ PyObject* Generate_CircleSegment(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> start = PyObject_AsGoPoint(starto);
-  if (!center || !start)
+  if (!center || !start) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or start: expected pointlike");
     return NULL;
+  }
   Go::Point normal(0.0,0.0,1.0);
   if (modState.dim == 3) {
     shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
-    if (!norm)
+    if (!norm) {
+      PyErr_SetString(PyExc_TypeError, "Invalid type for normal: expected pointlike");
       return NULL;
+    }
     normal = *norm;
   }
 
@@ -211,20 +219,19 @@ PyObject* Generate_Ellipse(PyObject* self, PyObject* args, PyObject* kwds)
                                    &radius1,&radius2,&normalo))
       return NULL;
 
-  if (centero->ob_type != &Point_Type || axiso->ob_type != &Point_Type)
-    return NULL;
-  if (modState.dim == 3 && normalo->ob_type != &Point_Type)
-    return NULL;
-
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
+  if (!center || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or axis: expected pointlike");
     return NULL;
+  }
   Go::Point normal(0.0,0.0);
   if (modState.dim == 3) {
     shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
-    if (!norm)
+    if (!norm) {
+      PyErr_SetString(PyExc_TypeError, "Invalid type for normal: expected pointlike");
       return NULL;
+    }
     normal = *norm;
   }
 
@@ -268,13 +275,17 @@ PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwd
 
   shared_ptr<Go::Point> center = PyObject_AsGoPoint(centero);
   shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
-  if (!center || !axis)
+  if (!center || !axis) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center or semi_axis: expected pointlike");
     return NULL;
+  }
   Go::Point normal(0.0,0.0);
   if (modState.dim == 3) {
     shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
-    if (!norm)
+    if (!norm) {
+      PyErr_SetString(PyExc_TypeError, "Invalid type for normal: expected pointlike");
       return NULL;
+    }
     normal = *norm;
   }
   double startangle_mod(startangle);
@@ -287,7 +298,7 @@ PyObject* Generate_EllipticSegment(PyObject* self, PyObject* args, PyObject* kwd
 
   // sanity check to avoid segments on both sides of the seam
   if (startangle > endangle && startangle_mod > endangle_mod) {
-    std::cerr << "Cannot construct elliptic segments crossing the seam" << std::endl;
+    PyErr_SetString(PyExc_ValueError, "Cannot construct elliptic segments crossing the seam");
     return NULL;
   }
   if (startangle_mod > endangle_mod)
@@ -332,8 +343,10 @@ PyObject* Generate_Helix(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::Point> axis = PyObject_AsGoPoint(axiso);
   shared_ptr<Go::Point> start = PyObject_AsGoPoint(starto);
 
-  if (!center || !axis || !start)
+  if (!center || !axis || !start) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for center, start or axis: expected pointlike");
     return NULL;
+  }
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   SISLCurve* sisl_helix;
@@ -366,20 +379,26 @@ PyObject* Generate_IntersectCurve(PyObject* self, PyObject* args, PyObject* kwds
   // get ParamCurve from Python object
   shared_ptr<Go::ParamCurve> curve1p = PyObject_AsGoCurve(curve1o);
   shared_ptr<Go::ParamCurve> curve2p = PyObject_AsGoCurve(curve2o);
-  if (!curve1p || !curve2p)
+  if (!curve1p || !curve2p) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curve1 or curve2: expected Curve");
     return NULL;
+  }
 
   // get SplineCurve from ParamCurve
   shared_ptr<Go::SplineCurve> curve1s = convertSplineCurve(curve1p);
   shared_ptr<Go::SplineCurve> curve2s = convertSplineCurve(curve2p);
-  if (!curve1s || !curve2s)
+  if (!curve1s || !curve2s) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   // get SISL curve from SplineCurve
   SISLCurve *crv1 = Curve2SISL(*curve1s, true);
   SISLCurve *crv2 = Curve2SISL(*curve2s, true);
-  if (!crv1 || !crv2)
+  if (!crv1 || !crv2) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain SISLCurve");
     return NULL;
+  }
 
   // setup SISL parameters
   double epsco = 0.0;                   // Computational resolution (not used)
@@ -398,11 +417,18 @@ PyObject* Generate_IntersectCurve(PyObject* self, PyObject* args, PyObject* kwds
         &status);                    // output errors
 
   // error handling
-  if (status > 0) { // warning
-    std::cerr << __FUNCTION__ << " WARNING: " << status << std::endl;
-  } else if (status < 0) { // error
-    std::cerr << __FUNCTION__ << " ERROR: " << status << std::endl;
-    return NULL;
+  if (status != 0) {
+    std::ostringstream ss;
+    ss << "SISL returned " << (status > 0 ? "warning" : "error") << " code " << status;
+    if (status > 0) {
+      // Warnings may throw exceptions, depending on user settings,
+      // in that case we are obliged to treat it as one
+      if (PyErr_WarnEx(PyExc_RuntimeWarning, ss.str().c_str(), 1) == -1)
+        return NULL;
+    } else {
+      PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+      return NULL;
+    }
   }
 
   PyObject* result    = PyTuple_New(2);
@@ -462,23 +488,29 @@ PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* k
   // get ParamSurfaces from Python objects
   shared_ptr<Go::ParamSurface> cyl_ps    = PyObject_AsGoSurface(cylindero);
   shared_ptr<Go::ParamSurface> param_srf = PyObject_AsGoSurface(surfo);
-  if (!cyl_ps || !param_srf)
+  if (!cyl_ps || !param_srf) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for surface, cylinder: expected Surface");
     return NULL;
+  }
 
   // check for Cylinder and SplineSurface from ParamSurfaces
   if (cyl_ps->instanceType() != Go::Class_Cylinder) {
-    std::cerr << "argument not a cylinder\n";
+    PyErr_SetString(PyExc_ValueError, "cylinder is not a cylinder");
     return NULL;
   }
   shared_ptr<Go::SplineSurface> srf = convertSplineSurface(param_srf);
   shared_ptr<Go::Cylinder>      cyl = static_pointer_cast<Go::Cylinder>(cyl_ps);
-  if (!srf || !cyl)
+  if (!srf || !cyl) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface or Go::Cylinder");
     return NULL;
+  }
 
   // get SISL surface from SplineSurface
   SISLSurf* sisl_srf = GoSurf2SISL(*srf, true);
-  if (!sisl_srf)
+  if (!sisl_srf) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain SISLSurf");
     return NULL;
+  }
 
   // SISL input arguments
   Go::Point x_ax, y_ax, z_ax, pt;
@@ -498,11 +530,20 @@ PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* k
   // SISL surface intersect cylinder (generating points and curves)
   s1853(sisl_srf, center, axis, radius, dim, 0, modState.gapTolerance, // input arguments
         &num_of_pts, &pts, &num_of_curves, &curves, &stat);            // output arguments
-  if (stat < 0) {
-    std::cerr << __FUNCTION__ << " ERROR: " << stat << std::endl;
-    return NULL;
-  } else if (stat > 0)
-    std::cerr << __FUNCTION__ << " WARNING: " << stat << std::endl;
+
+  if (stat != 0) {
+    std::ostringstream ss;
+    ss << "SISL returned " << (stat > 0 ? "warning" : "error") << " code " << stat;
+    if (stat > 0) {
+      // Warnings may throw exceptions, depending on user settings,
+      // in that case we are obliged to treat it as one
+      if (PyErr_WarnEx(PyExc_RuntimeWarning, ss.str().c_str(), 1) == -1)
+        return NULL;
+    } else {
+      PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+      return NULL;
+    }
+  }
 
   PyObject* result    = PyTuple_New(2);
   PyObject* curveList = PyList_New(0);
@@ -526,17 +567,24 @@ PyObject* Generate_IntersectCylinder(PyObject* self, PyObject* args, PyObject* k
           curves[i], makeCrv, graphic, &stat);
 
     if (stat == 3) {
-      // ERROR
-      std::cerr << "Iteration stopped due to singular point or\n"
-                << "degenerate surface. A part of an intersec-\n"
-                << "tion curve may have been traced out. If no\n"
-                << "curve is traced out, the curve pointers in\n"
-                << "the SISLIntcurve object point to NULL.\n";
+      PyErr_SetString(PyExc_RuntimeError,
+                      "Integration stopped due to a singular point or degenerate surface. "
+                      "A part of an intersection curve may have been traced out. If no curve "
+                      "is traced out, the curve pointers in the SISLIntcurve object point to NULL.");
       return NULL;
-    } else if (stat < 0) {
-      // ERROR
-      std::cerr << __FUNCTION__ << " ERROR " << stat << std::endl;
-      return NULL;
+    }
+    if (stat != 0) {
+      std::ostringstream ss;
+      ss << "SISL returned " << (stat > 0 ? "warning" : "error") << " code " << stat;
+      if (stat > 0) {
+        // Warnings may throw exceptions, depending on user settings,
+        // in that case we are obliged to treat it as one
+        if (PyErr_WarnEx(PyExc_RuntimeWarning, ss.str().c_str(), 1) == -1)
+          return NULL;
+      } else {
+        PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+        return NULL;
+      }
     }
 
     Go::SplineCurve *crv = Go::SISLCurve2Go(curves[i]->pgeom);
@@ -570,8 +618,10 @@ PyObject* Generate_Line(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::Point> p0 = PyObject_AsGoPoint(p0o);
   shared_ptr<Go::Point> dir = PyObject_AsGoPoint(diro);
-  if (!p0 || !dir)
+  if (!p0 || !dir) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for p0 or direction: expected pointlike");
     return NULL;
+  }
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   result->data.reset(new Go::Line(*p0,*dir));
@@ -600,8 +650,10 @@ PyObject* Generate_LineSegment(PyObject* self, PyObject* args, PyObject* kwds)
 
   shared_ptr<Go::Point> p0 = PyObject_AsGoPoint(p0o);
   shared_ptr<Go::Point> p1 = PyObject_AsGoPoint(p1o);
-  if (!p0 || !p1)
+  if (!p0 || !p1) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for p0 or p1: expected pointlike");
     return NULL;
+  }
 
   Curve* result = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
   if (vector)
@@ -627,13 +679,16 @@ PyObject* Generate_CrvNonRational(PyObject* self, PyObject* args, PyObject* kwds
     return NULL;
 
   shared_ptr<Go::ParamCurve> crv = PyObject_AsGoCurve(originalo);
-  if (!crv)
+  if (!crv) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for original: expected Curve");
     return NULL;
+  }
 
   shared_ptr<Go::SplineCurve> crv_base = convertSplineCurve(crv);
-
-  if (!crv_base)
+  if (!crv_base) {
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
+  }
 
   // if it's already B-spline, just return itself
   if(!crv_base->rational()) {
@@ -689,9 +744,10 @@ PyObject* Generate_ResampleCurve(PyObject* self, PyObject* args, PyObject* kwds)
     return NULL;
 
   shared_ptr<Go::SplineCurve> curve = convertSplineCurve(PyObject_AsGoCurve(curveo));
-
-  if (!curve || !knotso)
+  if (!curve || !knotso) {
+    PyErr_SetString(PyExc_TypeError, "Invalid type for curve: expected Curve");
     return NULL;
+  }
 
   std::vector<double> knots;
   if (PyObject_TypeCheck(knotso,&PyList_Type)) {
@@ -757,8 +813,10 @@ PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
 
   if (!PyObject_TypeCheck(paramso,&PyList_Type) ||
       !PyObject_TypeCheck(knotso,&PyList_Type) ||
-      !PyObject_TypeCheck(coeffso,&PyList_Type))
+      !PyObject_TypeCheck(coeffso,&PyList_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Invalid types for params, knots or coeffs: expected list");
     return NULL;
+  }
 
   // get parameters
   std::vector<double> params;
@@ -778,7 +836,7 @@ PyObject* Generate_SplineCurve(PyObject* self, PyObject* args, PyObject* kwds)
   if (params.size() != knots.size() ||
        knots.size() != coeffs.size()*(rational?1+modState.dim:
                                                  modState.dim)) {
-    std::cerr << "Error constructing spline curve" << std::endl;
+    PyErr_SetString(PyExc_RuntimeError, "Unable to construct spline curve");
     return NULL;
   }
 
