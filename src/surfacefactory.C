@@ -28,13 +28,14 @@ namespace GeoModeller {
 extern "C" {
 PyObject* SurfaceFactory_module;
 
-PyDoc_STRVAR(generate_addloop__doc__,"Add a loop to a surface\n"
-                                     "@param original: The original surface\n"
-                                     "@type original: Surface\n"
-                                     "@param loop: The curve describing the loop\n"
-                                     "@type loop: Curve\n"
-                                     "@return: Surface with loop added\n"
-                                     "@rtype: Surface");
+PyDoc_STRVAR(generate_addloop__doc__,
+             "Add a loop to a surface\n"
+             "@param original: The original surface\n"
+             "@type original: Surface\n"
+             "@param loop: The curve describing the loop\n"
+             "@type loop: Curve\n"
+             "@return: Surface with loop added\n"
+             "@rtype: Surface");
 PyObject* Generate_AddLoop(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", "loop", NULL };
@@ -159,15 +160,16 @@ PyObject* Generate_AddLoop(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_circular_disc__doc__,"Generate a circular disc\n"
-                                           "@param center: The center of the disc\n"
-                                           "@type center: Point, list of floats or tuple of floats\n"
-                                           "@param boundarypoint: A point on the boundary of the disc\n"
-                                           "@type boundarypoint: Point, list of floats or tuple of floats\n"
-                                           "@param normal: (optional) The normal of the disc\n"
-                                           "@type normal: Point, list of floats or tuple of floats\n"
-                                           "@return: The disc\n"
-                                           "@rtype: Surface");
+PyDoc_STRVAR(generate_circular_disc__doc__,
+             "Generate a circular disc\n"
+             "@param center: The center of the disc\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param boundarypoint: A point on the boundary of the disc\n"
+             "@type boundarypoint: Point, list of floats or tuple of floats\n"
+             "@param normal: (optional) The normal of the disc\n"
+             "@type normal: Point, list of floats or tuple of floats\n"
+             "@return: The disc\n"
+             "@rtype: Surface");
 PyObject* Generate_CircularDisc(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "boundarypoint", "normal", NULL };
@@ -202,19 +204,20 @@ PyObject* Generate_CircularDisc(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_cone_surface__doc__,"Generate a cone surface\n"
-                                          "@param apex: The apex of the cone\n"
-                                          "@type apex: Point, list of floats or tuple of floats\n"
-                                          "@param axis: The axis of the cone\n"
-                                          "@type axis: Point, list of floats or tuple of floats\n"
-                                          "@param angle: The angle of the cone in radians\n"
-                                          "@type angle: float\n"
-                                          "@param radius: (optional) The radius of the cone\n"
-                                          "@type radius: float\n"
-                                          "@param height: (optional) The height of the cone\n"
-                                          "@type height: float\n"
-                                          "@return: The cone surface\n"
-                                          "@rtype: Surface");
+PyDoc_STRVAR(generate_cone_surface__doc__,
+             "Generate a cone surface\n"
+             "@param apex: The apex of the cone\n"
+             "@type apex: Point, list of floats or tuple of floats\n"
+             "@param axis: The axis of the cone\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param angle: The angle of the cone in radians\n"
+             "@type angle: float\n"
+             "@param radius: (optional) The radius of the cone\n"
+             "@type radius: float\n"
+             "@param height: (optional) The height of the cone\n"
+             "@type height: float\n"
+             "@return: The cone surface\n"
+             "@rtype: Surface");
 PyObject* Generate_ConeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"apex", "axis", "angle", "radius", "height", NULL };
@@ -244,11 +247,12 @@ PyObject* Generate_ConeSurface(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_coons_surface_patch__doc__,"Create a new SplineSurface representing the coons patch defined by a loop of four boundary curves\n"
-                                                 "@param curves: There must be exactly four curves, they must all be of type 'SplineCurve', and they must be nonrational\n"
-                                                 "@type curves: List of Curve\n"
-                                                 "@return: The interior of the four curves\n"
-                                                 "@rtype: Surface");
+PyDoc_STRVAR(generate_coons_surface_patch__doc__,
+             "Create a new SplineSurface representing the coons patch defined by a loop of four boundary curves\n"
+             "@param curves: Exactly four non-rational spline curves\n"
+             "@type curves: List of Curve\n"
+             "@return: The interior of the four curves\n"
+             "@rtype: Surface");
 PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curves", NULL };
@@ -291,13 +295,14 @@ PyObject* Generate_CoonsSurfacePatch(PyObject* self, PyObject* args, PyObject* k
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_contract_curve_to__doc__,"Generate a surface by contracting a curve to a point\n"
-                                               "@param curve: The curve\n"
-                                               "@type curve: Curve\n"
-                                               "@param point: The point to contract to\n"
-                                               "@type point: Point, list of floats or tuple of floats\n"
-                                               "@return: Resulting geometry\n"
-                                               "@rtype: Surface");
+PyDoc_STRVAR(generate_contract_curve_to__doc__,
+             "Generate a surface by contracting a curve to a point\n"
+             "@param curve: The curve\n"
+             "@type curve: Curve\n"
+             "@param point: The point to contract to\n"
+             "@type point: Point, list of floats or tuple of floats\n"
+             "@return: Resulting geometry\n"
+             "@rtype: Surface");
 PyObject* Generate_ContractCurveTo(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve", "point", NULL };
@@ -349,17 +354,18 @@ PyObject* Generate_ContractCurveTo(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_cylinder_surface__doc__,"Generate a cylinder surface\n"
-                                              "@param center: The center of the cylinder\n"
-                                              "@type center: Point, list of floats or tuple of floats\n"
-                                              "@param axis: The axis of the cylinder\n"
-                                              "@type axis: Point, list of floats or tuple of floats\n"
-                                              "@param radius: The radius of the cylinder\n"
-                                              "@type radius: float\n"
-                                              "@param height: (optional) The height of the cylinder\n"
-                                              "@type height: float\n"
-                                              "@return: The cylinder surface\n"
-                                              "@rtype: Surface");
+PyDoc_STRVAR(generate_cylinder_surface__doc__,
+             "Generate a cylinder surface\n"
+             "@param center: The center of the cylinder\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param axis: The axis of the cylinder\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param radius: The radius of the cylinder\n"
+             "@type radius: float\n"
+             "@param height: (optional) The height of the cylinder\n"
+             "@type height: float\n"
+             "@return: The cylinder surface\n"
+             "@rtype: Surface");
 PyObject* Generate_CylinderSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "axis", "radius", "height", NULL };
@@ -387,21 +393,22 @@ PyObject* Generate_CylinderSurface(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_cylinder_section__doc__,"Generate a section of a cylinder surface\n"
-                                              "@param center: The center of the cylinder\n"
-                                              "@type center: Point, list of floats or tuple of floats\n"
-                                              "@param axis: The axis of the cylinder\n"
-                                              "@type axis: Point, list of floats or tuple of floats\n"
-                                              "@param radius: The radius of the cylinder\n"
-                                              "@type radius: float\n"
-                                              "@param height: The height of the cylinder\n"
-                                              "@type height: float\n"
-                                              "@param startAngle: The starting angle for the cylinder section\n"
-                                              "@type startAngle: float\n"
-                                              "@param angle: The circular segment angle of the cylinder section\n"
-                                              "@type angle: float\n"
-                                              "@return: The cylinder surface\n"
-                                              "@rtype: Surface");
+PyDoc_STRVAR(generate_cylinder_section__doc__,
+             "Generate a section of a cylinder surface\n"
+             "@param center: The center of the cylinder\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param axis: The axis of the cylinder\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param radius: The radius of the cylinder\n"
+             "@type radius: float\n"
+             "@param height: The height of the cylinder\n"
+             "@type height: float\n"
+             "@param startAngle: The starting angle for the cylinder section\n"
+             "@type startAngle: float\n"
+             "@param angle: The circular segment angle of the cylinder section\n"
+             "@type angle: float\n"
+             "@return: The cylinder surface\n"
+             "@rtype: Surface");
 PyObject* Generate_CylinderSection(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "axis", "radius", "height", "startAngle", "angle", NULL };
@@ -430,15 +437,16 @@ PyObject* Generate_CylinderSection(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_linear_curve_sweep__doc__,"Generate a surface by linearly sweeping a curve along a curve\n"
-                                                "@param curve1: The curve to sweep\n"
-                                                "@type curve1: Curve\n"
-                                                "@param curve2: The curve to sweep along\n"
-                                                "@type curve2: Curve\n"
-                                                "@param point: The start point of the new surface\n"
-                                                "@type point: Point\n"
-                                                "@return: The swept area\n"
-                                                "@rtype: Surface");
+PyDoc_STRVAR(generate_linear_curve_sweep__doc__,
+             "Generate a surface by linearly sweeping a curve along a curve\n"
+             "@param curve1: The curve to sweep\n"
+             "@type curve1: Curve\n"
+             "@param curve2: The curve to sweep along\n"
+             "@type curve2: Curve\n"
+             "@param point: The start point of the new surface\n"
+             "@type point: Point\n"
+             "@return: The swept area\n"
+             "@rtype: Surface");
 PyObject* Generate_LinearCurveSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve1", "curve2", "point", NULL };
@@ -471,15 +479,16 @@ PyObject* Generate_LinearCurveSweep(PyObject* self, PyObject* args, PyObject* kw
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_loft_curves__doc__,"Generate a surface by lofting curves\n"
-                                         "@param curves: The curves to loft\n"
-                                         "@type curves: List of Curve\n"
-                                         "@param params: The parameters of the curves (optional)\n"
-                                         "@type params: List of floats\n"
-                                         "@param order: The order in the lofting direction\n"
-                                         "@type order: Integer\n"
-                                         "@return: The lofted surface\n"
-                                         "@rtype: Surface");
+PyDoc_STRVAR(generate_loft_curves__doc__,
+             "Generate a surface by lofting curves\n"
+             "@param curves: The curves to loft\n"
+             "@type curves: List of Curve\n"
+             "@param params: The parameters of the curves (optional)\n"
+             "@type params: List of floats\n"
+             "@param order: The order in the lofting direction\n"
+             "@type order: Integer\n"
+             "@return: The lofted surface\n"
+             "@rtype: Surface");
 PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curves", "params", "order", NULL };
@@ -549,15 +558,16 @@ PyObject* Generate_LoftCurves(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_mirror_surface__doc__,"Generate a surface by mirroring a surface\n"
-                                            "@param original: The surface to mirror\n"
-                                            "@type original: Surface\n"
-                                            "@param point: A point on the plane to mirror around\n"
-                                            "@type point: Point, list of floats or tuple of floats\n"
-                                            "@param normal: The normal of the plane to mirror around\n"
-                                            "@type normal: Point, list of floats or tuple of floats\n"
-                                            "@return: The mirrored surface\n"
-                                            "@rtype: Surface");
+PyDoc_STRVAR(generate_mirror_surface__doc__,
+             "Generate a surface by mirroring a surface\n"
+             "@param original: The surface to mirror\n"
+             "@type original: Surface\n"
+             "@param point: A point on the plane to mirror around\n"
+             "@type point: Point, list of floats or tuple of floats\n"
+             "@param normal: The normal of the plane to mirror around\n"
+             "@type normal: Point, list of floats or tuple of floats\n"
+             "@return: The mirrored surface\n"
+             "@rtype: Surface");
 PyObject* Generate_MirrorSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "point", "normal", NULL };
@@ -595,11 +605,12 @@ PyObject* Generate_MirrorSurface(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_nonrational__doc__,"Generate a non-rational representation (approximation) of a rational spline surface\n"
-                                         "@param original: The initial (rational) surface\n"
-                                         "@type original: Surface\n"
-                                         "@return: Non-rational B-spline representation of the surface\n"
-                                         "@rtype: Surface");
+PyDoc_STRVAR(generate_nonrational__doc__,
+             "Generate a non-rational representation (approximation) of a rational spline surface\n"
+             "@param original: The initial (rational) surface\n"
+             "@type original: Surface\n"
+             "@return: Non-rational B-spline representation of the surface\n"
+             "@rtype: Surface");
 PyObject* Generate_SrfNonRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", NULL };
@@ -659,13 +670,14 @@ PyObject* Generate_SrfNonRational(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_plane__doc__,"Generate an infinite plane\n"
-                                   "@param p0: A point on the plane\n"
-                                   "@type center: Point, list of floats or tuple of floats\n"
-                                   "@param normal: The normal of the plane\n"
-                                   "@type center: Point, list of floats or tuple of floats\n"
-                                   "@return: The plane\n"
-                                   "@rtype: Surface");
+PyDoc_STRVAR(generate_plane__doc__,
+             "Generate an infinite plane\n"
+             "@param p0: A point on the plane\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param normal: The normal of the plane\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@return: The plane\n"
+             "@rtype: Surface");
 PyObject* Generate_Plane(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"p0", "normal", NULL };
@@ -688,19 +700,20 @@ PyObject* Generate_Plane(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_rectangle__doc__,"Generate a rectangle\n"
-                                       "@param corner: A corner of the rectangle\n"
-                                       "@type corner: Point, list of floats or tuple of floats\n"
-                                       "@param u_axis: The first axis of the rectangle\n"
-                                       "@type u_axis: Point, list of floats or tuple of floats\n"
-                                       "@param v_axis: The second axis of the rectangle\n"
-                                       "@type v_axis: Point, list of floats or tuple of floats\n"
-                                       "@param u_length: Length of sides along u-axis\n"
-                                       "@type u_length: float\n"
-                                       "@param v_length: Length of sides along v-axis\n"
-                                       "@type v_length: float\n"
-                                       "@return: The rectangle\n"
-                                       "@rtype: Surface");
+PyDoc_STRVAR(generate_rectangle__doc__,
+             "Generate a rectangle\n"
+             "@param corner: A corner of the rectangle\n"
+             "@type corner: Point, list of floats or tuple of floats\n"
+             "@param u_axis: The first axis of the rectangle\n"
+             "@type u_axis: Point, list of floats or tuple of floats\n"
+             "@param v_axis: The second axis of the rectangle\n"
+             "@type v_axis: Point, list of floats or tuple of floats\n"
+             "@param u_length: Length of sides along u-axis\n"
+             "@type u_length: float\n"
+             "@param v_length: Length of sides along v-axis\n"
+             "@type v_length: float\n"
+             "@return: The rectangle\n"
+             "@rtype: Surface");
 PyObject* Generate_Rectangle(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"corner", "u_axis", "v_axis", "u_length", "v_length", NULL };
@@ -730,19 +743,20 @@ PyObject* Generate_Rectangle(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_resample_surface__doc__,"Generate a surface by sampling another\n"
-                                              "@param surface: The surface to sample\n"
-                                              "@type surface: Surface\n"
-                                              "@param n1: The number of points to sample in the first direction\n"
-                                              "@type n1: integer\n"
-                                              "@param p1: The order in the first direction\n"
-                                              "@type p1: integer\n"
-                                              "@param n2: The number of points to sample in the first direction\n"
-                                              "@type n2: integer\n"
-                                              "@param p2: The order in the first direction\n"
-                                              "@type p2: integer\n"
-                                              "@return: The resampled surface\n"
-                                              "@rtype: Surface");
+PyDoc_STRVAR(generate_resample_surface__doc__,
+             "Generate a surface by sampling another\n"
+             "@param surface: The surface to sample\n"
+             "@type surface: Surface\n"
+             "@param n1: The number of points to sample in the first direction\n"
+             "@type n1: integer\n"
+             "@param p1: The order in the first direction\n"
+             "@type p1: integer\n"
+             "@param n2: The number of points to sample in the first direction\n"
+             "@type n2: integer\n"
+             "@param p2: The order in the first direction\n"
+             "@type p2: integer\n"
+             "@return: The resampled surface\n"
+             "@rtype: Surface");
 PyObject* Generate_ResampleSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"surface", "n1", "p1", "n2", "p2", NULL };
@@ -819,13 +833,14 @@ PyObject* Generate_ResampleSurface(PyObject* self, PyObject* args, PyObject* kwd
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_project_surface__doc__,"Generate a surface by projecting a surface onto the basis of another\n"
-                                             "@param src: The surface to sample\n"
-                                             "@type src: Surface\n"
-                                             "@param dst: The surface with the basis we want for the new surface\n"
-                                             "@type dst: Surface\n"
-                                             "@return: The interpolated surface\n"
-                                             "@rtype: Surface");
+PyDoc_STRVAR(generate_project_surface__doc__,
+             "Generate a surface by projecting a surface onto the basis of another\n"
+             "@param src: The surface to sample\n"
+             "@type src: Surface\n"
+             "@param dst: The surface with the basis we want for the new surface\n"
+             "@type dst: Surface\n"
+             "@return: The interpolated surface\n"
+             "@rtype: Surface");
 PyObject* Generate_ProjectSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"src", "dst", NULL };
@@ -895,17 +910,18 @@ PyObject* Generate_ProjectSurface(PyObject* self, PyObject* args, PyObject* kwds
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_rotational_curve_sweep__doc__,"Generate a surface by rotating a curve\n"
-                                                    "@param curve: The curve to rotate\n"
-                                                    "@type curve: Curve\n"
-                                                    "@param pos: The point to rotate the curve about\n"
-                                                    "@type pos: Point, list of floats or tuple of floats\n"
-                                                    "@param axis: The axis to rotate the curve about\n"
-                                                    "@type axis: Point, list of floats or tuple of floats\n"
-                                                    "@param angle: (optional )The angle to rotate the curve in radians (defaults to a full rotation)\n"
-                                                    "@type angle: float\n"
-                                                    "@return: The swept surface\n"
-                                                    "@rtype: Surface");
+PyDoc_STRVAR(generate_rotational_curve_sweep__doc__,
+             "Generate a surface by rotating a curve\n"
+             "@param curve: The curve to rotate\n"
+             "@type curve: Curve\n"
+             "@param pos: The point to rotate the curve about\n"
+             "@type pos: Point, list of floats or tuple of floats\n"
+             "@param axis: The axis to rotate the curve about\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param angle: (optional) The angle to rotate the curve in radians (defaults to a full rotation)\n"
+             "@type angle: float\n"
+             "@return: The swept surface\n"
+             "@rtype: Surface");
 PyObject* Generate_RotationalCurveSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve", "pos", "axis", "angle", NULL };
@@ -937,13 +953,14 @@ PyObject* Generate_RotationalCurveSweep(PyObject* self, PyObject* args, PyObject
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_sphere_surface__doc__,"Generate a sphere surface\n"
-                                            "@param center: The center of the sphere\n"
-                                            "@type center: Point, list of floats or tuple of floats\n"
-                                            "@param radius: The radius of the sphere\n"
-                                            "@type radius: float\n"
-                                            "@return: The sphere surface\n"
-                                            "@rtype: Surface");
+PyDoc_STRVAR(generate_sphere_surface__doc__,
+             "Generate a sphere surface\n"
+             "@param center: The center of the sphere\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param radius: The radius of the sphere\n"
+             "@type radius: float\n"
+             "@return: The sphere surface\n"
+             "@rtype: Surface");
 PyObject* Generate_SphereSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "radius", NULL };
@@ -968,17 +985,18 @@ PyObject* Generate_SphereSurface(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_torus_surface__doc__,"Generate a torus surface\n"
-                                           "@param center: The center of the torus\n"
-                                           "@type center: Point, list of floats or tuple of floats\n"
-                                           "@param axis: The center axis of the torus\n"
-                                           "@type center: Point, list of floats or tuple of floats\n"
-                                           "@param major_radius: The major radius of the torus\n"
-                                           "@type major_radius: float\n"
-                                           "@param minor_radius: The minor radius of the torus\n"
-                                           "@type minor_radius: float\n"
-                                           "@return: The torus surface\n"
-                                           "@rtype: Surface");
+PyDoc_STRVAR(generate_torus_surface__doc__,
+             "Generate a torus surface\n"
+             "@param center: The center of the torus\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param axis: The center axis of the torus\n"
+             "@type center: Point, list of floats or tuple of floats\n"
+             "@param major_radius: The major radius of the torus\n"
+             "@type major_radius: float\n"
+             "@param minor_radius: The minor radius of the torus\n"
+             "@type minor_radius: float\n"
+             "@return: The torus surface\n"
+             "@rtype: Surface");
 PyObject* Generate_TorusSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"center", "axis", "major_radius", "minor_radius", NULL };
@@ -1006,13 +1024,14 @@ PyObject* Generate_TorusSurface(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(generate_trim_surface__doc__,"Generate a surface by trimming one surface with another\n"
-                                          "@param original: The surface to trim\n"
-                                          "@type original: Surface\n"
-                                          "@param trim: The surface to trim with\n"
-                                          "@type trim: Surface\n"
-                                          "@return: The trimmed surface\n"
-                                          "@rtype: Surface");
+PyDoc_STRVAR(generate_trim_surface__doc__,
+             "Generate a surface by trimming one surface with another\n"
+             "@param original: The surface to trim\n"
+             "@type original: Surface\n"
+             "@param trim: The surface to trim with\n"
+             "@type trim: Surface\n"
+             "@return: The trimmed surface\n"
+             "@rtype: Surface");
 PyObject* Generate_TrimSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"original", "trim", NULL };

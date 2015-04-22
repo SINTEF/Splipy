@@ -89,9 +89,10 @@ PyObject* VolumeModel_Append(PyObject* o1, PyObject* o2)
   return Py_None;
 }
 
-PyDoc_STRVAR(volumemodel_ctoc__doc__,"Returns whether or not VolumeModel has a Corner to Corner configuration\n"
-                                     "@return: True/False\n"
-                                     "@rtype: Bool");
+PyDoc_STRVAR(volumemodel_ctoc__doc__,
+             "Returns whether or not VolumeModel has a Corner to Corner configuration\n"
+             "@return: True/False\n"
+             "@rtype: Bool");
 PyObject* VolumeModel_CtoC(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::VolumeModel> vm = PyObject_AsGoVolumeModel(self);
@@ -101,11 +102,12 @@ PyObject* VolumeModel_CtoC(PyObject* self, Py_ssize_t i)
   return Py_BuildValue((char*)"b", vm->isCornerToCorner());
 }
 
-PyDoc_STRVAR(volumemodel_get__doc__,"Returns the i'th Volume of this VolumeModel\n"
-                                    "@param i: index of the volume to return\n"
-                                    "@type i: int\n"
-                                    "@return: The i'th Volume\n"
-                                    "@rtype: Volume");
+PyDoc_STRVAR(volumemodel_get__doc__,
+             "Returns the i'th Volume of this VolumeModel\n"
+             "@param i: index of the volume to return\n"
+             "@type i: int\n"
+             "@return: The i'th Volume\n"
+             "@rtype: Volume");
 PyObject* VolumeModel_Get(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::VolumeModel> vm = PyObject_AsGoVolumeModel(self);
@@ -120,9 +122,10 @@ PyObject* VolumeModel_Get(PyObject* self, Py_ssize_t i)
   return (PyObject*) result;
 }
 
-PyDoc_STRVAR(volumemodel_get_bounding_box__doc__,"Generate and return the Volumemodel bounding box\n"
-                                                 "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,...\n"
-                                                 "@rtype: List of floats");
+PyDoc_STRVAR(volumemodel_get_bounding_box__doc__,
+             "Generate and return the Volumemodel bounding box\n"
+             "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,...\n"
+             "@rtype: List of floats");
 PyObject* VolumeModel_GetBoundingBox(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::VolumeModel> volumemodel = PyObject_AsGoVolumeModel(self);
@@ -145,9 +148,10 @@ PyObject* VolumeModel_GetBoundingBox(PyObject* self, PyObject* args)
   return result;
 }
 
-PyDoc_STRVAR(volumemodel_get_shell__doc__,"Generate and return all boundary faces of the volume model\n"
-                                          "@return: The enclosing shell representation\n"
-                                          "@rtype: List of Surfaces");
+PyDoc_STRVAR(volumemodel_get_shell__doc__,
+             "Generate and return all boundary faces of the volume model\n"
+             "@return: The enclosing shell representation\n"
+             "@rtype: List of Surfaces");
 PyObject* VolumeModel_GetShell(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::VolumeModel> volumemodel = PyObject_AsGoVolumeModel(self);
@@ -167,9 +171,10 @@ PyObject* VolumeModel_GetShell(PyObject* self, PyObject* args)
   return result;
 }
 
-PyDoc_STRVAR(volumemodel_get_boundary_ids__doc__,"Return all boundary face ids of a volume model with a shoebox topology\n"
-                                                 "@return: Lists of face ids\n"
-                                                 "@rtype: List of (List of (tuple of integers))");
+PyDoc_STRVAR(volumemodel_get_boundary_ids__doc__,
+             "Return all boundary face ids of a volume model with a shoebox topology\n"
+             "@return: Lists of face IDs\n"
+             "@rtype: List of (List of (tuple of integers))");
 PyObject* VolumeModel_GetBoundaryIds(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::VolumeModel> volumemodel = PyObject_AsGoVolumeModel(self);
@@ -209,8 +214,9 @@ PyObject* VolumeModel_GetBoundaryIds(PyObject* self, PyObject* args)
   return result;
 }
 
-PyDoc_STRVAR(volumemodel_make_common_spline__doc__,"Make sure all volumes in model share the same spline space\n"
-                                                   "@return: None");
+PyDoc_STRVAR(volumemodel_make_common_spline__doc__,
+             "Make sure all volumes in model share the same spline space\n"
+             "@return: None");
 PyObject* VolumeModel_MakeCommonSpline(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::VolumeModel> vm = PyObject_AsGoVolumeModel(self);
@@ -223,8 +229,9 @@ PyObject* VolumeModel_MakeCommonSpline(PyObject* self, PyObject* args)
   return Py_None;
 }
 
-PyDoc_STRVAR(volumemodel_make_ctoc__doc__,"Force model into a corner to corner configuration\n"
-                                          "@return: None");
+PyDoc_STRVAR(volumemodel_make_ctoc__doc__,
+             "Force model into a corner to corner configuration\n"
+             "@return: None");
 PyObject* VolumeModel_MakeCtoC(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::VolumeModel> vm = PyObject_AsGoVolumeModel(self);
@@ -237,9 +244,10 @@ PyObject* VolumeModel_MakeCtoC(PyObject* self, PyObject* args)
   return Py_None;
 }
 
-PyDoc_STRVAR(volumemodel_nmb_faces__doc__,"Returns the number of simple entities (Volumes) in this model\n"
-                                          "@return: The number of faces in this model\n"
-                                          "@rtype: integer");
+PyDoc_STRVAR(volumemodel_nmb_faces__doc__,
+             "Returns the number of simple entities (Volumes) in this model\n"
+             "@return: The number of faces in this model\n"
+             "@rtype: integer");
 Py_ssize_t VolumeModel_NmbFaces(PyObject* self)
 {
   shared_ptr<Go::VolumeModel> vm = PyObject_AsGoVolumeModel(self);
@@ -261,7 +269,8 @@ PyMethodDef VolumeModel_methods[] = {
      {NULL,                    NULL,                                        0,                          NULL}
    };
 
-PyDoc_STRVAR(volume_model__doc__, "A collection of parametric volumes");
+PyDoc_STRVAR(volume_model__doc__,
+             "A collection of parametric volumes");
 void init_VolumeModel_Type()
 {
   VolumeModel_seq_operators.sq_inplace_concat = VolumeModel_Append;

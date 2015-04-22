@@ -79,15 +79,16 @@ void Curve_Dealloc(Curve* self)
   self->ob_type->tp_free((PyObject*)self);
 }
 
-PyDoc_STRVAR(curve_append_curve__doc__,"Merge another curve with this one, with possible reparametrization\n"
-                                       "@param curve: The curve to append\n"
-                                       "@type curve: Curve\n"
-                                       "@param continuity: (optional) Required continuity\n"
-                                       "@type continuity: int\n"
-                                       "@param reparam: (optional) Specify whether or not there should be reparametrization\n"
-                                       "@type reparam: bool\n"
-                                       "@return: The curve\n"
-                                       "@rtype: Curve");
+PyDoc_STRVAR(curve_append_curve__doc__,
+             "Merge another curve with this one, with possible reparametrization\n"
+             "@param curve: The curve to append\n"
+             "@type curve: Curve\n"
+             "@param continuity: (optional) Required continuity\n"
+             "@type continuity: int\n"
+             "@param reparam: (optional) Specify whether or not there should be reparametrization\n"
+             "@type reparam: bool\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"curve", "continuity", "reparam", NULL };
@@ -122,13 +123,14 @@ PyObject* Curve_AppendCurve(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_clone__doc__,"Clone a curve\n"
-                                "@param coefs: Coefficients for new curve\n"
-                                "@type coefs: List of (list of float)\n"
-                                "@param ncomp: Number of components in coefficients\n"
-                                "@type ncomp: Integer\n"
-                                "@return: New (copy of) curve\n"
-                                "@rtype: Curve\n");
+PyDoc_STRVAR(curve_clone__doc__,
+             "Clone a curve\n"
+             "@param coefs: Coefficients for new curve\n"
+             "@type coefs: List of (list of float)\n"
+             "@param ncomp: Number of components in coefficients\n"
+             "@type ncomp: Integer\n"
+             "@return: New (copy of) curve\n"
+             "@rtype: Curve\n");
 PyObject* Curve_Clone(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"coefs", "ncomp", NULL};
@@ -186,11 +188,12 @@ PyObject* Curve_Str(Curve* self)
   return PyString_FromString(str.str().c_str());
 }
 
-PyDoc_STRVAR(curve_evaluate__doc__,"Evaluate curve at a parameter value\n"
-                                   "@param value: The parameter value\n"
-                                   "@type value: float\n"
-                                   "@return: The value of the curve\n"
-                                   "@rtype: Point");
+PyDoc_STRVAR(curve_evaluate__doc__,
+             "Evaluate curve at a parameter value\n"
+             "@param value: The parameter value\n"
+             "@type value: float\n"
+             "@return: The value of the curve\n"
+             "@rtype: Point");
 PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value", NULL };
@@ -207,11 +210,12 @@ PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(curve_evaluategrid__doc__,"Evaluate curve on a grid\n"
-                                       "@param params: The parameters\n"
-                                       "@type params: List of float\n"
-                                       "@return: The values of the curve at the given parameters\n"
-                                       "@rtype: List of floats");
+PyDoc_STRVAR(curve_evaluategrid__doc__,
+             "Evaluate curve on a grid\n"
+             "@param params: The parameters\n"
+             "@type params: List of float\n"
+             "@return: The values of the curve at the given parameters\n"
+             "@rtype: List of floats");
 PyObject* Curve_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"params", NULL};
@@ -240,11 +244,12 @@ PyObject* Curve_EvaluateGrid(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(curve_evaluate_tangent__doc__,"Evaluate the curve tangent at a parameter value\n"
-                                           "@param value: The parameter value\n"
-                                           "@type value: float\n"
-                                           "@return: The tangent of the curve\n"
-                                           "@rtype: Point");
+PyDoc_STRVAR(curve_evaluate_tangent__doc__,
+             "Evaluate the curve tangent at a parameter value\n"
+             "@param value: The parameter value\n"
+             "@type value: float\n"
+             "@return: The tangent of the curve\n"
+             "@rtype: Point");
 PyObject* Curve_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"value", NULL };
@@ -263,9 +268,10 @@ PyObject* Curve_EvaluateTangent(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)result;
 }
 
-PyDoc_STRVAR(curve_flip_parametrization__doc__,"Flip curve parametrization\n"
-                                               "@return: The curve\n"
-                                               "@rtype: Curve");
+PyDoc_STRVAR(curve_flip_parametrization__doc__,
+             "Flip curve parametrization\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -278,9 +284,10 @@ PyObject* Curve_FlipParametrization(PyObject* self, PyObject* args, PyObject* kw
   return self;
 }
 
-PyDoc_STRVAR(curve_force_rational__doc__,"Enforce a rational representation of the spline curve\n"
-                                         "@return: The curve\n"
-                                         "@rtype: Curve");
+PyDoc_STRVAR(curve_force_rational__doc__,
+             "Enforce a rational representation of the spline curve\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_ForceRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -354,9 +361,10 @@ PyObject* Curve_LowerOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_get_greville__doc__,"Return Greville points for a spline curve\n"
-                                       "@return: List with the parameter values\n"
-                                       "@rtype: List of float");
+PyDoc_STRVAR(curve_get_greville__doc__,
+             "Return Greville points for a spline curve\n"
+             "@return: List with the parameter values\n"
+             "@rtype: List of float");
 PyObject* Curve_GetGreville(PyObject* self)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -377,11 +385,12 @@ PyObject* Curve_GetGreville(PyObject* self)
   return result;
 }
 
-PyDoc_STRVAR(curve_get_knots__doc__,"Get the knots of a spline curve\n"
-                                    "@param with_multiplicities: (optional) Set to true to obtain the knot vector with multiplicities\n"
-                                    "@type with_multiplicities: Boolean\n"
-                                    "@return: List with the knot values\n"
-                                    "@rtype: List of float");
+PyDoc_STRVAR(curve_get_knots__doc__,
+             "Get the knots of a spline curve\n"
+             "@param with_multiplicities: (optional) Set to true to obtain the knot vector with multiplicities\n"
+             "@type with_multiplicities: Boolean\n"
+             "@return: List with the knot values\n"
+             "@rtype: List of float");
 PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"with_multiplicities", NULL };
@@ -410,9 +419,10 @@ PyObject* Curve_GetKnots(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(curve_get_order__doc__,"Get the curve order (polynomial degree + 1)\n"
-                                    "@return: Order\n"
-                                    "@rtype: Integer");
+PyDoc_STRVAR(curve_get_order__doc__,
+             "Get the curve order (polynomial degree + 1)\n"
+             "@return: Order\n"
+             "@rtype: Integer");
 PyObject* Curve_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -428,11 +438,12 @@ PyObject* Curve_GetOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_BuildValue((char*)"i",spCrv->order());
 }
 
-PyDoc_STRVAR(curve_get_parameter_at_point__doc__,"Get all Curve parameter values at a geometric Point\n"
-                                                 "@param point: The geometric point to intersect \n"
-                                                 "@type point: Point, list of floats or tuple of floats\n"
-                                                 "@return: Parameter values of all intersection points\n"
-                                                 "@rtype: List of float");
+PyDoc_STRVAR(curve_get_parameter_at_point__doc__,
+             "Get all Curve parameter values at a geometric Point\n"
+             "@param point: The geometric point to intersect \n"
+             "@type point: Point, list of floats or tuple of floats\n"
+             "@return: Parameter values of all intersection points\n"
+             "@rtype: List of float");
 PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"point", NULL };
@@ -510,10 +521,11 @@ PyObject* Curve_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kw
   return result;
 }
 
-PyDoc_STRVAR(curve_get_tesselationparams__doc__,"Obtain tesselation parameters for a curve\n"
-                                                "@param n: Number of tesselation points per knotspan\n"
-                                                "@type n: Int\n"
-                                                "@rtype: List of float");
+PyDoc_STRVAR(curve_get_tesselationparams__doc__,
+             "Obtain tesselation parameters for a curve\n"
+             "@param n: Number of tesselation points per knotspan\n"
+             "@type n: Int\n"
+             "@rtype: List of float");
 PyObject* Curve_GetTesselationParams(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -535,11 +547,12 @@ PyObject* Curve_GetTesselationParams(PyObject* self, PyObject* args, PyObject* k
   return result;
 }
 
-PyDoc_STRVAR(curve_insert_knot__doc__,"Insert a knot into a spline curve\n"
-                                      "@param knot: The knot to insert\n"
-                                      "@type knot: float\n"
-                                      "@return: The curve\n"
-                                      "@rtype: Curve");
+PyDoc_STRVAR(curve_insert_knot__doc__,
+             "Insert a knot into a spline curve\n"
+             "@param knot: The knot to insert\n"
+             "@type knot: float\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"knot", NULL };
@@ -559,11 +572,12 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_interpolate__doc__,"Interpolate a field onto the curve's basis\n"
-                                       "@param coefs: The values to interpolate (sample in the Greville points)\n"
-                                       "@type coefs: List of Float"
-                                       "@return: New basis coefficients\n"
-                                       "@rtype: List of float");
+PyDoc_STRVAR(curve_interpolate__doc__,
+             "Interpolate a field onto the curve's basis\n"
+             "@param coefs: The values to interpolate (sample in the Greville points)\n"
+             "@type coefs: List of Float"
+             "@return: New basis coefficients\n"
+             "@rtype: List of float");
 PyObject* Curve_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"coefs", NULL };
@@ -619,12 +633,13 @@ PyObject* Curve_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(curve_intersect__doc__,"Check if this curve intersects another curve or surface.\n"
-                                    "Set tolerance 'gap' for intersection tolerance \n"
-                                    "@param obj: The object to test against\n"
-                                    "@type obj: Curve or Surface\n"
-                                    "@return: One intersection point (if any)\n"
-                                    "@rtype: Point or None");
+PyDoc_STRVAR(curve_intersect__doc__,
+             "Check if this curve intersects another curve or surface.\n"
+             "Set tolerance 'gap' for intersection tolerance \n"
+             "@param obj: The object to test against\n"
+             "@type obj: Curve or Surface\n"
+             "@return: One intersection point (if any)\n"
+             "@rtype: Point or None");
 PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"obj", NULL };
@@ -695,9 +710,10 @@ PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
   return NULL;
 }
 
-PyDoc_STRVAR(curve_normalize__doc__,"Normalize a curve in the parameter domain\n"
-                                    "@return: The curve\n"
-                                    "@rtype: Curve");
+PyDoc_STRVAR(curve_normalize__doc__,
+             "Normalize a curve in the parameter domain\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -713,11 +729,12 @@ PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_project__doc__,"Project the curve onto an axis or plane along parallel to the cartesian coordinate system\n"
-                                  "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
-                                  "@type axis: string\n"
-                                  "@return: The curve\n"
-                                  "@rtype: Curve");
+PyDoc_STRVAR(curve_project__doc__,
+             "Project the curve onto an axis or plane along parallel to the cartesian coordinate system\n"
+             "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
+             "@type axis: string\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", NULL };
@@ -764,11 +781,12 @@ PyObject* Curve_Project(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_raise_order__doc__,"Raise the order of the curve's B-spline basis without changing the shape of the curve\n"
-                                      "@param n: Specifies how many times the order will be raised\n"
-                                      "@type n: int\n"
-                                      "@return: The curve\n"
-                                      "@rtype: Curve");
+PyDoc_STRVAR(curve_raise_order__doc__,
+             "Raise the order of the curve's B-spline basis without changing the shape of the curve\n"
+             "@param n: Specifies how many times the order will be raised\n"
+             "@type n: int\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"n", NULL };
@@ -788,13 +806,14 @@ PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_reparametrize__doc__,"Re-parametrize a curve\n"
-                                        "@param umin: The minimum u value\n"
-                                        "@type umin: float\n"
-                                        "@param umax: The maximum u value\n"
-                                        "@type umax: float\n"
-                                        "@return: The curve\n"
-                                        "@rtype: Curve");
+PyDoc_STRVAR(curve_reparametrize__doc__,
+             "Re-parametrize a curve\n"
+             "@param umin: The minimum u value\n"
+             "@type umin: float\n"
+             "@param umax: The maximum u value\n"
+             "@type umax: float\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"umin", "umax", NULL };
@@ -818,15 +837,16 @@ PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_rebuild__doc__,"Rebuild the curve by resampling it to a given order and number of control points\n"
-                                  "The rebuilt curve will match the old one at the end-points, the end tangents and \n"
-                                  "n-4 internal uniformly distributed points \n"
-                                  "@param n: Specifies how many control points the resulting curve should have\n"
-                                  "@type n: int\n"
-                                  "@param p: Specifies the resulting order (polynomial degree +1) of the curve\n"
-                                  "@type p: int\n"
-                                  "@return: Rebuilt curve\n"
-                                  "@rtype: Curve");
+PyDoc_STRVAR(curve_rebuild__doc__,
+             "Rebuild the curve by resampling it to a given order and number of control points\n"
+             "The rebuilt curve will match the old one at the end-points, the end tangents and \n"
+             "n-4 internal uniformly distributed points \n"
+             "@param n: Specifies how many control points the resulting curve should have\n"
+             "@type n: int\n"
+             "@param p: Specifies the resulting order (polynomial degree +1) of the curve\n"
+             "@type p: int\n"
+             "@return: Rebuilt curve\n"
+             "@rtype: Curve");
 PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"n", "p", NULL };
@@ -943,13 +963,14 @@ PyObject* Curve_Rebuild(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*)pyCrv;
 }
 
-PyDoc_STRVAR(curve_rotate__doc__,"Rotate a curve around an axis\n"
-                                 "@param axis: The axis to rotate around\n"
-                                 "@type axis: Point, list of floats or tuple of floats\n"
-                                 "@param angle: Angle to rotate curve with in radians\n"
-                                 "@type angle: float\n"
-                                 "@return: The curve\n"
-                                 "@rtype: Curve");
+PyDoc_STRVAR(curve_rotate__doc__,
+             "Rotate a curve around an axis\n"
+             "@param axis: The axis to rotate around\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@param angle: Angle to rotate curve with in radians\n"
+             "@type angle: float\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"axis", "angle", NULL };
@@ -980,11 +1001,12 @@ PyObject* Curve_Rotate(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(curve_split__doc__, "Split the curve into segments\n"
-                                 "@param params: The parameter values to split at\n"
-                                 "@type params: Float or list of floats\n"
-                                 "@return: The resulting curves\n"
-                                 "@rtype: List of Curve");
+PyDoc_STRVAR(curve_split__doc__,
+             "Split the curve into segments\n"
+             "@param params: The parameter values to split at\n"
+             "@type params: Float or list of floats\n"
+             "@return: The resulting curves\n"
+             "@rtype: List of Curve");
 PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"params", NULL };
@@ -1028,13 +1050,14 @@ PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
-PyDoc_STRVAR(curve_get_sub_curve__doc__,"Get a Curve which represent a part of 'this' Curve\n"
-                                        "@param from_par: The parametric left end of the sub curve\n"
-                                        "@type  from_par: float\n"
-                                        "@param to_par:   The upper right end of the sub curve\n"
-                                        "@type  to_par:   float\n"
-                                        "@return: A parametric subcurve of this Curve represented as a Spline Curve\n"
-                                        "@rtype: Curve");
+PyDoc_STRVAR(curve_get_sub_curve__doc__,
+             "Get a Curve which represent a part of 'this' Curve\n"
+             "@param from_par: The parametric left end of the sub curve\n"
+             "@type  from_par: float\n"
+             "@param to_par:   The upper right end of the sub curve\n"
+             "@type  to_par:   float\n"
+             "@return: A parametric subcurve of this Curve represented as a Spline Curve\n"
+             "@rtype: Curve");
 PyObject* Curve_GetSubCurve(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
@@ -1064,10 +1087,11 @@ PyObject* Curve_GetSubCurve(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) result;
 }
 
-PyDoc_STRVAR(curve_tesselate__doc__,"Tesselate a curve\n"
-                                    "@param n: Number of tesselation points per knotspan\n"
-                                    "@type n: Int\n"
-                                    "@rtype: Tuple with (list of nodes, list of elements)");
+PyDoc_STRVAR(curve_tesselate__doc__,
+             "Tesselate a curve\n"
+             "@param n: Number of tesselation points per knotspan\n"
+             "@type n: Int\n"
+             "@rtype: Tuple with (list of nodes, list of elements)");
 PyObject* Curve_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"n", NULL};
@@ -1114,11 +1138,12 @@ PyObject* Curve_Tesselate(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 
-PyDoc_STRVAR(curve_translate__doc__,"Translate a curve along a given vector\n"
-                                    "@param vector: The vector to translate along\n"
-                                    "@type axis: Point, list of floats or tuple of floats\n"
-                                    "@return: The curve\n"
-                                    "@rtype: Curve");
+PyDoc_STRVAR(curve_translate__doc__,
+             "Translate a curve along a given vector\n"
+             "@param vector: The vector to translate along\n"
+             "@type axis: Point, list of floats or tuple of floats\n"
+             "@return: The curve\n"
+             "@rtype: Curve");
 PyObject* Curve_Translate(PyObject* self, PyObject* args, PyObject* kwds)
 {
   static const char* keyWords[] = {"vector", NULL };

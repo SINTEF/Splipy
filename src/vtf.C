@@ -86,12 +86,13 @@ PyObject* VTF_Str(PyVTF* self)
   return PyString_FromString(str.str().c_str());
 }
 
-PyDoc_STRVAR(vtf_addgeometryblock__doc__,"Add a geometry block to the VTF file\n"
-                                         "@param nodes: Nodal coordinates (interleaved format)\n"
-                                         "@type nodes: List of floats\n"
-                                         "@param elements: Element nodal connectivities\n"
-                                         "@type elements: List of int\n"
-                                         "@return: Self");
+PyDoc_STRVAR(vtf_addgeometryblock__doc__,
+             "Add a geometry block to the VTF file\n"
+             "@param nodes: Nodal coordinates (interleaved format)\n"
+             "@type nodes: List of floats\n"
+             "@param elements: Element nodal connectivities\n"
+             "@type elements: List of int\n"
+             "@return: Self");
 PyObject* VTF_AddGeometryBlock(PyObject* self, PyObject* args, PyObject* kwds)
 {
   PyVTF* vtf = (PyVTF*)self;
@@ -152,15 +153,16 @@ PyObject* VTF_AddGeometryBlock(PyObject* self, PyObject* args, PyObject* kwds)
   return self;
 }
 
-PyDoc_STRVAR(vtf_addgeometrydescriptor__doc__,"Add a block connecting geometry blocks\n"
-                                              "@param size: Number of blocks in part\n"
-                                              "@type size: Int\n"
-                                              "@param blockid: ID of block being added\n"
-                                              "@type blockid: Integer\n"
-                                              "@param dim: Dimensionality of geometry block\n"
-                                              "@type dim: Integer\n"
-                                              "@return: Self\n"
-                                              "@rtype: VTFFile");
+PyDoc_STRVAR(vtf_addgeometrydescriptor__doc__,
+             "Add a block connecting geometry blocks\n"
+             "@param size: Number of blocks in part\n"
+             "@type size: Int\n"
+             "@param blockid: ID of block being added\n"
+             "@type blockid: Integer\n"
+             "@param dim: Dimensionality of geometry block\n"
+             "@type dim: Integer\n"
+             "@return: Self\n"
+             "@rtype: VTFFile");
 PyObject* VTF_AddGeometryDescriptor(PyObject* self, PyObject* args, PyObject* kwds)
 {
   PyVTF* vtf = (PyVTF*)self;
@@ -186,14 +188,15 @@ PyObject* VTF_AddGeometryDescriptor(PyObject* self, PyObject* args, PyObject* kw
   return self;
 }
 
-PyDoc_STRVAR(vtf_addgeometryset__doc__,"Add a set describing a geometry subpart\n"
-                                       "@param elems: Geometry element numbers\n"
-                                       "@type elems: List of Int\n"
-                                       "@param block: Geometry block elements belong to"
-                                       "@type block: Int"
-                                       "@param name: Name of set\n"
-                                       "@type name: String\n"
-                                       "@return: None\n");
+PyDoc_STRVAR(vtf_addgeometryset__doc__,
+             "Add a set describing a geometry subpart\n"
+             "@param elems: Geometry element numbers\n"
+             "@type elems: List of Int\n"
+             "@param block: Geometry block elements belong to"
+             "@type block: Int"
+             "@param name: Name of set\n"
+             "@type name: String\n"
+             "@return: None\n");
 PyObject* VTF_AddGeometrySet(PyObject* self, PyObject* args, PyObject* kwds)
 {
   PyVTF* vtf = (PyVTF*)self;
@@ -234,13 +237,14 @@ PyObject* VTF_AddGeometrySet(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-PyDoc_STRVAR(vtf_addfield__doc__,"Add a field\n"
-                                 "@param coefs: Field data\n"
-                                 "@type coefs: List of float\n"
-                                 "@param block: Block to map field to\n"
-                                 "@type block: Int\n"
-                                 "@return: Block ID\n"
-                                 "@rtype: Int");
+PyDoc_STRVAR(vtf_addfield__doc__,
+             "Add a field\n"
+             "@param coefs: Field data\n"
+             "@type coefs: List of float\n"
+             "@param block: Block to map field to\n"
+             "@type block: Int\n"
+             "@return: Block ID\n"
+             "@rtype: Int");
 PyObject* VTF_AddField(PyObject* self, PyObject* args, PyObject* kwds)
 {
   PyVTF* vtf = (PyVTF*)self;
@@ -278,16 +282,17 @@ PyObject* VTF_AddField(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_BuildValue((char*)"i",vtf->nBlock);
 }
 
-PyDoc_STRVAR(vtf_addfieldblocks__doc__,"Add a description block for a field\n"
-                                       "@param blocks: Field block numbers\n"
-                                       "@type coefs: List of Int\n"
-                                       "@param name: Name of field\n"
-                                       "@type name: String\n"
-                                       "@param comp: Number of components in field\n"
-                                       "@type comp: Int=1\n"
-                                       "@param displacement: Write as a displacement field\n"
-                                       "@type displacement: Boolean\n"
-                                       "@return: None\n");
+PyDoc_STRVAR(vtf_addfieldblocks__doc__,
+             "Add a description block for a field\n"
+             "@param blocks: Field block numbers\n"
+             "@type coefs: List of Int\n"
+             "@param name: Name of field\n"
+             "@type name: String\n"
+             "@param comp: Number of components in field\n"
+             "@type comp: Int=1\n"
+             "@param displacement: Write as a displacement field\n"
+             "@type displacement: Boolean\n"
+             "@return: None\n");
 PyObject* VTF_AddFieldBlocks(PyObject* self, PyObject* args, PyObject* kwds)
 {
   PyVTF* vtf = (PyVTF*)self;
@@ -343,10 +348,11 @@ PyObject* VTF_AddFieldBlocks(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
-PyDoc_STRVAR(vtf_addstate__doc__,"Add a state (timestep) descriptor\n"
-                                 "@param timelevel: Time level\n"
-                                 "@type timelevel: Float\n"
-                                 "@return: None\n");
+PyDoc_STRVAR(vtf_addstate__doc__,
+             "Add a state (timestep) descriptor\n"
+             "@param timelevel: Time level\n"
+             "@type timelevel: Float\n"
+             "@return: None\n");
 PyObject* VTF_AddState(PyObject* self, PyObject* args, PyObject* kwds)
 {
   PyVTF* vtf = (PyVTF*)self;

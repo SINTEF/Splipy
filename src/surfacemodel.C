@@ -88,9 +88,10 @@ PyObject* SurfaceModel_Append(PyObject* o1, PyObject* o2)
   return Py_None;
 }
 
-PyDoc_STRVAR(surfacemodel_ctoc__doc__,"Returns whether or not SurfaceModel has a Corner to Corner configuration\n"
-                                      "@return: True/False\n"
-                                      "@rtype: Bool");
+PyDoc_STRVAR(surfacemodel_ctoc__doc__,
+             "Returns whether or not SurfaceModel has a Corner to Corner configuration\n"
+             "@return: True/False\n"
+             "@rtype: Bool");
 PyObject* SurfaceModel_CtoC(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
@@ -100,11 +101,12 @@ PyObject* SurfaceModel_CtoC(PyObject* self, Py_ssize_t i)
   return Py_BuildValue((char*)"b", sm->isCornerToCorner());
 }
 
-PyDoc_STRVAR(surfacemodel_get__doc__,"Returns the i'th Surface of this SurfaceModel\n"
-                                     "@param i: index of the surface to return\n"
-                                     "@type i: int\n"
-                                     "@return: The i'th Surface\n"
-                                     "@rtype: Surface");
+PyDoc_STRVAR(surfacemodel_get__doc__,
+             "Returns the i'th Surface of this SurfaceModel\n"
+             "@param i: index of the surface to return\n"
+             "@type i: int\n"
+             "@return: The i'th Surface\n"
+             "@rtype: Surface");
 PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
@@ -124,9 +126,10 @@ PyObject* SurfaceModel_Get(PyObject* self, Py_ssize_t i)
   return (PyObject*) result;
 }
 
-PyDoc_STRVAR(surfacemodel_get_bounding_box__doc__,"Generate and return the Surfacemodel bounding box\n"
-                                                  "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,...\n"
-                                                  "@rtype: List of floats");
+PyDoc_STRVAR(surfacemodel_get_bounding_box__doc__,
+             "Generate and return the Surfacemodel bounding box\n"
+             "@return: 6 numbers representing the bounding box in order xmin,xmax,ymin,ymax,...\n"
+             "@rtype: List of floats");
 PyObject* SurfaceModel_GetBoundingBox(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::SurfaceModel> surfacemodel = PyObject_AsGoSurfaceModel(self);
@@ -149,8 +152,9 @@ PyObject* SurfaceModel_GetBoundingBox(PyObject* self, PyObject* args)
   return result;
 }
 
-PyDoc_STRVAR(surfacemodel_make_common_spline__doc__,"Make sure all surfaces in model share the same spline space\n"
-                                                    "@return: None");
+PyDoc_STRVAR(surfacemodel_make_common_spline__doc__,
+             "Make sure all surfaces in model share the same spline space\n"
+             "@return: None");
 PyObject* SurfaceModel_MakeCommonSpline(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
@@ -163,8 +167,9 @@ PyObject* SurfaceModel_MakeCommonSpline(PyObject* self, PyObject* args)
   return Py_None;
 }
 
-PyDoc_STRVAR(surfacemodel_make_ctoc__doc__,"Force model into a corner to corner configuration\n"
-                                           "@return: None");
+PyDoc_STRVAR(surfacemodel_make_ctoc__doc__,
+             "Force model into a corner to corner configuration\n"
+             "@return: None");
 PyObject* SurfaceModel_MakeCtoC(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
@@ -177,9 +182,10 @@ PyObject* SurfaceModel_MakeCtoC(PyObject* self, PyObject* args)
   return Py_None;
 }
 
-PyDoc_STRVAR(surfacemodel_nmb_faces__doc__,"Returns the number of simple entities (Surfaces) in this model\n"
-                                           "@return: The number of faces in this model\n"
-                                           "@rtype: integer");
+PyDoc_STRVAR(surfacemodel_nmb_faces__doc__,
+             "Returns the number of simple entities (Surfaces) in this model\n"
+             "@return: The number of faces in this model\n"
+             "@rtype: integer");
 Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
 {
   shared_ptr<Go::SurfaceModel> sm = PyObject_AsGoSurfaceModel(self);
@@ -189,9 +195,10 @@ Py_ssize_t SurfaceModel_NmbFaces(PyObject* self)
   return sm->nmbEntities();
 }
 
-PyDoc_STRVAR(surfacemodel_get_boundary_ids__doc__,"Return all boundary face ids of a X-Y plane surface model with hex topology\n"
-                                                  "@return: Lists of edge ids\n"
-                                                  "@rtype: List of (List of (tuple of integers))");
+PyDoc_STRVAR(surfacemodel_get_boundary_ids__doc__,
+             "Return all boundary face ids of a X-Y plane surface model with hex topology\n"
+             "@return: Lists of edge ids\n"
+             "@rtype: List of (List of (tuple of integers))");
 PyObject* SurfaceModel_GetBoundaryIds(PyObject* self, PyObject* args)
 {
   shared_ptr<Go::SurfaceModel> surfacemodel = PyObject_AsGoSurfaceModel(self);
