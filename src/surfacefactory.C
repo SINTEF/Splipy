@@ -166,7 +166,7 @@ PyDoc_STRVAR(generate_circular_disc__doc__,
              "@type center: Point, list of floats or tuple of floats\n"
              "@param boundarypoint: A point on the boundary of the disc\n"
              "@type boundarypoint: Point, list of floats or tuple of floats\n"
-             "@param normal: (optional) The normal of the disc\n"
+             "@param normal: (optional except in 3D) The normal of the disc\n"
              "@type normal: Point, list of floats or tuple of floats\n"
              "@return: The disc\n"
              "@rtype: Surface");
@@ -190,8 +190,10 @@ PyObject* Generate_CircularDisc(PyObject* self, PyObject* args, PyObject* kwds)
   Go::Point normal(0.0,0.0);
   if (modState.dim == 3) {
     shared_ptr<Go::Point> norm = PyObject_AsGoPoint(normalo);
-    if (!norm)
+    if (!norm) {
+      PyErr_SetString(PyExc_ValueError, "Normal is required in three dimensions");
       return NULL;
+    }
     normal = *norm;
   }
 
