@@ -63,20 +63,33 @@ def ParseArgs(args, defaults):
         else:
           defaults[k] = value
 
-  for arg in args:
-    if arg.startswith('paramfile=') :
-      fn = arg[10:]
-      extension = fn.split('.')[-1]
-      with open(fn, 'r') as f:
-        if extension == 'json':
-          dc = json.load(f)
-        elif extension == 'yaml':
-          dc = yaml.load(f)
-      for k, v in dc.iteritems():
+  def load_file(filename):
+    extension = filename.split('.')[-1]
+    with open(filename, 'r') as f:
+      if extension == 'json':
+        dc = json.load(f)
+      elif extension == 'yaml':
+        dc = yaml.load(f)
+
+    # Load included files first, if any
+    if 'paramfile' in dc:
+      filenames = dc['paramfile']
+      if not isinstance(filenames, list):
+        filenames = [filenames]
+      for fn in filenames:
+        load_file(fn)
+
+    # Set other parameters
+    for k, v in dc.iteritems():
+      if k != 'paramfile':
         set_def(k, v)
 
-    split = arg.split('=', 1)
-    set_def(split[0], split[1] if len(split) > 1 else None)
+  for arg in args:
+    if arg.startswith('paramfile='):
+      load_file(arg[10:])
+    else:
+      split = arg.split('=', 1)
+      set_def(split[0], split[1] if len(split) > 1 else None)
 
 def readMCfile(filename,remlast=True, silent=False):
     """
