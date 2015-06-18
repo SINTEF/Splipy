@@ -58,8 +58,10 @@ def ParseArgs(args, defaults):
           defaults[k] = float(value)
         elif isinstance(v, int):
           defaults[k] = int(value)
-        else:
+        elif isinstance(v, str):
           defaults[k] = str(value)
+        else:
+          defaults[k] = value
 
   for arg in args:
     if arg.startswith('paramfile=') :
