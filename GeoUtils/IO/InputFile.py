@@ -112,34 +112,38 @@ class InputFile:
 
     for name in names:
       for topset in topologyset.getElementsByTagName('set'):
-        if topset.getAttributeNode('name').nodeValue == name:
-          typ = topset.getAttributeNode('type').nodeValue
-          for item in topset.getElementsByTagName('item'):
-            patch = int(item.getAttributeNode('patch').nodeValue)
-            values = map(int, item.childNodes[0].nodeValue.split())
-            if not result.has_key(patch):
-              result[patch] = InputFile.PatchInfo([], [], [])
+        nam = topset.getAttributeNode('name').nodeValue
+        typ = topset.getAttributeNode('type').nodeValue
+        if not typ == toptype or not nam == name: continue
 
-            if convention == 'gotools':
-              if typ == 'edge':
-                if toptype == 'edge' or len(toptype) == 0:
-                  remap = [4,2,1,3]
-                  result[patch].edge.extend([remap[v-1] for v in values])
-              elif typ == 'face':
-                if toptype == 'face' or len(toptype) == 0:
-                  remap = [1,2,3,4,5,6]
-                  result[patch].face.extend([remap[v-1] for v in values])
-              else:
-                result[patch].vertex.extend(values)
+        for item in topset.getElementsByTagName('item'):
+          patch = int(item.getAttributeNode('patch').nodeValue)
+          if not result.has_key(patch):
+            result[patch] = InputFile.PatchInfo([], [], [])
 
-            elif convention == 'ifem':
-              if typ == 'edge':
-                target = result[patch].edge
-              elif typ == 'face':
-                target = result[patch].face
-              else:
-                target = result[patch].vertex
-              target.extend(values)
+          if not len(item.childNodes): continue # empty <item> tag
+          values = map(int, item.childNodes[0].nodeValue.split())
+
+          if convention == 'gotools':
+            if typ == 'edge':
+              if toptype == 'edge' or len(toptype) == 0:
+                remap = [4,2,1,3]
+                result[patch].edge.extend([remap[v-1] for v in values])
+            elif typ == 'face':
+              if toptype == 'face' or len(toptype) == 0:
+                remap = [1,2,3,4,5,6]
+                result[patch].face.extend([remap[v-1] for v in values])
+            else:
+              result[patch].vertex.extend(values)
+
+          elif convention == 'ifem':
+            if typ == 'edge':
+              target = result[patch].edge
+            elif typ == 'face':
+              target = result[patch].face
+            else:
+              target = result[patch].vertex
+            target.extend(values)
 
     return result
 
