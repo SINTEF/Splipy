@@ -110,6 +110,7 @@ def distanceFunction(patches, wallset, process=[], display=True):
        @rtype: List of list of float
     """
 
+    assert len(wallset), 'Empty wallset'
     if isinstance(patches[0], Surface):
       return _distanceFunction2D(patches, wallset, process, display=display)
 

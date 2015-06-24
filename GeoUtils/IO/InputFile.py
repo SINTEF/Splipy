@@ -112,9 +112,9 @@ class InputFile:
 
     for name in names:
       for topset in topologyset.getElementsByTagName('set'):
-        nam = topset.getAttributeNode('name').nodeValue
         typ = topset.getAttributeNode('type').nodeValue
-        if not typ == toptype or not nam == name: continue
+        nam = topset.getAttributeNode('name').nodeValue
+        if toptype and not typ == toptype or not nam == name: continue
 
         for item in topset.getElementsByTagName('item'):
           patch = int(item.getAttributeNode('patch').nodeValue)
