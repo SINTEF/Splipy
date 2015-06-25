@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "preprocess.h"
 #include "curve.h"
 #include "geomodeller.h"

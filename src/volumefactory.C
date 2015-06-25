@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "volumefactory.h"
 
 #include "curve.h"

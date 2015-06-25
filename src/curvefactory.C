@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "curvefactory.h"
 
+#include "undef.h"
 #include "curve.h"
 #include "geomodeller.h"
 #include "point.h"

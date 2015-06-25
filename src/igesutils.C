@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "curve.h"
 #include "surface.h"
 #include "pyutils.h"

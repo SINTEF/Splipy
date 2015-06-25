@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "surfacemodelfactory.h"
 
 #include "geomodeller.h"

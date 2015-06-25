@@ -12,6 +12,7 @@
 //                                                                           
 //===========================================================================
 
+#include "undef.h"
 #include "surface.h"
 #include "curve.h"
 #include "pyutils.h"

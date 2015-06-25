@@ -1,3 +1,4 @@
+#include "undef.h"
 #ifdef ENABLE_HDF5
 
 #include "curve.h"

@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "surfacefactory.h"
 
 #include "curve.h"

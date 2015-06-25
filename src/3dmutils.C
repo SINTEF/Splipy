@@ -1,3 +1,4 @@
+#include "undef.h"
 #ifdef ENABLE_OPENNURBS
 
 #include "curve.h"

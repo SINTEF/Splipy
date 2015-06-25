@@ -1,3 +1,4 @@
+#include "undef.h"
 #include <Python.h>
 
 #include "geomodeller.h"
@@ -82,7 +83,9 @@ int main(int argc, char** argv)
     exit(2);
   }
   Py_Initialize();
+#ifndef __APPLE__
   addPath();
+#endif
 #ifdef ENABLE_OPENNURBS
   ON::Begin();
 #endif
@@ -90,7 +93,9 @@ int main(int argc, char** argv)
   PySys_SetArgv(argv_.size(), &argv_[0]);
   int result=PyRun_SimpleFile(f,file);
   fclose(f);
+#ifndef __APPLE__
   Py_Finalize();
+#endif
 #ifdef ENABLE_OPENNURBS
   ON::End();
 #endif
