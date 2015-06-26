@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "stlutils.h"
 #include "geomodeller.h"
 

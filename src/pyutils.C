@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "pyutils.h"
 
 namespace GeoModeller {

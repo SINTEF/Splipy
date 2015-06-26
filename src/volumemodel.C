@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "volumemodel.h"
 #include "pyutils.h"
 #include "geomodeller.h"

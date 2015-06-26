@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "volume.h"
 
 #include "geomodeller.h"

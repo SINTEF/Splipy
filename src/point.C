@@ -1,3 +1,4 @@
+#include "undef.h"
 #include "point.h"
 #include "pyutils.h"
 #include "geomodeller.h"
