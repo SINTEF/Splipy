@@ -1,8 +1,9 @@
 __doc__ == 'Class for working with IFEM input (.xinp) files'
 
+import numpy as np
 import os, subprocess, time, xml.dom.minidom, sys
 from collections import namedtuple
-from itertools import groupby
+from itertools import groupby, product
 from operator import itemgetter
 from GoTools import ReadG2
 from GoTools.Preprocess import NaturalNodeNumbers
@@ -195,7 +196,6 @@ class InputFile:
       if p.MakeRHS():
         raise Exception("Found left-handed patch. Aborting.")
 
-
     # Write points
     nodenumbers = NaturalNodeNumbers(patchlist)
     maxnum = max(map(max, nodenumbers))
@@ -215,39 +215,75 @@ class InputFile:
         out.write('(%f %f %f)\n' % tuple(pt))
       out.write(')\n')
 
+    # Find out how many faces in total
+    def patch_num_faces(patch, faceid=0):
+      nu, nv, nw = map(len, patch.GetKnots())
+      if faceid == 0:
+        return 3*nu*nv*nw - 2*(nu*nv + nu*nw + nv*nw) + nu + nv + nw
+      elif faceid <= 2:
+        return (nv-1)*(nw-1)
+      elif faceid <= 4:
+        return (nu-1)*(nw-1)
+      return (nu-1)*(nv-1)
+
+    internal_bnds = set((patchid, faceid)
+                        for patchid in xrange(0, len(patchlist))
+                        for faceid in xrange(1, 7))
+    num_bnd_faces = 0
+    for ts_name in self.GetTopologySets():
+      ts = self.GetTopologySet(ts_name, convention='ifem', toptype='face')
+      for patchid, patchinfo in ts.iteritems():
+        internal_bnds.difference_update((patchid-1, faceid)
+                                        for faceid in patchinfo.face)
+        num_bnd_faces += sum(patch_num_faces(patchlist[patchid-1], faceid)
+                             for faceid in patchinfo.face)
+    internal_bnd_faces = sum(patch_num_faces(patchlist[p], faceid) for p, faceid in internal_bnds) / 2
+    num_faces = sum(patch_num_faces(p) for p in patchlist) - internal_bnd_faces
+
     # Face-cell connectivity structure
-    sort_tuple = lambda tup: tuple(sorted(tup))
-    rev_tuple = lambda tup: tuple(reversed(tup))
     localid = lambda iu, iv, iw, nu, nv: iw*nu*nv + iv*nu + iu
 
-    facedict = {}
-    cellnum = 0
+    face_table = np.zeros((num_faces,),
+                          dtype=[('owner', np.int32),
+                                 ('neighbour', np.int32),
+                                 ('boundary', np.int32),
+                                 ('tup1', np.int32),
+                                 ('tup2', np.int32),
+                                 ('tup3', np.int32),
+                                 ('tup4', np.int32)])
+    face_table[:]['neighbour'] = -1
+    face_table[:]['boundary'] = -1
+
+    next_cell, next_face = 0, 0
+    previous_faces = {}
     face_idxs = [(0,2,6,4), (1,5,7,3), (0,1,3,2), (4,6,7,5), (0,4,5,1), (2,3,7,6)]
     for patchid, patch in enumerate(patchlist):
       nu, nv, nw = map(len, patch.GetKnots())
       localid_patch = lambda (iu, iv, iw): localid(iu, iv, iw, nu, nv)
 
-      for iw in range(nw-1):
-        for iv in range(nv-1):
-          for iu in range(nu-1):
-            globalids = [nodenumbers[patchid][localid_patch(tp)]
-                         for tp in [(iu,iv,iw), (iu+1,iv,iw), (iu,iv,iw+1), (iu+1,iv,iw+1),
-                                    (iu,iv+1,iw), (iu+1,iv+1,iw), (iu,iv+1,iw+1), (iu+1,iv+1,iw+1)]]
-            tuples = [(iu,iv,iw), (iu+1,iv,iw), (iu,iv,iw+1), (iu+1,iv,iw+1),
-                      (iu,iv+1,iw), (iu+1,iv+1,iw), (iu,iv+1,iw+1), (iu+1,iv+1,iw+1)]
-            for fidxs in face_idxs:
-              face = [globalids[fid] for fid in fidxs]
-              if sort_tuple(face) in facedict:
-                assert(facedict[sort_tuple(face)]['neighbour'] == -1)
-                facedict[sort_tuple(face)]['neighbour'] = cellnum
-              else:
-                facedict[sort_tuple(face)] = {'tuple': tuple(face),
-                                              'owner': cellnum,
-                                              'neighbour': -1}
-            cellnum += 1
+      for iw, iv, iu in product(xrange(nw-1), xrange(nv-1), xrange(nu-1)):
+        globalids = [nodenumbers[patchid][localid_patch(tp)]
+                     for tp in [(iu,iv,iw), (iu+1,iv,iw), (iu,iv,iw+1), (iu+1,iv,iw+1),
+                                (iu,iv+1,iw), (iu+1,iv+1,iw), (iu,iv+1,iw+1), (iu+1,iv+1,iw+1)]]
+        for fidxs in face_idxs:
+          face_ns = tuple(globalids[fid] for fid in fidxs)
+          face_hash = frozenset(face_ns)
 
-    internal_faces = [f for f in facedict.values() if f['neighbour'] >= 0]
-    boundary_faces = [f for f in facedict.values() if f['neighbour'] == -1]
+          if face_hash in previous_faces:
+            face_id = previous_faces[face_hash]
+            assert(face_table[face_id]['neighbour'] == -1)
+            face_table[face_id]['neighbour'] = next_cell
+            del previous_faces[face_hash]
+          else:
+            face_table[next_face]['owner'] = next_cell
+            face_table[next_face]['tup1'] = face_ns[0]
+            face_table[next_face]['tup2'] = face_ns[1]
+            face_table[next_face]['tup3'] = face_ns[2]
+            face_table[next_face]['tup4'] = face_ns[3]
+            previous_faces[face_hash] = next_face
+            next_face += 1
+
+        next_cell += 1
 
     # Identify boundaries
     def get_faces(patchid, faceid):
@@ -256,85 +292,83 @@ class InputFile:
       ret = []
       if faceid <= 2:
         iu = 0 if faceid == 1 else nu - 1
-        return [sort_tuple((nodenumbers[patchid][localid_patch(iu,iv,iw)],
-                            nodenumbers[patchid][localid_patch(iu,iv+1,iw)],
-                            nodenumbers[patchid][localid_patch(iu,iv+1,iw+1)],
-                            nodenumbers[patchid][localid_patch(iu,iv,iw+1)]))
+        return [frozenset((nodenumbers[patchid][localid_patch(iu,iv,iw)],
+                           nodenumbers[patchid][localid_patch(iu,iv+1,iw)],
+                           nodenumbers[patchid][localid_patch(iu,iv+1,iw+1)],
+                           nodenumbers[patchid][localid_patch(iu,iv,iw+1)]))
                 for iv in range(0, nv-1) for iw in range(0, nw-1)]
       if faceid <= 4:
         iv = 0 if faceid == 3 else nv - 1
-        return [sort_tuple((nodenumbers[patchid][localid_patch(iu,iv,iw)],
-                            nodenumbers[patchid][localid_patch(iu+1,iv,iw)],
-                            nodenumbers[patchid][localid_patch(iu+1,iv,iw+1)],
-                            nodenumbers[patchid][localid_patch(iu,iv,iw+1)]))
+        return [frozenset((nodenumbers[patchid][localid_patch(iu,iv,iw)],
+                           nodenumbers[patchid][localid_patch(iu+1,iv,iw)],
+                           nodenumbers[patchid][localid_patch(iu+1,iv,iw+1)],
+                           nodenumbers[patchid][localid_patch(iu,iv,iw+1)]))
                 for iu in range(0, nu-1) for iw in range(0, nw-1)]
       iw = 0 if faceid == 5 else nw - 1
-      return [sort_tuple((nodenumbers[patchid][localid_patch(iu,iv,iw)],
-                          nodenumbers[patchid][localid_patch(iu+1,iv,iw)],
-                          nodenumbers[patchid][localid_patch(iu+1,iv+1,iw)],
-                          nodenumbers[patchid][localid_patch(iu,iv+1,iw)]))
+      return [frozenset((nodenumbers[patchid][localid_patch(iu,iv,iw)],
+                         nodenumbers[patchid][localid_patch(iu+1,iv,iw)],
+                         nodenumbers[patchid][localid_patch(iu+1,iv+1,iw)],
+                         nodenumbers[patchid][localid_patch(iu,iv+1,iw)]))
               for iu in range(0, nu-1) for iv in range(0, nv-1)]
 
-    for f in boundary_faces:
-      f['boundary'] = None
+    topologysets = self.GetTopologySets()
 
-    for ts_name in self.GetTopologySets():
+    for ts_id, ts_name in enumerate(topologysets):
       ts = self.GetTopologySet(ts_name, convention='ifem', toptype='face')
       for patchid, patchinfo in ts.iteritems():
         for faceid in patchinfo.face:
           faces = get_faces(patchid-1, faceid)
           for f in faces:
-            facedict[f]['boundary'] = ts_name
+            face_id = previous_faces[f]
+            face_table[face_id]['boundary'] = ts_id
 
     # Order faces
-    internal_faces.sort(key=itemgetter('neighbour'))
-    internal_faces.sort(key=itemgetter('owner'))
-    boundary_faces.sort(key=itemgetter('owner'))
-    boundary_faces.sort(key=itemgetter('boundary'))
+    face_table.sort(order=['boundary', 'owner', 'neighbour'])
 
-    nfaces = len(facedict)
-
-    # Write faces
-    facenum = 0
+    # Write faces, simultaneously compute boundary boundaries (heh)
+    prev_boundary = -1
+    bnd_bnds = []
     with open(os.path.join(name, 'faces'), 'w') as out:
       out.write(header('faceList', 'faces'))
-      out.write('%i\n' % nfaces)
+      out.write('%i\n' % num_faces)
       out.write('(\n')
-      for f in internal_faces + boundary_faces:
-        out.write('4(%i %i %i %i)\n' % f['tuple'])
-        f['label'] = facenum
-        facenum += 1
+      for i in xrange(num_faces):
+        out.write('4(%i %i %i %i)\n' % (face_table[i]['tup1'],
+                                        face_table[i]['tup2'],
+                                        face_table[i]['tup3'],
+                                        face_table[i]['tup4']))
+        if face_table[i]['boundary'] != prev_boundary:
+          bnd_bnds.append(i)
+          prev_boundary = face_table[i]['boundary']
+      if face_table[-1]['boundary'] != -1:
+        bnd_bnds.append(num_faces)
       out.write(')\n')
 
     # Write owners and neighbours
     note = 'nPoints: %i nCells: %i nFaces: %i nInternalFaces: %i' % (len(points),
-                                                                     cellnum,
-                                                                     len(facedict),
-                                                                     len(internal_faces))
-
+                                                                     next_cell,
+                                                                     num_faces,
+                                                                     num_faces - num_bnd_faces)
     for thing in ['owner', 'neighbour']:
       with open(os.path.join(name, thing), 'w') as out:
         out.write(header('labelList', thing, note=note))
-        out.write('%i\n' % nfaces)
+        out.write('%i\n' % num_faces)
         out.write('(\n')
-        for f in internal_faces + boundary_faces:
-          out.write('%i\n' % f[thing])
+        for i in xrange(num_faces):
+          out.write('%i\n' % face_table[i][thing])
         out.write(')\n')
 
     # Write boundaries
-    bdpatches = [(n,list(f)) for n,f in groupby(boundary_faces, itemgetter('boundary'))]
     with open(os.path.join(name, 'boundary'), 'w') as out:
       out.write(header('polyBoundaryMesh', 'boundary'))
-      out.write('%i\n' % len(bdpatches))
+      out.write('%i\n' % len(topologysets))
       out.write('(\n')
-      for name, faces in bdpatches:
-        if name is None:
-          print >> sys.stderr, "Warning: Found boundary faces with no topology set."
-          continue
-        out.write('%s\n' % name)
+      for ts_id, (start, end) in enumerate(zip(bnd_bnds[:-1], bnd_bnds[1:])):
+        ts_name = topologysets[ts_id]
+        out.write('%s\n' % ts_name)
         out.write('{\n')
         out.write('    type patch;\n')
-        out.write('    nFaces %i;\n' % len(faces))
-        out.write('    startFace %i;\n' % faces[0]['label'])
+        out.write('    nFaces %i;\n' % (end - start))
+        out.write('    startFace %i;\n' % start)
         out.write('}\n')
       out.write(')\n')
