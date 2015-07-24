@@ -486,11 +486,13 @@ class Numberer(object):
     return ret
 
 
-  def WriteEverything(self, filename, indent=2, periodic={}, display=True):
+  def WriteEverything(self, filename, nodenumbers=True, indent=2, periodic={}, display=True):
     """ All-in-one method for writing out everything you might need (g2 geometry file,
         natural node numbers and IFEM xml file.
         @param filename: The base filename to write to (no extension).
         @type filename: String
+        @param nodenumbers: (Optional) Whether to include a node numbering file.
+        @type nodenumbers: Boolean (default True)
         @param indent: Number of spaces to add for each indentation level in the XML file.
         @type indent: Int
         @param display: (Optional) Write walldistance progress to stdout
@@ -503,11 +505,12 @@ class Numberer(object):
 
     WriteG2('%s.g2' % filename, patchlist)
 
-    numbers = NaturalNodeNumbers(patchlist,**periodic)
-    f = HDF5File('%s_nodenumbers' % filename)
-    for i, (p, n) in enumerate(zip(patchlist, numbers)):
-      f.AddGeometry('Common', i+1, 0, p)
-      f.AddField('Common', 'node numbers', i+1, 0, 1, n)
+    if nodenumbers:
+      numbers = NaturalNodeNumbers(patchlist,**periodic)
+      f = HDF5File('%s_nodenumbers' % filename)
+      for i, (p, n) in enumerate(zip(patchlist, numbers)):
+        f.AddGeometry('Common', i+1, 0, p)
+        f.AddField('Common', 'node numbers', i+1, 0, 1, n)
 
     with open('%s.xinp' % filename, 'w') as f:
       f.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n\n')
@@ -515,7 +518,8 @@ class Numberer(object):
 
       f.write(self.Partitioning(indent, indent, True))
       f.write(' '*indent + '<patchfile>%s.g2</patchfile>\n' % basename)
-      f.write(' '*indent + '<nodefile>%s_nodenumbers.hdf5</nodefile>\n' % basename)
+      if nodenumbers:
+        f.write(' '*indent + '<nodefile>%s_nodenumbers.hdf5</nodefile>\n' % basename)
       f.write(self.OutputTopologySets(self._topsets.keys() + self._outputgroups.keys(),
                                       indent, indent, True))
 

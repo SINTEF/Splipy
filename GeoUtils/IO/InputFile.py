@@ -8,6 +8,15 @@ from operator import itemgetter
 from GoTools import ReadG2
 from GoTools.Preprocess import NaturalNodeNumbers
 
+def progress(title, i, tot):
+    """Progress output to stdout."""
+    args = (title, i, tot, 100 * float(i) / tot)
+    s = '\r%s: %i/%i (%.2f%%)' % args
+    if i == tot:
+        s += '\n'
+    sys.stdout.write(s)
+    sys.stdout.flush()
+
 class InputFile:
   """Class for working with IFEM input (.xinp) files.
      @param path: The path of the xinp to open
@@ -158,7 +167,7 @@ class InputFile:
     f.write(self.dom.toxml('utf-8'))
     f.close()
 
-  def writeOpenFOAM(self, name):
+  def writeOpenFOAM(self, name, display=False):
     """ Writes an equivalent mesh in OpenFOAM format. The topology sets
         will be written as disjointed parts, e.g. the set 'myset' will
         yield OpenFOAM patches named 'myset-001', 'myset-002', etc. You
@@ -257,6 +266,8 @@ class InputFile:
     next_cell, next_face = 0, 0
     previous_faces = {}
     face_idxs = [(0,2,6,4), (1,5,7,3), (0,1,3,2), (4,6,7,5), (0,4,5,1), (2,3,7,6)]
+    if display:
+      progress('Processing faces', next_face, num_faces)
     for patchid, patch in enumerate(patchlist):
       nu, nv, nw = map(len, patch.GetKnots())
       localid_patch = lambda (iu, iv, iw): localid(iu, iv, iw, nu, nv)
@@ -283,7 +294,13 @@ class InputFile:
             previous_faces[face_hash] = next_face
             next_face += 1
 
+          if next_face % 100000 == 0 and display:
+            progress('Processing faces', next_face, num_faces)
+
         next_cell += 1
+
+    if display:
+      progress('Processing faces', num_faces, num_faces)
 
     # Identify boundaries
     def get_faces(patchid, faceid):
