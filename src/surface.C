@@ -683,6 +683,43 @@ PyObject* Surface_GetSubSurf(PyObject* self, PyObject* args, PyObject* kwds)
   return (PyObject*) result;
 }
 
+PyDoc_STRVAR(surface_get_parameter_at_point__doc__,
+             "Get surface parameter values at a geometric Point\n"
+             "@param point: The geometric point to intersect \n"
+             "@type point: Point\n"
+             "@param tolerance: (optional) Tolerance in search\n"
+             "@type tolerance: Float\n"
+             "@return: Parameters, distance and actual point on geometry\n"
+             "@rtype: Tuple of (list of Float, Float, Point)");
+PyObject* Surface_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+  static const char* keyWords[] = {"point", "tolerance", NULL };
+  PyObject* point=nullptr;
+  double tolerance=1e-5;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|d",
+                                   (char**)keyWords, &point, &tolerance) || !parSurf)
+    return NULL;
+  shared_ptr<Go::Point> pt = PyObject_AsGoPoint(point);
+  std::vector<double> clo(2);
+  double dist;
+  Go::Point clopt(3);
+  parSurf->closestPoint(*pt, clo[0], clo[1], clopt, dist, tolerance);
+  Point* rpt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  rpt->data.reset(new Go::Point(clopt));
+
+  PyObject* list = PyList_New(2);
+  VectorToPyPointList(list, clo, 1);
+
+  PyObject* result = PyTuple_New(3);
+  PyTuple_SetItem(result, 0, list);
+  PyTuple_SetItem(result, 1, PyFloat_FromDouble(dist));
+  PyTuple_SetItem(result, 2, (PyObject*)rpt);
+
+  return result;
+}
+
 PyDoc_STRVAR(surface_insert_knot__doc__,
              "Insert a knot in a spline surface\n"
              "@param direction: Direction to insert knot in\n"
@@ -1335,6 +1372,7 @@ PyMethodDef Surface_methods[] = {
      {(char*)"GetOrder",            (PyCFunction)Surface_GetOrder,              METH_VARARGS              , surface_get_order__doc__},
      {(char*)"GetSubSurf",          (PyCFunction)Surface_GetSubSurf,            METH_VARARGS|METH_KEYWORDS, surface_get_sub_surf__doc__},
      {(char*)"GetTesselationParams",(PyCFunction)Surface_GetTesselationParams,  METH_VARARGS|METH_KEYWORDS, surface_get_tesselationparams__doc__},
+     {(char*)"GetParameterAtPoint", (PyCFunction)Surface_GetParameterAtPoint,   METH_VARARGS|METH_KEYWORDS, surface_get_parameter_at_point__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Surface_InsertKnot,            METH_VARARGS|METH_KEYWORDS, surface_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Surface_Interpolate,           METH_VARARGS|METH_KEYWORDS, surface_interpolate__doc__},
      {(char*)"Intersect",           (PyCFunction)Surface_Intersect,             METH_VARARGS|METH_KEYWORDS, surface_intersect__doc__},
