@@ -404,6 +404,35 @@ PyObject* Volume_GetFaces(PyObject* self, PyObject* args, PyObject* kwds)
   return result;
 }
 
+PyDoc_STRVAR(volume_get_parameter_at_point__doc__,
+             "Get volume parameter values at a geometric Point. Uses the global approx tolerance.\n"
+             "@param point: The geometric point to intersect \n"
+             "@type point: Point\n"
+             "@return: Parameters, distance and actual point on geometry\n"
+             "@rtype: Tuple of (list of Float, Float, Point)");
+PyObject* Volume_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  static const char* keyWords[] = {"point", NULL };
+  PyObject* point=nullptr;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords, &point) || !parVol)
+    return NULL;
+  shared_ptr<Go::Point> pt = PyObject_AsGoPoint(point);
+  std::vector<double> clo(3);
+  double dist;
+  Go::Point clopt(3);
+  parVol->closestPoint(*pt, clo[0], clo[1], clo[2], clopt, dist, modState.approxTolerance);
+  Point* rpt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  rpt->data.reset(new Go::Point(clopt));
+
+  PyObject* list = PyList_New(3);
+  VectorToPyPointList(list, clo, 1);
+
+  return Py_BuildValue("(OOO)", list, PyFloat_FromDouble(dist), (PyObject*)rpt);
+}
+
 PyDoc_STRVAR(volume_get_sub_vol__doc__,
              "Get a Spline Volume which represent a part of 'this' Volume\n"
              "@param from_par: The parametric lower left corner of the sub volume\n"
@@ -1126,6 +1155,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"GetGreville",         (PyCFunction)Volume_GetGreville,           0,                          volume_get_greville__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
+     {(char*)"GetParameterAtPoint", (PyCFunction)Volume_GetParameterAtPoint,   METH_VARARGS|METH_KEYWORDS, volume_get_parameter_at_point__doc__},
      {(char*)"GetTesselationParams",(PyCFunction)Volume_GetTesselationParams,  METH_VARARGS|METH_KEYWORDS, volume_get_tesselationparams__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Volume_Interpolate,           METH_VARARGS|METH_KEYWORDS, volume_interpolate__doc__},
