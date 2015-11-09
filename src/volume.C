@@ -191,23 +191,40 @@ PyDoc_STRVAR(volume_evaluate__doc__,
              "@type value_v: float\n"
              "@param value_w: The w parameter value\n"
              "@type value_w: float\n"
+             "@param derivatives: The number of derivatives to obtain\n"
+             "@type derivatives: Integer\n"
              "@return: The value of the volume\n"
-             "@rtype: Point");
+             "@rtype: Point or tuple of Points if derivs > 0");
 PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"value_u", "value_v", "value_w", NULL };
+  static const char* keyWords[] = {"value_u", "value_v", "value_w", "derivatives", NULL };
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   double value_u=0, value_v=0, value_w=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd",
+  int derivs=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd|i",
                                    (char**)keyWords,&value_u,&value_v,
-                                                    &value_w) || !parVol)
+                                                    &value_w,&derivs) || !parVol)
     return NULL;
 
-  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(parVol->dimension()));
-  parVol->point(*result->data, value_u, value_v, value_w);
+  if (derivs == 0) {
+    Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+    result->data.reset(new Go::Point(parVol->dimension()));
+    parVol->point(*result->data, value_u, value_v, value_w);
+    return (PyObject*)result;
+  } else {
+    std::vector<Go::Point> pts((derivs+1)*(derivs+2)*(derivs+3)/6);
+    parVol->point(pts, value_u, value_v, value_w, derivs);
+    PyObject* result = PyTuple_New(pts.size());
+    for (size_t i=0;i<pts.size();++i) {
+      Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      pt->data.reset(new Go::Point(pts[i][0], pts[i][1], pts[i][2]));
+      PyTuple_SetItem(result, i, (PyObject*)pt);
+    }
+    return result;
+  }
 
-  return (PyObject*)result;
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 PyDoc_STRVAR(volume_evaluategrid__doc__,
