@@ -783,11 +783,7 @@ PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   }
   shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
 
-  std::vector<double> coefs;
-  for (int i=0;i<PyList_Size(pycoefs);++i) {
-    PyObject* o = PyList_GetItem(pycoefs,i);
-    coefs.push_back(PyFloat_AsDouble(o));
-  }
+  std::pair<std::vector<double>, int> coefs = PyPointListToVector(pycoefs);
 
   std::vector<double> greville_u(surf->basis_u().numCoefs());
   std::vector<double> greville_v(surf->basis_v().numCoefs());
@@ -797,15 +793,13 @@ PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
     greville_v[i] = surf->basis_v().grevilleParameter(i);
   std::vector<double> weights(0);
 
-  int dim = coefs.size()/(greville_u.size()*greville_v.size());
-
   Go::SplineSurface* res =
         Go::SurfaceInterpolator::regularInterpolation(surf->basis_u(),
                                                       surf->basis_v(),
                                                       greville_u,
                                                       greville_v,
-                                                      coefs,
-                                                      dim,
+                                                      coefs.first,
+                                                      coefs.second,
                                                       false,
                                                       weights);
 

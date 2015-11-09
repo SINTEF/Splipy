@@ -684,11 +684,7 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   }
   shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
 
-  std::vector<double> coefs;
-  for (int i=0;i<PyList_Size(pycoefs);++i) {
-    PyObject* o = PyList_GetItem(pycoefs,i);
-    coefs.push_back(PyFloat_AsDouble(o));
-  }
+  std::pair<std::vector<double>, int> coefs = PyPointListToVector(pycoefs);
 
   std::vector<double> greville_u(vol->basis(0).numCoefs());
   std::vector<double> greville_v(vol->basis(1).numCoefs());
@@ -701,8 +697,6 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
     greville_w[i] = vol->basis(2).grevilleParameter(i);
   std::vector<double> weights(0);
 
-  int dim = coefs.size()/(greville_u.size()*greville_v.size()*greville_w.size());
-
   Go::SplineVolume* res =
         Go::VolumeInterpolator::regularInterpolation(vol->basis(0),
                                                      vol->basis(1),
@@ -710,8 +704,8 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
                                                      greville_u,
                                                      greville_v,
                                                      greville_w,
-                                                     coefs,
-                                                     dim,
+                                                     coefs.first,
+                                                     coefs.second,
                                                      false,
                                                      weights);
 

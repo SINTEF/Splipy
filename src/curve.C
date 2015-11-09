@@ -636,24 +636,18 @@ PyObject* Curve_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   }
   shared_ptr<Go::SplineCurve> crv = convertSplineCurve(parCrv);
 
-  std::vector<double> coefs;
-  for (int i=0;i<PyList_Size(pycoefs);++i) {
-    PyObject* o = PyList_GetItem(pycoefs,i);
-    coefs.push_back(PyFloat_AsDouble(o));
-  }
+  std::pair<std::vector<double>, int> coefs = PyPointListToVector(pycoefs);
 
   std::vector<double> greville_u(crv->basis().numCoefs());
   for(int i=0; i<crv->basis().numCoefs(); i++)
     greville_u[i] = crv->basis().grevilleParameter(i);
   std::vector<double> weights(0);
 
-  int dim = coefs.size()/greville_u.size();
-
   Go::SplineCurve* res =
         Go::CurveInterpolator::regularInterpolation(crv->basis(),
                                                     greville_u,
-                                                    coefs,
-                                                    dim,
+                                                    coefs.first,
+                                                    coefs.second,
                                                     false,
                                                     weights);
 
