@@ -14,16 +14,16 @@ UNIFORM=8
 
 def getBasis(t, knot, d=0, fromRight=True):
     """Get all basis functions evaluated in a given set of points
-    @param t: The parametric coordinates to perform evaluation
-    @type t:  List of floats
-    @param t: Open knot vector corresponding to the basis functions
-    @type t:  List of floats
-    @param d: Number of derivatives
-    @type d:  Integer
+    @param t:         The parametric coordinates to perform evaluation
+    @type  t:         List of floats (in non-decreasing order)
+    @param knot:      Open knot vector corresponding to the basis functions
+    @type  knot:      List of floats (in non-decreasing order)
+    @param d:         Number of derivatives
+    @type  d:         Integer
     @param fromRight: True if evaluation should be done in the limit from above
-    @type fromRight:  Boolean
-    @return:  Matrix of all basis functions in all points
-    @rtype:   Numpy.Matrix
+    @type  fromRight: Boolean
+    @return:          Matrix of all basis functions in all points
+    @rtype:           Numpy.Matrix
     """
     TOL = 1e-10 # knot vector snap tolerance
     p = 1       # knot vector order
@@ -67,11 +67,11 @@ def getBasis(t, knot, d=0, fromRight=True):
 def InterpolateCurve(x, t, knot):
     """Interpolate a curve at a given set of points. User is responsible that the input problem is well posed
     @param x:    The physical coordinates of the points to interpolate. Size nxd, where d is the dimension and n is the number of points
-    @type x:     Numpy.Matrix
+    @type  x:    Numpy.Matrix
     @param t:    The parametric coordinates of the points to interpolate. Length n
-    @type t:     List of floats
+    @type  t:    List of floats
     @param knot: Open knot vector to use for interpolation. Size n+p, where p is the order to use for interpolation
-    @type knot:  List of floats
+    @type  knot: List of floats
     @return:     Interpolating curve
     @rtype:      Curve
     """
@@ -85,9 +85,9 @@ def InterpolateCurve(x, t, knot):
 def ApproximateCurve(x, t, knot):
     """Approximate a curve of m discrete points using a spline of n control points, where n<m
     @param x:    The physical coordinates of the points to approximate. Size mxd, where d is the dimension and m is the number of points
-    @type x:     Numpy.Matrix
+    @type  x:    Numpy.Matrix
     @param t:    The parametric coordinates of the points above. Length m
-    @type t:     List of floats
+    @type  t:    List of floats
     @param knot: Open knot vector to use for approximation. Size n+p, where p is the spline order and n is the number of control points
     @type knot:  List of floats
     @return:     Approximating curve
@@ -104,15 +104,15 @@ def ApproximateCurve(x, t, knot):
 def InterpolateSurface(x, u, v, knotU, knotV):
     """Interpolate a surface at a given set of points. User is responsible that the input problem is well posed
     @param x:     The physical coordinates of the points to interpolate. Size (NxM)xD, where D is the dimension and NxM is the number of points
-    @type x:      List of list of floats
+    @type  x:     List of list of floats
     @param u:     The parametric coordinates in the first direction of the points to interpolate. Length N
-    @type u:      List of floats
+    @type  u:     List of floats
     @param v:     The parametric coordinates in the second direction of the points to interpolate. Length M
-    @type v:      List of floats
+    @type  v:     List of floats
     @param knotU: Open knot vector to use for interpolation. Size N+p, where p is the order in the first direction
-    @type knotU:  List of floats
+    @type  knotU: List of floats
     @param knotV: Open knot vector to use for interpolation. Size M+q, where q is the order in the second direction
-    @type knotV:  List of floats
+    @type  knotV: List of floats
     @return:      Interpolating surface
     @rtype:       Surface
     """
@@ -148,15 +148,15 @@ def InterpolateSurface(x, u, v, knotU, knotV):
 def ApproximateSurface(x, u, v, knotU, knotV):
     """Approximate a surface of nxm discrete points using a spline of NxM control points, where n>N and m>M
     @param x:     The physical coordinates of the points to interpolate. Size (nxm)xD, where D is the dimension and NxM is the number of points
-    @type x:      List of list of floats
+    @type  x:     List of list of floats
     @param u:     The parametric coordinates in the first direction of the points to interpolate. Length N
-    @type u:      List of floats
+    @type  u:     List of floats
     @param v:     The parametric coordinates in the second direction of the points to interpolate. Length M
-    @type v:      List of floats
+    @type  v:     List of floats
     @param knotU: Open knot vector to use for interpolation. Size N+p, where p is the order in the first direction
-    @type knotU:  List of floats
+    @type  knotU: List of floats
     @param knotV: Open knot vector to use for interpolation. Size M+q, where q is the order in the second direction
-    @type knotV:  List of floats
+    @type  knotV: List of floats
     @return:      Interpolating surface
     @rtype:       Surface
     """
@@ -195,19 +195,19 @@ def ApproximateSurface(x, u, v, knotU, knotV):
 
 def LinearCurve(x=[], y=[], z=[], pts=[], t=[]):
     """Linearly interpolate a list of points.
-    @param x: The x-coordinate of the points to interpolate
-    @type x:  List of floats
-    @param y: y-coordinates
-    @type y:  List of floats
-    @param z: z-coordinates
-    @type z:  List of floats
+    @param x:   The x-coordinate of the points to interpolate
+    @type  x:   List of floats
+    @param y:   y-coordinates
+    @type  y:   List of floats
+    @param z:   z-coordinates
+    @type  z:   List of floats
     @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
-    @type pts: List of Point
-    @param t: The parametric coordinates of the points above. Length n. If not given,
-              arclength parametrization is used.
-    @type t: List of floats
-    @return:  Linear interpolated curve in 3 dimensions
-    @rtype:   Curve
+    @type  pts: List of Point
+    @param t:   The parametric coordinates of the points above. Length n. If not given,
+                arclength parametrization is used.
+    @type  t:   List of floats
+    @return:    Linear interpolated curve in 3 dimensions
+    @rtype:     Curve
     """
     if pts:
         x, y, z = [map(itemgetter(i), pts) for i in xrange(3)]
@@ -234,29 +234,29 @@ def LinearCurve(x=[], y=[], z=[], pts=[], t=[]):
 
 def CubicCurve(x=[], y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[], pts=[], t=[], der=[]):
     """Cubic spline interpolation of a list of points.
-    @param x: The x-coordinate of the points to interpolate
-    @type x:  List of floats (n points)
-    @param y: y-coordinates
-    @type y:  List of floats
-    @param z: z-coordinates
-    @type z:  List of floats
+    @param x:        The x-coordinate of the points to interpolate
+    @type  x:        List of floats (n points)
+    @param y:        y-coordinates
+    @type  y:        List of floats
+    @param z:        z-coordinates
+    @type  z:        List of floats
     @param boundary: Boundary conditions
-    @type boundary:  FREE, NATURAL, HERMITE, PERIODIC, TANGENT or TANGENTNATURAL
-    @param derX: In case of Hermite or Tangent boundary conditions, one must supply tangent information
-    @type derX:  List of floats (two points for Tangent, n points for Hermite)
-    @param derY: Y-component of tangent information
-    @type derY:  List of floats
-    @param derZ: Z-component of tangent information
-    @type derZ:  List of floats
-    @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
-    @type pts: List of Point
-    @param t: The parametric coordinates of the points above. Length n. If not given,
-              arclength parametrization is used.
-    @type t: List of floats
-    @param der:  Derivatives (supersedes derX, derY and derZ)
-    @type der:   List of Point
-    @return: Cubic interpolated curve in 3 dimensions
-    @rtype: Curve
+    @type  boundary: FREE, NATURAL, HERMITE, PERIODIC, TANGENT or TANGENTNATURAL
+    @param derX:     In case of Hermite or Tangent boundary conditions, one must supply tangent information
+    @type  derX:     List of floats (two points for Tangent, n points for Hermite)
+    @param derY:     Y-component of tangent information
+    @type  derY:     List of floats
+    @param derZ:     Z-component of tangent information
+    @type  derZ:     List of floats
+    @param pts:      Coordinates of the points to interpolate (supersedes x, y and z)
+    @type  pts:      List of Point
+    @param t:        The parametric coordinates of the points above. Length n. If not given,
+                     arclength parametrization is used.
+    @type  t:        List of floats
+    @param der:      Derivatives (supersedes derX, derY and derZ)
+    @type  der:      List of Point
+    @return:         Cubic interpolated curve in 3 dimensions
+    @rtype:          Curve
     """
     if pts:
         x, y, z = [map(itemgetter(i), pts) for i in xrange(3)]
@@ -347,16 +347,16 @@ def CubicCurve(x=[], y=[], z=[], boundary=FREE, derX=[], derY=[], derZ=[], pts=[
 
 def UniformCubicCurve(x=[], y=[], z=[], pts=[]):
     """Cubic spline interpolation a list of points by uniform parametrization
-    @param x: The x-coordinate of the points to interpolate
-    @type x:  List of floats
-    @param y: y-coordinates
-    @type y:  List of floats
-    @param z: z-coordinates
-    @type z:  List of floats
+    @param x:   The x-coordinate of the points to interpolate
+    @type  x:   List of floats
+    @param y:   y-coordinates
+    @type  y:   List of floats
+    @param z:   z-coordinates
+    @type  z:   List of floats
     @param pts: Coordinates of the points to interpolate (supersedes x, y and z)
-    @type pts: List of Point
-    @return:  Cubic interpolated curve in 3 dimensions
-    @rtype:   Curve
+    @type pts:  List of Point
+    @return:    Cubic interpolated curve in 3 dimensions
+    @rtype:     Curve
     """
     if pts:
         x, y, z = [map(itemgetter(i), pts) for i in xrange(3)]
