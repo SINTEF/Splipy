@@ -386,6 +386,39 @@ PyObject* Curve_GetGreville(PyObject* self)
   return result;
 }
 
+PyDoc_STRVAR(curve_get_kinks__doc__,
+             "Get the parametric value of the curve kinks (where the knot vector has multiplicity p and the curve is C0). Set 'knot' tolerance for more control.\n"
+             "@return: List of the knot values\n"
+             "@rtype: List of float");
+PyObject* Curve_GetKinks(PyObject* self)
+{
+
+  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+  if (!parCrv)
+    return NULL;
+  Curve* pyCrv = (Curve*)self;
+  pyCrv->data = convertSplineCurve(parCrv);
+  PyObject* result = PyList_New(0);
+  std::vector<double> knots;
+  shared_ptr<Go::SplineCurve> spCrv = static_pointer_cast<Go::SplineCurve>(pyCrv->data);
+  knots = spCrv->basis().getKnots();
+  int p = spCrv->basis().order();
+  int n = knots.size();
+  int multiplicity = 0;
+  double prevKnot = knots[0];
+  for(int i=1; i<knots.size()-1; i++) {
+    if(fabs(knots[i]-prevKnot) < modState.knotTolerance) {
+      multiplicity++;
+    } else {
+      multiplicity = 1;
+      prevKnot = knots[i];
+    }
+    if(multiplicity == p-1)
+      PyList_Append(result,Py_BuildValue((char*)"d",prevKnot));
+  }
+  return result;
+}
+
 PyDoc_STRVAR(curve_get_knots__doc__,
              "Get the knots of a spline curve\n"
              "@param with_multiplicities: (optional) Set to true to obtain the knot vector with multiplicities\n"
@@ -1288,6 +1321,7 @@ PyMethodDef Curve_methods[] = {
      {(char*)"FlipParametrization", (PyCFunction)Curve_FlipParametrization, METH_VARARGS,               curve_flip_parametrization__doc__},
      {(char*)"ForceRational",       (PyCFunction)Curve_ForceRational,       METH_VARARGS,               curve_force_rational__doc__},
      {(char*)"GetGreville",         (PyCFunction)Curve_GetGreville,         0,                          curve_get_greville__doc__},
+     {(char*)"GetKinks",            (PyCFunction)Curve_GetKinks,            0,                          curve_get_kinks__doc__},
      {(char*)"GetKnots",            (PyCFunction)Curve_GetKnots,            METH_VARARGS|METH_KEYWORDS, curve_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Curve_GetOrder,            METH_VARARGS,               curve_get_order__doc__},
      {(char*)"GetParameterAtPoint", (PyCFunction)Curve_GetParameterAtPoint, METH_VARARGS|METH_KEYWORDS, curve_get_parameter_at_point__doc__},
