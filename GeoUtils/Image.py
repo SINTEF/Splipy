@@ -1,29 +1,30 @@
 __doc__ = 'Implementation of image based mesh generation.'
 
 from GoTools import *
+from GoTools.SurfaceFactory import *
 from GeoUtils.Interpolate import *
 from math import *
 import cv2
 import numpy as np
 
-def getCorners(X):
+def getCorners(X, L=50, R=30, D=15):
     """CornerDet detects corners of traced outlines using the SAM04 algorithm.
     The outline is assumed to constitute a discrete closed curve where each
-    point is included just once.
-    @param X: A traced outline forming a discrete closed curve
-    @type  X: numpy array of size 2xn
-
-    @return: (The indices of X that consitute corner points)
-    @rtype : (The indices of X that consitute corner points)
+    point is included just once. Increasing D and R will give the same number
+    of corners or fewer corners.
+    @param X : A traced outline forming a discrete closed curve
+    @type  X : numpy array of size nx2
+    @param L : Controls the scale at which corners are measured.
+    @type  L : Float
+    @param R : Controls how close corners can appear.
+    @type  R : Float
+    @param D : The lower bound for the corner metric. Corner candidates with
+               lower metric than this are rejected.
+    @type  D : Float
+    @return  : The indices of X that consitute corner points
+    @rtype   : Numpy array
     """
     n = len(X)
-
-    # Sets the parameters of the algorithm. Increasing D and R will give the
-    # same number of corners or fewer corners.
-    L = 50 # Controls the scale at which corners are measured.
-    R = 30 # Controls how close corners can appear.
-    D = 15 # The lower bound for the corner metric. Corner candidates with
-           # lower metric than this are rejected.
 
     # Finds corner candidates
     d = np.zeros(n)
@@ -123,6 +124,9 @@ def ImageCurves(filename):
             pts[j][1] = len(im[0])-pts[j][1]
 
         corners = getCorners(pts)
+        if len(corners)>2:                        # start/stop tagged as corners. If any inner corners, then
+            pts     = np.roll(pts, -corners[1],0) # rearrange points so start/stop falls at a natural corner.
+            corners = getCorners(pts)             # recompute corners, since previous sem might be smooth
 
         SetTolerance(approx=2300)
 
@@ -217,4 +221,54 @@ def ImageHeight(filename, N=[30,30], p=[4,4]):
             pts.append([v[j], u[i], float(imGrey[width-i-1][j])/255.0*1.0])
 
     return ApproximateSurface(pts,u,v,knot1,knot2)
+
+def ImageConvexSurface(filename):
+    """Generate a single B-spline surface corresponding to convex black domain of a black/white mask image. The algorithm
+       traces the boundary and searches for 4 natural corner points. It will then generate 4 boundary curves which will be
+       used to create the surface by Coons Patch. If less than 4 corners are found, the rest is generated at the center of
+       the largest span (possibly creating a 180 degree corner), and if more than 4 corners are found, then the excess corners
+       are placed on curve interiors, thus contributing to internal C0 parametrization. Many non-convex domains will produce
+       good surfaces, but for these domains there is no guarantee against self-intersection. All convex domains will work. 
+    @param filename: Name of image file to read
+    @type  filename: String
+    @return        : B-spline surface
+    @rtype         : Surface
+    """
+    # generate boundary curve
+    crv = ImageCurves(filename);
+
+    # error test input
+    if type(crv) is list:
+        print 'Error: ImageConvexSurface expects a single closed curve. Multiple curves detected'
+        return None
+
+    # parametric value of corner candidates. These are all in the range [0,1] and both 0 and 1 is present
+    kinks = crv.GetKinks()
+
+    # generate 4 corners
+    if len(kinks) == 2:
+        corners = [.25, .5, .75]
+
+    elif len(kinks) == 3:
+        corners = [(0+kinks[1])/2, kinks[1], (1+kinks[1])/2]
+
+    elif len(kinks) == 4:
+        if kinks[1]-kinks[0] > kinks[2]-kinks[1] and kinks[1]-kinks[0] > kinks[3]-kinks[2]:
+            corners = [(kinks[0]+kinks[1])/2] + kinks[1:3]
+        elif kinks[2]-kinks[1] > kinks[3]-kinks[2]:
+            corners = [kinks[1], (kinks[1]+kinks[2])/2], kinks[2]
+        else:
+            corners = kinks[1:3] + [(kinks[2]+kinks[3])/2]
+    
+    else:
+        while len(kinks) > 5:
+            max_span   = 0
+            max_span_i = 0
+            for i in range(1,len(kinks)-1):
+                max_span   = max(max_span, kinks[i+1]-kinks[i-1])
+                max_span_i = i
+            del kinks[max_span_i]
+        corners = kinks[1:4]
+
+    return CoonsSurfacePatch(crv.Split(corners));
 
