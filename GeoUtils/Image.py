@@ -23,7 +23,7 @@ def getCorners(X):
     L = 50 # Controls the scale at which corners are measured.
     R = 30 # Controls how close corners can appear.
     D = 15 # The lower bound for the corner metric. Corner candidates with
-            # lower metric than this are rejected.
+           # lower metric than this are rejected.
 
     # Finds corner candidates
     d = np.zeros(n)
@@ -124,7 +124,7 @@ def ImageCurves(filename):
 
         corners = getCorners(pts)
 
-        SetTolerance('approx', 2300)
+        SetTolerance(approx=2300)
 
         n = len(pts)
         parpt = range(n)

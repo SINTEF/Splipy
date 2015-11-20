@@ -69,40 +69,57 @@ PyObject* GeoMod_SetDimension(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(set_tolerance__doc__,
-             "Set a tolerance\n"
-             "@param type: Tolerance that should be changed\n"
-             "@type type: 'gap', 'approx', 'neighbour', 'kink', 'bend' or 'refine'\n"
-             "@param tolerance: Tolerance to set\n"
-             "@type tolerance: float\n"
+             "Set a tolerance. Distances are either measured in the geometric space (x,y)-coordinates, or parametric space (u,v)-coordinates.\n"
+             "@param gap      : distance between points considered equal (i.e. intersection algorithms)\n"
+             "@type  gap      : Geometric float  \n"
+             "@param approx   : approximatin error tolerance\n"
+             "@type  approx   : Geometric float  \n"
+             "@param neighbour: maximum distance between patches considered adjacent\n"
+             "@type  neighbour: Geometric float  \n"
+             "@param kink     : If two adjacent surfaces meet with an angle less than 'kink', they are seen as G1 continous  (angles in radians) \n"
+             "@type  kink     : Geometric float  \n"
+             "@param bend     : If two surfaces meet along a common boundary and corresponding surface normals form an angle which is larger than 'bend', there is an intentional sharp edge between the surfaces (angles in radians) \n"
+             "@type  bend     : Geometric float  \n"
+             "@param refine   : refinement operations will not insert new knots within this distance of existing knots\n"
+             "@type  refine   : Parametric float \n"
+             "@param knot     : tolerance for knots that are to be considered equal (reduced continuity basis)\n"
+             "@type  knot     : Parametric float \n"
              "@return: None");
 PyObject* GeoMod_SetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"type", "tolerance", NULL };
-  const char* typec;
-  double tolerance;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"sd",
-                                   (char**)keyWords,&typec, &tolerance))
+  static const char* keyWords[] = {"gap", "approx", "neighbour", "kink", "bend", "refine", "knot", NULL};
+  double gap       = -1;
+  double approx    = -1;
+  double neighbour = -1;
+  double kink      = -1;
+  double bend      = -1;
+  double refine    = -1;
+  double knot      = -1;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|ddddddd",
+                                   (char**)keyWords, &gap, &approx, &neighbour, &kink, &bend, &refine, &knot))
     return NULL;
 
-  std::string type(typec);
+  // negative tolerances means that they are overridden from the commandline (keep them unchanged)
+  if (gap > 0 && modState.gapTolerance >= 0)
+    modState.gapTolerance = gap;
 
-  if (type == "gap" && modState.gapTolerance >= 0)
-    modState.gapTolerance = tolerance;
+  if (approx > 0 && modState.approxTolerance >= 0)
+    modState.approxTolerance = approx;
 
-  if (type == "approx" && modState.approxTolerance >= 0)
-    modState.approxTolerance = tolerance;
+  if (neighbour > 0 && modState.neighbourTolerance >= 0)
+    modState.neighbourTolerance = neighbour;
 
-  if (type == "neighbour" && modState.neighbourTolerance >= 0)
-    modState.neighbourTolerance = tolerance;
+  if (kink > 0 && modState.kinkTolerance >= 0)
+    modState.kinkTolerance = kink;
 
-  if (type == "kink" && modState.kinkTolerance >= 0)
-    modState.kinkTolerance = tolerance;
+  if (bend > 0 && modState.bendTolerance >= 0)
+    modState.bendTolerance = bend;
 
-  if (type == "bend" && modState.kinkTolerance >= 0)
-    modState.bendTolerance = tolerance;
+  if (refine > 0 && modState.refineTolerance >= 0)
+    modState.refineTolerance = refine;
 
-  if (type == "refine" && modState.refineTolerance >= 0)
-    modState.refineTolerance = tolerance;
+  if (knot > 0 && modState.knotTolerance >= 0)
+    modState.knotTolerance = knot;
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -111,7 +128,7 @@ PyObject* GeoMod_SetTolerance(PyObject* self, PyObject* args, PyObject* kwds)
 PyDoc_STRVAR(get_tolerance__doc__,
              "Get a tolerance\n"
              "@param type: Requested tolerance\n"
-             "@type type: 'gap', 'approx', 'neighbour', 'kink', 'bend' or 'refine'\n"
+             "@type type: 'gap', 'approx', 'neighbour', 'kink', 'bend', 'refine' or 'knot'\n"
              "@return: Tolerance\n"
              "@rtype: Float");
 PyObject* GeoMod_GetTolerance(PyObject* self, PyObject* args, PyObject* kwds)

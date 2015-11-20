@@ -4,7 +4,7 @@ from GoTools.SurfaceFactory import *
 from GoTools.VolumeFactory import *
 
 SetDimension(3)
-SetTolerance("gap",1.e-5)
+SetTolerance(gap=1.e-5)
 SetDebugLevel(1)
 
 ls1 = LineSegment((3,0,0),(4,0,0))
