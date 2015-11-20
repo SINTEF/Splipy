@@ -191,23 +191,40 @@ PyDoc_STRVAR(volume_evaluate__doc__,
              "@type value_v: float\n"
              "@param value_w: The w parameter value\n"
              "@type value_w: float\n"
+             "@param derivatives: The number of derivatives to obtain\n"
+             "@type derivatives: Integer\n"
              "@return: The value of the volume\n"
-             "@rtype: Point");
+             "@rtype: Point or tuple of Points if derivs > 0");
 PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"value_u", "value_v", "value_w", NULL };
+  static const char* keyWords[] = {"value_u", "value_v", "value_w", "derivatives", NULL };
   shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
   double value_u=0, value_v=0, value_w=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd",
+  int derivs=0;
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd|i",
                                    (char**)keyWords,&value_u,&value_v,
-                                                    &value_w) || !parVol)
+                                                    &value_w,&derivs) || !parVol)
     return NULL;
 
-  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(parVol->dimension()));
-  parVol->point(*result->data, value_u, value_v, value_w);
+  if (derivs == 0) {
+    Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+    result->data.reset(new Go::Point(parVol->dimension()));
+    parVol->point(*result->data, value_u, value_v, value_w);
+    return (PyObject*)result;
+  } else {
+    std::vector<Go::Point> pts((derivs+1)*(derivs+2)*(derivs+3)/6);
+    parVol->point(pts, value_u, value_v, value_w, derivs);
+    PyObject* result = PyTuple_New(pts.size());
+    for (size_t i=0;i<pts.size();++i) {
+      Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      pt->data.reset(new Go::Point(pts[i][0], pts[i][1], pts[i][2]));
+      PyTuple_SetItem(result, i, (PyObject*)pt);
+    }
+    return result;
+  }
 
-  return (PyObject*)result;
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 PyDoc_STRVAR(volume_evaluategrid__doc__,
@@ -385,6 +402,35 @@ PyObject* Volume_GetFaces(PyObject* self, PyObject* args, PyObject* kwds)
   }
 
   return result;
+}
+
+PyDoc_STRVAR(volume_get_parameter_at_point__doc__,
+             "Get volume parameter values at a geometric Point. Uses the global approx tolerance.\n"
+             "@param point: The geometric point to intersect \n"
+             "@type point: Point\n"
+             "@return: Parameters, distance and actual point on geometry\n"
+             "@rtype: Tuple of (list of Float, Float, Point)");
+PyObject* Volume_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kwds)
+{
+  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+  static const char* keyWords[] = {"point", NULL };
+  PyObject* point=nullptr;
+
+  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                   (char**)keyWords, &point) || !parVol)
+    return NULL;
+  shared_ptr<Go::Point> pt = PyObject_AsGoPoint(point);
+  std::vector<double> clo(3);
+  double dist;
+  Go::Point clopt(3);
+  parVol->closestPoint(*pt, clo[0], clo[1], clo[2], clopt, dist, modState.approxTolerance);
+  Point* rpt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+  rpt->data.reset(new Go::Point(clopt));
+
+  PyObject* list = PyList_New(3);
+  VectorToPyPointList(list, clo, 1);
+
+  return Py_BuildValue("(OOO)", list, PyFloat_FromDouble(dist), (PyObject*)rpt);
 }
 
 PyDoc_STRVAR(volume_get_sub_vol__doc__,
@@ -638,11 +684,7 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   }
   shared_ptr<Go::SplineVolume> vol = convertSplineVolume(parVol);
 
-  std::vector<double> coefs;
-  for (int i=0;i<PyList_Size(pycoefs);++i) {
-    PyObject* o = PyList_GetItem(pycoefs,i);
-    coefs.push_back(PyFloat_AsDouble(o));
-  }
+  std::pair<std::vector<double>, int> coefs = PyPointListToVector(pycoefs);
 
   std::vector<double> greville_u(vol->basis(0).numCoefs());
   std::vector<double> greville_v(vol->basis(1).numCoefs());
@@ -655,8 +697,6 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
     greville_w[i] = vol->basis(2).grevilleParameter(i);
   std::vector<double> weights(0);
 
-  int dim = coefs.size()/(greville_u.size()*greville_v.size()*greville_w.size());
-
   Go::SplineVolume* res =
         Go::VolumeInterpolator::regularInterpolation(vol->basis(0),
                                                      vol->basis(1),
@@ -664,8 +704,8 @@ PyObject* Volume_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
                                                      greville_u,
                                                      greville_v,
                                                      greville_w,
-                                                     coefs,
-                                                     dim,
+                                                     coefs.first,
+                                                     coefs.second,
                                                      false,
                                                      weights);
 
@@ -1109,6 +1149,7 @@ PyMethodDef Volume_methods[] = {
      {(char*)"GetGreville",         (PyCFunction)Volume_GetGreville,           0,                          volume_get_greville__doc__},
      {(char*)"GetKnots",            (PyCFunction)Volume_GetKnots,              METH_VARARGS|METH_KEYWORDS, volume_get_knots__doc__},
      {(char*)"GetOrder",            (PyCFunction)Volume_GetOrder,              METH_VARARGS,               volume_get_order__doc__},
+     {(char*)"GetParameterAtPoint", (PyCFunction)Volume_GetParameterAtPoint,   METH_VARARGS|METH_KEYWORDS, volume_get_parameter_at_point__doc__},
      {(char*)"GetTesselationParams",(PyCFunction)Volume_GetTesselationParams,  METH_VARARGS|METH_KEYWORDS, volume_get_tesselationparams__doc__},
      {(char*)"InsertKnot",          (PyCFunction)Volume_InsertKnot,            METH_VARARGS|METH_KEYWORDS, volume_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Volume_Interpolate,           METH_VARARGS|METH_KEYWORDS, volume_interpolate__doc__},

@@ -684,28 +684,26 @@ PyObject* Surface_GetSubSurf(PyObject* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(surface_get_parameter_at_point__doc__,
-             "Get surface parameter values at a geometric Point\n"
+             "Get surface parameter values at a geometric Point. Uses the global approx tolerance\n"
              "@param point: The geometric point to intersect \n"
              "@type point: Point\n"
-             "@param tolerance: (optional) Tolerance in search\n"
-             "@type tolerance: Float\n"
              "@return: Parameters, distance and actual point on geometry\n"
              "@rtype: Tuple of (list of Float, Float, Point)");
 PyObject* Surface_GetParameterAtPoint(PyObject* self, PyObject* args, PyObject* kwds)
 {
   shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
-  static const char* keyWords[] = {"point", "tolerance", NULL };
+  static const char* keyWords[] = {"point", NULL };
   PyObject* point=nullptr;
   double tolerance=1e-5;
 
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O|d",
-                                   (char**)keyWords, &point, &tolerance) || !parSurf)
+                                   (char**)keyWords, &point) || !parSurf)
     return NULL;
   shared_ptr<Go::Point> pt = PyObject_AsGoPoint(point);
   std::vector<double> clo(2);
   double dist;
   Go::Point clopt(3);
-  parSurf->closestPoint(*pt, clo[0], clo[1], clopt, dist, tolerance);
+  parSurf->closestPoint(*pt, clo[0], clo[1], clopt, dist, modState.approxTolerance);
   Point* rpt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
   rpt->data.reset(new Go::Point(clopt));
 
@@ -783,11 +781,7 @@ PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
   }
   shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
 
-  std::vector<double> coefs;
-  for (int i=0;i<PyList_Size(pycoefs);++i) {
-    PyObject* o = PyList_GetItem(pycoefs,i);
-    coefs.push_back(PyFloat_AsDouble(o));
-  }
+  std::pair<std::vector<double>, int> coefs = PyPointListToVector(pycoefs);
 
   std::vector<double> greville_u(surf->basis_u().numCoefs());
   std::vector<double> greville_v(surf->basis_v().numCoefs());
@@ -797,15 +791,13 @@ PyObject* Surface_Interpolate(PyObject* self, PyObject* args, PyObject* kwds)
     greville_v[i] = surf->basis_v().grevilleParameter(i);
   std::vector<double> weights(0);
 
-  int dim = coefs.size()/(greville_u.size()*greville_v.size());
-
   Go::SplineSurface* res =
         Go::SurfaceInterpolator::regularInterpolation(surf->basis_u(),
                                                       surf->basis_v(),
                                                       greville_u,
                                                       greville_v,
-                                                      coefs,
-                                                      dim,
+                                                      coefs.first,
+                                                      coefs.second,
                                                       false,
                                                       weights);
 
