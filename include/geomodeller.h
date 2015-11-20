@@ -25,14 +25,15 @@ class GeoModellerState {
       dim = 3;
       convertSpline = 0;
       // Negative values means it's overridden from command line
-      gapTolerance = 1.e-4;
-      approxTolerance = 1.e-3;
+      gapTolerance       = 1.e-4;
+      approxTolerance    = 1.e-3;
       neighbourTolerance = 1.e-2;
-      kinkTolerance = 1.e-2;
-      bendTolerance = 1.e-1;
-      refineTolerance = 1.e-3;
+      kinkTolerance      = 1.e-2;
+      bendTolerance      = 1.e-1;
+      refineTolerance    = 1.e-3;
+      knotTolerance      = 1.e-10;
       debugLevel = 1;
-      procCount = std::thread::hardware_concurrency();
+      procCount  = std::thread::hardware_concurrency();
     }
 
     void addInfo(PyObject* module)
@@ -54,6 +55,7 @@ class GeoModellerState {
     double kinkTolerance; //!< Kink tolerance
     double bendTolerance; //!< Bend tolerance
     double refineTolerance; //!< Tolerance for skipping refinement-inserted knots as they already exist
+    double knotTolerance; //!< Tolerance for identical knots
     std::string finalOutput; //!< The final output file
 
     //!< Python binding metadata

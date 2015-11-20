@@ -94,7 +94,7 @@ def ApproximateCurve(x, t, knot):
     @rtype:      Curve
     """
     p = 1 # knot vector order
-    while knotU[p]==knotU[0]:
+    while knot[p]==knot[0]:
         p += 1
     N = getBasis(t,knot)
     C = np.linalg.solve(N.transpose()*N, N.transpose()*x)
