@@ -161,11 +161,11 @@ def ImageCurves(filename):
                 knot[i] = (knot[i-1]+knot[i+1])/2.0
 
         # make C^0 at corners and C^-1 at endpoints by duplicating knots
-        knot = sorted(knot + c + c + [0,n]) # both c and knot contains a copy of the endpoints
+        knot = sorted(knot + c + c + [0,n-1]) # both c and knot contains a copy of the endpoints
 
-        # make it span [0,1] instead of [0,n]
+        # make it span [0,1] instead of [0,n-1]
         for i in range(len(knot)):
-            knot[i] /= float(n)
+            knot[i] /= float(n-1)
 
         c = ApproximateCurve(pts, parpt, knot)
 
