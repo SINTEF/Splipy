@@ -194,6 +194,15 @@ install(DIRECTORY GeoUtils DESTINATION ${PYTHON_DESTDIR}
 
 enable_testing()
 file(GLOB_RECURSE GEOMOD_TESTFILES RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*.reg)
+if(NOT VTFWRITER_FOUND)
+  foreach(testfile ${GEOMOD_TESTFILES})
+    if(NOT ${testfile} MATCHES "testVtf")
+      list(APPEND GEOMOD_TESTFILES2 ${testfile})
+    endif()
+  endforeach()
+  set(GEOMOD_TESTFILES ${GEOMOD_TESTFILES2})
+endif()
+
 foreach(TESTFILE ${GEOMOD_TESTFILES})
   string(REGEX REPLACE ".reg" ".py" TESTSCRIPT ${TESTFILE})
   add_test(${TESTFILE} ${CMAKE_BINARY_DIR}/dotest ${CMAKE_BINARY_DIR}/geoModeler ${PROJECT_SOURCE_DIR}/scripts/${TESTSCRIPT} ${PROJECT_SOURCE_DIR}/tests/${TESTFILE})
