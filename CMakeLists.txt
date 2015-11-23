@@ -217,5 +217,5 @@ add_custom_target(check-commits COMMAND ${CMAKE_COMMAND}
 # PIP/Distutils Package
 configure_file(${CMAKE_SOURCE_DIR}/setup.py.in ${CMAKE_BINARY_DIR}/setup.py)
 file(COPY ${CMAKE_SOURCE_DIR}/GeoUtils DESTINATION ${CMAKE_BINARY_DIR})
-file(COPY ${CMAKE_SOURCE_DIR}/README DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/README.rst DESTINATION ${CMAKE_BINARY_DIR})
 add_custom_target(pip DEPENDS GoTools COMMAND python2 setup.py sdist --dist-dir ${CMAKE_BINARY_DIR})
