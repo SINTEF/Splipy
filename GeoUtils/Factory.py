@@ -19,9 +19,8 @@ def SplitSurface(original, param, value):
     """
 
     surf      = original.Clone()
-# this actually fails for 2D models, but no Surface.GetDim() or
-# Surface.IsRational()  :(
-    rational  = (len(surf[0]) == 4)
+    dim       = GetDimension()
+    rational  = (len(surf[0]) == (dim+1))
     knot      = surf.GetKnots(True)
     p         = surf.GetOrder()
 

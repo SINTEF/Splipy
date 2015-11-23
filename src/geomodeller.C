@@ -207,6 +207,15 @@ PyObject* GeoMod_SetDebugLevel(PyObject* self, PyObject* args, PyObject* kwds)
   return Py_None;
 }
 
+PyDoc_STRVAR(get_dimension__doc__,
+             "Get geometry dimensionality\n"
+             "@return : Dimensionality of objects\n"
+             "@rtype  : Integer (2 or 3)\n");
+PyObject* GeoMod_GetDimension(PyObject* self)
+{
+  return Py_BuildValue((char*)"i", modState.dim);
+}
+
 PyDoc_STRVAR(get_processor_count__doc__,
              "Get processor count\n"
              "@return: Number of processes\n"
@@ -736,11 +745,12 @@ PyObject* GeoMod_FinalOutput(PyObject* self, PyObject* args, PyObject* kwds)
 PyMethodDef GeoMod_methods[] = {
      // setup and general methods
      {(char*)"GetVersion",            (PyCFunction)GeoMod_GetVersion,        METH_VARARGS,               get_go_version__doc__},
+     {(char*)"GetDimension",          (PyCFunction)GeoMod_GetDimension,      0,                          get_dimension__doc__},
      {(char*)"GetTolerance",          (PyCFunction)GeoMod_GetTolerance,      METH_VARARGS|METH_KEYWORDS, get_tolerance__doc__},
-     {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS|METH_KEYWORDS, set_tolerance__doc__},
+     {(char*)"GetProcessorCount",     (PyCFunction)GeoMod_GetProcessorCount, 0,                          get_processor_count__doc__},
      {(char*)"SetDimension",          (PyCFunction)GeoMod_SetDimension,      METH_VARARGS|METH_KEYWORDS, set_dim__doc__},
      {(char*)"SetFinalOutput",        (PyCFunction)GeoMod_SetFinalOutput,    METH_VARARGS|METH_KEYWORDS, set_final_output__doc__},
-     {(char*)"GetProcessorCount",     (PyCFunction)GeoMod_GetProcessorCount, 0,                          get_processor_count__doc__},
+     {(char*)"SetTolerance",          (PyCFunction)GeoMod_SetTolerance,      METH_VARARGS|METH_KEYWORDS, set_tolerance__doc__},
      {(char*)"SetProcessorCount",     (PyCFunction)GeoMod_SetProcessorCount, METH_VARARGS|METH_KEYWORDS, set_processor_count__doc__},
 
      // I/O
