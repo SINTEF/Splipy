@@ -43,6 +43,10 @@ PyDoc_STRVAR(generate_box__doc__,
              "@rtype: Volume");
 PyObject* Generate_Box(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"corner", "u_axis", "v_axis", "u_length", "v_length", "w_length", NULL };
   PyObject* cornero;
   PyObject* axisxo;
@@ -87,6 +91,10 @@ PyDoc_STRVAR(generate_cone__doc__,
              "@rtype: Volume");
 PyObject* Generate_Cone(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"apex", "axis", "angle", "height", "radius", NULL };
   PyObject* apexo;
   PyObject* axiso;
@@ -122,6 +130,10 @@ PyDoc_STRVAR(generate_contract_surf_to__doc__,
              "@rtype: Volume");
 PyObject* Generate_ContractSurfaceTo(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"surface", "point", NULL };
   PyObject* surfaceo;
   PyObject* pointo;
@@ -184,6 +196,10 @@ PyDoc_STRVAR(generate_cylinder__doc__,
              "@rtype: Volume");
 PyObject* Generate_Cylinder(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"center", "boundarypoint", "normal", "height", NULL };
   PyObject* centero;
   PyObject* bpointo;
@@ -226,6 +242,10 @@ PyDoc_STRVAR(generate_extrude_surface__doc__,
              "@rtype: Volume");
 PyObject* Generate_ExtrudeSurface(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"surface", "direction", "amount", NULL };
   PyObject* surfo;
   PyObject* pointo;
@@ -277,6 +297,10 @@ PyDoc_STRVAR(generate_loft_surfaces__doc__,
              "@rtype: Volume");
 PyObject* Generate_LoftSurfaces(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"surfaces", "params", "order", NULL };
   PyObject* surfaceso;
   PyObject* paramso=NULL;
@@ -376,6 +400,10 @@ PyDoc_STRVAR(generate_linear_surface_sweep__doc__,
              "@rtype: Volume");
 PyObject* Generate_LinearSurfaceSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"surface", "curve", "point", NULL };
   PyObject* o1;
   PyObject* o2;
@@ -415,6 +443,10 @@ PyDoc_STRVAR(generate_volnonrational__doc__,
              "@rtype: Volume");
 PyObject* Generate_VolNonRational(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"original", NULL };
   PyObject* originalo;
   if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
@@ -491,6 +523,10 @@ PyDoc_STRVAR(generate_resample_volume__doc__,
              "@rtype: Volume");
 PyObject* Generate_ResampleVolume(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"volume", "curve", NULL };
   PyObject* volumeo;
   PyObject* curveo;
@@ -567,6 +603,10 @@ PyDoc_STRVAR(generate_rotational_surface_sweep__doc__,
              "@rtype: Volume");
 PyObject* Generate_RotationalSurfaceSweep(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"surface", "position", "axis", "angle", NULL };
   PyObject* surfaceo;
   PyObject* poso;
@@ -615,6 +655,10 @@ PyDoc_STRVAR(generate_parallelepiped__doc__,
              "@rtype: Volume");
 PyObject* Generate_Parallelepiped(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"corner", "u_axis", "v_axis", "w_axis", "u_length", "v_length", "w_length", NULL };
   PyObject* cornero;
   PyObject* axisxo;
@@ -654,6 +698,10 @@ PyDoc_STRVAR(generate_sphere__doc__,
              "@rtype: Volume");
 PyObject* Generate_Sphere(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"center", "radius", NULL };
   PyObject* centero;
   double radius;
@@ -691,6 +739,10 @@ PyDoc_STRVAR(generate_torus__doc__,
              "@rtype: Volume");
 PyObject* Generate_Torus(PyObject* self, PyObject* args, PyObject* kwds)
 {
+  if (modState.dim != 3) {
+    PyErr_SetString(PyExc_TypeError, "Dimension error: Volume requested, but dimension not set to 3");
+    return NULL;
+  }
   static const char* keyWords[] = {"center", "axis", "major_radius", "minor_radius", NULL };
   PyObject* centero;
   PyObject* axiso;
