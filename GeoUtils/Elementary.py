@@ -250,8 +250,8 @@ def Rotate(obj, normal, theta):
         return Volume(p[0], p[1], p[2], knots1, knots2, knots3, rotatedCP, rational)
 
 def MakeCommonSplineSpace(obj1, obj2):
-    """ Make obj1 and obj2 have the same degree, and same
-    knot vector and same rational representation
+    """ Make obj1 and obj2 have the same degree, and same knot vector and same 
+    rational representation. Uses 'Knot' tolerance (see GoTools.SetTolerance).
     @param obj1: The first object
     @type obj1: Curve or Surface 
     @param obj2: The second object
@@ -259,6 +259,7 @@ def MakeCommonSplineSpace(obj1, obj2):
     @return: none
     """
     
+    tol  = GetTolerance('knot');
     p1   = obj1.GetOrder()
     p2   = obj2.GetOrder()
     rat1 = len(obj1[0]) == 4 # here assuming that obj1 & obj2 lies in 3D space
@@ -280,7 +281,7 @@ def MakeCommonSplineSpace(obj1, obj2):
         i = 0
         j = 0
         while not done:
-            if k1[i] == k2[j]:
+            if abs(k1[i] - k2[j]) <= tol:
                 i = i+1
                 j = j+1
             elif k1[i] < k2[j]:
@@ -324,7 +325,7 @@ def MakeCommonSplineSpace(obj1, obj2):
             i = 0
             j = 0
             while not done:
-                if k1[d][i] == k2[d][j]:
+                if abs(k1[d][i] - k2[d][j]) <= tol:
                     i = i+1
                     j = j+1
                 elif k1[d][i] < k2[d][j]:
