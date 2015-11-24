@@ -197,34 +197,40 @@ PyDoc_STRVAR(volume_evaluate__doc__,
              "@rtype: Point or tuple of Points if derivs > 0");
 PyObject* Volume_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"value_u", "value_v", "value_w", "derivatives", NULL };
-  shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
-  double value_u=0, value_v=0, value_w=0;
-  int derivs=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd|i",
-                                   (char**)keyWords,&value_u,&value_v,
-                                                    &value_w,&derivs) || !parVol)
-    return NULL;
+  try {
+    static const char* keyWords[] = {"value_u", "value_v", "value_w", "derivatives", NULL };
+    shared_ptr<Go::ParamVolume> parVol = PyObject_AsGoVolume(self);
+    double value_u=0, value_v=0, value_w=0;
+    int derivs=0;
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"ddd|i",
+                                     (char**)keyWords,&value_u,&value_v,
+                                                      &value_w,&derivs) || !parVol)
+      return NULL;
 
-  if (derivs == 0) {
-    Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-    result->data.reset(new Go::Point(parVol->dimension()));
-    parVol->point(*result->data, value_u, value_v, value_w);
-    return (PyObject*)result;
-  } else {
-    std::vector<Go::Point> pts((derivs+1)*(derivs+2)*(derivs+3)/6);
-    parVol->point(pts, value_u, value_v, value_w, derivs);
-    PyObject* result = PyTuple_New(pts.size());
-    for (size_t i=0;i<pts.size();++i) {
-      Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-      pt->data.reset(new Go::Point(pts[i][0], pts[i][1], pts[i][2]));
-      PyTuple_SetItem(result, i, (PyObject*)pt);
+    if (derivs == 0) {
+      Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      result->data.reset(new Go::Point(parVol->dimension()));
+      parVol->point(*result->data, value_u, value_v, value_w);
+      return (PyObject*)result;
+    } else {
+      std::vector<Go::Point> pts((derivs+1)*(derivs+2)*(derivs+3)/6);
+      parVol->point(pts, value_u, value_v, value_w, derivs);
+      PyObject* result = PyTuple_New(pts.size());
+      for (size_t i=0;i<pts.size();++i) {
+        Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+        pt->data.reset(new Go::Point(pts[i][0], pts[i][1], pts[i][2]));
+        PyTuple_SetItem(result, i, (PyObject*)pt);
+      }
+      return result;
     }
-    return result;
-  }
 
-  Py_INCREF(Py_None);
-  return Py_None;
+    Py_INCREF(Py_None);
+    return Py_None;
+
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
+    return NULL;
+  }
 }
 
 PyDoc_STRVAR(volume_evaluategrid__doc__,

@@ -193,22 +193,47 @@ PyDoc_STRVAR(curve_evaluate__doc__,
              "Evaluate curve at a parameter value\n"
              "@param value: The parameter value\n"
              "@type value: float\n"
+             "@param derivatives: The number of derivatives to obtain\n"
+             "@type derivatives: Integer\n"
              "@return: The value of the curve\n"
-             "@rtype: Point");
+             "@rtype: Point or tuple of Points if derivs > 0");
 PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"value", NULL };
-  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  double value=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
-                                   (char**)keyWords,&value) || !parCrv)
+  try {
+    static const char* keyWords[] = {"value", "derivatives", NULL };
+    shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+    double value=0;
+    int derivs=0;
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d|i",
+                                     (char**)keyWords,&value,&derivs) || !parCrv)
+      return NULL;
+
+    if (derivs == 0) {
+      Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      result->data.reset(new Go::Point(parCrv->dimension()));
+      parCrv->point(*result->data,value);
+      return (PyObject*)result;
+    } else {
+      std::vector<Go::Point> pts((derivs+1));
+      parCrv->point(pts, value, derivs);
+      PyObject* result = PyTuple_New(pts.size());
+      for (size_t i=0;i<derivs+1;++i) {
+        Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+        if(parCrv->dimension() == 2)
+          pt->data.reset(new Go::Point(pts[i][0], pts[i][1]));
+        else
+          pt->data.reset(new Go::Point(pts[i][0], pts[i][1], pts[i][2]));
+        PyTuple_SetItem(result, i, (PyObject*)pt);
+      }
+      return result;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
-
-  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(parCrv->dimension()));
-  parCrv->point(*result->data,value);
-
-  return (PyObject*)result;
+  }
 }
 
 PyDoc_STRVAR(curve_evaluategrid__doc__,
