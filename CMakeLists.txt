@@ -208,6 +208,13 @@ foreach(TESTFILE ${GEOMOD_TESTFILES})
   add_test(${TESTFILE} ${CMAKE_BINARY_DIR}/dotest ${CMAKE_BINARY_DIR}/geoModeler ${PROJECT_SOURCE_DIR}/scripts/${TESTSCRIPT} ${PROJECT_SOURCE_DIR}/tests/${TESTFILE})
 endforeach()
 
+file(GLOB GEOMOD_UNITTESTS ${PROJECT_SOURCE_DIR}/src/tests/*.py)
+foreach(testfile ${GEOMOD_UNITTESTS})
+  string(REGEX REPLACE ".py" "" testscript ${testfile})
+  get_filename_component(test_label ${testscript} NAME)
+  add_test(${test_label} ${CMAKE_BINARY_DIR}/geoModeler ${testfile})
+endforeach()
+
 add_custom_target(check-commits COMMAND ${CMAKE_COMMAND}
                                         -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
                                         -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
