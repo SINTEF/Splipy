@@ -35,6 +35,7 @@ find_package(SISL REQUIRED)
 find_package(GoTopology REQUIRED)
 find_package(GoImplicitization REQUIRED)
 find_package(GoIntersections REQUIRED)
+find_package(CXX11 REQUIRED)
 find_package(LATEX)
 find_package(EpyDoc)
 find_package(LRSpline)
@@ -79,7 +80,7 @@ set(DEPLIBS ${PYTHON_LIBRARIES}
             ${GoTools_LIBRARIES}
             ${GoTrivariate_LIBRARIES})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS} -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GoTools_CXX_FLAGS} -fPIC ${CXX_STD11_FLAGS}")
 SET(INCLUDE_DIRS ${GoTools_INCLUDE_DIRS}
                  ${PYTHON_INCLUDE_DIRS} 
                  ${PROJECT_SOURCE_DIR}/include)
