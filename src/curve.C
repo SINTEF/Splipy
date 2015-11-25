@@ -842,21 +842,26 @@ PyDoc_STRVAR(curve_raise_order__doc__,
              "@rtype: Curve");
 PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"n", NULL };
-  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  int amount;
+  try {
+    static const char* keyWords[] = {"n", NULL };
+    shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+    int amount;
 
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
-                                   (char**)keyWords,&amount) || !parCrv)
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
+                                     (char**)keyWords,&amount) || !parCrv)
+      return NULL;
+
+    Curve* pyCrv = (Curve*)self;
+    pyCrv->data = convertSplineCurve(parCrv);
+
+    static_pointer_cast<Go::SplineCurve>(pyCrv->data)->raiseOrder(amount);
+
+    Py_INCREF(self);
+    return self;
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
-
-  Curve* pyCrv = (Curve*)self;
-  pyCrv->data = convertSplineCurve(parCrv);
-
-  static_pointer_cast<Go::SplineCurve>(pyCrv->data)->raiseOrder(amount);
-
-  Py_INCREF(self);
-  return self;
+  }
 }
 
 PyDoc_STRVAR(curve_reparametrize__doc__,
@@ -881,6 +886,10 @@ PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
   if(!spCrv) {
     PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
+    return NULL;
+  }
+  if(umin >= umax) {
+    PyErr_SetString(PyExc_ValueError, "Invalid parameter range: requires umin < umax");
     return NULL;
   }
 
