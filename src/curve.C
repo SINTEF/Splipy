@@ -763,25 +763,6 @@ PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
   return NULL;
 }
 
-PyDoc_STRVAR(curve_normalize__doc__,
-             "Normalize a curve in the parameter domain\n"
-             "@return: The curve\n"
-             "@rtype: Curve");
-PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  if (!parCrv)
-    return NULL;
-
-  Curve* pyCrv = (Curve*)self;
-  pyCrv->data = convertSplineCurve(parCrv);
-
-  pyCrv->data->setParameterInterval(0,1);
-
-  Py_INCREF(self);
-  return self;
-}
-
 PyDoc_STRVAR(curve_project__doc__,
              "Project the curve onto an axis or plane along parallel to the cartesian coordinate system\n"
              "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
@@ -1358,7 +1339,6 @@ PyMethodDef Curve_methods[] = {
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Curve_Interpolate,         METH_VARARGS|METH_KEYWORDS, curve_interpolate__doc__},
      {(char*)"Intersect",           (PyCFunction)Curve_Intersect,           METH_VARARGS|METH_KEYWORDS, curve_intersect__doc__},
-     {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
      {(char*)"LowerOrder",          (PyCFunction)Curve_LowerOrder,          METH_VARARGS|METH_KEYWORDS, curve_lower_order__doc__},
