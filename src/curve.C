@@ -1057,45 +1057,50 @@ PyDoc_STRVAR(curve_split__doc__,
              "@rtype: List of Curve");
 PyObject* Curve_Split(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"params", NULL };
-  PyObject* params;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
-                                   (char**)keyWords,&params) || !params)
-    return NULL;
+  try {
+    static const char* keyWords[] = {"params", NULL };
+    PyObject* params;
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"O",
+                                     (char**)keyWords,&params) || !params)
+      return NULL;
 
-  std::vector<double> p;
-  if (PyObject_TypeCheck(params,&PyList_Type)) {
-    for (int i=0;i<PyList_Size(params);++i) {
-      PyObject* o = PyList_GetItem(params,i);
-      if (o)
-        p.push_back(PyFloat_AsDouble(o));
+    std::vector<double> p;
+    if (PyObject_TypeCheck(params,&PyList_Type)) {
+      for (int i=0;i<PyList_Size(params);++i) {
+        PyObject* o = PyList_GetItem(params,i);
+        if (o)
+          p.push_back(PyFloat_AsDouble(o));
+      }
+    } else if (PyObject_TypeCheck(params,&PyFloat_Type) || 
+               PyObject_TypeCheck(params,&PyInt_Type))
+      p.push_back(PyFloat_AsDouble(params));
+
+    if (p.empty()) {
+      PyErr_SetString(PyExc_ValueError, "No valid parameter values found");
+      return NULL;
     }
-  } else if (PyObject_TypeCheck(params,&PyFloat_Type) || 
-             PyObject_TypeCheck(params,&PyInt_Type))
-    p.push_back(PyFloat_AsDouble(params));
 
-  if (p.empty()) {
-    PyErr_SetString(PyExc_ValueError, "No valid parameter values found");
+    std::vector<shared_ptr<Go::ParamCurve> > curves;
+    if (p.size() > 1) {
+      shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(((Curve*)self)->data);
+      std::vector<shared_ptr<Go::SplineCurve> > curves2 = spCrv->split(p);
+      for (size_t i=0;i<curves2.size();++i)
+        curves.push_back(static_pointer_cast<Go::ParamCurve,Go::SplineCurve>(curves2[i]));
+    } else
+      curves = ((Curve*)self)->data->split(p[0]);
+
+    PyObject* result = PyList_New(0);
+    for (size_t i=0;i<curves.size();++i) {
+      Curve* pyCrv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
+      pyCrv->data = curves[i];
+      PyList_Append(result,(PyObject*)pyCrv);
+    }
+
+    return result;
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
   }
-
-  std::vector<shared_ptr<Go::ParamCurve> > curves;
-  if (p.size() > 1) {
-    shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(((Curve*)self)->data);
-    std::vector<shared_ptr<Go::SplineCurve> > curves2 = spCrv->split(p);
-    for (size_t i=0;i<curves2.size();++i)
-      curves.push_back(static_pointer_cast<Go::ParamCurve,Go::SplineCurve>(curves2[i]));
-  } else
-    curves = ((Curve*)self)->data->split(p[0]);
-
-  PyObject* result = PyList_New(0);
-  for (size_t i=0;i<curves.size();++i) {
-    Curve* pyCrv = (Curve*)Curve_Type.tp_alloc(&Curve_Type,0);
-    pyCrv->data = curves[i];
-    PyList_Append(result,(PyObject*)pyCrv);
-  }
-
-  return result;
 }
 
 PyDoc_STRVAR(curve_get_sub_curve__doc__,

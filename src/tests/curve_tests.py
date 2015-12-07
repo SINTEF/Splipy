@@ -1,4 +1,5 @@
 from GoTools import Curve
+from math import sqrt
 import unittest
 
 class TestCurve(unittest.TestCase):
@@ -99,10 +100,8 @@ class TestCurve(unittest.TestCase):
 
         crv
         evaluation_point1 = crv.Evaluate(0.37)
-        control_point1    = crv[0]
         crv2              = crv.RaiseOrder(2)
         evaluation_point2 = crv2.Evaluate(0.37)
-        control_point2    = crv2[0]
 
         # ensure that curve has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -120,6 +119,57 @@ class TestCurve(unittest.TestCase):
         # check logic error for negative argument (gotools cast this error)
         with self.assertRaises(Exception):
             crv.RaiseOrder(-1);
+
+    def test_insert_knot(self):
+        # non-uniform knot vector of a squiggly quadratic n=5 curve in 3D
+        controlpoints = [[0,0,0],  [1,1,1],  [2,-1,0],  [3,0,-1], [0,0,-5]]
+        crv = Curve(3, [0, 0, 0, .3, .4, 1, 1, 1], controlpoints)
+
+        evaluation_point1 = crv.Evaluate(0.37)
+        crv.InsertKnot(.2)
+        crv.InsertKnot(.3)
+        crv.InsertKnot(.9)
+        evaluation_point2 = crv.Evaluate(0.37)
+
+        # ensure that curve has not chcanged, by comparing evaluation of it
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+        self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
+        # ensure that curve has the knot length
+        self.assertEqual(len(crv.GetKnots(True)),  11)
+
+        # test rational curves, here a perfect circle represented as n=9, p=2-curve
+        s = 1.0/sqrt(2)
+        controlpoints = [[1,0,1], [s,s,s], [0,1,1], [-s,s,s], [-1,0,1], [-s,-s,s], [0,-1,1], [s,-s,s], [1,0,1]]
+        crv = Curve(3, [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4], controlpoints, True)
+
+        evaluation_point1 = crv.Evaluate(0.37)
+        crv.InsertKnot(.2)
+        crv.InsertKnot(.3)
+        crv.InsertKnot(.9)
+        evaluation_point2 = crv.Evaluate(0.37)
+
+        # ensure that curve has not chcanged, by comparing evaluation of it
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+
+        # ensure that curve has the knot length
+        self.assertEqual(len(crv.GetKnots(True)),  15)
+
+
+        # test errors and exceptions
+        with self.assertRaises(TypeError):
+            crv.InsertKnot(1, 2)          # too many arguments
+        with self.assertRaises(TypeError):
+            crv.InsertKnot()              # too few arguments
+        with self.assertRaises(TypeError):
+            crv.InsertKnot("tree-fiddy")  # wrong argument type
+        with self.assertRaises(ValueError):
+            crv.InsertKnot(-0.2)          # Outside-domain error
+        with self.assertRaises(ValueError):
+            crv.InsertKnot( 4.4)          # Outside-domain error
+
 
     def test_reparametrize(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
@@ -165,6 +215,63 @@ class TestCurve(unittest.TestCase):
             crv.ReParametrize(9, 3)
         with self.assertRaises(TypeError):
             crv.ReParametrize("one", "two")
+
+    def test_split(self):
+        # non-uniform knot vector of a squiggly quadratic n=4 curve
+        controlpoints = [[0,0,1],  [1,1,0],  [2,-1,0],  [3,0,0]]
+        crv = Curve(3, [0, 0, 0, 0.7, 1, 1, 1], controlpoints)
+
+        # get some info on the initial curve
+        evaluation_point1 = crv.Evaluate(0.50)
+        evaluation_point2 = crv.Evaluate(0.70)
+        evaluation_point3 = crv.Evaluate(0.33)
+
+        # split curves away from knot
+        new_curves_050 = crv.Split(0.50)
+        self.assertEqual(len(new_curves_050), 2)
+        self.assertEqual(len(new_curves_050[0].GetKnots(True)), 6) # open knot vector [0,0,0,.5,.5,.5]
+        self.assertEqual(len(new_curves_050[1].GetKnots(True)), 7) # open knot vector [.5,.5,.5,.7,1,1,1]
+
+        # split curves at existing knot
+        new_curves_070 = crv.Split(0.70)
+        self.assertEqual(len(new_curves_070), 2)
+        self.assertEqual(len(new_curves_070[0].GetKnots(True)), 6) # open knot vector [0,0,0,.7,.7,.7]
+        self.assertEqual(len(new_curves_070[1].GetKnots(True)), 6) # open knot vector [.7,.7,.7,1,1,1]
+
+        # split curves multiple points
+        new_curves_all = crv.Split([0.50, 0.70])
+        self.assertEqual(len(new_curves_all), 3)
+        self.assertEqual(len(new_curves_all[0].GetKnots(True)), 6) # open knot vector [0,0,0,.5,.5,.5]
+        self.assertEqual(len(new_curves_all[1].GetKnots(True)), 6) # open knot vector [.5,.5,.5,.7,.7,.7]
+        self.assertEqual(len(new_curves_all[2].GetKnots(True)), 6) # open knot vector [.7,.7,.7,1,1,1]
+        
+        # compare all curves which exist at parametric point 0.5 and 0.33
+        for c in new_curves_050 + [new_curves_070[0]] + new_curves_all[0:2]:
+            new_curve_evaluation = c.Evaluate(0.50)
+            self.assertAlmostEqual(evaluation_point1[0], new_curve_evaluation[0])
+            self.assertAlmostEqual(evaluation_point1[1], new_curve_evaluation[1])
+            self.assertAlmostEqual(evaluation_point1[2], new_curve_evaluation[2])
+            new_curve_evaluation = c.Evaluate(0.33)
+            self.assertAlmostEqual(evaluation_point3[0], new_curve_evaluation[0])
+            self.assertAlmostEqual(evaluation_point3[1], new_curve_evaluation[1])
+            self.assertAlmostEqual(evaluation_point3[2], new_curve_evaluation[2])
+
+        # compare all curves which exist at parametric point 0.7
+        for c in [new_curves_050[1]] + new_curves_070 + new_curves_all[1:3]:
+            new_curve_evaluation = c.Evaluate(0.70)
+            self.assertAlmostEqual(evaluation_point2[0], new_curve_evaluation[0])
+            self.assertAlmostEqual(evaluation_point2[1], new_curve_evaluation[1])
+            self.assertAlmostEqual(evaluation_point2[2], new_curve_evaluation[2])
+            
+        # test errors and exceptions
+        with self.assertRaises(TypeError):
+            crv.Split(.1, .2, .3)    # too many arguments
+        with self.assertRaises(ValueError):
+            crv.Split("tree-fiddy")  # wrong argument type
+        with self.assertRaises(Exception):
+            crv.Split(-0.2)          # GoTools returns error on outside-domain errors
+        with self.assertRaises(Exception):
+            crv.Split( 1.4)          # GoTools returns error on outside-domain errors
 
 
 if __name__ == '__main__':
