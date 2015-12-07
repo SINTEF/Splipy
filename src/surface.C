@@ -198,22 +198,44 @@ PyDoc_STRVAR(surface_evaluate__doc__,
              "@type value_u: float\n"
              "@param value_v: The v parameter value\n"
              "@type value_v: float\n"
+             "@param derivatives: The number of derivatives to obtain\n"
+             "@type derivatives: Integer\n"
              "@return: The value of the surface at the given parameters\n"
-             "@rtype: Point");
+             "@rtype: Point or tuple of Points if derivs > 0");
 PyObject* Surface_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"value_u", "value_v", NULL };
-  shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
-  double value_u=0, value_v=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd",
-                                   (char**)keyWords,&value_u,&value_v) || !parSurf)
+  try {
+    static const char* keyWords[] = {"value_u", "value_v", "derivatives", NULL };
+    shared_ptr<Go::ParamSurface> parSurf = PyObject_AsGoSurface(self);
+    double value_u=0, value_v=0;
+    int derivs=0;
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"dd|i",
+                                     (char**)keyWords,&value_u,&value_v,&derivs) || !parSurf)
+      return NULL;
+
+    if (derivs == 0) {
+      Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      result->data.reset(new Go::Point(parSurf->dimension()));
+      parSurf->point(*result->data,value_u,value_v);
+      return (PyObject*)result;
+    } else {
+      std::vector<Go::Point> pts((derivs+1)*(derivs+2)/2);
+      parSurf->point(pts, value_u, value_v, derivs);
+      PyObject* result = PyTuple_New(pts.size());
+      for (size_t i=0;i<pts.size();++i) {
+        Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+        if(parSurf->dimension() == 2)
+          pt->data.reset(new Go::Point(pts[i][0], pts[i][1]));
+        else
+          pt->data.reset(new Go::Point(pts[i][0], pts[i][1], pts[i][2]));
+        PyTuple_SetItem(result, i, (PyObject*)pt);
+      }
+      return result;
+    }
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
-
-  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(parSurf->dimension()));
-  parSurf->point(*result->data,value_u,value_v);
-
-  return (PyObject*)result;
+  }
 }
 
 PyDoc_STRVAR(surface_evaluategrid__doc__,

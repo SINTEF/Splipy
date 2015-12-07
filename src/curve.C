@@ -193,22 +193,47 @@ PyDoc_STRVAR(curve_evaluate__doc__,
              "Evaluate curve at a parameter value\n"
              "@param value: The parameter value\n"
              "@type value: float\n"
+             "@param derivatives: The number of derivatives to obtain\n"
+             "@type derivatives: Integer\n"
              "@return: The value of the curve\n"
-             "@rtype: Point");
+             "@rtype: Point or tuple of Points if derivs > 0");
 PyObject* Curve_Evaluate(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"value", NULL };
-  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  double value=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d",
-                                   (char**)keyWords,&value) || !parCrv)
+  try {
+    static const char* keyWords[] = {"value", "derivatives", NULL };
+    shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+    double value=0;
+    int derivs=0;
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"d|i",
+                                     (char**)keyWords,&value,&derivs) || !parCrv)
+      return NULL;
+
+    if (derivs == 0) {
+      Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+      result->data.reset(new Go::Point(parCrv->dimension()));
+      parCrv->point(*result->data,value);
+      return (PyObject*)result;
+    } else {
+      std::vector<Go::Point> pts((derivs+1));
+      parCrv->point(pts, value, derivs);
+      PyObject* result = PyTuple_New(pts.size());
+      for (size_t i=0;i<derivs+1;++i) {
+        Point* pt = (Point*)Point_Type.tp_alloc(&Point_Type,0);
+        if(parCrv->dimension() == 2)
+          pt->data.reset(new Go::Point(pts[i][0], pts[i][1]));
+        else
+          pt->data.reset(new Go::Point(pts[i][0], pts[i][1], pts[i][2]));
+        PyTuple_SetItem(result, i, (PyObject*)pt);
+      }
+      return result;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
-
-  Point* result = (Point*)Point_Type.tp_alloc(&Point_Type,0);
-  result->data.reset(new Go::Point(parCrv->dimension()));
-  parCrv->point(*result->data,value);
-
-  return (PyObject*)result;
+  }
 }
 
 PyDoc_STRVAR(curve_evaluategrid__doc__,
@@ -738,25 +763,6 @@ PyObject* Curve_Intersect(PyObject* self, PyObject* args, PyObject* kwds)
   return NULL;
 }
 
-PyDoc_STRVAR(curve_normalize__doc__,
-             "Normalize a curve in the parameter domain\n"
-             "@return: The curve\n"
-             "@rtype: Curve");
-PyObject* Curve_Normalize(PyObject* self, PyObject* args, PyObject* kwds)
-{
-  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  if (!parCrv)
-    return NULL;
-
-  Curve* pyCrv = (Curve*)self;
-  pyCrv->data = convertSplineCurve(parCrv);
-
-  pyCrv->data->setParameterInterval(0,1);
-
-  Py_INCREF(self);
-  return self;
-}
-
 PyDoc_STRVAR(curve_project__doc__,
              "Project the curve onto an axis or plane along parallel to the cartesian coordinate system\n"
              "@param axis: The axis or plane to project onto (\"X\",\"Y\",\"Z\" or a comibation of these)\n"
@@ -817,21 +823,26 @@ PyDoc_STRVAR(curve_raise_order__doc__,
              "@rtype: Curve");
 PyObject* Curve_RaiseOrder(PyObject* self, PyObject* args, PyObject* kwds)
 {
-  static const char* keyWords[] = {"n", NULL };
-  shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
-  int amount;
+  try {
+    static const char* keyWords[] = {"n", NULL };
+    shared_ptr<Go::ParamCurve> parCrv = PyObject_AsGoCurve(self);
+    int amount;
 
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
-                                   (char**)keyWords,&amount) || !parCrv)
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"i",
+                                     (char**)keyWords,&amount) || !parCrv)
+      return NULL;
+
+    Curve* pyCrv = (Curve*)self;
+    pyCrv->data = convertSplineCurve(parCrv);
+
+    static_pointer_cast<Go::SplineCurve>(pyCrv->data)->raiseOrder(amount);
+
+    Py_INCREF(self);
+    return self;
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
-
-  Curve* pyCrv = (Curve*)self;
-  pyCrv->data = convertSplineCurve(parCrv);
-
-  static_pointer_cast<Go::SplineCurve>(pyCrv->data)->raiseOrder(amount);
-
-  Py_INCREF(self);
-  return self;
+  }
 }
 
 PyDoc_STRVAR(curve_reparametrize__doc__,
@@ -856,6 +867,10 @@ PyObject* Curve_ReParametrize(PyObject* self, PyObject* args, PyObject* kwds)
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
   if(!spCrv) {
     PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
+    return NULL;
+  }
+  if(umin >= umax) {
+    PyErr_SetString(PyExc_ValueError, "Invalid parameter range: requires umin < umax");
     return NULL;
   }
 
@@ -1324,7 +1339,6 @@ PyMethodDef Curve_methods[] = {
      {(char*)"InsertKnot",          (PyCFunction)Curve_InsertKnot,          METH_VARARGS|METH_KEYWORDS, curve_insert_knot__doc__},
      {(char*)"Interpolate",         (PyCFunction)Curve_Interpolate,         METH_VARARGS|METH_KEYWORDS, curve_interpolate__doc__},
      {(char*)"Intersect",           (PyCFunction)Curve_Intersect,           METH_VARARGS|METH_KEYWORDS, curve_intersect__doc__},
-     {(char*)"Normalize",           (PyCFunction)Curve_Normalize,           METH_VARARGS,               curve_normalize__doc__},
      {(char*)"Project",             (PyCFunction)Curve_Project,             METH_VARARGS|METH_KEYWORDS, curve_project__doc__},
      {(char*)"RaiseOrder",          (PyCFunction)Curve_RaiseOrder,          METH_VARARGS|METH_KEYWORDS, curve_raise_order__doc__},
      {(char*)"LowerOrder",          (PyCFunction)Curve_LowerOrder,          METH_VARARGS|METH_KEYWORDS, curve_lower_order__doc__},
