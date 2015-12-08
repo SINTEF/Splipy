@@ -1421,11 +1421,6 @@ PyObject* Surface_GetComponent(PyObject* self, Py_ssize_t i)
   if (!parSurf)
     return NULL;
 
-  if(parSurf->dimension() != 3) {
-    PyErr_SetString(PyExc_ValueError, "Not a three-dimensional surface");
-    return NULL;
-  }
-
   shared_ptr<Go::SplineSurface> spSurf = convertSplineSurface(parSurf);
   if(!spSurf) {
     PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineSurface");
@@ -1442,12 +1437,9 @@ PyObject* Surface_GetComponent(PyObject* self, Py_ssize_t i)
   if(spSurf->rational()) {
     vector<double>::const_iterator cp = spSurf->rcoefs_begin() + i*(dim+1);
     result->data.reset(new Go::Point(cp, cp+(dim+1)));
-  } else {
-    x = *(spSurf->coefs_begin() + i*(spSurf->dimension() )+0) ;
-    y = *(spSurf->coefs_begin() + i*(spSurf->dimension() )+1) ;
-    z = *(spSurf->coefs_begin() + i*(spSurf->dimension() )+2) ;
-    result->data.reset(new Go::Point(x,y,z));
-  }
+  } else
+    result->data.reset(new Go::Point(spSurf->coefs_begin() + i*spSurf->dimension(),
+                                     spSurf->coefs_begin() + (i+1)*spSurf->dimension()));
 
   return (PyObject*) result;
 }

@@ -1290,14 +1290,9 @@ PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
   if (!parCrv)
     return NULL;
 
-  if(parCrv->dimension() != 3) {
-    PyErr_SetString(PyExc_ValueError, "Not a three-dimensional curve");
-    return NULL;
-  }
-
   shared_ptr<Go::SplineCurve> spCrv = convertSplineCurve(parCrv);
   if(!spCrv) {
-    PyErr_SetString(PyExc_RuntimeError, "Unable to obtian Go::SplineCurve");
+    PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineCurve");
     return NULL;
   }
 
@@ -1311,12 +1306,9 @@ PyObject* Curve_GetComponent(PyObject* self, Py_ssize_t i)
   if (spCrv->rational()) {
     vector<double>::const_iterator cp = spCrv->rcoefs_begin() + i*(dim+1);
     result->data.reset(new Go::Point(cp, cp+(dim+1)));
-  } else {
-    double x = *(spCrv->coefs_begin() + i*dim + 0);
-    double y = *(spCrv->coefs_begin() + i*dim + 1);
-    double z = *(spCrv->coefs_begin() + i*dim + 2);
-    result->data.reset(new Go::Point(x,y,z));
-  }
+  } else
+    result->data.reset(new Go::Point(spCrv->coefs_begin() + i*spCrv->dimension(),
+                                     spCrv->coefs_begin() + (i+1)*spCrv->dimension()));
 
   return (PyObject*) result;
 }
