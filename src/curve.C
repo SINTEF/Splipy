@@ -625,7 +625,12 @@ PyObject* Curve_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
   Curve* pyCrv = (Curve*)self;
   pyCrv->data = convertSplineCurve(parCrv);
 
-  static_pointer_cast<Go::SplineCurve>(pyCrv->data)->insertKnot(knot);
+  shared_ptr<Go::SplineCurve> spCrv = static_pointer_cast<Go::SplineCurve>(parCrv);
+  if(knot <= spCrv->startparam() || spCrv->endparam() <= knot) {
+    PyErr_SetString(PyExc_ValueError, "Outside domain");
+    return NULL;
+  }
+  spCrv->insertKnot(knot);
 
   Py_INCREF(self);
   return self;
