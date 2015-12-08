@@ -1191,11 +1191,6 @@ PyObject* Volume_GetComponent(PyObject* self, Py_ssize_t i)
   if (!parVol)
     return NULL;
 
-  if(parVol->dimension() != 3) {
-    PyErr_SetString(PyExc_ValueError, "Not a three-dimensional volume");
-    return NULL;
-  }
-
   shared_ptr<Go::SplineVolume> spVol = convertSplineVolume(parVol);
   if(!spVol) {
     PyErr_SetString(PyExc_RuntimeError, "Unable to obtain Go::SplineVolume");
@@ -1214,12 +1209,9 @@ PyObject* Volume_GetComponent(PyObject* self, Py_ssize_t i)
   if(spVol->rational()) {
     vector<double>::const_iterator cp = spVol->rcoefs_begin() + i*(dim+1);
     result->data.reset(new Go::Point(cp, cp+(dim+1)));
-  } else {
-    x = *(spVol->coefs_begin() + i*(spVol->dimension() )+0) ;
-    y = *(spVol->coefs_begin() + i*(spVol->dimension() )+1) ;
-    z = *(spVol->coefs_begin() + i*(spVol->dimension() )+2) ;
-    result->data.reset(new Go::Point(x,y,z));
-  }
+  } else
+    result->data.reset(new Go::Point(spVol->coefs_begin() + i*spVol->dimension(),
+                                     spVol->coefs_begin() + (i+1)*spVol->dimension()));
 
   return (PyObject*) result;
 }
