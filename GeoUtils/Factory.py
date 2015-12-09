@@ -542,3 +542,41 @@ def CombineSurfaces(surf1, surf2):
             k = k+1
 
     return Surface(p1[0], p1[1], knotU, knotV, coefs, rational)
+
+def CombineCurves(crv1, crv2):
+    """Combine two curves into a single representation with internal C^0 knot. Assumes that the end of crv1 matches the start of crv2
+    @param crv1: The first Curve
+    @type  crv1: Curve
+    @param crv2: The second Curve
+    @type  crv2: Curve
+    @return:     The combined Curve
+    @rtype:      Curve
+    """
+
+    c1        = crv1.Clone()
+    c2        = crv2.Clone()
+    dim       = GetDimension()
+    rational  = (len(c1[0]) == dim+1)
+    if c1.GetOrder() > c2.GetOrder():
+        c2.RaiseOrder(c1.GetOrder() - c2.GetOrder())
+    else:
+        c1.RaiseOrder(c2.GetOrder() - c1.GetOrder())
+
+    knot1 = c1.GetKnots(True)
+    p1    = c1.GetOrder()
+    n1    = len(knot1) - p1
+
+    knot2 = c2.GetKnots(True)
+    p2    = c2.GetOrder()
+    n2    = len(knot2) - p2
+
+
+    coefs =  []
+    knot =  knot1[:-1] + [k+knot1[-1] for k in knot2[p2:]] # merge 
+
+    for i in range(n1-1):
+        coefs.append(c1[i])
+    for i in range(n2):
+        coefs.append(c2[i])
+
+    return Curve(p1, knot, coefs, rational)
