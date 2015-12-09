@@ -39,67 +39,72 @@ PyTypeObject Surface_Type;
 
 PyObject* Surface_New(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
-  Surface* self;
-  self = (Surface*)type->tp_alloc(type,0);
-  static const char* keyWords[] = {"order1", "order2", "knots1", "knots2 ", "coefs", "rational", NULL };
-  PyObject* knots1o=0;
-  PyObject* knots2o=0;
-  PyObject* coefso=0;
-  bool rational=false;
-  int order1=0;
-  int order2=0;
-  if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|iiOOOb",
-                                   (char**)keyWords, &order1, &order2, &knots1o, 
-                                                  &knots2o, &coefso, &rational))
+  try {
+    Surface* self;
+    self = (Surface*)type->tp_alloc(type,0);
+    static const char* keyWords[] = {"order1", "order2", "knots1", "knots2 ", "coefs", "rational", NULL };
+    PyObject* knots1o=0;
+    PyObject* knots2o=0;
+    PyObject* coefso=0;
+    bool rational=false;
+    int order1=0;
+    int order2=0;
+    if (!PyArg_ParseTupleAndKeywords(args,kwds,(char*)"|iiOOOb",
+                                     (char**)keyWords, &order1, &order2, &knots1o, 
+                                                    &knots2o, &coefso, &rational))
+      return NULL;
+
+    // surface is specified
+    if (knots1o && knots2o && coefso) {
+      std::vector<double> knots1;
+      std::vector<double> knots2;
+      std::vector<double> coefs;
+      if (PyObject_TypeCheck(knots1o,&PyList_Type)) {
+        for (int i=0;i<PyList_Size(knots1o);++i) {
+          PyObject* o = PyList_GetItem(knots1o,i);
+          if (o && PyObject_TypeCheck(o,&PyFloat_Type))
+            knots1.push_back(PyFloat_AsDouble(o));
+          else if (o && PyObject_TypeCheck(o,&PyInt_Type))
+            knots1.push_back(PyInt_AsLong(o));
+        }
+      }
+      if (PyObject_TypeCheck(knots2o,&PyList_Type)) {
+        for (int i=0;i<PyList_Size(knots2o);++i) {
+          PyObject* o = PyList_GetItem(knots2o,i);
+          if (o && PyObject_TypeCheck(o,&PyFloat_Type))
+            knots2.push_back(PyFloat_AsDouble(o));
+          else if (o && PyObject_TypeCheck(o,&PyInt_Type))
+            knots2.push_back(PyInt_AsLong(o));
+        }
+      }
+      if (PyObject_TypeCheck(coefso,&PyList_Type)) {
+        for (int i=0;i<PyList_Size(coefso);++i) {
+          PyObject* o = PyList_GetItem(coefso,i);
+          shared_ptr<Go::Point> p1 = PyObject_AsGoPoint(o); 
+          if (p1) {
+            for (double* p = p1->begin(); p != p1->end(); ++p)
+              coefs.push_back(*p);
+          } else if (o && PyObject_TypeCheck(o,&PyFloat_Type))
+            coefs.push_back(PyFloat_AsDouble(o));
+          if (o && PyObject_TypeCheck(o,&PyInt_Type))
+            coefs.push_back(PyInt_AsLong(o));
+        }
+      }
+      int dim = coefs.size()/((knots1.size()-order1)*(knots2.size()-order2));
+      if (rational)
+        dim--;
+      ((Surface*)self)->data.reset(new Go::SplineSurface(knots1.size()-order1,
+                                                         knots2.size()-order2, 
+                                                         order1, order2,
+                                                         knots1.begin(), knots2.begin(),
+                                                         coefs.begin(), dim, rational));
+    }
+
+    return (PyObject*)self;
+  } catch(std::exception e) {
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
-
-  // surface is specified
-  if (knots1o && knots2o && coefso) {
-    std::vector<double> knots1;
-    std::vector<double> knots2;
-    std::vector<double> coefs;
-    if (PyObject_TypeCheck(knots1o,&PyList_Type)) {
-      for (int i=0;i<PyList_Size(knots1o);++i) {
-        PyObject* o = PyList_GetItem(knots1o,i);
-        if (o && PyObject_TypeCheck(o,&PyFloat_Type))
-          knots1.push_back(PyFloat_AsDouble(o));
-        else if (o && PyObject_TypeCheck(o,&PyInt_Type))
-          knots1.push_back(PyInt_AsLong(o));
-      }
-    }
-    if (PyObject_TypeCheck(knots2o,&PyList_Type)) {
-      for (int i=0;i<PyList_Size(knots2o);++i) {
-        PyObject* o = PyList_GetItem(knots2o,i);
-        if (o && PyObject_TypeCheck(o,&PyFloat_Type))
-          knots2.push_back(PyFloat_AsDouble(o));
-        else if (o && PyObject_TypeCheck(o,&PyInt_Type))
-          knots2.push_back(PyInt_AsLong(o));
-      }
-    }
-    if (PyObject_TypeCheck(coefso,&PyList_Type)) {
-      for (int i=0;i<PyList_Size(coefso);++i) {
-        PyObject* o = PyList_GetItem(coefso,i);
-        shared_ptr<Go::Point> p1 = PyObject_AsGoPoint(o); 
-        if (p1) {
-          for (double* p = p1->begin(); p != p1->end(); ++p)
-            coefs.push_back(*p);
-        } else if (o && PyObject_TypeCheck(o,&PyFloat_Type))
-          coefs.push_back(PyFloat_AsDouble(o));
-        if (o && PyObject_TypeCheck(o,&PyInt_Type))
-          coefs.push_back(PyInt_AsLong(o));
-      }
-    }
-    int dim = coefs.size()/((knots1.size()-order1)*(knots2.size()-order2));
-    if (rational)
-      dim--;
-    ((Surface*)self)->data.reset(new Go::SplineSurface(knots1.size()-order1,
-                                                       knots2.size()-order2, 
-                                                       order1, order2,
-                                                       knots1.begin(), knots2.begin(),
-                                                       coefs.begin(), dim, rational));
   }
-
-  return (PyObject*)self;
 }
 
 void Surface_Dealloc(Surface* self)
@@ -765,10 +770,20 @@ PyObject* Surface_InsertKnot(PyObject* self, PyObject* args, PyObject* kwds)
     pySurf->data = convertSplineSurface(parSurf);
     parSurf = pySurf->data;
   }
-  if (direction == 0)
-    static_pointer_cast<Go::SplineSurface>(parSurf)->insertKnot_u(knot);
-  else
-    static_pointer_cast<Go::SplineSurface>(parSurf)->insertKnot_v(knot);
+  shared_ptr<Go::SplineSurface> surf = convertSplineSurface(parSurf);
+  if (direction == 0) {
+    if(knot <= surf->startparam_u() || knot >= surf->endparam_u()) {
+      PyErr_SetString(PyExc_ValueError, "Outside domain");
+      return NULL;
+    }
+    surf->insertKnot_u(knot);
+  } else {
+    if(knot <= surf->startparam_v() || knot >= surf->endparam_v()) {
+      PyErr_SetString(PyExc_ValueError, "Outside domain");
+      return NULL;
+    }
+    surf->insertKnot_v(knot);
+  }
 
   Py_INCREF(self);
   return self;
