@@ -37,21 +37,21 @@ class BSplineBasis:
             if knots[i+1]-knots[i] < -self.tol:
                 raise ValueError('knot vector needs to be non-decreasing')
                 
-    def Start(self):
+    def start(self):
         """Start point of parametric domain. For open knot vectors, this is the first knot.
         @return: Knot number p, where p is the spline order
         @rtype : Float
         """
         return self.knots[self.order-1]
 
-    def End(self):
+    def end(self):
         """End point of parametric domain. For open knot vectors, this is the last knot.
         @return: Knot number n-p, where p is the spline order and n is the number of knots
         @rtype : Float
         """
         return self.knots[-self.order]
 
-    def Greville(self, index=None):
+    def greville(self, index=None):
         """Fetch greville point(s), also known as knot averages, corresponding to this basis: sum_{j=index+1}^{index+p-1} t_j / (p-1)
         @return: One, or all of the Greville points
         @rtype : Float or List of Floats
@@ -66,7 +66,7 @@ class BSplineBasis:
             result = float(np.sum(self.knots[index+1:index+p]))/(p-1)
         return result
 
-    def Evaluate(self, t, d=0, fromRight=True):
+    def evaluate(self, t, d=0, fromRight=True):
         """Get all basis functions evaluated in a given set of points
         @param t:         The parametric coordinate(s) to perform evaluation
         @type  t:         Float or List of Floats 
@@ -90,12 +90,12 @@ class BSplineBasis:
         for i in range(len(t)):                     # for all evaluation points t
             evalT = t[i]
             if self.periodic >= 0:                  # wrap periodic evaluation into domain
-                if t[i]<self.Start() or t[i]>self.End():
-                    evalT = (t[i]-self.Start()) % (self.End()-self.Start()) + self.Start()
+                if t[i]<self.start() or t[i]>self.end():
+                    evalT = (t[i]-self.start()) % (self.end()-self.start()) + self.start()
             else:
-                if abs(t[i]-self.End()) < self.tol:      # special case the endpoint, so the user don't need to
+                if abs(t[i]-self.end()) < self.tol:      # special case the endpoint, so the user don't need to
                     fromRight = False
-                if t[i]<self.Start() or t[i]>self.End(): # skip non-periodic evaluation points outside domain
+                if t[i]<self.start() or t[i]>self.end(): # skip non-periodic evaluation points outside domain
                     continue
 
             # mu = index of last non-zero basis function
@@ -131,18 +131,18 @@ class BSplineBasis:
 
         return N
 
-    def Normalize(self):
+    def normalize(self):
         """Set the parametric domain to be (0,1)"""
-        self -= self.Start() # set start-point to 0
-        self /= self.End()   # set end-point to 1
+        self -= self.start() # set start-point to 0
+        self /= self.end()   # set end-point to 1
 
-    def Reverse(self):
+    def reverse(self):
         """Reverse parametric domain, keeping start/end values unchanged"""
-        a = float(self.Start())
-        b = float(self.End())
+        a = float(self.start())
+        b = float(self.end())
         self.knots = (self.knots[::-1]-a)/(b-a) * (a-b) + b
 
-    def GetKnotSpans(self):
+    def get_knot_spans(self):
         """Return the set of unique knots in the knot vector"""
         result = [self.knots[0]]
         for k in self.knots:

@@ -6,28 +6,28 @@ class TestSurface(unittest.TestCase):
         # test 3D constructor
         controlpoints = [[0,0,0], [1,0,0], [0,1,0], [1,1,0]]
         surf = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints)
-        val = surf.Evaluate(0.5, 0.5)
+        val = surf.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf[0]), 3)
 
         # test 2D constructor
         controlpoints = [[0,0], [1,0], [0,1], [1,1]]
         surf2 = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints)
-        val  = surf2.Evaluate(0.5, 0.5)
+        val  = surf2.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf2[0]), 2)
 
         # test rational 2D constructor
         controlpoints = [[0,0,1], [1,0,1], [0,1,1], [1,1,1]]
         surf3 = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints, True)
-        val = surf3.Evaluate(0.5, 0.5)
+        val = surf3.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf3[0]), 2)
 
         # test rational 3D constructor
         controlpoints = [[0,0,0,1], [1,0,0,1], [0,1,0,1], [1,1,0,1]]
         surf4 = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints, True)
-        val = surf4.Evaluate(0.5, 0.5)
+        val = surf4.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf4[0]), 3)
 
@@ -64,12 +64,12 @@ class TestSurface(unittest.TestCase):
         surf = Surface(3,3, [0,0,0,1,1,1], [0,0,0,1,1,1], controlpoints)
 
         # startpoint evaluation
-        val = surf.Evaluate(0,0)     
+        val = surf.evaluate(0,0)     
         self.assertAlmostEqual(val[0], 0.0)
         self.assertAlmostEqual(val[1], 0.0)
 
         # startpoint with derivatives
-        val = surf.Evaluate(0,0,  1)  
+        val = surf.evaluate(0,0,  1)  
         self.assertAlmostEqual(val[0][0], 0.0)
         self.assertAlmostEqual(val[0][1], 0.0)
         self.assertAlmostEqual(val[1][0], 0.0) # dx/du = 2*u*v^2
@@ -78,7 +78,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(val[2][1], 0.0) # dy/dv = u      
 
         # midpoint with derivatives
-        val = surf.Evaluate(0.5, 0.5,   1)  
+        val = surf.evaluate(0.5, 0.5,   1)  
         self.assertAlmostEqual(val[0][0], 0.0625)
         self.assertAlmostEqual(val[0][1], 0.25)
         self.assertAlmostEqual(val[1][0], 0.25)  # dx/du = 2*u*v^2
@@ -87,7 +87,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(val[2][1], 0.5)   # dy/dv = u      
 
         # mid top edge with derivatives (sensitive to left-evaluation)
-        val = surf.Evaluate(0.5, 1.0,   1)  
+        val = surf.evaluate(0.5, 1.0,   1)  
         self.assertAlmostEqual(val[0][0], 0.25)
         self.assertAlmostEqual(val[0][1], 0.5)
         self.assertAlmostEqual(val[1][0], 1.0) # dx/du = 2*u*v^2
@@ -96,7 +96,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(val[2][1], 0.5) # dy/dv = u      
 
         # mid right edge with derivatives (sensitive to left-evaluation)
-        val = surf.Evaluate(1.0, 0.5,   1)  
+        val = surf.evaluate(1.0, 0.5,   1)  
         self.assertAlmostEqual(val[0][0], 0.25)
         self.assertAlmostEqual(val[0][1], 0.5)
         self.assertAlmostEqual(val[1][0], 0.5) # dx/du = 2*u*v^2
@@ -105,7 +105,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(val[2][1], 1.0) # dy/dv = u      
 
         # top right corner with derivatives (sensitive to left-evaluation)
-        val = surf.Evaluate(1.0, 1.0,   1)  
+        val = surf.evaluate(1.0, 1.0,   1)  
         self.assertAlmostEqual(val[0][0], 1.0)
         self.assertAlmostEqual(val[0][1], 1.0)
         self.assertAlmostEqual(val[1][0], 2.0) # dx/du = 2*u*v^2
@@ -114,7 +114,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(val[2][1], 1.0) # dy/dv = u      
 
         # second derivatives at midpoint 
-        val = surf.Evaluate(0.5, 0.5,   2)  
+        val = surf.evaluate(0.5, 0.5,   2)  
         self.assertAlmostEqual(len(val),  6)
         self.assertAlmostEqual(val[3][0],  0.5) # d2x/du2  = 2*v^2
         self.assertAlmostEqual(val[3][1],  0.0) # d2y/du2  = 0
@@ -124,7 +124,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(val[5][1],  0.0) # d2y/dv2  = 0
 
         # third derivatives
-        val = surf.Evaluate(0.5, 0.5,   3)  
+        val = surf.evaluate(0.5, 0.5,   3)  
         self.assertAlmostEqual(len(val),  10)
         self.assertAlmostEqual(val[6][0],  0.0) # d3x/du3   = 0
         self.assertAlmostEqual(val[6][1],  0.0) # d3y/du3   = 0
@@ -134,7 +134,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(val[9][0],  0.0) # d3x/dv3   = 0
 
         # fourth derivatives
-        val = surf.Evaluate(0.5, 0.5,   4)  
+        val = surf.evaluate(0.5, 0.5,   4)  
         self.assertAlmostEqual(len(val),  15)
         self.assertAlmostEqual(val[11][0],  0.0) # d4x/du3dv  = 0
         self.assertAlmostEqual(val[12][0],  4.0) # d4x/du2dv2 = 4
@@ -142,26 +142,26 @@ class TestSurface(unittest.TestCase):
 
         # check integer type for derivative
         with self.assertRaises(TypeError):
-            val = surf.Evaluate(0.5,0.5,  1.5) 
+            val = surf.evaluate(0.5,0.5,  1.5) 
 
         # GoTools throws exception for negative derivatives
         with self.assertRaises(Exception):
-            val = surf.Evaluate(0.5,0.5,  -1) 
+            val = surf.evaluate(0.5,0.5,  -1) 
 
     def test_raise_order(self):
         # more or less random 2D surface with p=[2,2] and n=[4,3]
         controlpoints = [[0,0],[-1,1],[0,2],  [1,-1],[1,0],[1,1],  [2,1],[2,2],[2,3],  [3,0],[4,1],[3,2]]
         surf = Surface(3,3, [0,0,0,.4,1,1,1], [0,0,0,1,1,1], controlpoints)
 
-        self.assertEqual(surf.GetOrder()[0], 3)
-        self.assertEqual(surf.GetOrder()[1], 3)
-        evaluation_point1 = surf.Evaluate(0.23, 0.37) # pick some evaluation point (could be anything)
+        self.assertEqual(surf.get_order()[0], 3)
+        self.assertEqual(surf.get_order()[1], 3)
+        evaluation_point1 = surf.evaluate(0.23, 0.37) # pick some evaluation point (could be anything)
 
-        surf.RaiseOrder(1,2)
+        surf.raise_order(1,2)
 
-        self.assertEqual(surf.GetOrder()[0], 4)
-        self.assertEqual(surf.GetOrder()[1], 5)
-        evaluation_point2 = surf.Evaluate(0.23, 0.37)
+        self.assertEqual(surf.get_order()[0], 4)
+        self.assertEqual(surf.get_order()[1], 5)
+        evaluation_point2 = surf.evaluate(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -172,15 +172,15 @@ class TestSurface(unittest.TestCase):
         controlpoints = [[0,0,1],[-1,1,.96],[0,2,1],  [1,-1,1],[1,0,.8],[1,1,1],  [2,1,.89],[2,2,.9],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
         surf = Surface(3,3, [0,0,0,.4,1,1,1], [0,0,0,1,1,1], controlpoints, True)
 
-        self.assertEqual(surf.GetOrder()[0], 3)
-        self.assertEqual(surf.GetOrder()[1], 3)
-        evaluation_point1 = surf.Evaluate(0.23, 0.37)
+        self.assertEqual(surf.get_order()[0], 3)
+        self.assertEqual(surf.get_order()[1], 3)
+        evaluation_point1 = surf.evaluate(0.23, 0.37)
 
-        surf.RaiseOrder(1,2)
+        surf.raise_order(1,2)
 
-        self.assertEqual(surf.GetOrder()[0], 4)
-        self.assertEqual(surf.GetOrder()[1], 5)
-        evaluation_point2 = surf.Evaluate(0.23, 0.37)
+        self.assertEqual(surf.get_order()[0], 4)
+        self.assertEqual(surf.get_order()[1], 5)
+        evaluation_point2 = surf.evaluate(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -192,18 +192,18 @@ class TestSurface(unittest.TestCase):
         surf = Surface(4,3, [0,0,0,0,2,2,2,2], [0,0,0,1,1,1], controlpoints)
 
         # pick some evaluation point (could be anything)
-        evaluation_point1 = surf.Evaluate(0.23, 0.37)
+        evaluation_point1 = surf.evaluate(0.23, 0.37)
 
-        surf.InsertKnot(0, .22)
-        surf.InsertKnot(0, .5)
-        surf.InsertKnot(0, .7)
-        surf.InsertKnot(1, .1)
-        surf.InsertKnot(1, 1.0/3)
-        knot1, knot2 = surf.GetKnots(True)
+        surf.insert_knot(0, .22)
+        surf.insert_knot(0, .5)
+        surf.insert_knot(0, .7)
+        surf.insert_knot(1, .1)
+        surf.insert_knot(1, 1.0/3)
+        knot1, knot2 = surf.get_knots(True)
         self.assertEqual(len(knot1), 11) # 8 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 
-        evaluation_point2 = surf.Evaluate(0.23, 0.37)
+        evaluation_point2 = surf.evaluate(0.23, 0.37)
 
         # evaluation before and after InsertKnot should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -214,18 +214,18 @@ class TestSurface(unittest.TestCase):
         controlpoints = [[0,0,1],[-1,1,.96],[0,2,1],  [1,-1,1],[1,0,.8],[1,1,1],  [2,1,.89],[2,2,.9],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
         surf = Surface(3,3, [0,0,0,.4,1,1,1], [0,0,0,1,1,1], controlpoints, True)
 
-        evaluation_point1 = surf.Evaluate(0.23, 0.37)
+        evaluation_point1 = surf.evaluate(0.23, 0.37)
 
-        surf.InsertKnot(0, .22)
-        surf.InsertKnot(0, .5)
-        surf.InsertKnot(0, .7)
-        surf.InsertKnot(1, .1)
-        surf.InsertKnot(1, 1.0/3)
-        knot1, knot2 = surf.GetKnots(True)
+        surf.insert_knot(0, .22)
+        surf.insert_knot(0, .5)
+        surf.insert_knot(0, .7)
+        surf.insert_knot(1, .1)
+        surf.insert_knot(1, 1.0/3)
+        knot1, knot2 = surf.get_knots(True)
         self.assertEqual(len(knot1), 10) # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 
-        evaluation_point2 = surf.Evaluate(0.23, 0.37)
+        evaluation_point2 = surf.evaluate(0.23, 0.37)
 
         # evaluation before and after InsertKnot should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -233,25 +233,25 @@ class TestSurface(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(TypeError):
-            surf.InsertKnot(1, 2, 3)          # too many arguments
+            surf.insert_knot(1, 2, 3)          # too many arguments
         with self.assertRaises(TypeError):
-            surf.InsertKnot(1)                # too few arguments
+            surf.insert_knot(1)                # too few arguments
         with self.assertRaises(TypeError):
-            surf.InsertKnot("tree-fiddy", .5) # wrong argument type
+            surf.insert_knot("tree-fiddy", .5) # wrong argument type
         with self.assertRaises(ValueError):
-            surf.InsertKnot(0, -0.2)          # Outside-domain error
+            surf.insert_knot(0, -0.2)          # Outside-domain error
         with self.assertRaises(ValueError):
-            surf.InsertKnot(1, 1.4)           # Outside-domain error
+            surf.insert_knot(1, 1.4)           # Outside-domain error
 
     def test_force_rational(self):
         # more or less random 3D surface with p=[3,2] and n=[4,3]
         controlpoints = [[0,0,1],[-1,1,1],[0,2,1],  [1,-1,1],[1,0,1],[1,1,1],  [2,1,1],[2,2,1],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
         surf = Surface(4,3, [0,0,0,0,2,2,2,2], [0,0,0,1,1,1], controlpoints)
 
-        evaluation_point1 = surf.Evaluate(0.23, .66)
+        evaluation_point1 = surf.evaluate(0.23, .66)
         control_point1    = surf[0]
-        surf.ForceRational()
-        evaluation_point2 = surf.Evaluate(0.23, .66)
+        surf.force_rational()
+        evaluation_point2 = surf.evaluate(0.23, .66)
         control_point2    = surf[0]
         # ensure that surface has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -267,10 +267,10 @@ class TestSurface(unittest.TestCase):
         controlpoints = [[0,0,1],[-1,1,1],[0,2,1],  [1,-1,1],[1,0,.5],[1,1,1],  [2,1,1],[2,2,.5],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
         surf = Surface(3,3, [0,0,0,.64,2,2,2], [0,0,0,1,1,1], controlpoints)
 
-        evaluation_point1 = surf.Evaluate(0.23, .56)
+        evaluation_point1 = surf.evaluate(0.23, .56)
         control_point1    = surf[1]  # this is control point i=(1,0), when n=(4,3)
-        surf.SwapParametrization()
-        evaluation_point2 = surf.Evaluate(0.56, .23)
+        surf.swap_parametrization()
+        evaluation_point2 = surf.evaluate(0.56, .23)
         control_point2    = surf[3]  # this is control point i=(0,1), when n=(3,4)
 
         # ensure that surface has not chcanged, by comparing evaluation of it

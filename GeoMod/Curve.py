@@ -11,7 +11,7 @@ class Curve(ControlPointOperations):
         # if none provided, create the default geometry which is the linear mapping onto the unit line [0,0]->[1,0]
         if controlpoints == None:
             controlpoints = []
-            greville_points = self.basis.Greville()
+            greville_points = self.basis.greville()
             for point in greville_points:
                 controlpoints.append([point, 0])
         
@@ -19,7 +19,7 @@ class Curve(ControlPointOperations):
         self.rational      = rational
         self.dimension     = len(controlpoints[0]) - rational
 
-    def Evaluate(self, t):
+    def evaluate(self, t):
         """Evaluate the curve at given parametric values
         @param t: Parametric coordinate point(s)
         @type  t: Float or list of Floats
@@ -27,7 +27,7 @@ class Curve(ControlPointOperations):
         @rtype  : numpy.array
         """
         # compute basis functions for all points t. N(i,j) is a matrix of all functions j for all points i
-        N = self.basis.Evaluate(t)
+        N = self.basis.evaluate(t)
 
         # compute physical points [x,y,z] for all points t[i]. For rational curves, compute [X,Y,Z,W] (in projective space)
         result = N * self.controlpoints
@@ -43,7 +43,7 @@ class Curve(ControlPointOperations):
 
         return result
 
-    def EvaluateTangent(self, t):
+    def evaluate_tangent(self, t):
         """Evaluate the tangent of the curve at given parametric values
         @param t: Parametric coordinate point(s)
         @type  t: Float or list of Floats
@@ -51,7 +51,7 @@ class Curve(ControlPointOperations):
         @rtype  : numpy.array
         """
         # compute basis functions for all points t. dN(i,j) is a matrix of the derivative of all functions j for all points i
-        dN = self.basis.Evaluate(t, 1)
+        dN = self.basis.evaluate(t, 1)
 
         # compute physical points [dx/dt,dy/dt,dz/dt] for all points t[i]
         result = dN * self.controlpoints
@@ -61,7 +61,7 @@ class Curve(ControlPointOperations):
         # W(t) = sum_j N_j(t) * w_j
         # dx/dt =  sum_i N_i'(t)*w_i*x_i / W(t) - sum_i N_i(t)*w_i*x_i* W'(t)/W(t)^2
         if self.rational: 
-            N = self.basis.Evaluate(t)
+            N = self.basis.evaluate(t)
             non_derivative = N*self.controlpoints
             W    = non_derivative[:,-1]  # W(t)
             Wder = result[:,-1]          # W'(t)
@@ -72,16 +72,16 @@ class Curve(ControlPointOperations):
 
         return result
 
-    def FlipParametrization(self):
+    def flip_parametrization(self):
         """Swap direction of the curve by making it go in the reverse direction. Parametric domain remain unchanged"""
-        self.basis.Reverse()
+        self.basis.reverse()
         self.controlpoints = self.controlpoints[::-1]
 
-    def GetOrder(self):
+    def get_order(self):
         """Return polynomial order (degree + 1) of spline curve"""
         return self.basis.order
 
-    def GetKnots(self, with_multiplicities=False):
+    def get_knots(self, with_multiplicities=False):
         """Get the knots of a spline curve
         @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
         @type with_multiplicities : Boolean
@@ -91,20 +91,20 @@ class Curve(ControlPointOperations):
         if with_multiplicities:
             return self.basis.knots
         else:
-            return self.basis.GetKnotSpans()
+            return self.basis.get_knot_spans()
 
-    def ForceRational(self):
+    def force_rational(self):
         """Force a rational representation by including weights of all value 1"""
         if not self.rational:
             n,d = self.controlpoints.shape # n controlpoints of dimension d
             self.controlpoints = np.insert(self.controlpoints, d, np.array([1]*n), 1)
             self.rational = 1
 
-    def ReParametrize(self, start=0, end=1):
+    def reparametrize(self, start=0, end=1):
         """Redefine the parametric domain to be (start,end)"""
         if end <= start:
             raise ValueError('end must be larger than start')
-        self.basis.Normalize()     # set domain to (0,1)
+        self.basis.normalize()     # set domain to (0,1)
         self.basis *= (end-start)
         self.basis += start
 

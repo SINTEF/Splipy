@@ -13,9 +13,9 @@ class Volume(ControlPointOperations):
         # if none provided, create the default geometry which is the linear mapping onto the unit cube (0,1)^3
         if controlpoints == None:
             controlpoints = []
-            greville_points1 = self.basis1.Greville()
-            greville_points2 = self.basis2.Greville()
-            greville_points3 = self.basis3.Greville()
+            greville_points1 = self.basis1.greville()
+            greville_points2 = self.basis2.greville()
+            greville_points3 = self.basis3.greville()
             for p3 in greville_points3:
               for p2 in greville_points2:
                   for p1 in greville_points1:
@@ -30,7 +30,7 @@ class Volume(ControlPointOperations):
         # swap axis 0 and 2, to make it (i,j,k,l) 
         self.controlpoints = self.controlpoints.transpose((2,1,0,3))
 
-    def Evaluate(self, u, v, w):
+    def evaluate(self, u, v, w):
         """Evaluate the volume at given parametric values
         @param u: Parametric coordinate point(s) in first direction
         @type  u: Float or list of Floats
@@ -42,9 +42,9 @@ class Volume(ControlPointOperations):
         @rtype  : numpy.array
         """
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
-        Nu = self.basis1.Evaluate(u)
-        Nv = self.basis2.Evaluate(v)
-        Nw = self.basis3.Evaluate(w)
+        Nu = self.basis1.evaluate(u)
+        Nv = self.basis2.evaluate(v)
+        Nw = self.basis3.evaluate(w)
 
         # compute physical points [x,y,z] for all points (u[i],v[j],w[k]). For rational volumes, compute [X,Y,Z,W] (in projective space)
         result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
@@ -62,28 +62,28 @@ class Volume(ControlPointOperations):
             result = np.array(result[0,0,0,:]).reshape(self.dimension)
         return result
 
-    def FlipParametrization(self, direction):
+    def flip_parametrization(self, direction):
         """Swap direction of the volume by making it go in the reverse direction. Parametric domain remain unchanged
            @param direction: The parametric direction to flip (0=u, 1=v, 2=w)
            @type  direction: Int
         """
         if direction==0:
-            self.basis1.Reverse()
+            self.basis1.reverse()
             self.controlpoints = self.controlpoints[::-1, :,:,:]
         elif direction==1:
-            self.basis2.Reverse()
+            self.basis2.reverse()
             self.controlpoints = self.controlpoints[:, ::-1 ,:,:]
         elif direction==2:
-            self.basis3.Reverse()
+            self.basis3.reverse()
             self.controlpoints = self.controlpoints[:,:, ::-1 ,:]
         else:
             raise ValueError('direction must be 0,1 or 2')
 
-    def GetOrder(self):
+    def get_order(self):
         """Return spline volume order (polynomial degree + 1) in all parametric directions"""
         return (self.basis1.order, self.basis2.order, self.basis3.order)
 
-    def GetKnots(self, with_multiplicities=False):
+    def get_knots(self, with_multiplicities=False):
         """Get the knots of the spline volume
         @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
         @type with_multiplicities : Boolean
@@ -93,16 +93,16 @@ class Volume(ControlPointOperations):
         if with_multiplicities:
             return (self.basis1.knots, self.basis2.knots, self.basis3.knots)
         else:
-            return (self.basis1.GetKnotSpans(), self.basis2.GetKnotSpans(), self.basis3.GetKnotSpans())
+            return (self.basis1.get_knot_spans(), self.basis2.get_knot_spans(), self.basis3.get_knot_spans())
 
-    def ForceRational(self):
+    def force_rational(self):
         """Force a rational representation by including weights of all value 1"""
         if not self.rational:
             n1,n2,n3,d = self.controlpoints.shape # n1 x n2 x n3 controlpoints of dimension d
             self.controlpoints = np.insert(self.controlpoints, d, np.ones((n1,n2,n3)), 3)
             self.rational = 1
 
-    def SwapParametrization(self, pardir1, pardir2):
+    def swap_parametrization(self, pardir1, pardir2):
         """Swaps the two volume parameter directions"""
         if (pardir1==0 and pardir2==1) or (pardir1==1 and pardir2==0):
             self.controlpoints = self.controlpoints.transpose((1,0,2,3))  # re-order controlpoints
@@ -117,24 +117,24 @@ class Volume(ControlPointOperations):
             raise ValueError('pardir1 and pardir2 must be different from each other and either 0,1 or 2')
 
 
-    def ReParametrize(self, umin=0, umax=1, vmin=0, vmax=1, wmin=0, wmax=1):
+    def reparametrize(self, umin=0, umax=1, vmin=0, vmax=1, wmin=0, wmax=1):
         """Redefine the parametric domain to be (umin,umax) x (vmin,vmax) x (wmin,wmax)"""
         if umax <= umin or vmax <= vmin or wmax <= wmin:
             raise ValueError('end must be larger than start')
-        self.basis1.Normalize()     # set domain to (0,1)
+        self.basis1.normalize()     # set domain to (0,1)
         self.basis1 *= (umax-umin)
         self.basis1 +=  umin
-        self.basis2.Normalize()
+        self.basis2.normalize()
         self.basis2 *= (vmax-vmin)
         self.basis2 +=  vmin
-        self.basis3.Normalize()
+        self.basis3.normalize()
         self.basis3 *= (wmax-wmin)
         self.basis3 +=  wmin
 
-    def GetFaces(self):
+    def get_faces(self):
         """Return a list of the 6 boundary faces of this volume (with outward normal vector). They are ordered as (umin,umax,vmin,vmax,wmin,wmax)"""
         # ASSUMPTION: open knot vectors
-        (p1,p2,p3)     = self.GetOrder()
+        (p1,p2,p3)     = self.get_order()
         (n1,n2,n3,dim) = self.controlpoints.shape
         rat            = self.rational
         umin = Surface(p3,p2, self.basis3, self.basis2, np.reshape(self.controlpoints[ 0,:,:,:], (n2*n3,dim), rat))
@@ -143,9 +143,9 @@ class Volume(ControlPointOperations):
         vmax = Surface(p3,p1, self.basis3, self.basis1, np.reshape(self.controlpoints[:,-1,:,:], (n1*n3,dim), rat))
         wmin = Surface(p2,p1, self.basis2, self.basis1, np.reshape(self.controlpoints[:,:, 0,:], (n1*n2,dim), rat))
         wmax = Surface(p2,p1, self.basis2, self.basis1, np.reshape(self.controlpoints[:,:,-1,:], (n1*n2,dim), rat))
-        umax.SwapParametrization()
-        vmax.SwapParametrization()
-        wmax.SwapParametrization()
+        umax.swap_parametrization()
+        vmax.swap_parametrization()
+        wmax.swap_parametrization()
         return [umin, umax, vmin, vmax, wmin, wmax]
 
         

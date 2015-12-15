@@ -12,8 +12,8 @@ class Surface(ControlPointOperations):
         # if none provided, create the default geometry which is the linear mapping onto the unit square (0,1)^2
         if controlpoints == None:
             controlpoints = []
-            greville_points1 = self.basis1.Greville()
-            greville_points2 = self.basis2.Greville()
+            greville_points1 = self.basis1.greville()
+            greville_points2 = self.basis2.greville()
             for p2 in greville_points2:
                 for p1 in greville_points1:
                     controlpoints.append([p1,p2])
@@ -27,7 +27,7 @@ class Surface(ControlPointOperations):
         # swap axis 0 and 1, to make it (i,j,k) 
         self.controlpoints = self.controlpoints.transpose((1,0,2))
 
-    def Evaluate(self, u, v):
+    def evaluate(self, u, v):
         """Evaluate the surface at given parametric values
         @param u: Parametric coordinate point(s) in first direction
         @type  u: Float or list of Floats
@@ -37,8 +37,8 @@ class Surface(ControlPointOperations):
         @rtype  : numpy.array
         """
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
-        Nu = self.basis1.Evaluate(u)
-        Nv = self.basis2.Evaluate(v)
+        Nu = self.basis1.evaluate(u)
+        Nv = self.basis2.evaluate(v)
 
         # compute physical points [x,y,z] for all points (u[i],v[j]). For rational surfaces, compute [X,Y,Z,W] (in projective space)
         result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
@@ -54,25 +54,25 @@ class Surface(ControlPointOperations):
             result = np.array(result[0,0,:]).reshape(self.dimension)
         return result
 
-    def FlipParametrization(self, direction):
+    def flip_parametrization(self, direction):
         """Swap direction of the surface by making it go in the reverse direction. Parametric domain remain unchanged
            @param direction: The parametric direction to flip (0=u, 1=v)
            @type  direction: Int
         """
         if direction==0:
-            self.basis1.Reverse()
+            self.basis1.reverse()
             self.controlpoints = self.controlpoints[::-1, :,:]
         elif direction==1:
-            self.basis2.Reverse()
+            self.basis2.reverse()
             self.controlpoints = self.controlpoints[:, ::-1 ,:]
         else:
             raise ValueError('direction must be 0 or 1')
 
-    def GetOrder(self):
+    def get_order(self):
         """Return spline surface order (polynomial degree + 1) in all parametric directions"""
         return (self.basis1.order, self.basis2.order)
 
-    def GetKnots(self, with_multiplicities=False):
+    def get_knots(self, with_multiplicities=False):
         """Get the knots of the spline surface
         @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
         @type with_multiplicities : Boolean
@@ -82,35 +82,35 @@ class Surface(ControlPointOperations):
         if with_multiplicities:
             return (self.basis1.knots, self.basis2.knots)
         else:
-            return (self.basis1.GetKnotSpans(), self.basis2.GetKnotSpans())
+            return (self.basis1.get_knot_spans(), self.basis2.get_knot_spans())
 
-    def ForceRational(self):
+    def force_rational(self):
         """Force a rational representation by including weights of all value 1"""
         if not self.rational:
             n1,n2,d = self.controlpoints.shape # n1 x n2 controlpoints of dimension d
             self.controlpoints = np.insert(self.controlpoints, d, np.ones((n1,n2)), 2)
             self.rational = 1
 
-    def SwapParametrization(self):
+    def swap_parametrization(self):
         """Swaps the two surface parameter directions"""
         self.controlpoints = self.controlpoints.transpose((1,0,2))  # re-order controlpoints
         self.basis1, self.basis2 = self.basis2, self.basis1         # swap knot vectors
 
-    def ReParametrize(self, umin=0, umax=1, vmin=0, vmax=1):
+    def reparametrize(self, umin=0, umax=1, vmin=0, vmax=1):
         """Redefine the parametric domain to be (umin,umax) x (vmin,vmax)"""
         if umax <= umin or vmax <= vmin:
             raise ValueError('end must be larger than start')
-        self.basis1.Normalize()     # set domain to (0,1)
+        self.basis1.normalize()     # set domain to (0,1)
         self.basis1 *= (umax-umin)
         self.basis1 += umin
-        self.basis2.Normalize()
+        self.basis2.normalize()
         self.basis2 *= (vmax-vmin)
         self.basis2 += vmin
 
-    def GetEdges(self):
+    def get_edges(self):
         """Return the four edge curves in (parametric) order: bottom, right, top, left"""
         # ASSUMPTION: open knot vectors
-        (p1,p2)     = self.GetOrder()
+        (p1,p2)     = self.get_order()
         (n1,n2,dim) = self.controlpoints.shape
         rat         = self.rational
         umin = Curve(p2, self.basis2, np.reshape(self.controlpoints[ 0,:,:], (n2,dim), rat))
@@ -118,8 +118,8 @@ class Surface(ControlPointOperations):
         vmin = Curve(p1, self.basis1, np.reshape(self.controlpoints[:, 0,:], (n1,dim), rat))
         vmax = Curve(p1, self.basis1, np.reshape(self.controlpoints[:,-1,:], (n1,dim), rat))
         # make the curves form a clockwise oriented closed loop around surface
-        umax.FlipParametrization()
-        vmax.FlipParametrization()
+        umax.flip_parametrization()
+        vmax.flip_parametrization()
         return [vmin, umax, vmax, umin]
 
 
