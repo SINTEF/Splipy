@@ -43,6 +43,7 @@ class Surface(ControlPointOperations):
         # compute physical points [x,y,z] for all points (u[i],v[j]). For rational surfaces, compute [X,Y,Z,W] (in projective space)
         result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
         result = np.tensordot(Nv, result,             axes=(1,1))
+        result = result.transpose((1,0,2)) # I really dont know why it insist on storing it in the wrong order :(
 
         # Project rational surfaces down to geometry space: x = X/W, y=Y/W, z=Z/W
         if self.rational: 
@@ -121,6 +122,36 @@ class Surface(ControlPointOperations):
         umax.flip_parametrization()
         vmax.flip_parametrization()
         return [vmin, umax, vmax, umin]
+
+    def raise_order(self, raise_u, raise_v):
+        # create the new basis
+        newKnot1  = self.basis1.get_raise_order_knot(raise_u)
+        newBasis1 = BSplineBasis(self.basis1.order + raise_u, newKnot1, self.basis1.periodic)
+        newKnot2  = self.basis2.get_raise_order_knot(raise_v)
+        newBasis2 = BSplineBasis(self.basis2.order + raise_v, newKnot2, self.basis2.periodic)
+
+        # set up an interpolation problem. This is in projective space, so no problems for rational cases
+        interpolation_pts_u = newBasis1.greville()        # parametric interpolation points u
+        interpolation_pts_v = newBasis2.greville()        # parametric interpolation points v
+        N_u_old = self.basis1.evaluate( interpolation_pts_u )
+        N_u_new =   newBasis1.evaluate( interpolation_pts_u )
+        N_v_old = self.basis2.evaluate( interpolation_pts_v )
+        N_v_new =   newBasis2.evaluate( interpolation_pts_v )
+        tmp = np.tensordot(N_u_old, self.controlpoints, axes=(1,0))
+        tmp = np.tensordot(N_v_old, tmp,                axes=(1,1)) # projective interpolation points (x,y,z,w)
+        interpolation_pts_x = tmp.transpose((1,0,2)) # 3D-tensor with elements (i,j,k) of component x[k] evaluated at u[i] v[j]
+
+        # solve the interpolation problem
+        N_u_inv = np.linalg.inv(N_u_new)
+        N_v_inv = np.linalg.inv(N_v_new) # these are inverses of the 1D problems, and small compared to the total number of unknowns
+        tmp = np.tensordot(N_u_inv, interpolation_pts_x, axes=(1,0))
+        tmp = np.tensordot(N_v_inv, tmp,                 axes=(1,1))
+
+        # update the basis and controlpoints of the surface
+        self.controlpoints = tmp.transpose((1,0,2))
+        self.basis1        = newBasis1
+        self.basis2        = newBasis2
+        
 
 
 

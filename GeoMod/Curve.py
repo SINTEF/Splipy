@@ -108,6 +108,22 @@ class Curve(ControlPointOperations):
         self.basis *= (end-start)
         self.basis += start
 
+    def raise_order(self, amount):
+        # create the new basis
+        newKnot  = self.basis.get_raise_order_knot(amount)
+        newBasis = BSplineBasis(self.basis.order + amount, newKnot, self.basis.periodic)
+
+        # set up an interpolation problem. This is in projective space, so no problems for rational cases
+        interpolation_pts_t = newBasis.greville()        # parametric interpolation points (t)
+        N_old = self.basis.evaluate(interpolation_pts_t) 
+        N_new = newBasis.evaluate(  interpolation_pts_t) 
+        interpolation_pts_x = N_old * self.controlpoints # projective interpolation points (x,y,z,w)
+
+        # solve the interpolation problem
+        self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
+        self.basis         = newBasis
+        
+
 
 
 

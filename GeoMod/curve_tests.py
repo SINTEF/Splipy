@@ -100,8 +100,8 @@ class TestCurve(unittest.TestCase):
 
         crv
         evaluation_point1 = crv.evaluate(0.37)
-        crv2              = crv.raise_order(2)
-        evaluation_point2 = crv2.evaluate(0.37)
+        crv.raise_order(2)
+        evaluation_point2 = crv.evaluate(0.37)
 
         # ensure that curve has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -109,8 +109,7 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
 
         # ensure that curve has the right order
-        self.assertEqual(crv.get_order(),  5)
-        self.assertEqual(crv2.get_order(), 5)
+        self.assertEqual(crv.get_order(), 5)
 
         # check integer type for argument
         with self.assertRaises(TypeError):

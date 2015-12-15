@@ -17,9 +17,9 @@ class Volume(ControlPointOperations):
             greville_points2 = self.basis2.greville()
             greville_points3 = self.basis3.greville()
             for p3 in greville_points3:
-              for p2 in greville_points2:
-                  for p1 in greville_points1:
-                      controlpoints.append([p1,p2,p3])
+                for p2 in greville_points2:
+                    for p1 in greville_points1:
+                        controlpoints.append([p1,p2,p3])
         
         self.dimension     = len(controlpoints[0]) - rational
         self.rational      = rational
@@ -50,6 +50,7 @@ class Volume(ControlPointOperations):
         result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
         result = np.tensordot(Nv, result,             axes=(1,1))
         result = np.tensordot(Nw, result,             axes=(1,2))
+        result = result.transpose((2,1,0,3)) # I really dont know why it insist on storing it in the wrong order :(
 
         # Project rational volumes down to geometry space: x = X/W, y=Y/W, z=Z/W
         if self.rational: 
@@ -148,7 +149,43 @@ class Volume(ControlPointOperations):
         wmax.swap_parametrization()
         return [umin, umax, vmin, vmax, wmin, wmax]
 
-        
+    def raise_order(self, raise_u, raise_v, raise_w):
+        # create the new basis
+        newKnot1  = self.basis1.get_raise_order_knot(raise_u)
+        newBasis1 = BSplineBasis(self.basis1.order + raise_u, newKnot1, self.basis1.periodic)
+        newKnot2  = self.basis2.get_raise_order_knot(raise_v)
+        newBasis2 = BSplineBasis(self.basis2.order + raise_v, newKnot2, self.basis2.periodic)
+        newKnot3  = self.basis3.get_raise_order_knot(raise_w)
+        newBasis3 = BSplineBasis(self.basis3.order + raise_w, newKnot3, self.basis3.periodic)
+
+        # set up an interpolation problem. This is in projective space, so no problems for rational cases
+        interpolation_pts_u = newBasis1.greville()        # parametric interpolation points u
+        interpolation_pts_v = newBasis2.greville()        # parametric interpolation points v
+        interpolation_pts_w = newBasis3.greville()        # parametric interpolation points w
+        N_u_old = self.basis1.evaluate( interpolation_pts_u )
+        N_u_new =   newBasis1.evaluate( interpolation_pts_u )
+        N_v_old = self.basis2.evaluate( interpolation_pts_v )
+        N_v_new =   newBasis2.evaluate( interpolation_pts_v )
+        N_w_old = self.basis3.evaluate( interpolation_pts_w )
+        N_w_new =   newBasis3.evaluate( interpolation_pts_w )
+        tmp = np.tensordot(N_u_old, self.controlpoints, axes=(1,0))
+        tmp = np.tensordot(N_v_old, tmp,                axes=(1,1)) 
+        tmp = np.tensordot(N_w_old, tmp,                axes=(1,2)) # projective interpolation points (x,y,z,w)
+        interpolation_pts_x = tmp.transpose((2,1,0,3)) # 4D-tensor with elements (i,j,k,l) of component x[l] evaluated at u[i] v[j] w[k]
+
+        # solve the interpolation problem
+        N_u_inv = np.linalg.inv(N_u_new)
+        N_v_inv = np.linalg.inv(N_v_new)
+        N_w_inv = np.linalg.inv(N_w_new) # these are inverses of the 1D problems, and small compared to the total number of unknowns
+        tmp = np.tensordot(N_u_inv, interpolation_pts_x, axes=(1,0))
+        tmp = np.tensordot(N_v_inv, tmp,                 axes=(1,1))
+        tmp = np.tensordot(N_w_inv, tmp,                 axes=(1,2))
+
+        # update the basis and controlpoints of the volume
+        self.controlpoints = tmp.transpose((2,1,0,3))
+        self.basis1        = newBasis1
+        self.basis2        = newBasis2
+        self.basis3        = newBasis3
 
 
 
