@@ -11,7 +11,7 @@ class Volume(ControlPointOperations):
         self.basis3 = BSplineBasis(order3, knot3)
         
         # if none provided, create the default geometry which is the linear mapping onto the unit cube (0,1)^3
-        if controlpoints == None:
+        if controlpoints is None:
             controlpoints = []
             greville_points1 = self.basis1.greville()
             greville_points2 = self.basis2.greville()

@@ -10,7 +10,7 @@ class Surface(ControlPointOperations):
         self.basis2 = BSplineBasis(order2, knot2)
         
         # if none provided, create the default geometry which is the linear mapping onto the unit square (0,1)^2
-        if controlpoints == None:
+        if controlpoints is None:
             controlpoints = []
             greville_points1 = self.basis1.greville()
             greville_points2 = self.basis2.greville()

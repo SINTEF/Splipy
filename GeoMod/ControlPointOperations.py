@@ -86,6 +86,3 @@ class ControlPointOperations:
         self.scale(x)
         return self
 
-    def __idiv__(self, x):
-        self.scale(1.0/x)
-        return self

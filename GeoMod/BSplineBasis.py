@@ -19,7 +19,7 @@ class BSplineBasis:
         @type  periodic: Int
         """
 
-        if knots == None:
+        if knots is None:
             knots = [0]*order + [1]*order
 
         self.knots    = np.array(knots)
@@ -27,7 +27,7 @@ class BSplineBasis:
         self.periodic = periodic
 
         # error test input
-        if len(knots) < order or (periodic and len(knots)<order):
+        if len(knots) < order:
             raise ValueError('knot vector has too few elements')
         if periodic >= 0:
             for i in range(periodic+1):
@@ -59,23 +59,23 @@ class BSplineBasis:
         result = []
         p = self.order
         n = len(self.knots) - p;
-        if index == None:
+        if index is None:
             for i in range(n):
                 result.append(float(np.sum(self.knots[i+1:i+p]))/(p-1))
         else:
             result = float(np.sum(self.knots[index+1:index+p]))/(p-1)
         return result
 
-    def evaluate(self, t, d=0, fromRight=True):
+    def evaluate(self, t, d=0, from_right=True):
         """Get all basis functions evaluated in a given set of points
-        @param t:         The parametric coordinate(s) to perform evaluation
-        @type  t:         Float or List of Floats 
-        @param d:         Number of derivatives
-        @type  d:         Int
-        @param fromRight: True if evaluation should be done in the limit from above
-        @type  fromRight: Boolean
-        @return:          Matrix N[i,j] of all basis functions j in all points i
-        @rtype:           numpy.array
+        @param t:          The parametric coordinate(s) to perform evaluation
+        @type  t:          Float or List of Floats 
+        @param d:          Number of derivatives
+        @type  d:          Int
+        @param from_right: True if evaluation should be done in the limit from above
+        @type  from_right: Boolean
+        @return:           Matrix N[i,j] of all basis functions j in all points i
+        @rtype:            numpy.array
         """
 
         # for single-value input, wrap it into a list so it don't crash on the loop below
@@ -94,12 +94,12 @@ class BSplineBasis:
                     evalT = (t[i]-self.start()) % (self.end()-self.start()) + self.start()
             else:
                 if abs(t[i]-self.end()) < self.tol:      # special case the endpoint, so the user don't need to
-                    fromRight = False
+                    from_right = False
                 if t[i]<self.start() or t[i]>self.end(): # skip non-periodic evaluation points outside domain
                     continue
 
             # mu = index of last non-zero basis function
-            if fromRight:
+            if from_right:
                 mu = bisect_right(self.knots, evalT)
             else:
                 mu = bisect_left( self.knots, evalT)

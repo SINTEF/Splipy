@@ -9,7 +9,7 @@ class Curve(ControlPointOperations):
         self.basis = BSplineBasis(order, knot)
         
         # if none provided, create the default geometry which is the linear mapping onto the unit line [0,0]->[1,0]
-        if controlpoints == None:
+        if controlpoints is None:
             controlpoints = []
             greville_points = self.basis.greville()
             for point in greville_points:
