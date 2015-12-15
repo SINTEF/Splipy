@@ -107,6 +107,21 @@ class Surface(ControlPointOperations):
         self.basis2 *= (vmax-vmin)
         self.basis2 += vmin
 
+    def GetEdges(self):
+        """Return the four edge curves in (parametric) order: bottom, right, top, left"""
+        # ASSUMPTION: open knot vectors
+        (p1,p2)     = self.GetOrder()
+        (n1,n2,dim) = self.controlpoints.shape
+        rat         = self.rational
+        umin = Curve(p2, self.basis2, np.reshape(self.controlpoints[ 0,:,:], (n2,dim), rat))
+        umax = Curve(p2, self.basis2, np.reshape(self.controlpoints[-1,:,:], (n2,dim), rat))
+        vmin = Curve(p1, self.basis1, np.reshape(self.controlpoints[:, 0,:], (n1,dim), rat))
+        vmax = Curve(p1, self.basis1, np.reshape(self.controlpoints[:,-1,:], (n1,dim), rat))
+        # make the curves form a clockwise oriented closed loop around surface
+        umax.FlipParametrization()
+        vmax.FlipParametrization()
+        return [vmin, umax, vmax, umin]
+
 
 
 
