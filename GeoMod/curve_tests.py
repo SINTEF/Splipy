@@ -5,14 +5,16 @@ import unittest
 class TestCurve(unittest.TestCase):
     def test_constructor(self):
         # test 3D constructor
-        crv = Curve(2, [0, 0, 1, 1], [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        crv = Curve(controlpoints=[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
         val = crv.evaluate(0.5)
         self.assertEqual(val[0], 0.5)
+        self.assertEqual(crv.dimension,3)
 
         # test 2D constructor
-        crv2 = Curve(2, [0, 0, 1, 1], [[0.0, 0.0], [1.0, 0.0]])
+        crv2 = Curve()
         val  = crv.evaluate(0.5)
         self.assertEqual(val[0], 0.5)
+        self.assertEqual(crv2.dimension,2)
 
     def test_evaluate(self):
         # create the mapping
@@ -20,7 +22,7 @@ class TestCurve(unittest.TestCase):
         # y(t) = 2t(1-t) 
         # z(t) = 0
         controlpoints = [[1,0,0],  [2,1,0],  [3,0,0]]
-        crv = Curve(3, [0, 0, 0, 1, 1, 1], controlpoints)
+        crv = Curve(BSplineBasis(3), controlpoints)
 
         # startpoint evaluation
         val = crv.evaluate(0.0)     
@@ -64,7 +66,7 @@ class TestCurve(unittest.TestCase):
     def test_flip_parametrization(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
         controlpoints = [[0,0,0],  [1,1,0],  [2,-1,0],  [3,0,0]]
-        crv = Curve(3, [0, 0, 0, .3, 1, 1, 1], controlpoints)
+        crv = Curve(BSplineBasis(3, [0,0,0,.3,1,1,1]), controlpoints)
 
         p1 = crv.evaluate(0.23)
         crv.flip_parametrization()
@@ -76,7 +78,7 @@ class TestCurve(unittest.TestCase):
     def test_force_rational(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
         controlpoints = [[0,0,0],  [1,1,0],  [2,-1,0],  [3,0,0]]
-        crv = Curve(3, [0, 0, 0, .3, 1, 1, 1], controlpoints)
+        crv = Curve(BSplineBasis(3, [0,0,0,.3,1,1,1]), controlpoints)
 
         evaluation_point1 = crv.evaluate(0.23)
         control_point1    = crv[0]
@@ -95,7 +97,7 @@ class TestCurve(unittest.TestCase):
     def test_raise_order(self):
         # non-uniform knot vector of a squiggly quadratic n=5 curve in 3D
         controlpoints = [[0,0,0],  [1,1,1],  [2,-1,0],  [3,0,-1], [0,0,-5]]
-        crv = Curve(3, [0, 0, 0, .3, .4, 1, 1, 1], controlpoints)
+        crv = Curve(BSplineBasis(3, [0,0,0,.3,.4,1,1,1]), controlpoints)
 
         crv
         evaluation_point1 = crv.evaluate(0.37)
@@ -121,7 +123,7 @@ class TestCurve(unittest.TestCase):
     def test_insert_knot(self):
         # non-uniform knot vector of a squiggly quadratic n=5 curve in 3D
         controlpoints = [[0,0,0],  [1,1,1],  [2,-1,0],  [3,0,-1], [0,0,-5]]
-        crv = Curve(3, [0, 0, 0, .3, .4, 1, 1, 1], controlpoints)
+        crv = Curve(BSplineBasis(3, [0,0,0,.3,.4,1,1,1]), controlpoints)
 
         evaluation_point1 = crv.evaluate(0.37)
         crv.insert_knot(.2)
@@ -140,7 +142,7 @@ class TestCurve(unittest.TestCase):
         # test rational curves, here a perfect circle represented as n=9, p=2-curve
         s = 1.0/sqrt(2)
         controlpoints = [[1,0,1], [s,s,s], [0,1,1], [-s,s,s], [-1,0,1], [-s,-s,s], [0,-1,1], [s,-s,s], [1,0,1]]
-        crv = Curve(3, [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4], controlpoints, True)
+        crv = Curve(BSplineBasis(3, [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4]), controlpoints, True)
 
         evaluation_point1 = crv.evaluate(0.37)
         crv.insert_knot(.2)
@@ -172,7 +174,7 @@ class TestCurve(unittest.TestCase):
     def test_reparametrize(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
         controlpoints = [[0,0,0],  [1,1,0],  [2,-1,0],  [3,0,0]]
-        crv = Curve(3, [0, 0, 0, 1.32, 3, 3, 3], controlpoints)
+        crv = Curve(BSplineBasis(3, [0, 0, 0, 1.32, 3, 3, 3]), controlpoints)
 
         # get some info on the initial curve
         knots1            = crv.get_knots()
@@ -217,7 +219,7 @@ class TestCurve(unittest.TestCase):
     def test_split(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
         controlpoints = [[0,0,1],  [1,1,0],  [2,-1,0],  [3,0,0]]
-        crv = Curve(3, [0, 0, 0, 0.7, 1, 1, 1], controlpoints)
+        crv = Curve(BSplineBasis(3, [0,0,0,.7,1,1,1]), controlpoints)
 
         # get some info on the initial curve
         evaluation_point1 = crv.evaluate(0.50)

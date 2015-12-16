@@ -4,11 +4,18 @@ import numpy as np
 
 class Volume(ControlPointOperations):
 
-    def __init__(self, order1=2, order2=2, order3=2, knot1=None, knot2=None, knot3=None, controlpoints=None, rational=False):
+    def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
 
-        self.basis1 = BSplineBasis(order1, knot1)
-        self.basis2 = BSplineBasis(order2, knot2)
-        self.basis3 = BSplineBasis(order3, knot3)
+        if basis1 is None:
+            basis1 = BSplineBasis()
+        if basis2 is None:
+            basis2 = BSplineBasis()
+        if basis3 is None:
+            basis3 = BSplineBasis()
+
+        self.basis1 = basis1
+        self.basis2 = basis2
+        self.basis3 = basis3
         
         # if none provided, create the default geometry which is the linear mapping onto the unit cube (0,1)^3
         if controlpoints is None:

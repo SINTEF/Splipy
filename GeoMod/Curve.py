@@ -4,12 +4,11 @@ import numpy as np
 
 class Curve(ControlPointOperations):
 
-    def __init__(self, order=2, knot=None, controlpoints=None, rational=False, periodic=False):
+    def __init__(self, basis=None, controlpoints=None, rational=False):
 
-        if periodic:
-            self.basis = BSplineBasis(order, knot, 0)
-        else:
-            self.basis = BSplineBasis(order, knot)
+        if basis is None:
+            basis = BSplineBasis()
+        self.basis = basis
         
         # if none provided, create the default geometry which is the linear mapping onto the unit line [0,0]->[1,0]
         if controlpoints is None:

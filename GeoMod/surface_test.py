@@ -4,29 +4,29 @@ import unittest
 class TestSurface(unittest.TestCase):
     def test_constructor(self):
         # test 3D constructor
-        controlpoints = [[0,0,0], [1,0,0], [0,1,0], [1,1,0]]
-        surf = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints)
+        cp = [[0,0,0], [1,0,0], [0,1,0], [1,1,0]]
+        surf = Surface(controlpoints=cp)
         val = surf.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf[0]), 3)
 
         # test 2D constructor
-        controlpoints = [[0,0], [1,0], [0,1], [1,1]]
-        surf2 = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints)
+        cp = [[0,0], [1,0], [0,1], [1,1]]
+        surf2 = Surface(controlpoints=cp)
         val  = surf2.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf2[0]), 2)
 
         # test rational 2D constructor
-        controlpoints = [[0,0,1], [1,0,1], [0,1,1], [1,1,1]]
-        surf3 = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints, True)
+        cp = [[0,0,1], [1,0,1], [0,1,1], [1,1,1]]
+        surf3 = Surface(controlpoints=cp, rational=True)
         val = surf3.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf3[0]), 2)
 
         # test rational 3D constructor
-        controlpoints = [[0,0,0,1], [1,0,0,1], [0,1,0,1], [1,1,0,1]]
-        surf4 = Surface(2,2, [0,0,1,1], [0,0,1,1], controlpoints, True)
+        cp = [[0,0,0,1], [1,0,0,1], [0,1,0,1], [1,1,0,1]]
+        surf4 = Surface(controlpoints=cp, rational=True)
         val = surf4.evaluate(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf4[0]), 3)
@@ -37,9 +37,13 @@ class TestSurface(unittest.TestCase):
         # test errors and exceptions
         controlpoints = [[0,0,1], [1,0,1], [0,1,1], [1,1,1]]
         with self.assertRaises(ValueError):
-            surf = Surface(2,2,[1,1,0,0], [0,0,1,1], controlpoints)            # illegal knot vector
+            basis1 = BSplineBasis(2, [1,1,0,0])
+            basis2 = BSplineBasis(2, [0,0,1,1])
+            surf = Surface(basis1, basis2, controlpoints)        # illegal knot vector
         with self.assertRaises(ValueError):
-            surf = Surface(2,2,[0,0,.5,1,1], [0,0,1,1], controlpoints)         # too few controlpoints
+            basis1 = BSplineBasis(2, [0,0,.5,1,1])
+            basis2 = BSplineBasis(2, [0,0,1,1])
+            surf = Surface(basis1,basis2, controlpoints)         # too few controlpoints
         # TODO: Create fail tests for rational surfaces with weights equal to zero
         #       Create fail tests for providing too few control points
         #       Create fail tests for providing too many control points
@@ -60,7 +64,9 @@ class TestSurface(unittest.TestCase):
         #   x(u,v) = u^2*v + u(1-v)
         #   y(u,v) = v
         controlpoints = [[0,0],[1.0/4,0],[3.0/4,0],[.75,0],  [0,1],[0,1],[.5,1],[1,1]]
-        surf = Surface(3,2, [0,0,0,.5,1,1,1], [0,0,1,1], controlpoints)
+        basis1 = BSplineBasis(3, [0,0,0,.5,1,1,1])
+        basis2 = BSplineBasis(2, [0,0,1,1])
+        surf = Surface(basis1, basis2, controlpoints)
 
         # call evaluation at a 5x4 grid of points
         val = surf.evaluate([0,.2,.5,.6,1], [0,.2,.4,1])
@@ -100,7 +106,9 @@ class TestSurface(unittest.TestCase):
     def test_raise_order(self):
         # more or less random 2D surface with p=[2,2] and n=[4,3]
         controlpoints = [[0,0],[-1,1],[0,2],  [1,-1],[1,0],[1,1],  [2,1],[2,2],[2,3],  [3,0],[4,1],[3,2]]
-        surf = Surface(3,3, [0,0,0,.4,1,1,1], [0,0,0,1,1,1], controlpoints)
+        basis1 = BSplineBasis(3, [0,0,0,.4,1,1,1])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
+        surf = Surface(basis1, basis2, controlpoints)
 
         self.assertEqual(surf.get_order()[0], 3)
         self.assertEqual(surf.get_order()[1], 3)
@@ -119,7 +127,9 @@ class TestSurface(unittest.TestCase):
 
         # test a rational 2D surface 
         controlpoints = [[0,0,1],[-1,1,.96],[0,2,1],  [1,-1,1],[1,0,.8],[1,1,1],  [2,1,.89],[2,2,.9],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
-        surf = Surface(3,3, [0,0,0,.4,1,1,1], [0,0,0,1,1,1], controlpoints, True)
+        basis1 = BSplineBasis(3, [0,0,0,.4,1,1,1])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
+        surf = Surface(basis1, basis2, controlpoints, True)
 
         self.assertEqual(surf.get_order()[0], 3)
         self.assertEqual(surf.get_order()[1], 3)
@@ -138,7 +148,9 @@ class TestSurface(unittest.TestCase):
     def test_insert_knot(self):
         # more or less random 2D surface with p=[3,2] and n=[4,3]
         controlpoints = [[0,0],[-1,1],[0,2],  [1,-1],[1,0],[1,1],  [2,1],[2,2],[2,3],  [3,0],[4,1],[3,2]]
-        surf = Surface(4,3, [0,0,0,0,2,2,2,2], [0,0,0,1,1,1], controlpoints)
+        basis1 = BSplineBasis(4, [0,0,0,0,2,2,2,2])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
+        surf = Surface(basis1, basis2, controlpoints)
 
         # pick some evaluation point (could be anything)
         evaluation_point1 = surf.evaluate(0.23, 0.37)
@@ -161,7 +173,9 @@ class TestSurface(unittest.TestCase):
 
         # test a rational 2D surface 
         controlpoints = [[0,0,1],[-1,1,.96],[0,2,1],  [1,-1,1],[1,0,.8],[1,1,1],  [2,1,.89],[2,2,.9],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
-        surf = Surface(3,3, [0,0,0,.4,1,1,1], [0,0,0,1,1,1], controlpoints, True)
+        basis1 = bsplinebasis(3, [0,0,0,.4,1,1,1])
+        basis2 = bsplinebasis(3, [0,0,0,1,1,1])
+        surf = Surface(basis1, basis2, controlpoints, True)
 
         evaluation_point1 = surf.evaluate(0.23, 0.37)
 
@@ -195,7 +209,9 @@ class TestSurface(unittest.TestCase):
     def test_force_rational(self):
         # more or less random 3D surface with p=[3,2] and n=[4,3]
         controlpoints = [[0,0,1],[-1,1,1],[0,2,1],  [1,-1,1],[1,0,1],[1,1,1],  [2,1,1],[2,2,1],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
-        surf = Surface(4,3, [0,0,0,0,2,2,2,2], [0,0,0,1,1,1], controlpoints)
+        basis1 = BSplineBasis(4, [0,0,0,0,2,2,2,2])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
+        surf = Surface(basis1, basis2, controlpoints)
 
         evaluation_point1 = surf.evaluate(0.23, .66)
         control_point1    = surf[0]
@@ -214,7 +230,9 @@ class TestSurface(unittest.TestCase):
     def test_swap_parametrization(self):
         # more or less random 3D surface with p=[2,2] and n=[4,3]
         controlpoints = [[0,0,1],[-1,1,1],[0,2,1],  [1,-1,1],[1,0,.5],[1,1,1],  [2,1,1],[2,2,.5],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
-        surf = Surface(3,3, [0,0,0,.64,2,2,2], [0,0,0,1,1,1], controlpoints)
+        basis1 = BSplineBasis(3, [0,0,0,.64,2,2,2])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
+        surf = Surface(basis1, basis2, controlpoints)
 
         evaluation_point1 = surf.evaluate(0.23, .56)
         control_point1    = surf[1]  # this is control point i=(1,0), when n=(4,3)

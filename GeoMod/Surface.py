@@ -4,10 +4,15 @@ import numpy as np
 
 class Surface(ControlPointOperations):
 
-    def __init__(self, order1=2, order2=2, knot1=None, knot2=None, controlpoints=None, rational=False):
+    def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False):
 
-        self.basis1 = BSplineBasis(order1, knot1)
-        self.basis2 = BSplineBasis(order2, knot2)
+        if basis1 is None:
+            basis1 = BSplineBasis()
+        if basis2 is None:
+            basis2 = BSplineBasis()
+
+        self.basis1 = basis1
+        self.basis2 = basis2
         
         # if none provided, create the default geometry which is the linear mapping onto the unit square (0,1)^2
         if controlpoints is None:
