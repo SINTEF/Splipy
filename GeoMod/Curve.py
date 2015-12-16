@@ -4,9 +4,12 @@ import numpy as np
 
 class Curve(ControlPointOperations):
 
-    def __init__(self, order=None, knot=None, controlpoints=None, rational=False):
+    def __init__(self, order=2, knot=None, controlpoints=None, rational=False, periodic=False):
 
-        self.basis = BSplineBasis(order, knot)
+        if periodic:
+            self.basis = BSplineBasis(order, knot, 0)
+        else:
+            self.basis = BSplineBasis(order, knot)
         
         # if none provided, create the default geometry which is the linear mapping onto the unit line [0,0]->[1,0]
         if controlpoints is None:
@@ -87,6 +90,19 @@ class Curve(ControlPointOperations):
         """Swap direction of the curve by making it go in the reverse direction. Parametric domain remain unchanged"""
         self.basis.reverse()
         self.controlpoints = self.controlpoints[::-1]
+
+    def start(self):
+        """Return the start of the parametric domain"""
+        return self.basis.start()
+
+    def end(self):
+        """Return the end of the parametric domain"""
+        return self.basis.end()
+
+    # convenience function since I can't remember to use stop or end
+    def stop(self):
+        """Return the end of the parametric domain"""
+        return self.end()
 
     def get_order(self):
         """Return polynomial order (degree + 1) of spline curve"""
