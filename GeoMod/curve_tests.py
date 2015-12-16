@@ -15,52 +15,51 @@ class TestCurve(unittest.TestCase):
         self.assertEqual(val[0], 0.5)
 
     def test_evaluate(self):
-        controlpoints = [[0,0,0],  [1,1,0],  [2,0,0]]
+        # create the mapping
+        # x(t) = 2t + 1
+        # y(t) = 2t(1-t) 
+        # z(t) = 0
+        controlpoints = [[1,0,0],  [2,1,0],  [3,0,0]]
         crv = Curve(3, [0, 0, 0, 1, 1, 1], controlpoints)
 
         # startpoint evaluation
         val = crv.evaluate(0.0)     
-        self.assertEqual(val[0], 0.0)
-        self.assertEqual(val[1], 0.0)
+        self.assertAlmostEqual(val[0], 1.0)
+        self.assertAlmostEqual(val[1], 0.0)
+        self.assertAlmostEqual(val[2], 0.0)
 
-        # startpoint with derivatives
-        val = crv.evaluate(0.0, 1)  
-        self.assertEqual(val[0][0], 0.0)
-        self.assertEqual(val[0][1], 0.0)
-        self.assertEqual(val[1][0], 2.0)
-        self.assertEqual(val[1][1], 2.0)
+        # inner evaluation
+        val = crv.evaluate(0.4)
+        self.assertAlmostEqual(val[0], 1.8)
+        self.assertAlmostEqual(val[1], 0.48)
+        self.assertAlmostEqual(val[2], 0.0)
 
-        # midpoint with derivatives
-        val = crv.evaluate(0.5, 1)  
-        self.assertEqual(val[0][0], 1.0)
-        self.assertEqual(val[0][1], 0.5)
-        self.assertEqual(val[1][0], 2.0)
-        self.assertEqual(val[1][1], 0.0)
+        # endpoint evaluation
+        val = crv.evaluate(1.0)     
+        self.assertAlmostEqual(val[0], 3.0)
+        self.assertAlmostEqual(val[1], 0.0)
+        self.assertAlmostEqual(val[2], 0.0)
 
-        # end with derivatives (sensitive to left-evaluation)
-        val = crv.evaluate(1.0, 1)  
-        self.assertEqual(val[0][0],  2.0)
-        self.assertEqual(val[0][1],  0.0)
-        self.assertEqual(val[1][0],  2.0)
-        self.assertEqual(val[1][1], -2.0)
+        # test evaluation at multiple points
+        val = crv.evaluate([0.0, 0.4, 0.8, 1.0])
+        self.assertEqual(len(val.shape), 2) # return matrix
+        self.assertEqual(val.shape[0], 4)   # 4 evaluation points
+        self.assertEqual(val.shape[1], 3)   # (x,y,z) results
+        self.assertAlmostEqual(val[0,0], 1.0)
+        self.assertAlmostEqual(val[0,1], 0.0)
+        self.assertAlmostEqual(val[0,2], 0.0) # startpt evaluation
+        self.assertAlmostEqual(val[1,0], 1.8)
+        self.assertAlmostEqual(val[1,1], 0.48)
+        self.assertAlmostEqual(val[1,2], 0.0) # inner evaluation
+        self.assertAlmostEqual(val[3,0], 3.0)
+        self.assertAlmostEqual(val[3,1], 0.0)
+        self.assertAlmostEqual(val[3,2], 0.0) # endpt evaluation
 
-        # second derivatives at midpoint
-        val = crv.evaluate(0.5, 2)  
-        self.assertEqual(val[2][0],  0.0)
-        self.assertEqual(val[2][1], -4.0)
-
-        # third derivatives should all vanish everywhere
-        val = crv.evaluate(0.5, 3)  
-        self.assertEqual(val[3][0],  0.0)
-        self.assertEqual(val[3][1],  0.0)
-
-        # check integer type for derivative
-        with self.assertRaises(TypeError):
-            val = crv.evaluate(0.5, 1.5) 
-
-        # GoTools throws exception for negative derivatives
-        with self.assertRaises(Exception):
-            val = crv.evaluate(0.5, -1) 
+        # test errors and exceptions
+        with self.assertRaises(ValueError):
+            val = crv.evaluate(-10) # evalaute outside parametric domain
+        with self.assertRaises(ValueError):
+            val = crv.evaluate(+10) # evalaute outside parametric domain
 
     def test_flip_parametrization(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve

@@ -150,6 +150,14 @@ class Volume(ControlPointOperations):
         return [umin, umax, vmin, vmax, wmin, wmax]
 
     def raise_order(self, raise_u, raise_v, raise_w):
+        """Raise the order of a spline surface
+        @param raise_u: Number of polynomial degrees to increase in u
+        @type  raise_u: Int
+        @param raise_v: Number of polynomial degrees to increase in v
+        @type  raise_v: Int
+        @param raise_w: Number of polynomial degrees to increase in w
+        @type  raise_w: Int
+        """
         # create the new basis
         newKnot1  = self.basis1.get_raise_order_knot(raise_u)
         newBasis1 = BSplineBasis(self.basis1.order + raise_u, newKnot1, self.basis1.periodic)

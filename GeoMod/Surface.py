@@ -36,14 +36,31 @@ class Surface(ControlPointOperations):
         @return : Geometry coordinates. 3D-array X(i,j,k) of component x(k) evaluated at (u[i],v[j])
         @rtype  : numpy.array
         """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0: # periodic functions can evaluate everywhere
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
         Nu = self.basis1.evaluate(u)
         Nv = self.basis2.evaluate(v)
 
         # compute physical points [x,y,z] for all points (u[i],v[j]). For rational surfaces, compute [X,Y,Z,W] (in projective space)
-        result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
-        result = np.tensordot(Nv, result,             axes=(1,1))
-        result = result.transpose((1,0,2)) # I really dont know why it insist on storing it in the wrong order :(
+        result = np.tensordot(Nv, self.controlpoints, axes=(1,1))
+        result = np.tensordot(Nu, result,             axes=(1,1))
 
         # Project rational surfaces down to geometry space: x = X/W, y=Y/W, z=Z/W
         if self.rational: 
@@ -124,6 +141,12 @@ class Surface(ControlPointOperations):
         return [vmin, umax, vmax, umin]
 
     def raise_order(self, raise_u, raise_v):
+        """Raise the order of a spline surface
+        @param raise_u: Number of polynomial degrees to increase in u
+        @type  raise_u: Int
+        @param raise_v: Number of polynomial degrees to increase in v
+        @type  raise_v: Int
+        """
         # create the new basis
         newKnot1  = self.basis1.get_raise_order_knot(raise_u)
         newBasis1 = BSplineBasis(self.basis1.order + raise_u, newKnot1, self.basis1.periodic)
@@ -137,18 +160,18 @@ class Surface(ControlPointOperations):
         N_u_new =   newBasis1.evaluate( interpolation_pts_u )
         N_v_old = self.basis2.evaluate( interpolation_pts_v )
         N_v_new =   newBasis2.evaluate( interpolation_pts_v )
-        tmp = np.tensordot(N_u_old, self.controlpoints, axes=(1,0))
-        tmp = np.tensordot(N_v_old, tmp,                axes=(1,1)) # projective interpolation points (x,y,z,w)
-        interpolation_pts_x = tmp.transpose((1,0,2)) # 3D-tensor with elements (i,j,k) of component x[k] evaluated at u[i] v[j]
+        tmp = np.tensordot(N_v_old, self.controlpoints, axes=(1,1))
+        tmp = np.tensordot(N_u_old, tmp,                axes=(1,1)) # projective interpolation points (x,y,z,w)
+        interpolation_pts_x = tmp # 3D-tensor with elements (i,j,k) of component x[k] evaluated at u[i] v[j]
 
         # solve the interpolation problem
         N_u_inv = np.linalg.inv(N_u_new)
         N_v_inv = np.linalg.inv(N_v_new) # these are inverses of the 1D problems, and small compared to the total number of unknowns
-        tmp = np.tensordot(N_u_inv, interpolation_pts_x, axes=(1,0))
-        tmp = np.tensordot(N_v_inv, tmp,                 axes=(1,1))
+        tmp = np.tensordot(N_v_inv, interpolation_pts_x, axes=(1,1))
+        tmp = np.tensordot(N_u_inv, tmp,                 axes=(1,1))
 
         # update the basis and controlpoints of the surface
-        self.controlpoints = tmp.transpose((1,0,2))
+        self.controlpoints = tmp
         self.basis1        = newBasis1
         self.basis2        = newBasis2
         

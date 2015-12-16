@@ -26,6 +26,17 @@ class Curve(ControlPointOperations):
         @return : Geometry coordinates. Matrix X(i,j) of component x(j) evaluated at t(i)
         @rtype  : numpy.array
         """
+        # for single-value input, wrap it into a list
+        try:
+            len(t)
+        except TypeError:
+            t = [t]
+
+        # error test input
+        if self.basis.periodic < 0: # periodic functions can evaluate everywhere
+            if min(t) < self.basis.start() or self.basis.end() < max(t):
+                raise ValueError('evaluation outside parametric domain')
+
         # compute basis functions for all points t. N(i,j) is a matrix of all functions j for all points i
         N = self.basis.evaluate(t)
 
@@ -109,6 +120,10 @@ class Curve(ControlPointOperations):
         self.basis += start
 
     def raise_order(self, amount):
+        """Raise the order of a spline curve
+        @param amount: Number of polynomial degrees to increase
+        @type  amount: Int
+        """
         # create the new basis
         newKnot  = self.basis.get_raise_order_knot(amount)
         newBasis = BSplineBasis(self.basis.order + amount, newKnot, self.basis.periodic)
@@ -123,6 +138,13 @@ class Curve(ControlPointOperations):
         self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
         self.basis         = newBasis
         
+    def insert_knot(self, knot):
+        """Insert a knot into this spline curve
+        @param knot: The knot(s) to insert
+        @type  knot: Float or list of Floats
+        """
+        # TODO: write this thing...
+
 
 
 

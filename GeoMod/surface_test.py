@@ -46,7 +46,7 @@ class TestSurface(unittest.TestCase):
 
     def test_evaluate(self):
         # knot vector [t_1, t_2, ... t_{n+p+1}]
-        # polynomial degree p
+        # polynomial degree p (order-1)
         # n basis functions N_i(t), for i=1...n
         # the power basis {1,t,t^2,t^3,...} can be expressed as:
         # 1     = sum         N_i(t)
@@ -56,97 +56,46 @@ class TestSurface(unittest.TestCase):
         # t2s_i = sum_{j=i+1}^{i+p-1} sum_{k=j+1}^{i+p} t_j*t_k / (p 2)
         # (p 2) = binomial coefficent
 
-
         # creating the mapping:
-        #   x(u,v) = u^2*v^2
-        #   y(u,v) = u*v
-        controlpoints = [[0,0],[0,0],[0,0],  [0,0],[0,.25],[0,.5],  [0,0], [0,.5], [1,1]]
-        surf = Surface(3,3, [0,0,0,1,1,1], [0,0,0,1,1,1], controlpoints)
+        #   x(u,v) = u^2*v + u(1-v)
+        #   y(u,v) = v
+        controlpoints = [[0,0],[1.0/4,0],[3.0/4,0],[.75,0],  [0,1],[0,1],[.5,1],[1,1]]
+        surf = Surface(3,2, [0,0,0,.5,1,1,1], [0,0,1,1], controlpoints)
 
-        # startpoint evaluation
-        val = surf.evaluate(0,0)     
-        self.assertAlmostEqual(val[0], 0.0)
-        self.assertAlmostEqual(val[1], 0.0)
+        # call evaluation at a 5x4 grid of points
+        val = surf.evaluate([0,.2,.5,.6,1], [0,.2,.4,1])
+        val = surf.evaluate([0,.2,.5,.6,1], [0,.2,.4,1])
+        self.assertEqual(len(val.shape), 3) # result should be wrapped in 3-index tensor
+        self.assertEqual(val.shape[0],   5) # 5 evaluation points in u-direction
+        self.assertEqual(val.shape[1],   4) # 4 evaluation points in v-direction
+        self.assertEqual(val.shape[2],   2) # 2 coordinates (x,y)
 
-        # startpoint with derivatives
-        val = surf.evaluate(0,0,  1)  
-        self.assertAlmostEqual(val[0][0], 0.0)
-        self.assertAlmostEqual(val[0][1], 0.0)
-        self.assertAlmostEqual(val[1][0], 0.0) # dx/du = 2*u*v^2
-        self.assertAlmostEqual(val[1][1], 0.0) # dy/du = v
-        self.assertAlmostEqual(val[2][0], 0.0) # dx/dv = 2*u^2*v
-        self.assertAlmostEqual(val[2][1], 0.0) # dy/dv = u      
+        # check evaluation at (0,0)
+        self.assertAlmostEqual(val[0][0][0], 0.0)
+        self.assertAlmostEqual(val[0][0][1], 0.0)
+        # check evaluation at (.2,0)
+        self.assertAlmostEqual(val[1][0][0], 0.2)
+        self.assertAlmostEqual(val[1][0][1], 0.0)
+        # check evaluation at (.2,.2)
+        self.assertAlmostEqual(val[1][1][0], 0.168)
+        self.assertAlmostEqual(val[1][1][1], 0.2)
+        # check evaluation at (.5,.4)
+        self.assertAlmostEqual(val[2][2][0], 0.4)
+        self.assertAlmostEqual(val[2][2][1], 0.4)
+        # check evaluation at (.6,1)
+        self.assertAlmostEqual(val[3][3][0], 0.36)
+        self.assertAlmostEqual(val[3][3][1], 1)
 
-        # midpoint with derivatives
-        val = surf.evaluate(0.5, 0.5,   1)  
-        self.assertAlmostEqual(val[0][0], 0.0625)
-        self.assertAlmostEqual(val[0][1], 0.25)
-        self.assertAlmostEqual(val[1][0], 0.25)  # dx/du = 2*u*v^2
-        self.assertAlmostEqual(val[1][1], 0.5)   # dy/du = v
-        self.assertAlmostEqual(val[2][0], 0.25)  # dx/dv = 2*u^2*v
-        self.assertAlmostEqual(val[2][1], 0.5)   # dy/dv = u      
+        # test errors and exceptions
+        with self.assertRaises(ValueError):
+            val = surf.evaluate(-10, .5) # evalaute outside parametric domain
+        with self.assertRaises(ValueError):
+            val = surf.evaluate(+10, .3) # evalaute outside parametric domain
+        with self.assertRaises(ValueError):
+            val = surf.evaluate(.5, -10) # evalaute outside parametric domain
+        with self.assertRaises(ValueError):
+            val = surf.evaluate(.5, +10) # evalaute outside parametric domain
 
-        # mid top edge with derivatives (sensitive to left-evaluation)
-        val = surf.evaluate(0.5, 1.0,   1)  
-        self.assertAlmostEqual(val[0][0], 0.25)
-        self.assertAlmostEqual(val[0][1], 0.5)
-        self.assertAlmostEqual(val[1][0], 1.0) # dx/du = 2*u*v^2
-        self.assertAlmostEqual(val[1][1], 1.0) # dy/du = v
-        self.assertAlmostEqual(val[2][0], 0.5) # dx/dv = 2*u^2*v
-        self.assertAlmostEqual(val[2][1], 0.5) # dy/dv = u      
-
-        # mid right edge with derivatives (sensitive to left-evaluation)
-        val = surf.evaluate(1.0, 0.5,   1)  
-        self.assertAlmostEqual(val[0][0], 0.25)
-        self.assertAlmostEqual(val[0][1], 0.5)
-        self.assertAlmostEqual(val[1][0], 0.5) # dx/du = 2*u*v^2
-        self.assertAlmostEqual(val[1][1], 0.5) # dy/du = v
-        self.assertAlmostEqual(val[2][0], 1.0) # dx/dv = 2*u^2*v
-        self.assertAlmostEqual(val[2][1], 1.0) # dy/dv = u      
-
-        # top right corner with derivatives (sensitive to left-evaluation)
-        val = surf.evaluate(1.0, 1.0,   1)  
-        self.assertAlmostEqual(val[0][0], 1.0)
-        self.assertAlmostEqual(val[0][1], 1.0)
-        self.assertAlmostEqual(val[1][0], 2.0) # dx/du = 2*u*v^2
-        self.assertAlmostEqual(val[1][1], 1.0) # dy/du = v
-        self.assertAlmostEqual(val[2][0], 2.0) # dx/dv = 2*u^2*v
-        self.assertAlmostEqual(val[2][1], 1.0) # dy/dv = u      
-
-        # second derivatives at midpoint 
-        val = surf.evaluate(0.5, 0.5,   2)  
-        self.assertAlmostEqual(len(val),  6)
-        self.assertAlmostEqual(val[3][0],  0.5) # d2x/du2  = 2*v^2
-        self.assertAlmostEqual(val[3][1],  0.0) # d2y/du2  = 0
-        self.assertAlmostEqual(val[4][0],  1.0) # d2x/dudv = 4*u*v
-        self.assertAlmostEqual(val[4][1],  1.0) # d2y/dudv = 1
-        self.assertAlmostEqual(val[5][0],  0.5) # d2x/dv2  = 2*u^2
-        self.assertAlmostEqual(val[5][1],  0.0) # d2y/dv2  = 0
-
-        # third derivatives
-        val = surf.evaluate(0.5, 0.5,   3)  
-        self.assertAlmostEqual(len(val),  10)
-        self.assertAlmostEqual(val[6][0],  0.0) # d3x/du3   = 0
-        self.assertAlmostEqual(val[6][1],  0.0) # d3y/du3   = 0
-        self.assertAlmostEqual(val[7][0],  2.0) # d3x/du2dv = 4*v
-        self.assertAlmostEqual(val[7][1],  0.0) # d3y/du2dv = 0
-        self.assertAlmostEqual(val[8][0],  2.0) # d3x/dudv2 = 4*u
-        self.assertAlmostEqual(val[9][0],  0.0) # d3x/dv3   = 0
-
-        # fourth derivatives
-        val = surf.evaluate(0.5, 0.5,   4)  
-        self.assertAlmostEqual(len(val),  15)
-        self.assertAlmostEqual(val[11][0],  0.0) # d4x/du3dv  = 0
-        self.assertAlmostEqual(val[12][0],  4.0) # d4x/du2dv2 = 4
-        self.assertAlmostEqual(val[13][0],  0.0) # d4x/dudv3  = 0
-
-        # check integer type for derivative
-        with self.assertRaises(TypeError):
-            val = surf.evaluate(0.5,0.5,  1.5) 
-
-        # GoTools throws exception for negative derivatives
-        with self.assertRaises(Exception):
-            val = surf.evaluate(0.5,0.5,  -1) 
 
     def test_raise_order(self):
         # more or less random 2D surface with p=[2,2] and n=[4,3]
