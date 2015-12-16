@@ -2,6 +2,8 @@ from Curve   import *
 from Surface import *
 from Volume  import *
 
+### Curve constructors
+
 def line(a, b):
     """ Create a line between the points a and b
     @param a: start point
@@ -27,7 +29,7 @@ def circle(r=1):
     controlpoints = [[r,0,1], [r*w,r*w,w], [0,r,1], [-r*w,r*w,w], [-r,0,1],
                      [-r*w,-r*w,w], [0,-r,1], [r*w,-r*w,w]];
     knot = np.array([0,0,0, 1,1, 2,2, 3,3, 4,4,4])/4.0*2*pi
-    return Curve(3, knot, controlpoints, True, True)
+    return Curve(BSplineBasis(3, knot, 0), controlpoints, True)
 
 def circle_segment(theta, r=1):
     """ Create a circle segment at the origin with start at (1,0)
@@ -65,4 +67,47 @@ def circle_segment(theta, r=1):
         cp += [[x,y,w]]
         t  += dt
 
-    return Curve(3, knot, cp, True)
+    return Curve(BSplineBasis(3, knot), cp, True)
+
+
+### Surface constructors
+
+def square(width=1, height=1):
+    """ Create a 2D square with lower right corner at (0,0)
+    @param width : width in x-direction
+    @type  width : Float
+    @param height: height in y-direction
+    @type  height: Float
+    @return      : a square
+    @rtype       : Surface
+    """
+    result = Surface() # unit square
+    result.scale((width,height))
+    return result
+    
+def disc(r=1, type='radial'):
+    """ Create surface representation of a circular disc with center at (0,0)
+    @param r   : radius
+    @type  r   : Float
+    @param type: 'radial' or 'square'
+    @type  type: String
+    @return    : a circular disc
+    @rtype     : Surface
+    """
+    if type is 'radial':
+        c = circle(r)
+        cp = np.zeros((16,3))
+        cp[:,-1] = 1 
+        cp[1::2,:] = c.controlpoints
+        return Surface(BSplineBasis(), c.basis, cp, True)
+    elif type is 'square':
+        w = 1/sqrt(2)
+        cp = [ [-r*w,-r*w,1], [0,-r,w], [r*w,-r*w,1],
+               [-r,     0,w], [0, 0,1], [r,     0,w],
+               [-r*w, r*w,1], [0, r,w], [r*w, r*w,1]]
+        basis1 = BSplineBasis(3)
+        basis2 = BSplineBasis(3)
+        return Surface(basis1, basis2, cp, True)
+    else:
+        raise ValueError('invalid type argument')
+    

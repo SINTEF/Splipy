@@ -165,7 +165,7 @@ class BSplineBasis:
 
     def __len__(self):
         """returns the number of functions in this basis"""
-        return len(self.knots) - self.order
+        return len(self.knots) - self.order - (self.periodic+1)
 
     def __getitem__(self, i):
         """returns knot i, including multiplicities"""
