@@ -103,6 +103,14 @@ class Volume(ControlPointOperations):
         else:
             return (self.basis1.get_knot_spans(), self.basis2.get_knot_spans(), self.basis3.get_knot_spans())
 
+    def start(self):
+        """Return the start of the parametric domain"""
+        return (self.basis1.start(), self.basis2.start(), self.basis3.start())
+
+    def end(self):
+        """Return the end of the parametric domain"""
+        return (self.basis1.end(), self.basis2.end(), self.basis3.end())
+
     def force_rational(self):
         """Force a rational representation by including weights of all value 1"""
         if not self.rational:
@@ -217,20 +225,14 @@ class Volume(ControlPointOperations):
         i1 = int(i % n1     )
         i2 = int(i / n1)% n2
         i3 = int(i / n1 / n2)
-        if self.rational:
-            return self.controlpoints[i1,i2,i3,:-1] / self.controlpoints[i1,i2,i3,-1]
-        else:
-            return self.controlpoints[i1,i2,i3,:]
+        return self.controlpoints[i1,i2,i3,:]
 
     def __setitem__(self, i, newCP):
         (n1,n2,n3,dim) = self.controlpoints.shape
         i1 = int(i % n1     )
         i2 = int(i / n1)% n2
         i3 = int(i / n1 / n2)
-        if self.rational:
-            self.controlpoints[i1,i2,i3,:-1] = newCP * self.controlpoints[i1,i2,i3,-1]
-        else:
-            self.controlpoints[i1,i2,i3,:]   = newCP
+        self.controlpoints[i1,i2,i3,:]   = newCP
         return self
 
     def __repr__(self):

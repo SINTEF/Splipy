@@ -22,14 +22,14 @@ class TestSurface(unittest.TestCase):
         surf3 = Surface(controlpoints=cp, rational=True)
         val = surf3(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
-        self.assertEqual(len(surf3[0]), 2)
+        self.assertEqual(len(surf3[0]), 3)
 
         # test rational 3D constructor
         cp = [[0,0,0,1], [1,0,0,1], [0,1,0,1], [1,1,0,1]]
         surf4 = Surface(controlpoints=cp, rational=True)
         val = surf4(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
-        self.assertEqual(len(surf4[0]), 3)
+        self.assertEqual(len(surf4[0]), 4)
 
         # TODO: Include a default constructor specifying nothing, or just polynomial degrees, or just knot vectors.
         #       This should create identity mappings
@@ -224,7 +224,8 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
         # ensure that we include rational weights of 1
         self.assertEqual(len(control_point1), 3)
-        self.assertEqual(len(control_point2), 3)
+        self.assertEqual(len(control_point2), 4)
+        self.assertEqual(control_point2[3], 1)
         self.assertEqual(surf.rational, True)
 
     def test_swap_parametrization(self):

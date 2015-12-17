@@ -91,7 +91,8 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
         # ensure that we include rational weights of 1
         self.assertEqual(len(control_point1), 3)
-        self.assertEqual(len(control_point2), 3)
+        self.assertEqual(len(control_point2), 4)
+        self.assertEqual(control_point2[3], 1)
         self.assertEqual(crv.rational, True)
 
     def test_raise_order(self):

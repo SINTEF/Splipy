@@ -171,16 +171,10 @@ class Curve(ControlPointOperations):
         return len(self.basis)
 
     def __getitem__(self, i):
-        if self.rational:
-            return self.controlpoints[i,:-1] / self.controlpoints[i,-1]
-        else:
-            return self.controlpoints[i,:]
+        return self.controlpoints[i,:]
 
     def __setitem__(self, i, newCP):
-        if self.rational:
-            self.controlpoints[i,:-1] = newCP * self.controlpoints[i,-1]
-        else:
-            self.controlpoints[i,:]   = newCP
+        self.controlpoints[i,:] = newCP
         return self
 
     def __repr__(self):

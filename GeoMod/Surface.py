@@ -107,6 +107,14 @@ class Surface(ControlPointOperations):
         else:
             return (self.basis1.get_knot_spans(), self.basis2.get_knot_spans())
 
+    def start(self):
+        """Return the start of the parametric domain"""
+        return (self.basis1.start(), self.basis2.start())
+
+    def end(self):
+        """Return the end of the parametric domain"""
+        return (self.basis1.end(), self.basis2.end())
+
     def force_rational(self):
         """Force a rational representation by including weights of all value 1"""
         if not self.rational:
@@ -195,19 +203,13 @@ class Surface(ControlPointOperations):
         (n1,n2,dim) = self.controlpoints.shape
         i1 =     i % n1
         i2 = int(i / n1)
-        if self.rational:
-            return self.controlpoints[i1,i2,:-1] / self.controlpoints[i1,i2,-1]
-        else:
-            return self.controlpoints[i1,i2,:]
+        return self.controlpoints[i1,i2,:]
 
     def __setitem__(self, i, newCP):
         (n1,n2,dim) = self.controlpoints.shape
         i1 =     i % n1
         i2 = int(i / n1)
-        if self.rational:
-            self.controlpoints[i1,i2,:-1] = newCP * self.controlpoints[i1,i2,-1]
-        else:
-            self.controlpoints[i1,i2,:]   = newCP
+        self.controlpoints[i1,i2,:]   = newCP
         return self
 
     def __repr__(self):
