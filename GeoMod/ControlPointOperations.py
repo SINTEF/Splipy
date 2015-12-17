@@ -166,6 +166,29 @@ class ControlPointOperations:
 
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
+        
+    def project(self, plane):
+        """Projects geometry onto a plane or axis. project('xy') will project it
+        onto the xy-plane, by setting all z-components to 0. project('y') will
+        project it onto the y-axis by setting all x and z coordinates to 0.
+        @param plane: Any combination of 'x', 'y' and/or 'z'
+        @type  plane: String
+        """
+        keep = [False]*3
+        for s in plane:
+            if s=='x' or s=='X':
+                keep[0] = True
+            if s=='y' or s=='Y':
+                keep[1] = True
+            if s=='z' or s=='Z':
+                keep[2] = True
+
+        dim   = self.dimension
+        rat   = self.rational
+        shape = self.controlpoints.shape
+        for i in range(dim):
+            if not keep[i]:
+                self.controlpoints[...,i] = 0
 
     def bounding_box(self):
         """Get the bounding box of a B-spline computed off the control-point values.
