@@ -26,7 +26,10 @@ class ControlPointOperations:
         #      in order to formulate translation as a matrix-matrix product
         dim = self.dimension
         rat = self.rational
-        n   = len(self)     # number of control points
+        n   = len(self)  # number of control points
+        if len(x) > dim: # typical case: requesting movement in z-direction for 2D geometries
+            self.set_dimension(len(x))
+            dim = self.dimension
 
         # set up the translation matrix
         translation_matrix = np.matrix(np.identity(dim+1))
@@ -180,6 +183,18 @@ class ControlPointOperations:
             result.append(np.max(self.controlpoints[...,i]))
         return result
 
+    def set_dimension(self, new_dim):
+        dim    = self.dimension
+        rat    = self.rational
+        pardim = len(self.controlpoints.shape)-1 # 1=Curve, 2=Surface, 3=Volume
+        shape  = self.controlpoints.shape
+        while new_dim > dim:
+            self.controlpoints = np.insert(self.controlpoints, dim, np.zeros(shape[:-1]), pardim)
+            dim += 1
+        while new_dim < dim:
+            np.insert(self.controlpoints, dim, pardim)
+            dim -= 1
+        self.dimension = new_dim
 
 
     def __iadd__(self, x):

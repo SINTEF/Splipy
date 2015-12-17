@@ -178,7 +178,27 @@ class TestFactory(unittest.TestCase):
         for pt in np.array(x[:,-1,:]): # vmax edge
             self.assertAlmostEqual(np.linalg.norm(pt,2), 3.0) # check radius
 
+    def test_sphere(self):
+        pi = np.pi
+        ### unit ball
+        surf = SurfaceFactory.sphere()
+        # test 7x7 grid for radius = 1
+        for u in np.linspace(surf.start()[0], surf.end()[0], 7):
+            for v in np.linspace(surf.start()[1], surf.end()[1], 7):
+                # print u, v, ' = ', surf(u,v)
+                # print np.linalg.norm(surf(u,v))
+                self.assertAlmostEqual(np.linalg.norm(surf(u,v),2), 1.0)
 
+    def test_cylinder(self):
+        pi = np.pi
+        ### unit cylinder
+        surf = SurfaceFactory.cylinder()
+        # test 7x7 grid for xy-radius = 1 and v=z
+        for u in np.linspace(surf.start()[0], surf.end()[0], 7):
+            for v in np.linspace(surf.start()[1], surf.end()[1], 7):
+                x = surf(u,v)
+                self.assertAlmostEqual(np.linalg.norm(x[:2],2), 1.0) # (x,y) coordinates to z-axis
+                self.assertAlmostEqual(x[2],  v)                     # z coordinate should be linear
 
 if __name__ == '__main__':
     unittest.main()
