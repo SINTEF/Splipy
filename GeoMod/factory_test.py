@@ -1,5 +1,6 @@
 import CurveFactory
 import SurfaceFactory
+import VolumeFactory
 import numpy as np
 import unittest
 
@@ -135,7 +136,7 @@ class TestFactory(unittest.TestCase):
             c = CurveFactory.circle_segment(pi, -2) # negative radius
 
     def test_square(self):
-        surf = SurfaceFactory.square(4,5)
+        surf = SurfaceFactory.square((4,5))
         self.assertEqual(surf.dimension, 2)
         self.assertEqual(surf.rational, False)
         self.assertEqual(surf.get_order(), (2,2))
@@ -189,7 +190,7 @@ class TestFactory(unittest.TestCase):
                 # print np.linalg.norm(surf(u,v))
                 self.assertAlmostEqual(np.linalg.norm(surf(u,v),2), 1.0)
 
-    def test_cylinder(self):
+    def test_cylinder_surface(self):
         pi = np.pi
         ### unit cylinder
         surf = SurfaceFactory.cylinder()
@@ -199,6 +200,18 @@ class TestFactory(unittest.TestCase):
                 x = surf(u,v)
                 self.assertAlmostEqual(np.linalg.norm(x[:2],2), 1.0) # (x,y) coordinates to z-axis
                 self.assertAlmostEqual(x[2],  v)                     # z coordinate should be linear
+
+    def test_cylinder_volume(self):
+        pi = np.pi
+        ### unit cylinder
+        vol = VolumeFactory.cylinder()
+        # test 5x5x5 grid for xy-radius = w and v=z
+        for u in np.linspace(vol.start()[0], vol.end()[0], 5):
+            for v in np.linspace(vol.start()[1], vol.end()[1], 5):
+                for w in np.linspace(vol.start()[2], vol.end()[2], 5):
+                    x = vol(u,v,w)
+                    self.assertAlmostEqual(np.linalg.norm(x[:2],2), w) # (x,y) coordinates to z-axis
+                    self.assertAlmostEqual(x[2],  v)                   # z coordinate should be linear
 
 if __name__ == '__main__':
     unittest.main()

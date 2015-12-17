@@ -2,15 +2,15 @@ from Curve   import *
 from Surface import *
 import CurveFactory
 
-def square(width=1, height=1):
+def square(size=(1,1)):
     """ Create a 2D square with lower right corner at (0,0)
-    @param width : width in x-direction
-    @type  height: Float
-    @return      : a square
-    @rtype       : Surface
+    @param size: size in all directions, or (width,height)
+    @type  size: Float or List of Floats
+    @return    : a square
+    @rtype     : Surface
     """
     result = Surface() # unit square
-    result.scale((width,height))
+    result.scale(size)
     return result
     
 def disc(r=1, type='radial'):
@@ -75,9 +75,9 @@ def sphere(r=1):
 def cylinder(r=1, h=1):
     """ Create cylinder shell with no top or bottom starting at the xy-plane,
     and the height increases in the z-direction
-    @param r   : radius of torus
+    @param r   : radius of cylinder
     @type  r   : Float
-    @param h   : heigh in z-direction
+    @param h   : height in z-direction
     @type  h   : Float
     @return    : a cylinder shell
     @rtype     : Surface
