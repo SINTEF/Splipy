@@ -204,6 +204,9 @@ class Volume(ControlPointOperations):
 
 
 
+    def __call__(self, u,v,w):
+        """see evaluate(u,v,w)"""
+        return self.evaluate(u,v,w)
 
     def __len__(self):
         """return the number of control points (basis functions) for this volume"""

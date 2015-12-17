@@ -6,13 +6,13 @@ class TestCurve(unittest.TestCase):
     def test_constructor(self):
         # test 3D constructor
         crv = Curve(controlpoints=[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
-        val = crv.evaluate(0.5)
+        val = crv(0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(crv.dimension,3)
 
         # test 2D constructor
         crv2 = Curve()
-        val  = crv.evaluate(0.5)
+        val  = crv(0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(crv2.dimension,2)
 
@@ -25,25 +25,25 @@ class TestCurve(unittest.TestCase):
         crv = Curve(BSplineBasis(3), controlpoints)
 
         # startpoint evaluation
-        val = crv.evaluate(0.0)     
+        val = crv(0.0)     
         self.assertAlmostEqual(val[0], 1.0)
         self.assertAlmostEqual(val[1], 0.0)
         self.assertAlmostEqual(val[2], 0.0)
 
         # inner evaluation
-        val = crv.evaluate(0.4)
+        val = crv(0.4)
         self.assertAlmostEqual(val[0], 1.8)
         self.assertAlmostEqual(val[1], 0.48)
         self.assertAlmostEqual(val[2], 0.0)
 
         # endpoint evaluation
-        val = crv.evaluate(1.0)     
+        val = crv(1.0)     
         self.assertAlmostEqual(val[0], 3.0)
         self.assertAlmostEqual(val[1], 0.0)
         self.assertAlmostEqual(val[2], 0.0)
 
         # test evaluation at multiple points
-        val = crv.evaluate([0.0, 0.4, 0.8, 1.0])
+        val = crv([0.0, 0.4, 0.8, 1.0])
         self.assertEqual(len(val.shape), 2) # return matrix
         self.assertEqual(val.shape[0], 4)   # 4 evaluation points
         self.assertEqual(val.shape[1], 3)   # (x,y,z) results
@@ -59,18 +59,18 @@ class TestCurve(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            val = crv.evaluate(-10) # evalaute outside parametric domain
+            val = crv(-10) # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = crv.evaluate(+10) # evalaute outside parametric domain
+            val = crv(+10) # evalaute outside parametric domain
 
     def test_flip_parametrization(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
         controlpoints = [[0,0,0],  [1,1,0],  [2,-1,0],  [3,0,0]]
         crv = Curve(BSplineBasis(3, [0,0,0,.3,1,1,1]), controlpoints)
 
-        p1 = crv.evaluate(0.23)
+        p1 = crv(0.23)
         crv.flip_parametrization()
-        p2 = crv.evaluate(0.77)
+        p2 = crv(0.77)
         self.assertAlmostEqual(p1[0], p2[0])
         self.assertAlmostEqual(p1[1], p2[1])
         self.assertAlmostEqual(p1[2], p2[2])
@@ -80,10 +80,10 @@ class TestCurve(unittest.TestCase):
         controlpoints = [[0,0,0],  [1,1,0],  [2,-1,0],  [3,0,0]]
         crv = Curve(BSplineBasis(3, [0,0,0,.3,1,1,1]), controlpoints)
 
-        evaluation_point1 = crv.evaluate(0.23)
+        evaluation_point1 = crv(0.23)
         control_point1    = crv[0]
         crv.force_rational()
-        evaluation_point2 = crv.evaluate(0.23)
+        evaluation_point2 = crv(0.23)
         control_point2    = crv[0]
         # ensure that curve has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -100,9 +100,9 @@ class TestCurve(unittest.TestCase):
         crv = Curve(BSplineBasis(3, [0,0,0,.3,.4,1,1,1]), controlpoints)
 
         crv
-        evaluation_point1 = crv.evaluate(0.37)
+        evaluation_point1 = crv(0.37)
         crv.raise_order(2)
-        evaluation_point2 = crv.evaluate(0.37)
+        evaluation_point2 = crv(0.37)
 
         # ensure that curve has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -125,11 +125,11 @@ class TestCurve(unittest.TestCase):
         controlpoints = [[0,0,0],  [1,1,1],  [2,-1,0],  [3,0,-1], [0,0,-5]]
         crv = Curve(BSplineBasis(3, [0,0,0,.3,.4,1,1,1]), controlpoints)
 
-        evaluation_point1 = crv.evaluate(0.37)
+        evaluation_point1 = crv(0.37)
         crv.insert_knot(.2)
         crv.insert_knot(.3)
         crv.insert_knot(.9)
-        evaluation_point2 = crv.evaluate(0.37)
+        evaluation_point2 = crv(0.37)
 
         # ensure that curve has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -144,11 +144,11 @@ class TestCurve(unittest.TestCase):
         controlpoints = [[1,0,1], [s,s,s], [0,1,1], [-s,s,s], [-1,0,1], [-s,-s,s], [0,-1,1], [s,-s,s], [1,0,1]]
         crv = Curve(BSplineBasis(3, [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4]), controlpoints, True)
 
-        evaluation_point1 = crv.evaluate(0.37)
+        evaluation_point1 = crv(0.37)
         crv.insert_knot(.2)
         crv.insert_knot(.3)
         crv.insert_knot(.9)
-        evaluation_point2 = crv.evaluate(0.37)
+        evaluation_point2 = crv(0.37)
 
         # ensure that curve has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -178,7 +178,7 @@ class TestCurve(unittest.TestCase):
 
         # get some info on the initial curve
         knots1            = crv.get_knots()
-        evaluation_point1 = crv.evaluate(1.20)
+        evaluation_point1 = crv(1.20)
         self.assertEqual(knots1[0],  0);
         self.assertEqual(knots1[-1], 3);
 
@@ -187,7 +187,7 @@ class TestCurve(unittest.TestCase):
 
         # get some info on the reparametrized curve
         knots2            = crv.get_knots()
-        evaluation_point2 = crv.evaluate(7.20)
+        evaluation_point2 = crv(7.20)
         self.assertEqual(knots2[0],  6);
         self.assertEqual(knots2[-1], 9);
 
@@ -201,7 +201,7 @@ class TestCurve(unittest.TestCase):
 
         # get some info on the normalized curve
         knots3            = crv.get_knots()
-        evaluation_point3 = crv.evaluate(0.40)
+        evaluation_point3 = crv(0.40)
         self.assertEqual(knots3[0],  0);
         self.assertEqual(knots3[-1], 1);
 
@@ -222,9 +222,9 @@ class TestCurve(unittest.TestCase):
         crv = Curve(BSplineBasis(3, [0,0,0,.7,1,1,1]), controlpoints)
 
         # get some info on the initial curve
-        evaluation_point1 = crv.evaluate(0.50)
-        evaluation_point2 = crv.evaluate(0.70)
-        evaluation_point3 = crv.evaluate(0.33)
+        evaluation_point1 = crv(0.50)
+        evaluation_point2 = crv(0.70)
+        evaluation_point3 = crv(0.33)
 
         # split curves away from knot
         new_curves_050 = crv.split(0.50)
@@ -247,18 +247,18 @@ class TestCurve(unittest.TestCase):
         
         # compare all curves which exist at parametric point 0.5 and 0.33
         for c in new_curves_050 + [new_curves_070[0]] + new_curves_all[0:2]:
-            new_curve_evaluation = c.evaluate(0.50)
+            new_curve_evaluation = c(0.50)
             self.assertAlmostEqual(evaluation_point1[0], new_curve_evaluation[0])
             self.assertAlmostEqual(evaluation_point1[1], new_curve_evaluation[1])
             self.assertAlmostEqual(evaluation_point1[2], new_curve_evaluation[2])
-            new_curve_evaluation = c.evaluate(0.33)
+            new_curve_evaluation = c(0.33)
             self.assertAlmostEqual(evaluation_point3[0], new_curve_evaluation[0])
             self.assertAlmostEqual(evaluation_point3[1], new_curve_evaluation[1])
             self.assertAlmostEqual(evaluation_point3[2], new_curve_evaluation[2])
 
         # compare all curves which exist at parametric point 0.7
         for c in [new_curves_050[1]] + new_curves_070 + new_curves_all[1:3]:
-            new_curve_evaluation = c.evaluate(0.70)
+            new_curve_evaluation = c(0.70)
             self.assertAlmostEqual(evaluation_point2[0], new_curve_evaluation[0])
             self.assertAlmostEqual(evaluation_point2[1], new_curve_evaluation[1])
             self.assertAlmostEqual(evaluation_point2[2], new_curve_evaluation[2])

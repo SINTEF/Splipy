@@ -183,6 +183,9 @@ class Surface(ControlPointOperations):
 
 
 
+    def __call__(self, u,v):
+        """see evaluate(u,v)"""
+        return self.evaluate(u,v)
 
     def __len__(self):
         """return the number of control points (basis functions) for this surface"""

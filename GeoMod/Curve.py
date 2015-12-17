@@ -162,7 +162,9 @@ class Curve(ControlPointOperations):
 
 
 
-
+    def __call__(self, t):
+        """see evaluate(t)"""
+        return self.evaluate(t)
 
     def __len__(self):
         """return the number of control points (basis functions) for this curve"""

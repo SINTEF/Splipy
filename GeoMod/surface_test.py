@@ -6,28 +6,28 @@ class TestSurface(unittest.TestCase):
         # test 3D constructor
         cp = [[0,0,0], [1,0,0], [0,1,0], [1,1,0]]
         surf = Surface(controlpoints=cp)
-        val = surf.evaluate(0.5, 0.5)
+        val = surf(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf[0]), 3)
 
         # test 2D constructor
         cp = [[0,0], [1,0], [0,1], [1,1]]
         surf2 = Surface(controlpoints=cp)
-        val  = surf2.evaluate(0.5, 0.5)
+        val  = surf2(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf2[0]), 2)
 
         # test rational 2D constructor
         cp = [[0,0,1], [1,0,1], [0,1,1], [1,1,1]]
         surf3 = Surface(controlpoints=cp, rational=True)
-        val = surf3.evaluate(0.5, 0.5)
+        val = surf3(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf3[0]), 2)
 
         # test rational 3D constructor
         cp = [[0,0,0,1], [1,0,0,1], [0,1,0,1], [1,1,0,1]]
         surf4 = Surface(controlpoints=cp, rational=True)
-        val = surf4.evaluate(0.5, 0.5)
+        val = surf4(0.5, 0.5)
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf4[0]), 3)
 
@@ -69,8 +69,8 @@ class TestSurface(unittest.TestCase):
         surf = Surface(basis1, basis2, controlpoints)
 
         # call evaluation at a 5x4 grid of points
-        val = surf.evaluate([0,.2,.5,.6,1], [0,.2,.4,1])
-        val = surf.evaluate([0,.2,.5,.6,1], [0,.2,.4,1])
+        val = surf([0,.2,.5,.6,1], [0,.2,.4,1])
+        val = surf([0,.2,.5,.6,1], [0,.2,.4,1])
         self.assertEqual(len(val.shape), 3) # result should be wrapped in 3-index tensor
         self.assertEqual(val.shape[0],   5) # 5 evaluation points in u-direction
         self.assertEqual(val.shape[1],   4) # 4 evaluation points in v-direction
@@ -94,13 +94,13 @@ class TestSurface(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            val = surf.evaluate(-10, .5) # evalaute outside parametric domain
+            val = surf(-10, .5) # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.evaluate(+10, .3) # evalaute outside parametric domain
+            val = surf(+10, .3) # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.evaluate(.5, -10) # evalaute outside parametric domain
+            val = surf(.5, -10) # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.evaluate(.5, +10) # evalaute outside parametric domain
+            val = surf(.5, +10) # evalaute outside parametric domain
 
 
     def test_raise_order(self):
@@ -112,13 +112,13 @@ class TestSurface(unittest.TestCase):
 
         self.assertEqual(surf.get_order()[0], 3)
         self.assertEqual(surf.get_order()[1], 3)
-        evaluation_point1 = surf.evaluate(0.23, 0.37) # pick some evaluation point (could be anything)
+        evaluation_point1 = surf(0.23, 0.37) # pick some evaluation point (could be anything)
 
         surf.raise_order(1,2)
 
         self.assertEqual(surf.get_order()[0], 4)
         self.assertEqual(surf.get_order()[1], 5)
-        evaluation_point2 = surf.evaluate(0.23, 0.37)
+        evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -133,13 +133,13 @@ class TestSurface(unittest.TestCase):
 
         self.assertEqual(surf.get_order()[0], 3)
         self.assertEqual(surf.get_order()[1], 3)
-        evaluation_point1 = surf.evaluate(0.23, 0.37)
+        evaluation_point1 = surf(0.23, 0.37)
 
         surf.raise_order(1,2)
 
         self.assertEqual(surf.get_order()[0], 4)
         self.assertEqual(surf.get_order()[1], 5)
-        evaluation_point2 = surf.evaluate(0.23, 0.37)
+        evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -153,7 +153,7 @@ class TestSurface(unittest.TestCase):
         surf = Surface(basis1, basis2, controlpoints)
 
         # pick some evaluation point (could be anything)
-        evaluation_point1 = surf.evaluate(0.23, 0.37)
+        evaluation_point1 = surf(0.23, 0.37)
 
         surf.insert_knot(0, .22)
         surf.insert_knot(0, .5)
@@ -164,7 +164,7 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(len(knot1), 11) # 8 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 
-        evaluation_point2 = surf.evaluate(0.23, 0.37)
+        evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after InsertKnot should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -177,7 +177,7 @@ class TestSurface(unittest.TestCase):
         basis2 = bsplinebasis(3, [0,0,0,1,1,1])
         surf = Surface(basis1, basis2, controlpoints, True)
 
-        evaluation_point1 = surf.evaluate(0.23, 0.37)
+        evaluation_point1 = surf(0.23, 0.37)
 
         surf.insert_knot(0, .22)
         surf.insert_knot(0, .5)
@@ -188,7 +188,7 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(len(knot1), 10) # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 
-        evaluation_point2 = surf.evaluate(0.23, 0.37)
+        evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after InsertKnot should remain unchanged
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -213,10 +213,10 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [0,0,0,1,1,1])
         surf = Surface(basis1, basis2, controlpoints)
 
-        evaluation_point1 = surf.evaluate(0.23, .66)
+        evaluation_point1 = surf(0.23, .66)
         control_point1    = surf[0]
         surf.force_rational()
-        evaluation_point2 = surf.evaluate(0.23, .66)
+        evaluation_point2 = surf(0.23, .66)
         control_point2    = surf[0]
         # ensure that surface has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -234,10 +234,10 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [0,0,0,1,1,1])
         surf = Surface(basis1, basis2, controlpoints)
 
-        evaluation_point1 = surf.evaluate(0.23, .56)
+        evaluation_point1 = surf(0.23, .56)
         control_point1    = surf[1]  # this is control point i=(1,0), when n=(4,3)
         surf.swap_parametrization()
-        evaluation_point2 = surf.evaluate(0.56, .23)
+        evaluation_point2 = surf(0.56, .23)
         control_point2    = surf[3]  # this is control point i=(0,1), when n=(3,4)
 
         # ensure that surface has not chcanged, by comparing evaluation of it
