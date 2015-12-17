@@ -15,6 +15,31 @@ def line(a, b):
     """
     return Curve(controlpoints=[a,b])
 
+def n_gon(n=5, r=1):
+    """ Create an n-gon, i.e. a regular polygon of n equal sides centered at the origin
+    @param n: Number of sides and vertices
+    @type  n: Int
+    @param r: Radius, distance from (0,0) to the vertices
+    @type  r: Float
+    @return : A linear, periodic curve in 2 dimensions
+    @rtype  : Curve
+    """
+    if r <= 0:
+        raise ValueError('radius needs to be positive')
+    if n < 3:
+        raise ValueError('regular polygons need at least 3 sides')
+
+    cp = []
+    dt = 2*pi/n
+    knot = [0]
+    for i in range(n):
+        cp.append([r*cos(i*dt), r*sin(i*dt)])
+        knot.append(i)
+    knot += [n,n]
+    basis = BSplineBasis(2, knot, 0)
+    return Curve(basis, cp)
+
+
 def circle(r=1):
     """ Create a circle at the origin
     @param r: circle radius
@@ -75,8 +100,6 @@ def circle_segment(theta, r=1):
 def square(width=1, height=1):
     """ Create a 2D square with lower right corner at (0,0)
     @param width : width in x-direction
-    @type  width : Float
-    @param height: height in y-direction
     @type  height: Float
     @return      : a square
     @rtype       : Surface

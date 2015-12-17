@@ -21,6 +21,26 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(len(c), 2)        # two control points
         self.assertEqual(c.dimension, 3)
 
+    def test_n_gon(self):
+        ### test default 5 side n-gon
+        c = n_gon()
+        self.assertEqual(len(c), 5)
+        self.assertEqual(len(c.get_knots()), 6)
+        self.assertEqual(c.get_order(), 2)
+        # evaluate at second corner (clockwise from (1,0) )
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0)[0], cos(2*pi/5))
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0)[1], sin(2*pi/5))
+        # evaluate at fourh corner (clockwise from (1,0) )
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0*4)[0], cos(2*pi/5*4))
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0*4)[1], sin(2*pi/5*4))
+
+        ### test a radius 3 septagon
+        c = n_gon(n=7, r=3)
+        self.assertEqual(len(c), 7)
+        # evaluate at third corner (clockwise from (1,0) )
+        self.assertAlmostEqual(c.evaluate(c.stop()/7.0)[0], 3*cos(2*pi/7))
+        self.assertAlmostEqual(c.evaluate(c.stop()/7.0)[1], 3*sin(2*pi/7))
+
     def test_circle(self):
 
         ### unit circle of radius 1
