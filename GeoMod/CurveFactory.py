@@ -1,8 +1,4 @@
-from Curve   import *
-from Surface import *
-from Volume  import *
-
-### Curve constructors
+from Curve import *
 
 def line(a, b):
     """ Create a line between the points a and b
@@ -30,10 +26,10 @@ def n_gon(n=5, r=1):
         raise ValueError('regular polygons need at least 3 sides')
 
     cp = []
-    dt = 2*pi/n
+    dt = 2*np.pi/n
     knot = [0]
     for i in range(n):
-        cp.append([r*cos(i*dt), r*sin(i*dt)])
+        cp.append([r*np.cos(i*dt), r*np.sin(i*dt)])
         knot.append(i)
     knot += [n,n]
     basis = BSplineBasis(2, knot, 0)
@@ -53,7 +49,7 @@ def circle(r=1):
     w = 1.0/np.sqrt(2)
     controlpoints = [[r,0,1], [r*w,r*w,w], [0,r,1], [-r*w,r*w,w], [-r,0,1],
                      [-r*w,-r*w,w], [0,-r,1], [r*w,-r*w,w]];
-    knot = np.array([0,0,0, 1,1, 2,2, 3,3, 4,4,4])/4.0*2*pi
+    knot = np.array([0,0,0, 1,1, 2,2, 3,3, 4,4,4])/4.0*2*np.pi
     return Curve(BSplineBasis(3, knot, 0), controlpoints, True)
 
 def circle_segment(theta, r=1):
@@ -66,13 +62,13 @@ def circle_segment(theta, r=1):
     @rtype      : Curve
     """
     # error test input
-    if abs(theta) > 2*pi:
+    if abs(theta) > 2*np.pi:
         raise ValueError('theta needs to be in range [-2pi,2pi]')
     if r <= 0:
         raise ValueError('radius needs to be positive')
 
     # build knot vector
-    knot_spans = int(theta / (2*pi/3) )
+    knot_spans = int(theta / (2*np.pi/3) )
     knot = [0]
     for i in range(knot_spans+1):
         knot += [i]*2
@@ -86,51 +82,12 @@ def circle_segment(theta, r=1):
 
     # build control points
     for i in range(n):
-        w = 1 - (i%2)*(1-cos(dt))      # weights = 1 and cos(dt) every other i
-        x = r*cos(t)
-        y = r*sin(t)
+        w = 1 - (i%2)*(1-np.cos(dt))      # weights = 1 and cos(dt) every other i
+        x = r*np.cos(t)
+        y = r*np.sin(t)
         cp += [[x,y,w]]
         t  += dt
 
     return Curve(BSplineBasis(3, knot), cp, True)
 
 
-### Surface constructors
-
-def square(width=1, height=1):
-    """ Create a 2D square with lower right corner at (0,0)
-    @param width : width in x-direction
-    @type  height: Float
-    @return      : a square
-    @rtype       : Surface
-    """
-    result = Surface() # unit square
-    result.scale((width,height))
-    return result
-    
-def disc(r=1, type='radial'):
-    """ Create surface representation of a circular disc with center at (0,0)
-    @param r   : radius
-    @type  r   : Float
-    @param type: 'radial' or 'square'
-    @type  type: String
-    @return    : a circular disc
-    @rtype     : Surface
-    """
-    if type is 'radial':
-        c = circle(r)
-        cp = np.zeros((16,3))
-        cp[:,-1] = 1 
-        cp[1::2,:] = c.controlpoints
-        return Surface(BSplineBasis(), c.basis, cp, True)
-    elif type is 'square':
-        w = 1/sqrt(2)
-        cp = [ [-r*w,-r*w,1], [0,-r,w], [r*w,-r*w,1],
-               [-r,     0,w], [0, 0,1], [r,     0,w],
-               [-r*w, r*w,1], [0, r,w], [r*w, r*w,1]]
-        basis1 = BSplineBasis(3)
-        basis2 = BSplineBasis(3)
-        return Surface(basis1, basis2, cp, True)
-    else:
-        raise ValueError('invalid type argument')
-    
