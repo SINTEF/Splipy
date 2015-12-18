@@ -48,6 +48,31 @@ class Volume(ControlPointOperations):
         @return : Geometry coordinates. 4D-array X(i,j,k,l) of component x(l) evaluated at (u[i],v[j],w[k])
         @rtype  : numpy.array
         """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+        try:
+            len(w)
+        except TypeError:
+            w = [w]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0:
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis3.periodic < 0:
+            if min(w) < self.basis3.start() or self.basis3.end() < max(w):
+                raise ValueError('evaluation outside parametric domain')
+
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
         Nu = self.basis1.evaluate(u)
         Nv = self.basis2.evaluate(v)
@@ -68,6 +93,82 @@ class Volume(ControlPointOperations):
         # in case of single value input (u,v,w), return vector instead of 4D-matrix
         if result.shape[0] == 1 and result.shape[1] == 1 and result.shape[2] == 1:
             result = np.array(result[0,0,0,:]).reshape(self.dimension)
+        return result
+        
+    def evaluate_derivative(self, u, v, w, du=1, dv=1, dw=1):
+        """Evaluate the derivative of the volume at given parametric values
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @param w : Parametric coordinate point(s) in third direction
+        @type  w : Float or list of Floats
+        @param du: Number of derivatives in u
+        @type  du: Int
+        @param dv: Number of derivatives in v
+        @type  dv: Int
+        @param dw: Number of derivatives in w
+        @type  dw: Int
+        @return  : 4D-array D^(du,dv,dw) X(i,j) of component x(l) differentiated (du,dv,dw) times at (u[i],v[j],w[k])
+        @rtype   : numpy.ndarray
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+        try:
+            len(w)
+        except TypeError:
+            w = [w]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0:
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis3.periodic < 0:
+            if min(w) < self.basis3.start() or self.basis3.end() < max(w):
+                raise ValueError('evaluation outside parametric domain')
+
+        # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
+        dNu = self.basis1.evaluate(u, du)
+        dNv = self.basis2.evaluate(v, dv)
+        dNw = self.basis3.evaluate(w, dw)
+
+        # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j],w[k])
+        result = np.tensordot(dNu, self.controlpoints, axes=(1,0))
+        result = np.tensordot(dNv, result,             axes=(1,1))
+        result = np.tensordot(dNw, result,             axes=(1,2))
+        result = result.transpose((2,1,0,3)) # I really dont know why it insist on storing it in the wrong order :(
+
+        # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
+        # x(u,v) = sum_ijk N_i(u) * N_j(v) * N_k(w) * (w_ijk*x_ijk) / W(u,v,w)
+        # W(u,v) = sum_ijk N_i(u) * N_j(v) * N_k(w) * w_ijk
+        # dx/du =  sum_ijk N_i'(u)*N_j(v)*N_k(w) * (w_ijk*x_ijk) / W(u,v,w) - sum_ijk N_i(u)N_j(v)_N_k(w)*w_ijk*x_ijk* W'(u,v,w)/W(u,v,w)^2
+        if self.rational: 
+            if du+dv+dw>1:
+                raise RuntimeError('Rational derivatives not implemented for derivatives larger than 1')
+            Nu = self.basis.evaluate(u)
+            Nv = self.basis.evaluate(v)
+            Nw = self.basis.evaluate(w)
+            non_derivative = np.tensordot(Nu, self.controlpoints, axes=(1,0))
+            non_derivative = np.tensordot(Nv, non_derivative,     axes=(1,1))
+            non_derivative = np.tensordot(Nw, non_derivative,     axes=(1,2))
+            non_derivative = non_derivative.transpose((2,1,0,3))
+            W    = non_derivative[:,:,:,-1]  # W(u,v,w)
+            Wder = result[:,:,:,-1]          # dW/du or dW/dv or dW/dw
+            for i in range(self.dimension):
+                result[:,:,:,i] = result[:,:,:,i]/W - non_derivative[:,:,:,i]*Wder/W/W
+
+            result = np.delete(result, self.dimension, 1) # remove the weight column
+
         return result
 
     def flip_parametrization(self, direction):

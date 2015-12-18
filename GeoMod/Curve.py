@@ -63,8 +63,25 @@ class Curve(ControlPointOperations):
         @return : Tangent evaluation. Matrix DX(i,j) of component x(j) evaluated at t(i)
         @rtype  : numpy.array
         """
+        return self.derivative(t,1)
+
+    def evaluate_derivative(self, t, d=1):
+        """Evaluate the derivative of the curve at given parametric values
+        @param t: Parametric coordinate point(s)
+        @type  t: Float or list of Floats
+        @param d: Number of derivatives
+        @type  d: Int
+        @return : Matrix D^n X(i,j) of component x(j) differentiated d times at point t(i)
+        @rtype  : numpy.array
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(t)
+        except TypeError:
+            t = [t]
+
         # compute basis functions for all points t. dN(i,j) is a matrix of the derivative of all functions j for all points i
-        dN = self.basis.evaluate(t, 1)
+        dN = self.basis.evaluate(t, d)
 
         # compute physical points [dx/dt,dy/dt,dz/dt] for all points t[i]
         result = dN * self.controlpoints
@@ -74,14 +91,19 @@ class Curve(ControlPointOperations):
         # W(t) = sum_j N_j(t) * w_j
         # dx/dt =  sum_i N_i'(t)*w_i*x_i / W(t) - sum_i N_i(t)*w_i*x_i* W'(t)/W(t)^2
         if self.rational: 
+            if d>1:
+                raise RuntimeError('Rational derivatives not implemented for derivatives larger than 1')
             N = self.basis.evaluate(t)
             non_derivative = N*self.controlpoints
             W    = non_derivative[:,-1]  # W(t)
             Wder = result[:,-1]          # W'(t)
             for i in range(self.dimension):
-                result[:,i] = result[:,i]/W - non_derivative[i,:]*Wder/W/W
+                result[:,i] = result[:,i]/W - non_derivative[:,i]*Wder/W/W
 
             result = np.delete(result, self.dimension, 1) # remove the weight column
+
+        if result.shape[0] == 1: # in case of single value input t, return vector instead of matrix
+            result = np.array(result[0,:]).reshape(self.dimension)
 
         return result
 

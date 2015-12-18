@@ -70,7 +70,6 @@ class TestSurface(unittest.TestCase):
 
         # call evaluation at a 5x4 grid of points
         val = surf([0,.2,.5,.6,1], [0,.2,.4,1])
-        val = surf([0,.2,.5,.6,1], [0,.2,.4,1])
         self.assertEqual(len(val.shape), 3) # result should be wrapped in 3-index tensor
         self.assertEqual(val.shape[0],   5) # 5 evaluation points in u-direction
         self.assertEqual(val.shape[1],   4) # 4 evaluation points in v-direction
@@ -101,6 +100,52 @@ class TestSurface(unittest.TestCase):
             val = surf(.5, -10) # evalaute outside parametric domain
         with self.assertRaises(ValueError):
             val = surf(.5, +10) # evalaute outside parametric domain
+
+    def test_derivative(self):
+        # knot vector [t_1, t_2, ... t_{n+p+1}]
+        # polynomial degree p (order-1)
+        # n basis functions N_i(t), for i=1...n
+        # the power basis {1,t,t^2,t^3,...} can be expressed as:
+        # 1     = sum         N_i(t)
+        # t     = sum ts_i  * N_i(t)
+        # t^2   = sum t2s_i * N_i(t)
+        # ts_i  = sum_{j=i+1}^{i+p}   t_j / p
+        # t2s_i = sum_{j=i+1}^{i+p-1} sum_{k=j+1}^{i+p} t_j*t_k / (p 2)
+        # (p 2) = binomial coefficent
+
+        # creating the mapping:
+        #   x(u,v) = u^2*v + u(1-v)
+        #   y(u,v) = v
+        controlpoints = [[0,0],[1.0/4,0],[3.0/4,0],[.75,0],  [0,1],[0,1],[.5,1],[1,1]]
+        basis1 = BSplineBasis(3, [0,0,0,.5,1,1,1])
+        basis2 = BSplineBasis(2, [0,0,1,1])
+        surf = Surface(basis1, basis2, controlpoints)
+
+        # call evaluation at a 5x4 grid of points
+        val = surf.evaluate_derivative([0,.2,.5,.6,1], [0,.2,.4,1], 1,0)
+        self.assertEqual(len(val.shape), 3) # result should be wrapped in 3-index tensor
+        self.assertEqual(val.shape[0],   5) # 5 evaluation points in u-direction
+        self.assertEqual(val.shape[1],   4) # 4 evaluation points in v-direction
+        self.assertEqual(val.shape[2],   2) # 2 coordinates (x,y)
+
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,1,0)[0],  .88) # dx/du=2uv+(1-v)
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,1,0)[1],    0) # dy/du=0
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,0,1)[0], -.16) # dx/dv=u^2-u
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,0,1)[1],    1) # dy/dv=1
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,1,1)[0], -.60) # d2x/dudv=2u-1
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,2,0)[0], 0.40) # d2x/dudu=2v
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,3,0)[0], 0.00) # d3x/du3=0
+        self.assertAlmostEqual(surf.evaluate_derivative(.2,.2,0,2)[0], 0.00) # d2y/dv2=0
+
+        # test errors and exceptions
+        with self.assertRaises(ValueError):
+            val = surf.evaluate_derivative(-10, .5) # evalaute outside parametric domain
+        with self.assertRaises(ValueError):
+            val = surf.evaluate_derivative(+10, .3) # evalaute outside parametric domain
+        with self.assertRaises(ValueError):
+            val = surf.evaluate_derivative(.5, -10) # evalaute outside parametric domain
+        with self.assertRaises(ValueError):
+            val = surf.evaluate_derivative(.5, +10) # evalaute outside parametric domain
 
 
     def test_raise_order(self):

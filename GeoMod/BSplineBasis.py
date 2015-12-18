@@ -88,6 +88,8 @@ class BSplineBasis:
         n = len(self.knots)-p                       # number of basis functions (without periodicity)
         N = np.matrix(np.zeros((len(t),n)))
         for i in range(len(t)):                     # for all evaluation points t
+            if p<=d:
+                continue                            # requesting more derivatives than polymoial degree: return all zeros
             evalT = t[i]
             if self.periodic >= 0:                  # wrap periodic evaluation into domain
                 if t[i]<self.start() or t[i]>self.end():

@@ -77,6 +77,116 @@ class Surface(ControlPointOperations):
             result = np.array(result[0,0,:]).reshape(self.dimension)
         return result
 
+    def evaluate_normal(self, u, v):
+        """Evaluate the normal vector of the surface at given parametric value(s). The returned values are not normalized
+        @param t : Parametric coordinate point(s)
+        @type  t : Float or list of Floats
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @return  : 3D-array X(i,j,k) of the normal component x(k) evaluated at (u[i],v[j])
+        @rtype   : numpy.ndarray
+        """
+        if self.dimension==2:
+            try:
+                result = np.zeros((len(u), len(v), 3))
+                result[:,:,2] = 1
+                return result
+            except TypeError: # single valued input u, fails on len(u)
+                return np.array([0,0,1])
+        elif self.dimension==3:
+            (du,dv) = self.evaluate_tangent(u,v)
+            result = np.zeros(du.shape)
+            # the cross product of the tangent is the normal
+            if len(du.shape)==1: 
+                result[0] = du[1]*dv[2] - du[2]*dv[1]
+                result[1] = du[2]*dv[0] - du[0]*dv[2]
+                result[2] = du[0]*dv[1] - du[1]*dv[0]
+            else: # grid evaluation 
+                result[:,:,0] = du[:,:,1]*dv[:,:,2] - du[:,:,2]*dv[:,:,1]
+                result[:,:,1] = du[:,:,2]*dv[:,:,0] - du[:,:,0]*dv[:,:,2]
+                result[:,:,2] = du[:,:,0]*dv[:,:,1] - du[:,:,1]*dv[:,:,0]
+            return result
+        else:
+            raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
+
+    def evaluate_tangent(self, u, v):
+        """Evaluate the two tangent vectors of the surface at given parametric values
+        @param t : Parametric coordinate point(s)
+        @type  t : Float or list of Floats
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @return  : two 3D-arrays (dX/du, dX/dv) of the tangential component x(k) evaluated at (u[i],v[j])
+        @rtype   : tuple of two numpy.ndarray
+        """
+        return (self.evaluate_derivative(u,v,1,0), self.evaluate_derivative(u,v,0,1))
+
+    def evaluate_derivative(self, u, v, du=1, dv=1):
+        """Evaluate the derivative of the surface at given parametric values
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @param du: Number of derivatives in u
+        @type  du: Int
+        @param dv: Number of derivatives in v
+        @type  dv: Int
+        @return  : 3D-array D^(du,dv) X(i,j) of component x(k) differentiated (du,dv) times at (u[i],v[j])
+        @rtype   : numpy.array
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0: # periodic functions can evaluate everywhere
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+
+        # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
+        dNu = self.basis1.evaluate(u, du)
+        dNv = self.basis2.evaluate(v, dv)
+
+        # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j])
+        result = np.tensordot(dNv, self.controlpoints, axes=(1,1))
+        result = np.tensordot(dNu, result,             axes=(1,1))
+
+        # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
+        # x(u,v) = sum_ij N_i(u) * N_j(v) * (w_ij*x_ij) / W(u,v)
+        # W(u,v) = sum_ij N_i(u) * N_j(v) * w_ij
+        # dx/du =  sum_ij N_i'(u)*N_j(v) * (w_ij*x_ij) / W(u,v) - sum_ij N_i(u)N_j(v)*w_ij*x_ij* W'(u,v)/W(u,v)^2
+        if self.rational: 
+            if du+dv>1:
+                raise RuntimeError('Rational derivatives not implemented for derivatives larger than 1')
+            Nu = self.basis.evaluate(u)
+            Nv = self.basis.evaluate(v)
+            non_derivative = np.tensordot(Nv, self.controlpoints, axes=(1,1))
+            non_derivative = np.tensordot(Nu, non_derivative,     axes=(1,1))
+            W    = non_derivative[:,:,-1]  # W(u,v)
+            Wder = result[:,:,-1]          # dW(u,v)/du or dW(u,v)/dv
+            for i in range(self.dimension):
+                result[:,:,i] = result[:,:,i]/W - non_derivative[:,:,i]*Wder/W/W
+
+            result = np.delete(result, self.dimension, 1) # remove the weight column
+
+        if result.shape[0] == 1 and result.shape[1] == 1: # in case of single value input (u,v), return vector instead of 3D-matrix
+            result = np.array(result[0,0,:]).reshape(self.dimension)
+        return result
+
+        return result
+
     def flip_parametrization(self, direction):
         """Swap direction of the surface by making it go in the reverse direction. Parametric domain remain unchanged
            @param direction: The parametric direction to flip (0=u, 1=v)
