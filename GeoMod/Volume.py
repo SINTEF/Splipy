@@ -111,13 +111,6 @@ class Volume(ControlPointOperations):
         """Return the end of the parametric domain"""
         return (self.basis1.end(), self.basis2.end(), self.basis3.end())
 
-    def force_rational(self):
-        """Force a rational representation by including weights of all value 1"""
-        if not self.rational:
-            n1,n2,n3,d = self.controlpoints.shape # n1 x n2 x n3 controlpoints of dimension d
-            self.controlpoints = np.insert(self.controlpoints, d, np.ones((n1,n2,n3)), 3)
-            self.rational = 1
-
     def swap_parametrization(self, pardir1, pardir2):
         """Swaps the two volume parameter directions"""
         if (pardir1==0 and pardir2==1) or (pardir1==1 and pardir2==0):

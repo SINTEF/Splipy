@@ -115,13 +115,6 @@ class Surface(ControlPointOperations):
         """Return the end of the parametric domain"""
         return (self.basis1.end(), self.basis2.end())
 
-    def force_rational(self):
-        """Force a rational representation by including weights of all value 1"""
-        if not self.rational:
-            n1,n2,d = self.controlpoints.shape # n1 x n2 controlpoints of dimension d
-            self.controlpoints = np.insert(self.controlpoints, d, np.ones((n1,n2)), 2)
-            self.rational = 1
-
     def swap_parametrization(self):
         """Swaps the two surface parameter directions"""
         self.controlpoints = self.controlpoints.transpose((1,0,2))  # re-order controlpoints

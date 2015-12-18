@@ -219,6 +219,16 @@ class ControlPointOperations:
             dim -= 1
         self.dimension = new_dim
 
+    def force_rational(self):
+        """Force a rational representation by including weights of all value 1"""
+        if not self.rational:
+            dim    = self.dimension
+            shape  = self.controlpoints.shape
+            pardim = len(self.controlpoints.shape)-1 # 1=Curve, 2=Surface, 3=Volume
+            self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), pardim)
+            self.rational = 1
+
+
 
     def __iadd__(self, x):
         self.translate(x)

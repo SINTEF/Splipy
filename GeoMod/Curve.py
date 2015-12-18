@@ -119,13 +119,6 @@ class Curve(ControlPointOperations):
         else:
             return self.basis.get_knot_spans()
 
-    def force_rational(self):
-        """Force a rational representation by including weights of all value 1"""
-        if not self.rational:
-            n,d = self.controlpoints.shape # n controlpoints of dimension d
-            self.controlpoints = np.insert(self.controlpoints, d, np.array([1]*n), 1)
-            self.rational = 1
-
     def reparametrize(self, start=0, end=1):
         """Redefine the parametric domain to be (start,end)"""
         if end <= start:
