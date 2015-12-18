@@ -70,6 +70,24 @@ def sphere(r=1):
     basis1 = BSplineBasis(3, knot1, 0) # periodic
     basis2 = BSplineBasis(3, knot2)
     return Surface(basis1, basis2, cp, True)
+
+def extrude(curve, h):
+    """ Extrude a curve by sweeping it straight up in the z-direction
+    to a given height 
+    @param curve : curve to extrude
+    @type  curve : Curve
+    @param h     : height in z-direction
+    @type  h     : Float
+    @return      : an extruded surface
+    @rtype       : Surface
+    """
+    curve.set_dimension(3) # add z-components (if not already present)
+    n = len(curve)        # number of control points of the circle
+    cp = np.zeros((2*n,4))
+    cp[:n,:] = curve.controlpoints # the first control points form the bottom
+    curve += (0,0,h)
+    cp[n:,:] = curve.controlpoints # the last control points form the top
+    return Surface(curve.basis, BSplineBasis(2), cp, curve.rational)
     
 
 def cylinder(r=1, h=1):
@@ -82,11 +100,4 @@ def cylinder(r=1, h=1):
     @return    : a cylinder shell
     @rtype     : Surface
     """
-    circle  = CurveFactory.circle(r)
-    circle.set_dimension(3) # add z-components of 0
-    n = len(circle)         # number of control points of the circle
-    cp = np.zeros((2*n,4))
-    cp[:n,:] = circle.controlpoints # the first control points form the base
-    circle += (0,0,h)
-    cp[n:,:] = circle.controlpoints # the last control points form the top
-    return Surface(circle.basis, BSplineBasis(), cp, True)
+    return extrude(CurveFactory.circle(r), h)

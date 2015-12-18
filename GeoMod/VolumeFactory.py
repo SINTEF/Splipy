@@ -26,7 +26,6 @@ def cylinder(r=1, h=1):
     @rtype     : Volume
     """
     shell = SurfaceFactory.cylinder(r,h)
-    n = len(shell)         # number of control points of the cylinder shell
     cp = []
     for controlpoint in shell:
         cp.append([0,0,controlpoint[2],controlpoint[3]]) # project to z-axis
@@ -35,3 +34,22 @@ def cylinder(r=1, h=1):
 
     return Volume(shell.basis1, shell.basis2, BSplineBasis(), cp, True)
 
+def extrude(curve, h):
+    """ Extrude a surface by sweeping it straight up in the z-direction
+    to a given height 
+    @param surf : surf to extrude
+    @type  surf : Surface
+    @param h     : height in z-direction
+    @type  h     : Float
+    @return      : an extruded surface
+    @rtype       : Surface
+    """
+    surf.set_dimension(3) # add z-components (if not already present)
+    cp = []
+    for controlpoint in surf:
+        cp.append(list(controlpoint))
+    surf += (0,0,h)
+    for controlpoint in surf:
+        cp.append(list(controlpoint))
+    surf -= (0,0,h)
+    return Volume(surf.basis1, surf.basis2, BSplineBasis(2), cp, surf.rational)
