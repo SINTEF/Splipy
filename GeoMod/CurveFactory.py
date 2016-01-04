@@ -53,7 +53,7 @@ def circle(r=1):
     return Curve(BSplineBasis(3, knot, 0), controlpoints, True)
 
 def circle_segment(theta, r=1):
-    """ Create a circle segment at the origin with start at (1,0)
+    """ Create a circle segment at the origin with start at (r,0)
     @param theta: circle angle in radians
     @type  theta: Float
     @param r    : circle radius

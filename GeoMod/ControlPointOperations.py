@@ -103,6 +103,9 @@ class ControlPointOperations:
         dim = self.dimension
         rat = self.rational
         n   = len(self)     # number of control points
+        if not (normal[0]==0 and normal[1]==0): # rotating a 2D geometry out of the xy-plane
+            self.set_dimension(3)
+            dim = self.dimension
 
         # set up the rotation matrix
         if dim==2:

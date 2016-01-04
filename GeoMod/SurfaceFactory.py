@@ -47,29 +47,11 @@ def sphere(r=1):
     @rtype     : Surface
     """
     pi = np.pi
-    if r <= 0:
-        raise ValueError('radius needs to be positive')
-    weight = 1/np.sqrt(2)
-    cp = []
-    for i in range(5):
-        for j in range(8):
-            theta = j*2*pi/9    # latitude  east/west
-            phi   = i*pi/4-pi/2 # longitude north/south
-            x = r * np.cos(theta) * np.cos(phi)
-            y = r * np.sin(theta) * np.cos(phi)
-            z = r *                 np.sin(phi)
-            w = 1
-            if i%2==1:
-                w *= weight
-            if j%2==1:
-                w *= weight
-            cp.append([x,y,z,w])
-
-    knot1  = np.array([0,0,0,1,1,2,2,3,3,4,4,4]) / 4.0 * 2*pi
-    knot2  = np.array([0,0,0,1,1,2,2,2]        ) / 2.0 *   pi - pi/2
-    basis1 = BSplineBasis(3, knot1, 0) # periodic
-    basis2 = BSplineBasis(3, knot2)
-    return Surface(basis1, basis2, cp, True)
+    circle = CurveFactory.circle_segment(pi, r)
+    circle.rotate(-pi/2)
+    circle.rotate(pi/2, (1,0,0))    # flip up into xz-plane
+    return revolve(circle)
+    
 
 def extrude(curve, h):
     """ Extrude a curve by sweeping it straight up in the z-direction
@@ -82,12 +64,43 @@ def extrude(curve, h):
     @rtype       : Surface
     """
     curve.set_dimension(3) # add z-components (if not already present)
-    n = len(curve)        # number of control points of the circle
+    n  = len(curve)        # number of control points of the curve
     cp = np.zeros((2*n,4))
     cp[:n,:] = curve.controlpoints # the first control points form the bottom
     curve += (0,0,h)
     cp[n:,:] = curve.controlpoints # the last control points form the top
     return Surface(curve.basis, BSplineBasis(2), cp, curve.rational)
+
+def revolve(curve, theta=2*np.pi):
+    """ Revolve a surface by sweeping a curve in a rotational fashion around
+    the z-axis
+    @param curve : curve to revolve
+    @type  curve : Curve
+    @param theta : angle in radians
+    @type  theta : Float
+    @return      : a revolved surface
+    @rtype       : Surface
+    """
+    pi = np.pi
+    curve.set_dimension(3) # add z-components (if not already present)
+    curve.force_rational() # add weight (if not already present)
+    n  = len(curve)        # number of control points of the curve
+    cp = np.zeros((8*n,4))
+    basis = BSplineBasis(3, [0,0,0,1,1,2,2,3,3,4,4,4], periodic=0)
+    basis *= 2*pi/4        # set parametric domain to (0,2pi) in v-direction
+
+    # loop around the circle and set control points by the traditional 9-point
+    # circle curve with weights 1/sqrt(2), only here C0-periodic, so 8 points
+    for i in range(8):
+        if i%2 == 0:
+            weight = 1
+        else:
+            weight = 1/sqrt(2)
+        cp[i*n:(i+1)*n,:]  = curve.controlpoints
+        cp[i*n:(i+1)*n,2] *= weight
+        cp[i*n:(i+1)*n,3] *= weight
+        curve.rotate(pi/4)
+    return Surface(curve.basis, basis, cp, True)
     
 
 def cylinder(r=1, h=1):
@@ -101,3 +114,18 @@ def cylinder(r=1, h=1):
     @rtype     : Surface
     """
     return extrude(CurveFactory.circle(r), h)
+
+def torus(minor_r=1, major_r=3):
+    """ Create a torus (doughnut) by revolving a circle of size minor_r around
+    the z-axis with radius major_r
+    @param minor_r: the thickness of the torus, or radius in xz-plane
+    @type  minor_r: Float
+    @param major_r: the size of the torus, or radius in xy-plane
+    @type  major_r: Float
+    @return       : a periodic torus
+    @rtype        : Surface
+    """
+    circle = CurveFactory.circle(minor_r)
+    circle.rotate(pi/2, (1,0,0))    # flip up into xz-plane
+    circle.translate((major_r,0,0)) # move into position to spin around z-axis
+    return revolve(circle)

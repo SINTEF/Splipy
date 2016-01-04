@@ -179,6 +179,56 @@ class TestFactory(unittest.TestCase):
         for pt in np.array(x[:,-1,:]): # vmax edge
             self.assertAlmostEqual(np.linalg.norm(pt,2), 3.0) # check radius
 
+    def test_revolve(self):
+        pi = np.pi
+        ### square torus
+        square = CurveFactory.n_gon(4)
+        square.rotate(pi/2, (1,0,0))
+        square.translate((2,0,0)) # in xz-plane with corners at (3,0),(2,1),(1,0),(2,-1)
+        surf = SurfaceFactory.revolve(square)
+        surf.reparametrize() # set parametric space to (0,1)^2
+        v = np.linspace(0,1,13)
+        x = surf.evaluate(0,v) # outer ring evaluation u=0
+        for pt in np.array(x[0,:,:]):
+            self.assertAlmostEqual(np.linalg.norm(pt,2), 3.0) # check radius=3
+        x = surf.evaluate(.25,v) # top ring evaluation u=.25
+        for pt in np.array(x[0,:,:]):
+            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], 2*2) # check radius=2
+            self.assertAlmostEqual(pt[2], 1)                     # check height=1
+        x = surf.evaluate(.375,v) # mid inner ring evaluation u=.375
+        for pt in np.array(x[0,:,:]):
+            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], 1.5*1.5) # check radius=1.5
+            self.assertAlmostEqual(pt[2], .5)                        # check height=0.5
+
+    def test_surface_torus(self):
+        pi = np.pi
+        ### default torus
+        surf = SurfaceFactory.torus(1,3)
+        start = surf.start()
+        end   = surf.end()
+        # check a 13 evaluation points of v-evaluation (around the z-axis)
+        v = np.linspace(start[1],end[1],13)
+        # check minor-circle u=0 (outmost ring)
+        x = surf.evaluate(0,v)
+        for pt in np.array(x[0,:,:]):
+            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], 4*4) # check radius=4
+            self.assertAlmostEqual(pt[2], 0)                     # check height=0
+        # check minor-circle u=pi (innermost ring)
+        x = surf.evaluate(pi,v)
+        for pt in np.array(x[0,:,:]):
+            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], 2*2) # check radius=2
+            self.assertAlmostEqual(pt[2], 0)                     # check height=0
+        # check minor-circle u=pi/2 (topmost ring)
+        x = surf.evaluate(pi/2,v)
+        for pt in np.array(x[0,:,:]):
+            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], 3*3) # check radius=3
+            self.assertAlmostEqual(pt[2], 1)                     # check height=1
+        # check minor-circle u=3*pi/2 (mid-evaluation)
+        x = surf.evaluate(3*pi/4,v)
+        for pt in np.array(x[0,:,:]):
+            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], (3-1.0/np.sqrt(2))**2) # check radius=3-1/sqrt(2)
+            self.assertAlmostEqual(pt[2], 1.0/np.sqrt(2))             # check height=1/sqrt(2)
+
     def test_sphere(self):
         pi = np.pi
         ### unit ball
