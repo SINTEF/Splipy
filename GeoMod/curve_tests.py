@@ -136,26 +136,58 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
-
-        # ensure that curve has the knot length
         self.assertEqual(len(crv.get_knots(True)),  11)
+
+
+        # test knot insertion on single knot span
+        crv = Curve(BSplineBasis(5), [[0,0,0],  [1,1,1],  [2,-1,0],  [3,0,-1], [0,0,-5]])
+        evaluation_point1 = crv(0.27)
+        crv.insert_knot(.2)
+        evaluation_point2 = crv(0.27)
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+        self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
+        # test knot insertion on first of two-knot span
+        crv = Curve(BSplineBasis(3, [0,0,0,.5,1,1,1]), [[0,0,0],  [2,-1,0],  [3,0,-1], [0,0,-5]])
+        evaluation_point1 = crv(0.27)
+        crv.insert_knot(.2)
+        evaluation_point2 = crv(0.27)
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+        self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
+        # test knot insertion on last of two-knot span
+        crv = Curve(BSplineBasis(3, [0,0,0,.5,1,1,1]), [[0,0,0],  [2,-1,0],  [3,0,-1], [0,0,-5]])
+        evaluation_point1 = crv(0.27)
+        crv.insert_knot(.9)
+        evaluation_point2 = crv(0.27)
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+        self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
+        # test knot insertion down to C0 basis
+        crv = Curve(BSplineBasis(3), [[0,0,0], [2,-1,0], [0,0,-5]])
+        evaluation_point1 = crv(0.27)
+        crv.insert_knot(.4)
+        crv.insert_knot(.4)
+        evaluation_point2 = crv(0.27)
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+        self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
 
         # test rational curves, here a perfect circle represented as n=9, p=2-curve
         s = 1.0/sqrt(2)
         controlpoints = [[1,0,1], [s,s,s], [0,1,1], [-s,s,s], [-1,0,1], [-s,-s,s], [0,-1,1], [s,-s,s], [1,0,1]]
         crv = Curve(BSplineBasis(3, [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4]), controlpoints, True)
-
         evaluation_point1 = crv(0.37)
         crv.insert_knot(.2)
         crv.insert_knot(.3)
         crv.insert_knot(.9)
         evaluation_point2 = crv(0.37)
-
-        # ensure that curve has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
-
-        # ensure that curve has the knot length
         self.assertEqual(len(crv.get_knots(True)),  15)
 
 
@@ -164,7 +196,7 @@ class TestCurve(unittest.TestCase):
             crv.insert_knot(1, 2)          # too many arguments
         with self.assertRaises(TypeError):
             crv.insert_knot()              # too few arguments
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             crv.insert_knot("tree-fiddy")  # wrong argument type
         with self.assertRaises(ValueError):
             crv.insert_knot(-0.2)          # Outside-domain error

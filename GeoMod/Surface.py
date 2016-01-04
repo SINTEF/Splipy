@@ -290,7 +290,33 @@ class Surface(ControlPointOperations):
         self.controlpoints = tmp
         self.basis1        = newBasis1
         self.basis2        = newBasis2
-        
+
+    def insert_knot(self, direction, knot):
+        """Insert a knot into this spline surface
+        @param direction: The parametric direction (u=0, v=1)
+        @type  direction: Int
+        @param knot:      The knot(s) to insert
+        @type  knot:      Float or list of Floats
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(knot)
+        except TypeError:
+            knot = [knot]
+        if direction != 0 and direction != 1:
+            raise ValueError('direction must be 0 or 1')
+
+        (n1,n2,dim) = self.controlpoints.shape
+        if direction==0:
+            C = np.matrix(np.identity(n1))
+            for k in knot:
+                C = self.basis1.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,0))
+        else:
+            C = np.matrix(np.identity(n2))
+            for k in knot:
+                C = self.basis2.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,1)).transpose((1,0,2))
 
 
 

@@ -173,8 +173,17 @@ class Curve(ControlPointOperations):
         @param knot: The knot(s) to insert
         @type  knot: Float or list of Floats
         """
-        # TODO: write this thing...
+        # for single-value input, wrap it into a list
+        try:
+            len(knot)
+        except TypeError:
+            knot = [knot]
 
+        C = np.matrix(np.identity(len(self)))
+        for k in knot:
+            C = self.basis.insert_knot(k) * C
+
+        self.controlpoints = C * self.controlpoints
 
 
     def __call__(self, t):

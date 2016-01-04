@@ -259,7 +259,7 @@ class Volume(ControlPointOperations):
         return [umin, umax, vmin, vmax, wmin, wmax]
 
     def raise_order(self, raise_u, raise_v, raise_w):
-        """Raise the order of a spline surface
+        """Raise the order of a spline volume
         @param raise_u: Number of polynomial degrees to increase in u
         @type  raise_u: Int
         @param raise_v: Number of polynomial degrees to increase in v
@@ -303,6 +303,38 @@ class Volume(ControlPointOperations):
         self.basis1        = newBasis1
         self.basis2        = newBasis2
         self.basis3        = newBasis3
+
+    def insert_knot(self, direction, knot):
+        """Insert a knot into this spline volume
+        @param direction: The parametric direction (u=0, v=1, w=2)
+        @type  direction: Int
+        @param knot:      The knot(s) to insert
+        @type  knot:      Float or list of Floats
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(knot)
+        except TypeError:
+            knot = [knot]
+        if direction != 0 and direction != 1 and direction != 2:
+            raise ValueError('direction must be 0, 1 or 2')
+
+        (n1,n2,n3,dim) = self.controlpoints.shape
+        if direction==0:
+            C = np.matrix(np.identity(n1))
+            for k in knot:
+                C = self.basis1.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,0))
+        elif direction==1:
+            C = np.matrix(np.identity(n2))
+            for k in knot:
+                C = self.basis2.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,1)).transpose((1,0,2,3))
+        elif direction==2:
+            C = np.matrix(np.identity(n3))
+            for k in knot:
+                C = self.basis3.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,2)).transpose((1,2,0,3))
 
 
 

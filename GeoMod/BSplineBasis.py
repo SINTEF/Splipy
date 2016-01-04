@@ -23,6 +23,7 @@ class BSplineBasis:
             knots = [0]*order + [1]*order
 
         self.knots    = np.array(knots)
+        self.knots    = self.knots.astype(float)
         self.order    = order
         self.periodic = periodic
 
@@ -163,6 +164,39 @@ class BSplineBasis:
         result.sort()                                 # make it a proper knot vector by ensuring that it is non-decreasing
         return result
 
+    def insert_knot(self, new_knot):
+        """ Returns an extremely sparse matrix C such that N_new = N_old*C,
+        where N is a (row)vector of the basis functions. Also inserts new_knot
+        in the knot vector.
+        @param new_knot: The parametric coordinate point to insert
+        @type  new_knot: Float
+        @return:         Matrix C
+        @rtype:          numpy.array
+        """
+        if new_knot < self.knots[0] or self.knots[-1] < new_knot:
+            raise ValueError('new_knot out of range')
+        # mu is the index of last non-zero (old) basis function
+        mu = bisect_right( self.knots, new_knot)
+        n  = len(self)
+        p  = self.order
+        C  = np.zeros((n+1,n))
+        for i in range(mu-p):
+            C[i,i] = 1
+        for i in range(mu-p,mu):
+            if self.knots[i+p-1] <= new_knot and new_knot <= self.knots[i+p]:
+                C[i,i] = 1
+            else:
+                C[i,i] = (new_knot-self.knots[i]  )/(self.knots[i+p-1]-self.knots[i])
+            if self.knots[i] <= new_knot and new_knot <= self.knots[i+1]:
+                C[i+1,i] = 1
+            else:
+                C[i+1,i] = (self.knots[i+p]-new_knot)/(self.knots[i+p]-self.knots[i+1])
+        for i in range(mu,n+1):
+            C[i,i-1] = 1
+
+        self.knots = np.insert(self.knots, mu, new_knot)
+
+        return C
 
 
     def __len__(self):

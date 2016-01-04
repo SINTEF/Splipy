@@ -83,6 +83,64 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
 
+    def test_insert_knot(self):
+        # more or less random 3D volume with p=[2,2,1] and n=[4,3,2]
+        controlpoints = [[0,0,0],[-1,1,0],[0,2,0],  [1,-1,0],[1,0,0],[1,1,0],  [2,1,0],[2,2,0],[2,3,0],  [3,0,0],[4,1,0],[3,2,0],
+                         [0,0,1],[-1,1,1],[0,2,1],  [1,-1,2],[1,0,2],[1,1,2],  [2,1,2],[2,2,2],[2,3,2],  [3,0,1],[4,1,1],[3,2,1]]
+        basis1 = BSplineBasis(3, [0,0,0,.4,1,1,1])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
+        basis3 = BSplineBasis(2, [0,0,1,1])
+        vol = Volume(basis1, basis2, basis3, controlpoints)
+
+        evaluation_point1 = vol(0.23, 0.37, 0.44) # pick some evaluation point (could be anything)
+
+        vol.insert_knot(0, .20)
+        vol.insert_knot(0, .5)
+        vol.insert_knot(0, .7)
+        vol.insert_knot(1, .1)
+        vol.insert_knot(1, 1.0/3)
+        vol.insert_knot(2, .8)
+        vol.insert_knot(2, .9)
+        knot1, knot2, knot3 = vol.get_knots(True)
+        self.assertEqual(len(knot1), 10) # 7 to start with, 3 new ones
+        self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
+        self.assertEqual(len(knot3), 6)  # 4 to start with, 2 new ones
+        self.assertEqual(vol.controlpoints.shape, (7,5,4,3))
+
+        evaluation_point2 = vol(0.23, 0.37, 0.44)
+
+        # evaluation before and after insert_knot should remain unchanged
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+        self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
+
+        # test a rational 3D volume 
+        controlpoints = [[0,0,1,1],[-1,1,.96,1],[0,2,1,1],  [1,-1,1,1],[1,0,.8,1],[1,1,1,1],  [2,1,.89,1],[2,2,.9,1],[2,3,1,1],  [3,0,1,1],[4,1,1,1],[3,2,1,1],
+                         [0,0,1,2],[-1,1,.7,2],[0,2,1.3,2], [1,-1,1,2],[1,0,.77,2],[1,1,1,2],  [2,1,.89,1],[2,2,.8,4],[2,3,1,1],  [3,0,1,1],[4,1,1,1],[3,2,1,1]]
+        basis1 = BSplineBasis(3, [0,0,0,.4,1,1,1])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
+        basis3 = BSplineBasis(2, [0,0,1,1])
+        vol = Volume(basis1, basis2, basis3, controlpoints, True)
+
+        evaluation_point1 = vol(0.23, 0.37, 0.44)
+
+        vol.insert_knot(0, [.20, .5, .7])
+        vol.insert_knot(1, [.1, 1.0/3])
+        vol.insert_knot(2, [.8, .9])
+        knot1, knot2, knot3 = vol.get_knots(True)
+        self.assertEqual(len(knot1), 10) # 7 to start with, 3 new ones
+        self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
+        self.assertEqual(len(knot3), 6)  # 4 to start with, 2 new ones
+        self.assertEqual(vol.controlpoints.shape, (7,5,4,4))
+
+        evaluation_point2 = vol(0.23, 0.37, 0.44)
+
+        # evaluation before and after RaiseOrder should remain unchanged
+        self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
+        self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
+        self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
     def test_force_rational(self):
         # more or less random 3D volume with p=[3,2,1] and n=[4,3,2]
         controlpoints = [[0,0,1],[-1,1,1],[0,2,1],  [1,-1,2],[1,0,2],[1,1,2],  [2,1,2],[2,2,2],[2,3,2],  [3,0,0],[4,1,0],[3,2,0],

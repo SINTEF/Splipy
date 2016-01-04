@@ -218,8 +218,8 @@ class TestSurface(unittest.TestCase):
 
         # test a rational 2D surface 
         controlpoints = [[0,0,1],[-1,1,.96],[0,2,1],  [1,-1,1],[1,0,.8],[1,1,1],  [2,1,.89],[2,2,.9],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
-        basis1 = bsplinebasis(3, [0,0,0,.4,1,1,1])
-        basis2 = bsplinebasis(3, [0,0,0,1,1,1])
+        basis1 = BSplineBasis(3, [0,0,0,.4,1,1,1])
+        basis2 = BSplineBasis(3, [0,0,0,1,1,1])
         surf = Surface(basis1, basis2, controlpoints, True)
 
         evaluation_point1 = surf(0.23, 0.37)
@@ -244,7 +244,7 @@ class TestSurface(unittest.TestCase):
             surf.insert_knot(1, 2, 3)          # too many arguments
         with self.assertRaises(TypeError):
             surf.insert_knot(1)                # too few arguments
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             surf.insert_knot("tree-fiddy", .5) # wrong argument type
         with self.assertRaises(ValueError):
             surf.insert_knot(0, -0.2)          # Outside-domain error
