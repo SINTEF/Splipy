@@ -4,11 +4,18 @@ import numpy as np
 
 class Volume(ControlPointOperations):
 
-    def __init__(self, order1=2, order2=2, order3=2, knot1=None, knot2=None, knot3=None, controlpoints=None, rational=False):
+    def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
 
-        self.basis1 = BSplineBasis(order1, knot1)
-        self.basis2 = BSplineBasis(order2, knot2)
-        self.basis3 = BSplineBasis(order3, knot3)
+        if basis1 is None:
+            basis1 = BSplineBasis()
+        if basis2 is None:
+            basis2 = BSplineBasis()
+        if basis3 is None:
+            basis3 = BSplineBasis()
+
+        self.basis1 = basis1
+        self.basis2 = basis2
+        self.basis3 = basis3
         
         # if none provided, create the default geometry which is the linear mapping onto the unit cube (0,1)^3
         if controlpoints is None:
@@ -17,9 +24,9 @@ class Volume(ControlPointOperations):
             greville_points2 = self.basis2.greville()
             greville_points3 = self.basis3.greville()
             for p3 in greville_points3:
-              for p2 in greville_points2:
-                  for p1 in greville_points1:
-                      controlpoints.append([p1,p2,p3])
+                for p2 in greville_points2:
+                    for p1 in greville_points1:
+                        controlpoints.append([p1,p2,p3])
         
         self.dimension     = len(controlpoints[0]) - rational
         self.rational      = rational
@@ -41,6 +48,31 @@ class Volume(ControlPointOperations):
         @return : Geometry coordinates. 4D-array X(i,j,k,l) of component x(l) evaluated at (u[i],v[j],w[k])
         @rtype  : numpy.array
         """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+        try:
+            len(w)
+        except TypeError:
+            w = [w]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0:
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis3.periodic < 0:
+            if min(w) < self.basis3.start() or self.basis3.end() < max(w):
+                raise ValueError('evaluation outside parametric domain')
+
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
         Nu = self.basis1.evaluate(u)
         Nv = self.basis2.evaluate(v)
@@ -50,6 +82,7 @@ class Volume(ControlPointOperations):
         result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
         result = np.tensordot(Nv, result,             axes=(1,1))
         result = np.tensordot(Nw, result,             axes=(1,2))
+        result = result.transpose((2,1,0,3)) # I really dont know why it insist on storing it in the wrong order :(
 
         # Project rational volumes down to geometry space: x = X/W, y=Y/W, z=Z/W
         if self.rational: 
@@ -60,6 +93,82 @@ class Volume(ControlPointOperations):
         # in case of single value input (u,v,w), return vector instead of 4D-matrix
         if result.shape[0] == 1 and result.shape[1] == 1 and result.shape[2] == 1:
             result = np.array(result[0,0,0,:]).reshape(self.dimension)
+        return result
+        
+    def evaluate_derivative(self, u, v, w, du=1, dv=1, dw=1):
+        """Evaluate the derivative of the volume at given parametric values
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @param w : Parametric coordinate point(s) in third direction
+        @type  w : Float or list of Floats
+        @param du: Number of derivatives in u
+        @type  du: Int
+        @param dv: Number of derivatives in v
+        @type  dv: Int
+        @param dw: Number of derivatives in w
+        @type  dw: Int
+        @return  : 4D-array D^(du,dv,dw) X(i,j) of component x(l) differentiated (du,dv,dw) times at (u[i],v[j],w[k])
+        @rtype   : numpy.ndarray
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+        try:
+            len(w)
+        except TypeError:
+            w = [w]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0:
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis3.periodic < 0:
+            if min(w) < self.basis3.start() or self.basis3.end() < max(w):
+                raise ValueError('evaluation outside parametric domain')
+
+        # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
+        dNu = self.basis1.evaluate(u, du)
+        dNv = self.basis2.evaluate(v, dv)
+        dNw = self.basis3.evaluate(w, dw)
+
+        # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j],w[k])
+        result = np.tensordot(dNu, self.controlpoints, axes=(1,0))
+        result = np.tensordot(dNv, result,             axes=(1,1))
+        result = np.tensordot(dNw, result,             axes=(1,2))
+        result = result.transpose((2,1,0,3)) # I really dont know why it insist on storing it in the wrong order :(
+
+        # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
+        # x(u,v) = sum_ijk N_i(u) * N_j(v) * N_k(w) * (w_ijk*x_ijk) / W(u,v,w)
+        # W(u,v) = sum_ijk N_i(u) * N_j(v) * N_k(w) * w_ijk
+        # dx/du =  sum_ijk N_i'(u)*N_j(v)*N_k(w) * (w_ijk*x_ijk) / W(u,v,w) - sum_ijk N_i(u)N_j(v)_N_k(w)*w_ijk*x_ijk* W'(u,v,w)/W(u,v,w)^2
+        if self.rational: 
+            if du+dv+dw>1:
+                raise RuntimeError('Rational derivatives not implemented for derivatives larger than 1')
+            Nu = self.basis.evaluate(u)
+            Nv = self.basis.evaluate(v)
+            Nw = self.basis.evaluate(w)
+            non_derivative = np.tensordot(Nu, self.controlpoints, axes=(1,0))
+            non_derivative = np.tensordot(Nv, non_derivative,     axes=(1,1))
+            non_derivative = np.tensordot(Nw, non_derivative,     axes=(1,2))
+            non_derivative = non_derivative.transpose((2,1,0,3))
+            W    = non_derivative[:,:,:,-1]  # W(u,v,w)
+            Wder = result[:,:,:,-1]          # dW/du or dW/dv or dW/dw
+            for i in range(self.dimension):
+                result[:,:,:,i] = result[:,:,:,i]/W - non_derivative[:,:,:,i]*Wder/W/W
+
+            result = np.delete(result, self.dimension, 1) # remove the weight column
+
         return result
 
     def flip_parametrization(self, direction):
@@ -95,12 +204,13 @@ class Volume(ControlPointOperations):
         else:
             return (self.basis1.get_knot_spans(), self.basis2.get_knot_spans(), self.basis3.get_knot_spans())
 
-    def force_rational(self):
-        """Force a rational representation by including weights of all value 1"""
-        if not self.rational:
-            n1,n2,n3,d = self.controlpoints.shape # n1 x n2 x n3 controlpoints of dimension d
-            self.controlpoints = np.insert(self.controlpoints, d, np.ones((n1,n2,n3)), 3)
-            self.rational = 1
+    def start(self):
+        """Return the start of the parametric domain"""
+        return (self.basis1.start(), self.basis2.start(), self.basis3.start())
+
+    def end(self):
+        """Return the end of the parametric domain"""
+        return (self.basis1.end(), self.basis2.end(), self.basis3.end())
 
     def swap_parametrization(self, pardir1, pardir2):
         """Swaps the two volume parameter directions"""
@@ -148,10 +258,105 @@ class Volume(ControlPointOperations):
         wmax.swap_parametrization()
         return [umin, umax, vmin, vmax, wmin, wmax]
 
-        
+    def raise_order(self, raise_u, raise_v, raise_w):
+        """Raise the order of a spline volume
+        @param raise_u: Number of polynomial degrees to increase in u
+        @type  raise_u: Int
+        @param raise_v: Number of polynomial degrees to increase in v
+        @type  raise_v: Int
+        @param raise_w: Number of polynomial degrees to increase in w
+        @type  raise_w: Int
+        """
+        # create the new basis
+        newKnot1  = self.basis1.get_raise_order_knot(raise_u)
+        newBasis1 = BSplineBasis(self.basis1.order + raise_u, newKnot1, self.basis1.periodic)
+        newKnot2  = self.basis2.get_raise_order_knot(raise_v)
+        newBasis2 = BSplineBasis(self.basis2.order + raise_v, newKnot2, self.basis2.periodic)
+        newKnot3  = self.basis3.get_raise_order_knot(raise_w)
+        newBasis3 = BSplineBasis(self.basis3.order + raise_w, newKnot3, self.basis3.periodic)
+
+        # set up an interpolation problem. This is in projective space, so no problems for rational cases
+        interpolation_pts_u = newBasis1.greville()        # parametric interpolation points u
+        interpolation_pts_v = newBasis2.greville()        # parametric interpolation points v
+        interpolation_pts_w = newBasis3.greville()        # parametric interpolation points w
+        N_u_old = self.basis1.evaluate( interpolation_pts_u )
+        N_u_new =   newBasis1.evaluate( interpolation_pts_u )
+        N_v_old = self.basis2.evaluate( interpolation_pts_v )
+        N_v_new =   newBasis2.evaluate( interpolation_pts_v )
+        N_w_old = self.basis3.evaluate( interpolation_pts_w )
+        N_w_new =   newBasis3.evaluate( interpolation_pts_w )
+        tmp = np.tensordot(N_u_old, self.controlpoints, axes=(1,0))
+        tmp = np.tensordot(N_v_old, tmp,                axes=(1,1)) 
+        tmp = np.tensordot(N_w_old, tmp,                axes=(1,2)) # projective interpolation points (x,y,z,w)
+        interpolation_pts_x = tmp.transpose((2,1,0,3)) # 4D-tensor with elements (i,j,k,l) of component x[l] evaluated at u[i] v[j] w[k]
+
+        # solve the interpolation problem
+        N_u_inv = np.linalg.inv(N_u_new)
+        N_v_inv = np.linalg.inv(N_v_new)
+        N_w_inv = np.linalg.inv(N_w_new) # these are inverses of the 1D problems, and small compared to the total number of unknowns
+        tmp = np.tensordot(N_u_inv, interpolation_pts_x, axes=(1,0))
+        tmp = np.tensordot(N_v_inv, tmp,                 axes=(1,1))
+        tmp = np.tensordot(N_w_inv, tmp,                 axes=(1,2))
+
+        # update the basis and controlpoints of the volume
+        self.controlpoints = tmp.transpose((2,1,0,3))
+        self.basis1        = newBasis1
+        self.basis2        = newBasis2
+        self.basis3        = newBasis3
+
+    def insert_knot(self, direction, knot):
+        """Insert a knot into this spline volume
+        @param direction: The parametric direction (u=0, v=1, w=2)
+        @type  direction: Int
+        @param knot:      The knot(s) to insert
+        @type  knot:      Float or list of Floats
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(knot)
+        except TypeError:
+            knot = [knot]
+        if direction != 0 and direction != 1 and direction != 2:
+            raise ValueError('direction must be 0, 1 or 2')
+
+        (n1,n2,n3,dim) = self.controlpoints.shape
+        if direction==0:
+            C = np.matrix(np.identity(n1))
+            for k in knot:
+                C = self.basis1.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,0))
+        elif direction==1:
+            C = np.matrix(np.identity(n2))
+            for k in knot:
+                C = self.basis2.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,1)).transpose((1,0,2,3))
+        elif direction==2:
+            C = np.matrix(np.identity(n3))
+            for k in knot:
+                C = self.basis3.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,2)).transpose((1,2,0,3))
+
+    def write_g2(self, outfile):
+        """write GoTools formatted SplineVolume to file"""
+        outfile.write('700 1 0 0\n') # volume header, gotools version 1.0.0
+        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
+        self.basis1.write_g2(outfile)
+        self.basis2.write_g2(outfile)
+        self.basis3.write_g2(outfile)
+
+        (n1,n2,n3,n4) = self.controlpoints.shape
+        for k in range(n3) + range(self.basis3.periodic+1):
+            for j in range(n2) + range(self.basis2.periodic+1):
+                for i in range(n1) + range(self.basis1.periodic+1):
+                    for d in range(n4):
+                        outfile.write('%f ' % self.controlpoints[i,j,k,d])
+                    outfile.write('\n')
 
 
 
+    def __call__(self, u,v,w):
+        """see evaluate(u,v,w)"""
+        return self.evaluate(u,v,w)
 
     def __len__(self):
         """return the number of control points (basis functions) for this volume"""
@@ -162,20 +367,14 @@ class Volume(ControlPointOperations):
         i1 = int(i % n1     )
         i2 = int(i / n1)% n2
         i3 = int(i / n1 / n2)
-        if self.rational:
-            return self.controlpoints[i1,i2,i3,:-1] / self.controlpoints[i1,i2,i3,-1]
-        else:
-            return self.controlpoints[i1,i2,i3,:]
+        return self.controlpoints[i1,i2,i3,:]
 
     def __setitem__(self, i, newCP):
         (n1,n2,n3,dim) = self.controlpoints.shape
         i1 = int(i % n1     )
         i2 = int(i / n1)% n2
         i3 = int(i / n1 / n2)
-        if self.rational:
-            self.controlpoints[i1,i2,i3,:-1] = newCP * self.controlpoints[i1,i2,i3,-1]
-        else:
-            self.controlpoints[i1,i2,i3,:]   = newCP
+        self.controlpoints[i1,i2,i3,:]   = newCP
         return self
 
     def __repr__(self):

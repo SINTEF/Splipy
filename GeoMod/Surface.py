@@ -4,10 +4,15 @@ import numpy as np
 
 class Surface(ControlPointOperations):
 
-    def __init__(self, order1=2, order2=2, knot1=None, knot2=None, controlpoints=None, rational=False):
+    def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False):
 
-        self.basis1 = BSplineBasis(order1, knot1)
-        self.basis2 = BSplineBasis(order2, knot2)
+        if basis1 is None:
+            basis1 = BSplineBasis()
+        if basis2 is None:
+            basis2 = BSplineBasis()
+
+        self.basis1 = basis1
+        self.basis2 = basis2
         
         # if none provided, create the default geometry which is the linear mapping onto the unit square (0,1)^2
         if controlpoints is None:
@@ -36,13 +41,31 @@ class Surface(ControlPointOperations):
         @return : Geometry coordinates. 3D-array X(i,j,k) of component x(k) evaluated at (u[i],v[j])
         @rtype  : numpy.array
         """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0: # periodic functions can evaluate everywhere
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
         Nu = self.basis1.evaluate(u)
         Nv = self.basis2.evaluate(v)
 
         # compute physical points [x,y,z] for all points (u[i],v[j]). For rational surfaces, compute [X,Y,Z,W] (in projective space)
-        result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
-        result = np.tensordot(Nv, result,             axes=(1,1))
+        result = np.tensordot(Nv, self.controlpoints, axes=(1,1))
+        result = np.tensordot(Nu, result,             axes=(1,1))
 
         # Project rational surfaces down to geometry space: x = X/W, y=Y/W, z=Z/W
         if self.rational: 
@@ -52,6 +75,116 @@ class Surface(ControlPointOperations):
 
         if result.shape[0] == 1 and result.shape[1] == 1: # in case of single value input (u,v), return vector instead of 3D-matrix
             result = np.array(result[0,0,:]).reshape(self.dimension)
+        return result
+
+    def evaluate_normal(self, u, v):
+        """Evaluate the normal vector of the surface at given parametric value(s). The returned values are not normalized
+        @param t : Parametric coordinate point(s)
+        @type  t : Float or list of Floats
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @return  : 3D-array X(i,j,k) of the normal component x(k) evaluated at (u[i],v[j])
+        @rtype   : numpy.ndarray
+        """
+        if self.dimension==2:
+            try:
+                result = np.zeros((len(u), len(v), 3))
+                result[:,:,2] = 1
+                return result
+            except TypeError: # single valued input u, fails on len(u)
+                return np.array([0,0,1])
+        elif self.dimension==3:
+            (du,dv) = self.evaluate_tangent(u,v)
+            result = np.zeros(du.shape)
+            # the cross product of the tangent is the normal
+            if len(du.shape)==1: 
+                result[0] = du[1]*dv[2] - du[2]*dv[1]
+                result[1] = du[2]*dv[0] - du[0]*dv[2]
+                result[2] = du[0]*dv[1] - du[1]*dv[0]
+            else: # grid evaluation 
+                result[:,:,0] = du[:,:,1]*dv[:,:,2] - du[:,:,2]*dv[:,:,1]
+                result[:,:,1] = du[:,:,2]*dv[:,:,0] - du[:,:,0]*dv[:,:,2]
+                result[:,:,2] = du[:,:,0]*dv[:,:,1] - du[:,:,1]*dv[:,:,0]
+            return result
+        else:
+            raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
+
+    def evaluate_tangent(self, u, v):
+        """Evaluate the two tangent vectors of the surface at given parametric values
+        @param t : Parametric coordinate point(s)
+        @type  t : Float or list of Floats
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @return  : two 3D-arrays (dX/du, dX/dv) of the tangential component x(k) evaluated at (u[i],v[j])
+        @rtype   : tuple of two numpy.ndarray
+        """
+        return (self.evaluate_derivative(u,v,1,0), self.evaluate_derivative(u,v,0,1))
+
+    def evaluate_derivative(self, u, v, du=1, dv=1):
+        """Evaluate the derivative of the surface at given parametric values
+        @param u : Parametric coordinate point(s) in first direction
+        @type  u : Float or list of Floats
+        @param v : Parametric coordinate point(s) in second direction
+        @type  v : Float or list of Floats
+        @param du: Number of derivatives in u
+        @type  du: Int
+        @param dv: Number of derivatives in v
+        @type  dv: Int
+        @return  : 3D-array D^(du,dv) X(i,j) of component x(k) differentiated (du,dv) times at (u[i],v[j])
+        @rtype   : numpy.array
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(u)
+        except TypeError:
+            u = [u]
+        try:
+            len(v)
+        except TypeError:
+            v = [v]
+
+        # error test input
+        if self.basis1.periodic < 0: # periodic functions can evaluate everywhere
+            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+                raise ValueError('evaluation outside parametric domain')
+        if self.basis2.periodic < 0: # periodic functions can evaluate everywhere
+            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+                raise ValueError('evaluation outside parametric domain')
+
+        # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
+        dNu = self.basis1.evaluate(u, du)
+        dNv = self.basis2.evaluate(v, dv)
+
+        # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j])
+        result = np.tensordot(dNv, self.controlpoints, axes=(1,1))
+        result = np.tensordot(dNu, result,             axes=(1,1))
+
+        # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
+        # x(u,v) = sum_ij N_i(u) * N_j(v) * (w_ij*x_ij) / W(u,v)
+        # W(u,v) = sum_ij N_i(u) * N_j(v) * w_ij
+        # dx/du =  sum_ij N_i'(u)*N_j(v) * (w_ij*x_ij) / W(u,v) - sum_ij N_i(u)N_j(v)*w_ij*x_ij* W'(u,v)/W(u,v)^2
+        if self.rational: 
+            if du+dv>1:
+                raise RuntimeError('Rational derivatives not implemented for derivatives larger than 1')
+            Nu = self.basis.evaluate(u)
+            Nv = self.basis.evaluate(v)
+            non_derivative = np.tensordot(Nv, self.controlpoints, axes=(1,1))
+            non_derivative = np.tensordot(Nu, non_derivative,     axes=(1,1))
+            W    = non_derivative[:,:,-1]  # W(u,v)
+            Wder = result[:,:,-1]          # dW(u,v)/du or dW(u,v)/dv
+            for i in range(self.dimension):
+                result[:,:,i] = result[:,:,i]/W - non_derivative[:,:,i]*Wder/W/W
+
+            result = np.delete(result, self.dimension, 1) # remove the weight column
+
+        if result.shape[0] == 1 and result.shape[1] == 1: # in case of single value input (u,v), return vector instead of 3D-matrix
+            result = np.array(result[0,0,:]).reshape(self.dimension)
+        return result
+
         return result
 
     def flip_parametrization(self, direction):
@@ -84,12 +217,13 @@ class Surface(ControlPointOperations):
         else:
             return (self.basis1.get_knot_spans(), self.basis2.get_knot_spans())
 
-    def force_rational(self):
-        """Force a rational representation by including weights of all value 1"""
-        if not self.rational:
-            n1,n2,d = self.controlpoints.shape # n1 x n2 controlpoints of dimension d
-            self.controlpoints = np.insert(self.controlpoints, d, np.ones((n1,n2)), 2)
-            self.rational = 1
+    def start(self):
+        """Return the start of the parametric domain"""
+        return (self.basis1.start(), self.basis2.start())
+
+    def end(self):
+        """Return the end of the parametric domain"""
+        return (self.basis1.end(), self.basis2.end())
 
     def swap_parametrization(self):
         """Swaps the two surface parameter directions"""
@@ -122,8 +256,87 @@ class Surface(ControlPointOperations):
         vmax.flip_parametrization()
         return [vmin, umax, vmax, umin]
 
+    def raise_order(self, raise_u, raise_v):
+        """Raise the order of a spline surface
+        @param raise_u: Number of polynomial degrees to increase in u
+        @type  raise_u: Int
+        @param raise_v: Number of polynomial degrees to increase in v
+        @type  raise_v: Int
+        """
+        # create the new basis
+        newKnot1  = self.basis1.get_raise_order_knot(raise_u)
+        newBasis1 = BSplineBasis(self.basis1.order + raise_u, newKnot1, self.basis1.periodic)
+        newKnot2  = self.basis2.get_raise_order_knot(raise_v)
+        newBasis2 = BSplineBasis(self.basis2.order + raise_v, newKnot2, self.basis2.periodic)
+
+        # set up an interpolation problem. This is in projective space, so no problems for rational cases
+        interpolation_pts_u = newBasis1.greville()        # parametric interpolation points u
+        interpolation_pts_v = newBasis2.greville()        # parametric interpolation points v
+        N_u_old = self.basis1.evaluate( interpolation_pts_u )
+        N_u_new =   newBasis1.evaluate( interpolation_pts_u )
+        N_v_old = self.basis2.evaluate( interpolation_pts_v )
+        N_v_new =   newBasis2.evaluate( interpolation_pts_v )
+        tmp = np.tensordot(N_v_old, self.controlpoints, axes=(1,1))
+        tmp = np.tensordot(N_u_old, tmp,                axes=(1,1)) # projective interpolation points (x,y,z,w)
+        interpolation_pts_x = tmp # 3D-tensor with elements (i,j,k) of component x[k] evaluated at u[i] v[j]
+
+        # solve the interpolation problem
+        N_u_inv = np.linalg.inv(N_u_new)
+        N_v_inv = np.linalg.inv(N_v_new) # these are inverses of the 1D problems, and small compared to the total number of unknowns
+        tmp = np.tensordot(N_v_inv, interpolation_pts_x, axes=(1,1))
+        tmp = np.tensordot(N_u_inv, tmp,                 axes=(1,1))
+
+        # update the basis and controlpoints of the surface
+        self.controlpoints = tmp
+        self.basis1        = newBasis1
+        self.basis2        = newBasis2
+
+    def insert_knot(self, direction, knot):
+        """Insert a knot into this spline surface
+        @param direction: The parametric direction (u=0, v=1)
+        @type  direction: Int
+        @param knot:      The knot(s) to insert
+        @type  knot:      Float or list of Floats
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(knot)
+        except TypeError:
+            knot = [knot]
+        if direction != 0 and direction != 1:
+            raise ValueError('direction must be 0 or 1')
+
+        (n1,n2,dim) = self.controlpoints.shape
+        if direction==0:
+            C = np.matrix(np.identity(n1))
+            for k in knot:
+                C = self.basis1.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,0))
+        else:
+            C = np.matrix(np.identity(n2))
+            for k in knot:
+                C = self.basis2.insert_knot(k) * C
+            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,1)).transpose((1,0,2))
+
+    def write_g2(self, outfile):
+        """write GoTools formatted SplineSurface to file"""
+        outfile.write('200 1 0 0\n') # surface header, gotools version 1.0.0
+        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
+        self.basis1.write_g2(outfile)
+        self.basis2.write_g2(outfile)
+
+        (n1,n2,n3) = self.controlpoints.shape
+        for j in range(n2) + range(self.basis2.periodic+1):
+            for i in range(n1) + range(self.basis1.periodic+1):
+                for k in range(n3):
+                    outfile.write('%f ' % self.controlpoints[i,j,k])
+                outfile.write('\n')
 
 
+
+    def __call__(self, u,v):
+        """see evaluate(u,v)"""
+        return self.evaluate(u,v)
 
     def __len__(self):
         """return the number of control points (basis functions) for this surface"""
@@ -133,19 +346,13 @@ class Surface(ControlPointOperations):
         (n1,n2,dim) = self.controlpoints.shape
         i1 =     i % n1
         i2 = int(i / n1)
-        if self.rational:
-            return self.controlpoints[i1,i2,:-1] / self.controlpoints[i1,i2,-1]
-        else:
-            return self.controlpoints[i1,i2,:]
+        return self.controlpoints[i1,i2,:]
 
     def __setitem__(self, i, newCP):
         (n1,n2,dim) = self.controlpoints.shape
         i1 =     i % n1
         i2 = int(i / n1)
-        if self.rational:
-            self.controlpoints[i1,i2,:-1] = newCP * self.controlpoints[i1,i2,-1]
-        else:
-            self.controlpoints[i1,i2,:]   = newCP
+        self.controlpoints[i1,i2,:]   = newCP
         return self
 
     def __repr__(self):

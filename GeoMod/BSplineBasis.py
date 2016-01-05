@@ -23,6 +23,7 @@ class BSplineBasis:
             knots = [0]*order + [1]*order
 
         self.knots    = np.array(knots)
+        self.knots    = self.knots.astype(float)
         self.order    = order
         self.periodic = periodic
 
@@ -88,6 +89,8 @@ class BSplineBasis:
         n = len(self.knots)-p                       # number of basis functions (without periodicity)
         N = np.matrix(np.zeros((len(t),n)))
         for i in range(len(t)):                     # for all evaluation points t
+            if p<=d:
+                continue                            # requesting more derivatives than polymoial degree: return all zeros
             evalT = t[i]
             if self.periodic >= 0:                  # wrap periodic evaluation into domain
                 if t[i]<self.start() or t[i]>self.end():
@@ -150,11 +153,67 @@ class BSplineBasis:
                 result.append(k)
         return result
 
+    def get_raise_order_knot(self, amount):
+        """Return the knot vector corresponding to a raise_order operation, keeping the continuity at the knots unchanged by increasing their multiplicity"""
+        if type(amount) is not int:
+            raise TypeError( 'amount needs to be a positive integer')
+        if amount < 0:
+            raise ValueError('amount needs to be a positive integer')
+        knot_spans = list(self.get_knot_spans())      # list of unique knots
+        result = list(self.knots) + knot_spans*amount # for every degree we raise, we need to increase the multiplicity at the knots by one
+        result.sort()                                 # make it a proper knot vector by ensuring that it is non-decreasing
+        return result
 
+    def insert_knot(self, new_knot):
+        """ Returns an extremely sparse matrix C such that N_new = N_old*C,
+        where N is a (row)vector of the basis functions. Also inserts new_knot
+        in the knot vector.
+        @param new_knot: The parametric coordinate point to insert
+        @type  new_knot: Float
+        @return:         Matrix C
+        @rtype:          numpy.array
+        """
+        if new_knot < self.knots[0] or self.knots[-1] < new_knot:
+            raise ValueError('new_knot out of range')
+        # mu is the index of last non-zero (old) basis function
+        mu = bisect_right( self.knots, new_knot)
+        n  = len(self)
+        p  = self.order
+        C  = np.zeros((n+1,n))
+        # the modulus operator i%n in the C-matrix is needed for periodic basis functions
+        for i in range(mu-p):
+            C[i%(n+1),i%n] = 1
+        for i in range(mu-p,mu):
+            if self.knots[i+p-1] <= new_knot and new_knot <= self.knots[i+p]:
+                C[i%(n+1),i%n] = 1
+            else:
+                C[i%(n+1),i%n] = (new_knot-self.knots[i]  )/(self.knots[i+p-1]-self.knots[i])
+            if self.knots[i] <= new_knot and new_knot <= self.knots[i+1]:
+                C[(i+1)%(n+1),i%n] = 1
+            else:
+                C[(i+1)%(n+1),i%n] = (self.knots[i+p]-new_knot)/(self.knots[i+p]-self.knots[i+1])
+        for i in range(mu,n+1):
+            C[i%(n+1),(i-1)%n] = 1
+
+        self.knots = np.insert(self.knots, mu, new_knot)
+
+        return C
+
+    def write_g2(self, outfile):
+        """write GoTools formatted BSplineBasis to file"""
+        outfile.write('%i %i\n' % (len(self.knots)-self.order, self.order))
+        for k in self.knots:
+            outfile.write('%f ' % k)
+        outfile.write('\n')
+
+
+    def __call__(self, t):
+        """see evaluate(t)"""
+        return self.evaluate(t)
 
     def __len__(self):
         """returns the number of functions in this basis"""
-        return len(self.knots) - self.order
+        return len(self.knots) - self.order - (self.periodic+1)
 
     def __getitem__(self, i):
         """returns knot i, including multiplicities"""
