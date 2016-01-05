@@ -68,7 +68,7 @@ def circle_segment(theta, r=1):
         raise ValueError('radius needs to be positive')
 
     # build knot vector
-    knot_spans = int(theta / (2*np.pi/3) )
+    knot_spans = int(ceil(theta / (2*np.pi/3) ))
     knot = [0]
     for i in range(knot_spans+1):
         knot += [i]*2

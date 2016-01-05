@@ -185,6 +185,18 @@ class Curve(ControlPointOperations):
 
         self.controlpoints = C * self.controlpoints
 
+    def write_g2(self, outfile):
+        """write GoTools formatted SplineCurve to file"""
+        outfile.write('100 1 0 0\n') # surface header, gotools version 1.0.0
+        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
+        self.basis.write_g2(outfile)
+
+        (n1,n2) = self.controlpoints.shape
+        for i in range(n1) + range(self.basis.periodic+1):
+            for j in range(n2):
+                outfile.write('%f ' % self.controlpoints[i,j])
+            outfile.write('\n')
+
 
     def __call__(self, t):
         """see evaluate(t)"""

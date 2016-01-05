@@ -318,6 +318,20 @@ class Surface(ControlPointOperations):
                 C = self.basis2.insert_knot(k) * C
             self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,1)).transpose((1,0,2))
 
+    def write_g2(self, outfile):
+        """write GoTools formatted SplineSurface to file"""
+        outfile.write('200 1 0 0\n') # surface header, gotools version 1.0.0
+        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
+        self.basis1.write_g2(outfile)
+        self.basis2.write_g2(outfile)
+
+        (n1,n2,n3) = self.controlpoints.shape
+        for j in range(n2) + range(self.basis2.periodic+1):
+            for i in range(n1) + range(self.basis1.periodic+1):
+                for k in range(n3):
+                    outfile.write('%f ' % self.controlpoints[i,j,k])
+                outfile.write('\n')
+
 
 
     def __call__(self, u,v):

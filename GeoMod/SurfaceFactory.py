@@ -93,9 +93,9 @@ def revolve(curve, theta=2*np.pi):
     # circle curve with weights 1/sqrt(2), only here C0-periodic, so 8 points
     for i in range(8):
         if i%2 == 0:
-            weight = 1
+            weight = 1.0
         else:
-            weight = 1/sqrt(2)
+            weight = 1.0/sqrt(2)
         cp[i*n:(i+1)*n,:]  = curve.controlpoints
         cp[i*n:(i+1)*n,2] *= weight
         cp[i*n:(i+1)*n,3] *= weight

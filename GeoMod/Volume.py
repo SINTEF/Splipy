@@ -336,6 +336,22 @@ class Volume(ControlPointOperations):
                 C = self.basis3.insert_knot(k) * C
             self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,2)).transpose((1,2,0,3))
 
+    def write_g2(self, outfile):
+        """write GoTools formatted SplineVolume to file"""
+        outfile.write('700 1 0 0\n') # volume header, gotools version 1.0.0
+        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
+        self.basis1.write_g2(outfile)
+        self.basis2.write_g2(outfile)
+        self.basis3.write_g2(outfile)
+
+        (n1,n2,n3,n4) = self.controlpoints.shape
+        for k in range(n3) + range(self.basis3.periodic+1):
+            for j in range(n2) + range(self.basis2.periodic+1):
+                for i in range(n1) + range(self.basis1.periodic+1):
+                    for d in range(n4):
+                        outfile.write('%f ' % self.controlpoints[i,j,k,d])
+                    outfile.write('\n')
+
 
 
     def __call__(self, u,v,w):

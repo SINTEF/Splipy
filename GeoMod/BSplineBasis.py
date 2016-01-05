@@ -180,24 +180,36 @@ class BSplineBasis:
         n  = len(self)
         p  = self.order
         C  = np.zeros((n+1,n))
+        # the modulus operator i%n in the C-matrix is needed for periodic basis functions
         for i in range(mu-p):
-            C[i,i] = 1
+            C[i%(n+1),i%n] = 1
         for i in range(mu-p,mu):
             if self.knots[i+p-1] <= new_knot and new_knot <= self.knots[i+p]:
-                C[i,i] = 1
+                C[i%(n+1),i%n] = 1
             else:
-                C[i,i] = (new_knot-self.knots[i]  )/(self.knots[i+p-1]-self.knots[i])
+                C[i%(n+1),i%n] = (new_knot-self.knots[i]  )/(self.knots[i+p-1]-self.knots[i])
             if self.knots[i] <= new_knot and new_knot <= self.knots[i+1]:
-                C[i+1,i] = 1
+                C[(i+1)%(n+1),i%n] = 1
             else:
-                C[i+1,i] = (self.knots[i+p]-new_knot)/(self.knots[i+p]-self.knots[i+1])
+                C[(i+1)%(n+1),i%n] = (self.knots[i+p]-new_knot)/(self.knots[i+p]-self.knots[i+1])
         for i in range(mu,n+1):
-            C[i,i-1] = 1
+            C[i%(n+1),(i-1)%n] = 1
 
         self.knots = np.insert(self.knots, mu, new_knot)
 
         return C
 
+    def write_g2(self, outfile):
+        """write GoTools formatted BSplineBasis to file"""
+        outfile.write('%i %i\n' % (len(self.knots)-self.order, self.order))
+        for k in self.knots:
+            outfile.write('%f ' % k)
+        outfile.write('\n')
+
+
+    def __call__(self, t):
+        """see evaluate(t)"""
+        return self.evaluate(t)
 
     def __len__(self):
         """returns the number of functions in this basis"""
