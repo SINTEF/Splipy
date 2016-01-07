@@ -1,3 +1,4 @@
+from BSplineBasis import *
 import CurveFactory
 import SurfaceFactory
 import VolumeFactory
@@ -141,6 +142,23 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(surf.rational, False)
         self.assertEqual(surf.get_order(), (2,2))
 
+    def test_curve_interpolation(self):
+        basis = BSplineBasis(4, [0,0,0,0,.3,.9,1,1,1,1])
+        t = np.array(basis.greville())
+        # create the mapping (x,y,z)=(t^2, 1-t, t^3+2*t)
+        x_pts = np.zeros((len(t),3))
+        x_pts[:,0] = t*t
+        x_pts[:,1] = 1-t
+        x_pts[:,2] = t*t*t + 2*t
+        crv = CurveFactory.interpolate(x_pts, basis)
+        self.assertEqual(crv.get_order(), 4)
+        self.assertAlmostEqual(crv(.4)[0], .4**2)      # x=t^2
+        self.assertAlmostEqual(crv(.4)[1], 1-.4)       # y=1-t
+        self.assertAlmostEqual(crv(.4)[2], .4**3+2*.4) # z=t^3+2t
+        self.assertAlmostEqual(crv(.5)[0], .5**2)      # x=t^2
+        self.assertAlmostEqual(crv(.5)[1], 1-.5)       # y=1-t
+        self.assertAlmostEqual(crv(.5)[2], .5**3+2*.5) # z=t^3+2t
+
     def test_disc(self):
         pi = np.pi
         ### radial disc
@@ -236,8 +254,6 @@ class TestFactory(unittest.TestCase):
         # test 7x7 grid for radius = 1
         for u in np.linspace(surf.start()[0], surf.end()[0], 7):
             for v in np.linspace(surf.start()[1], surf.end()[1], 7):
-                # print u, v, ' = ', surf(u,v)
-                # print np.linalg.norm(surf(u,v))
                 self.assertAlmostEqual(np.linalg.norm(surf(u,v),2), 1.0)
 
     def test_cylinder_surface(self):

@@ -1,6 +1,7 @@
 from BSplineBasis import *
 from ControlPointOperations import *
 import numpy as np
+import copy
 
 class Curve(ControlPointOperations):
 
@@ -19,7 +20,7 @@ class Curve(ControlPointOperations):
         
         self.controlpoints = np.array(controlpoints)
         self.rational      = rational
-        self.dimension     = len(controlpoints[0]) - rational
+        self.dimension     = len(self.controlpoints[0]) - rational
 
     def evaluate(self, t):
         """Evaluate the curve at given parametric values
@@ -52,7 +53,7 @@ class Curve(ControlPointOperations):
             result = np.delete(result, self.dimension, 1) # remove the weight column
 
         if result.shape[0] == 1: # in case of single value input t, return vector instead of matrix
-            result = np.array(result[0,:]).reshape(self.dimension)
+            result = np.array(result).reshape(self.dimension)
 
         return result
 
@@ -63,7 +64,7 @@ class Curve(ControlPointOperations):
         @return : Tangent evaluation. Matrix DX(i,j) of component x(j) evaluated at t(i)
         @rtype  : numpy.array
         """
-        return self.derivative(t,1)
+        return self.evaluate_derivative(t,1)
 
     def evaluate_derivative(self, t, d=1):
         """Evaluate the derivative of the curve at given parametric values
@@ -91,14 +92,25 @@ class Curve(ControlPointOperations):
         # W(t) = sum_j N_j(t) * w_j
         # dx/dt =  sum_i N_i'(t)*w_i*x_i / W(t) - sum_i N_i(t)*w_i*x_i* W'(t)/W(t)^2
         if self.rational: 
-            if d>1:
-                raise RuntimeError('Rational derivatives not implemented for derivatives larger than 1')
-            N = self.basis.evaluate(t)
-            non_derivative = N*self.controlpoints
-            W    = non_derivative[:,-1]  # W(t)
-            Wder = result[:,-1]          # W'(t)
-            for i in range(self.dimension):
-                result[:,i] = result[:,i]/W - non_derivative[:,i]*Wder/W/W
+            if d==1:
+                N = self.basis.evaluate(t)
+                non_derivative = N*self.controlpoints
+                W    = non_derivative[:,-1]  # W(t)
+                Wder = result[:,-1]          # W'(t)
+                for i in range(self.dimension):
+                    result[:,i] = result[:,i]/W - non_derivative[:,i]*Wder/W/W
+
+            elif d==2:
+                d2 = result
+                d1 = self.basis.evaluate(t,1) * self.controlpoints;
+                d0 = self.basis.evaluate(t)   * self.controlpoints;
+                W  = d0[:,-1] # W(t)
+                W1 = d1[:,-1] # W'(t)
+                W2 = d1[:,-1] # W''(t)
+                for i in range(self.dimension):
+                    result[:,i] = (d2[:,i]*W*W - 2*W1*(d1[:,i]*W0 - d0[:,i]*W1) - d0[:,i]*W2*W) /W /W /W
+            else:
+                raise RuntimeError('Rational derivatives not implemented for derivatives larger than 2')
 
             result = np.delete(result, self.dimension, 1) # remove the weight column
 
@@ -185,6 +197,61 @@ class Curve(ControlPointOperations):
 
         self.controlpoints = C * self.controlpoints
 
+    def append(self, curve):
+        """ Extend this curve by merging another curve to the end of it. The
+        curves are glued together in a C0 fashion with enough repeated knots.
+        The function assumes that the end of this curve perfectly matches the
+        start of the input curve. 
+        @param curve: Another curve
+        @type  curve: Curve
+        """
+        # ASSUMPTION: open knot vectors
+
+        # error test input
+        if self.basis.periodic > -1 or curve.basis.periodic > -1:
+            raise RuntimeError('Cannot append with periodic curves')
+            
+        # copy input curve so we don't change that one directly
+        extending_curve = copy.deepcopy(curve)
+
+        # make sure both are in the same space, and (if needed) have rational weights
+        Curve.make_curves_compatible(self, extending_curve)
+
+        # make sure both have the same discretization order
+        p1 = self.get_order()
+        p2 = extending_curve.get_order()
+        if p1 < p2:
+            self.raise_order(p2-p1)
+        else:
+            extending_curve.raise_order(p1-p2)
+        p = max(p1,p2)
+
+
+        # build new knot vector by merging the two existing ones
+        old_knot = self.get_knots(True)
+        add_knot = extending_curve.get_knots(True)
+        # make sure that the new one starts where the old one stops
+        add_knot -= add_knot[0]
+        add_knot += old_knot[-1]
+        new_knot = np.zeros(len(add_knot) + len(old_knot)-p-1)
+        new_knot[:len(old_knot)-1] = old_knot[:-1]
+        new_knot[len(old_knot)-1:] = add_knot[p:]
+
+        # build new control points by merging the two existing matrices
+        n1 = len(self)
+        n2 = len(extending_curve)
+        new_controlpoints = np.zeros((n1+n2-1, self.dimension + self.rational))
+        new_controlpoints[:n1,:] = self.controlpoints
+        new_controlpoints[n1:,:] = extending_curve.controlpoints[1:,:]
+
+        # update basis and controlpoints
+        self.basis         = BSplineBasis(p,new_knot)
+        self.controlpoints = new_controlpoints
+
+        return self
+
+
+
     def write_g2(self, outfile):
         """write GoTools formatted SplineCurve to file"""
         outfile.write('100 1 0 0\n') # surface header, gotools version 1.0.0
@@ -215,4 +282,69 @@ class Curve(ControlPointOperations):
 
     def __repr__(self):
         return str(self.basis) + '\n' + str(self.controlpoints)
+
+
+
+
+    def make_curves_compatible(crv1, crv2):
+        """ Make sure that curves are compatible, i.e. for merging. This
+        will manipulate one or both to make sure that they are both rational
+        and in the same geometric space (2D/3D).
+        @param crv1: first curve
+        @type  crv1: Curve
+        @param crv2: second curve
+        @type  crv2: Curve
+        """
+        # make both rational
+        if crv1.rational:
+            crv2.force_rational()
+        if crv2.rational:
+            crv1.force_rational()
+
+        # make both in the same geometric space
+        if crv1.dimension > crv2.dimension:
+            crv2.set_dimension(crv1.dimension)
+        else:
+            crv1.set_dimension(crv2.dimension)
+
+    def make_curves_identical(crv1, crv2):
+        """ Make sure that curves have identical discretization, i.e. same
+        knot vector and order. May be used to draw a linear surface 
+        interpolation between them, or to add curves together.
+        @param crv1: first curve
+        @type  crv1: Curve
+        @param crv2: second curve
+        @type  crv2: Curve
+        """
+        # make sure that rational/dimension is the same
+        make_curves_compatible(crv1,crv2)
+
+        # make both have knot vectors in domain (0,1)
+        crv1.reparametrize()
+        crv2.reparametrize()
+
+        # make sure both have the same order
+        p1 = crv1.get_order()
+        p2 = crv2.get_order()
+        if p1 < p2:
+            crv1.raise_order(p2-p1)
+        else:
+            crv2.raise_order(p1-p2)
+
+        # make sure both have the same knot vector
+        knot1 = crv1.get_knots(True)
+        knot2 = crv2.get_knots(True)
+        i1 = 0
+        i2 = 0
+        done = False
+        while i1<len(knot1) and i2<len(knot2):
+            if abs(knot1[i1]-knot2[i2]) < crv1.basis.tol:
+                i1 += 1
+                i2 += 1
+            elif knot1[i1] < knot2[i2]:
+                crv2.insert_knot(knot1[i1])
+                i1 += 1
+            else:
+                crv1.insert_knot(knot2[i1])
+                i2 += 1
 

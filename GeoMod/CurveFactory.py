@@ -90,4 +90,25 @@ def circle_segment(theta, r=1):
 
     return Curve(BSplineBasis(3, knot), cp, True)
 
+def interpolate(x_pts, basis):
+    """ Perform general spline interpolation (at the greville points) on a basis 
+    @param x_pts: Matrix x[i,j] of interpolation points x[i] with (x,y,z)-components j
+    @type  x_pts: Matrix_like
+    @param basis: Basis to interpolate on
+    @type  basis: BSplineBasis
+    @return     : Interpolated curve
+    @rtype      : Curve
+    """
+    # wrap x_pts into a numpy matrix
+    x_pts = np.matrix(x_pts)
+
+    # evaluate all basis functions in the interpolation points
+    grev_pts = basis.greville()
+    N = basis.evaluate(grev_pts)
+
+    # solve interpolation problem
+    controlpoints = np.linalg.solve(N, x_pts)
+
+    return Curve(basis, controlpoints)
+
 

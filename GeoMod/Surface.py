@@ -1,4 +1,5 @@
 from BSplineBasis import *
+from Curve import *
 from ControlPointOperations import *
 import numpy as np
 
@@ -247,14 +248,14 @@ class Surface(ControlPointOperations):
         (p1,p2)     = self.get_order()
         (n1,n2,dim) = self.controlpoints.shape
         rat         = self.rational
-        umin = Curve(p2, self.basis2, np.reshape(self.controlpoints[ 0,:,:], (n2,dim), rat))
-        umax = Curve(p2, self.basis2, np.reshape(self.controlpoints[-1,:,:], (n2,dim), rat))
-        vmin = Curve(p1, self.basis1, np.reshape(self.controlpoints[:, 0,:], (n1,dim), rat))
-        vmax = Curve(p1, self.basis1, np.reshape(self.controlpoints[:,-1,:], (n1,dim), rat))
+        umin = Curve(self.basis2, np.reshape(self.controlpoints[ 0,:,:], (n2,dim)), rat)
+        umax = Curve(self.basis2, np.reshape(self.controlpoints[-1,:,:], (n2,dim)), rat)
+        vmin = Curve(self.basis1, np.reshape(self.controlpoints[:, 0,:], (n1,dim)), rat)
+        vmax = Curve(self.basis1, np.reshape(self.controlpoints[:,-1,:], (n1,dim)), rat)
         # make the curves form a clockwise oriented closed loop around surface
         umax.flip_parametrization()
         vmax.flip_parametrization()
-        return [vmin, umax, vmax, umin]
+        return (vmin, umax, vmax, umin)
 
     def raise_order(self, raise_u, raise_v):
         """Raise the order of a spline surface
