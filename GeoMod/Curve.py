@@ -167,6 +167,10 @@ class Curve(ControlPointOperations):
         @param amount: Number of polynomial degrees to increase
         @type  amount: Int
         """
+        if amount<0:
+            raise ValueError('Raise order requires a non-negative parameter')
+        elif amount==0:
+            return
         # create the new basis
         newKnot  = self.basis.get_raise_order_knot(amount)
         newBasis = BSplineBasis(self.basis.order + amount, newKnot, self.basis.periodic)
@@ -361,8 +365,8 @@ class Curve(ControlPointOperations):
 
 
 
-
-    def make_curves_compatible(crv1, crv2):
+    @classmethod
+    def make_curves_compatible(cls, crv1, crv2):
         """ Make sure that curves are compatible, i.e. for merging. This
         will manipulate one or both to make sure that they are both rational
         and in the same geometric space (2D/3D).
@@ -383,7 +387,8 @@ class Curve(ControlPointOperations):
         else:
             crv1.set_dimension(crv2.dimension)
 
-    def make_curves_identical(crv1, crv2):
+    @classmethod
+    def make_curves_identical(cls, crv1, crv2):
         """ Make sure that curves have identical discretization, i.e. same
         knot vector and order. May be used to draw a linear surface 
         interpolation between them, or to add curves together.
@@ -393,7 +398,7 @@ class Curve(ControlPointOperations):
         @type  crv2: Curve
         """
         # make sure that rational/dimension is the same
-        make_curves_compatible(crv1,crv2)
+        Curve.make_curves_compatible(crv1,crv2)
 
         # make both have knot vectors in domain (0,1)
         crv1.reparametrize()
@@ -421,6 +426,6 @@ class Curve(ControlPointOperations):
                 crv2.insert_knot(knot1[i1])
                 i1 += 1
             else:
-                crv1.insert_knot(knot2[i1])
+                crv1.insert_knot(knot2[i2])
                 i2 += 1
 

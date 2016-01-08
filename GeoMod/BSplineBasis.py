@@ -59,7 +59,7 @@ class BSplineBasis:
         """
         result = []
         p = self.order
-        n = len(self.knots) - p;
+        n = len(self)
         if index is None:
             for i in range(n):
                 result.append(float(np.sum(self.knots[i+1:i+p]))/(p-1))
@@ -246,11 +246,16 @@ class BSplineBasis:
         self.knots *= a
         return self
 
-    def __idiv__(self, a):
+    def __itruediv__(self, a):
         self.knots /= a
         return self
 
-    def __repr__(self):
-        return str(self.knots) + ',  p=' + str(self.order)
+    __ifloordiv__ = __itruediv__ # integer division (should not distinguish)
+    __idiv__      = __itruediv__ # python2 compatibility
 
+    def __repr__(self):
+        result = 'p=' + str(self.order) + ', ' + str(self.knots) 
+        if self.periodic > -1:
+            result += ', C' + str(self.periodic) + '-periodic'
+        return result
 

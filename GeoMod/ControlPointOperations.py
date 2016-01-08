@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 def get_rotation_matrix(theta,axis):
     axis = axis/np.sqrt(np.dot(axis,axis))
@@ -232,7 +233,6 @@ class ControlPointOperations:
             self.rational = 1
 
 
-
     def __iadd__(self, x):
         self.translate(x)
         return self
@@ -244,4 +244,33 @@ class ControlPointOperations:
     def __imul__(self, x):
         self.scale(x)
         return self
+
+    def __itruediv__(self, x):
+        self.scale(1.0/x)
+        return self
+
+    __ifloordiv__ = __itruediv__ # integer division (should not distinguish)
+    __idiv__      = __itruediv__ # python2 compatibility
+
+
+    def __add__(self, x):
+        new_obj  = copy.deepcopy(self)
+        new_obj += x
+        return new_obj
+
+    def __sub__(self, x):
+        new_obj  = copy.deepcopy(self)
+        new_obj -= x
+        return new_obj
+
+    def __mul__(self, x):
+        new_obj  = copy.deepcopy(self)
+        new_obj *= x
+        return new_obj
+
+    def __div__(self, x):
+        new_obj  = copy.deepcopy(self)
+        new_obj /= x
+        return new_obj
+       
 

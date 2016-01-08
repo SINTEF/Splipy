@@ -197,8 +197,6 @@ class TestCurve(unittest.TestCase):
         with self.assertRaises(TypeError):
             crv.insert_knot()              # too few arguments
         with self.assertRaises(ValueError):
-            crv.insert_knot("tree-fiddy")  # wrong argument type
-        with self.assertRaises(ValueError):
             crv.insert_knot(-0.2)          # Outside-domain error
         with self.assertRaises(ValueError):
             crv.insert_knot( 4.4)          # Outside-domain error

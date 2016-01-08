@@ -1,7 +1,10 @@
 from Curve   import *
 from Surface import *
+from math    import pi,sin,cos,sqrt
 import CurveFactory
 import inspect
+import copy
+        
 
 def square(size=(1,1)):
     """ Create a 2D square with lower right corner at (0,0)
@@ -30,7 +33,7 @@ def disc(r=1, type='radial'):
         cp[1::2,:] = c.controlpoints
         return Surface(BSplineBasis(), c.basis, cp, True)
     elif type is 'square':
-        w = 1/np.sqrt(2)
+        w = 1/sqrt(2)
         cp = [ [-r*w,-r*w,1], [0,-r,w], [r*w,-r*w,1],
                [-r,     0,w], [0, 0,1], [r,     0,w],
                [-r*w, r*w,1], [0, r,w], [r*w, r*w,1]]
@@ -47,7 +50,6 @@ def sphere(r=1):
     @return    : a sphere
     @rtype     : Surface
     """
-    pi = np.pi
     circle = CurveFactory.circle_segment(pi, r)
     circle.rotate(-pi/2)
     circle.rotate(pi/2, (1,0,0))    # flip up into xz-plane
@@ -72,7 +74,7 @@ def extrude(curve, h):
     cp[n:,:] = curve.controlpoints # the last control points form the top
     return Surface(curve.basis, BSplineBasis(2), cp, curve.rational)
 
-def revolve(curve, theta=2*np.pi):
+def revolve(curve, theta=2*pi):
     """ Revolve a surface by sweeping a curve in a rotational fashion around
     the z-axis
     @param curve : curve to revolve
@@ -82,7 +84,6 @@ def revolve(curve, theta=2*np.pi):
     @return      : a revolved surface
     @rtype       : Surface
     """
-    pi = np.pi
     curve.set_dimension(3) # add z-components (if not already present)
     curve.force_rational() # add weight (if not already present)
     n  = len(curve)        # number of control points of the curve
@@ -131,6 +132,56 @@ def torus(minor_r=1, major_r=3):
     circle.translate((major_r,0,0)) # move into position to spin around z-axis
     return revolve(circle)
 
+def edge_curves(curves):
+    """ Create the surface defined by the area between 2 or 4 input curves. In
+    case of 4 input curves, then these must define an ordered directional
+    closed loop around the resulting surface.
+    @param curves: Two or four edge curves
+    @type  curves: List of curves
+    @return      : intermediate surface
+    @rtype       : Surface
+    """
+    if len(curves)==2:
+        crv1 = copy.deepcopy(curves[0])
+        crv2 = copy.deepcopy(curves[1])
+        Curve.make_curves_identical(crv1, crv2)
+        (n,d) = crv1.controlpoints.shape # d = dimension + rational
+
+        controlpoints       = np.zeros((2*n, d))
+        controlpoints[:n,:] = crv1.controlpoints
+        controlpoints[n:,:] = crv2.controlpoints
+        linear              = BSplineBasis(2)
+
+        return Surface(crv1.basis, linear, controlpoints, crv1.rational)
+    elif len(curves)==4:
+        # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
+        bottom = curves[0]
+        right  = curves[1]
+        top    = copy.deepcopy(curves[2])
+        left   = copy.deepcopy(curves[3]) # gonna change these two, so make copies
+        top.flip_parametrization()
+        left.flip_parametrization()
+        # create linear interpolation between opposing sides
+        s1     = edge_curves([bottom,top])
+        s2     = edge_curves([left,right])
+        s2.swap_parametrization()
+        # create (linear,linear) corner parametrization
+        linear = BSplineBasis(2)
+        rat    = s1.rational     # using control-points from top/bottom, so need to know if these are rational
+        s3     = Surface(linear,linear, [bottom[0],bottom[-1],top[0],top[-1]], rat)
+
+        # in order to add spline surfaces, they need identical parametrization
+        Surface.make_surfaces_identical(s1,s2)
+        Surface.make_surfaces_identical(s1,s3)
+        Surface.make_surfaces_identical(s2,s3)
+
+        result = s1
+        result.controlpoints += s2.controlpoints
+        result.controlpoints -= s3.controlpoints
+        return result
+    else:
+        raise ValueError('Requires two or four input curves')
+
 def thicken(curve, amount):
     """ Add a thickness to a curve to generate a surface. For 2D-curves this
     is going to generate a 2D planar surface with the curve through the center,
@@ -159,7 +210,7 @@ def thicken(curve, amount):
     #     could produce wild behaviour. Original discretization might not 
     #     produce a satisfactory result
     #  * 3D tube geometries: 
-    #     unimplemented as of now. Would like to see the two points above
+    #     unimplemented as of now. Would like to see the three points above
     #     resolved before this is implemented. Rough idea is to compute the
     #     acceleration and binormal vectors to the curve and sketch out a
     #     circle in the plane defined by these two vectors
@@ -175,7 +226,7 @@ def thicken(curve, amount):
         x = curve.evaluate(t)            # curve at interpolation points
         v = curve.evaluate_tangent(t)    # velocity at interpolation points
         v = np.array(v)
-        l = np.sqrt(v[:,0]**2+v[:,1]**2) # normalizing factor for velocity
+        l = sqrt(v[:,0]**2+v[:,1]**2) # normalizing factor for velocity
         v[:,0] = v[:,0] / l
         v[:,1] = v[:,1] / l
         v = np.matrix(v)

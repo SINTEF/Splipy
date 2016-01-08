@@ -365,3 +365,80 @@ class Surface(ControlPointOperations):
                 result += str(self.controlpoints[i,j,:]) + '\n'
         return result
 
+
+    @classmethod
+    def make_surfaces_compatible(cls, surf1, surf2):
+        """ Make sure that surfaces are compatible, i.e. for merging. This
+        will manipulate one or both to make sure that they are both rational
+        and in the same geometric space (2D/3D).
+        @param surf1: first surface
+        @type  surf1: Surface
+        @param surf2: second surface
+        @type  surf2: Surface
+        """
+        # make both rational (if needed)
+        if surf1.rational:
+            surf2.force_rational()
+        if surf2.rational:
+            surf1.force_rational()
+
+        # make both in the same geometric space
+        if surf1.dimension > surf2.dimension:
+            surf2.set_dimension(surf1.dimension)
+        else:
+            surf1.set_dimension(surf2.dimension)
+
+    @classmethod
+    def make_surfaces_identical(cls, surf1, surf2):
+        """ Make sure that surfaces have identical discretization, i.e. same
+        knot vector and order. May be used to draw a linear surface 
+        interpolation between them, or to add surfaces together.
+        @param surf1: first surface
+        @type  surf1: Surface
+        @param surf2: second surface
+        @type  surf2: Surface
+        """
+        # make sure that rational/dimension is the same
+        Surface.make_surfaces_compatible(surf1,surf2)
+
+        # make both have knot vectors in domain (0,1)
+        surf1.reparametrize()
+        surf2.reparametrize()
+
+        # make sure both have the same order
+        p1 = surf1.get_order()
+        p2 = surf2.get_order()
+        p  = (max(p1[0],p2[0]), max(p1[1],p2[1]))
+        surf1.raise_order(p[0]-p1[0], p[1]-p1[1])
+        surf2.raise_order(p[0]-p2[0], p[1]-p2[1])
+
+        # make sure both have the same knot vector in u-direction
+        knot1 = surf1.get_knots(True)
+        knot2 = surf2.get_knots(True)
+        i1 = 0
+        i2 = 0
+        while i1<len(knot1[0]) and i2<len(knot2[0]):
+            if abs(knot1[0][i1]-knot2[0][i2]) < surf1.basis1.tol:
+                i1 += 1
+                i2 += 1
+            elif knot1[0][i1] < knot2[0][i2]:
+                surf2.insert_knot(0,knot1[0][i1])
+                i1 += 1
+            else:
+                surf1.insert_knot(0,knot2[0][i2])
+                i2 += 1
+
+        # make sure both have the same knot vector in v-direction
+        i1 = 0
+        i2 = 0
+        while i1<len(knot1[1]) and i2<len(knot2[1]):
+            if abs(knot1[1][i1]-knot2[1][i2]) < surf1.basis2.tol:
+                i1 += 1
+                i2 += 1
+            elif knot1[1][i1] < knot2[1][i2]:
+                surf2.insert_knot(1,knot1[1][i1])
+                i1 += 1
+            else:
+                surf1.insert_knot(1,knot2[1][i2])
+                i2 += 1
+

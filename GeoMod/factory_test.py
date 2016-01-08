@@ -1,4 +1,5 @@
 from BSplineBasis import *
+from Curve        import *
 import CurveFactory
 import SurfaceFactory
 import VolumeFactory
@@ -26,25 +27,24 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 3)
 
     def test_n_gon(self):
-        pi = np.pi
         ### test default 5 side n-gon
         c = CurveFactory.n_gon()
         self.assertEqual(len(c), 5)
         self.assertEqual(len(c.get_knots()), 6)
         self.assertEqual(c.get_order(), 2)
         # evaluate at second corner (clockwise from (1,0) )
-        self.assertAlmostEqual(c.evaluate(c.stop()/5.0)[0], np.cos(2*pi/5))
-        self.assertAlmostEqual(c.evaluate(c.stop()/5.0)[1], np.sin(2*pi/5))
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0)[0], cos(2*pi/5))
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0)[1], sin(2*pi/5))
         # evaluate at fourh corner (clockwise from (1,0) )
-        self.assertAlmostEqual(c.evaluate(c.stop()/5.0*4)[0], np.cos(2*pi/5*4))
-        self.assertAlmostEqual(c.evaluate(c.stop()/5.0*4)[1], np.sin(2*pi/5*4))
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0*4)[0], cos(2*pi/5*4))
+        self.assertAlmostEqual(c.evaluate(c.stop()/5.0*4)[1], sin(2*pi/5*4))
 
         ### test a radius 3 septagon
         c = CurveFactory.n_gon(n=7, r=3)
         self.assertEqual(len(c), 7)
         # evaluate at third corner (clockwise from (1,0) )
-        self.assertAlmostEqual(c.evaluate(c.stop()/7.0)[0], 3*np.cos(2*pi/7))
-        self.assertAlmostEqual(c.evaluate(c.stop()/7.0)[1], 3*np.sin(2*pi/7))
+        self.assertAlmostEqual(c.evaluate(c.stop()/7.0)[0], 3*cos(2*pi/7))
+        self.assertAlmostEqual(c.evaluate(c.stop()/7.0)[1], 3*sin(2*pi/7))
 
     def test_circle(self):
 
@@ -84,10 +84,9 @@ class TestFactory(unittest.TestCase):
             c = CurveFactory.circle(-2.5) # negative radius
 
     def test_circle_segment(self):
-        pi = np.pi
 
         ### basic circle segment
-        c = CurveFactory.circle_segment(np.pi*0.9)
+        c = CurveFactory.circle_segment(pi*0.9)
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
         # test evaluation at 25 points for radius=1
@@ -160,7 +159,6 @@ class TestFactory(unittest.TestCase):
         self.assertAlmostEqual(crv(.5)[2], .5**3+2*.5) # z=t^3+2t
 
     def test_disc(self):
-        pi = np.pi
         ### radial disc
         surf = SurfaceFactory.disc()
         x = surf.evaluate([0,1], [0,pi/4,pi/2,pi])
@@ -168,8 +166,8 @@ class TestFactory(unittest.TestCase):
         self.assertAlmostEqual(x[0][0][1], 0)
         self.assertAlmostEqual(x[1][0][0], 1)
         self.assertAlmostEqual(x[1][0][1], 0)
-        self.assertAlmostEqual(x[1][1][0], 1/np.sqrt(2))
-        self.assertAlmostEqual(x[1][1][1], 1/np.sqrt(2))
+        self.assertAlmostEqual(x[1][1][0], 1/sqrt(2))
+        self.assertAlmostEqual(x[1][1][1], 1/sqrt(2))
         self.assertAlmostEqual(x[1][2][0], 0)
         self.assertAlmostEqual(x[1][2][1], 1)
 
@@ -198,7 +196,6 @@ class TestFactory(unittest.TestCase):
             self.assertAlmostEqual(np.linalg.norm(pt,2), 3.0) # check radius
 
     def test_revolve(self):
-        pi = np.pi
         ### square torus
         square = CurveFactory.n_gon(4)
         square.rotate(pi/2, (1,0,0))
@@ -219,7 +216,6 @@ class TestFactory(unittest.TestCase):
             self.assertAlmostEqual(pt[2], .5)                        # check height=0.5
 
     def test_surface_torus(self):
-        pi = np.pi
         ### default torus
         surf = SurfaceFactory.torus(1,3)
         start = surf.start()
@@ -244,11 +240,10 @@ class TestFactory(unittest.TestCase):
         # check minor-circle u=3*pi/2 (mid-evaluation)
         x = surf.evaluate(3*pi/4,v)
         for pt in np.array(x[0,:,:]):
-            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], (3-1.0/np.sqrt(2))**2) # check radius=3-1/sqrt(2)
-            self.assertAlmostEqual(pt[2], 1.0/np.sqrt(2))             # check height=1/sqrt(2)
+            self.assertAlmostEqual(pt[0]*pt[0]+pt[1]*pt[1], (3-1.0/sqrt(2))**2) # check radius=3-1/sqrt(2)
+            self.assertAlmostEqual(pt[2], 1.0/sqrt(2))             # check height=1/sqrt(2)
 
     def test_sphere(self):
-        pi = np.pi
         ### unit ball
         surf = SurfaceFactory.sphere()
         # test 7x7 grid for radius = 1
@@ -257,7 +252,6 @@ class TestFactory(unittest.TestCase):
                 self.assertAlmostEqual(np.linalg.norm(surf(u,v),2), 1.0)
 
     def test_cylinder_surface(self):
-        pi = np.pi
         ### unit cylinder
         surf = SurfaceFactory.cylinder()
         # test 7x7 grid for xy-radius = 1 and v=z
@@ -267,8 +261,39 @@ class TestFactory(unittest.TestCase):
                 self.assertAlmostEqual(np.linalg.norm(x[:2],2), 1.0) # (x,y) coordinates to z-axis
                 self.assertAlmostEqual(x[2],  v)                     # z coordinate should be linear
 
+    def test_edge_curves(self):
+        # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
+        # mixes rational and non-rational curves with different parametrization spaces
+        c1 = CurveFactory.circle_segment(pi/2)
+        c2 = Curve(BSplineBasis(2,[0,0,1,2,2]), [[0,1], [-1,1], [-1,0]])
+        c3 = CurveFactory.circle_segment(pi/2)
+        c3.rotate(pi)
+        c4 = Curve(BSplineBasis(2), [[0,-1], [1,0]])
+        
+        surf = SurfaceFactory.edge_curves([c1,c2,c3,c4])
+
+        # srf spits out parametric space (0,1)^2, so we sync these up to input curves
+        c3.flip_parametrization()
+        c4.flip_parametrization()
+        c1.reparametrize()
+        c2.reparametrize()
+        c3.reparametrize()
+        c4.reparametrize()
+
+        for u in np.linspace(0,1,7):
+            self.assertAlmostEqual(surf(u,0)[0], c1(u)[0]) # x-coord, bottom crv
+            self.assertAlmostEqual(surf(u,0)[1], c1(u)[1]) # y-coord, bottom crv
+        for u in np.linspace(0,1,7):
+            self.assertAlmostEqual(surf(u,1)[0], c3(u)[0]) # x-coord, top crv
+            self.assertAlmostEqual(surf(u,1)[1], c3(u)[1]) # y-coord, top crv
+        for v in np.linspace(0,1,7):
+            self.assertAlmostEqual(surf(0,v)[0], c4(v)[0]) # x-coord, left crv
+            self.assertAlmostEqual(surf(0,v)[1], c4(v)[1]) # y-coord, left crv
+        for v in np.linspace(0,1,7):
+            self.assertAlmostEqual(surf(1,v)[0], c2(v)[0]) # x-coord, right crv
+            self.assertAlmostEqual(surf(1,v)[1], c2(v)[1]) # y-coord, right crv
+
     def test_cylinder_volume(self):
-        pi = np.pi
         ### unit cylinder
         vol = VolumeFactory.cylinder()
         # test 5x5x5 grid for xy-radius = w and v=z

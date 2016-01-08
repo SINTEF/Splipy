@@ -1,3 +1,4 @@
+from math  import pi,cos,sin,sqrt
 from Curve import *
 
 def line(a, b):
@@ -26,10 +27,10 @@ def n_gon(n=5, r=1):
         raise ValueError('regular polygons need at least 3 sides')
 
     cp = []
-    dt = 2*np.pi/n
+    dt = 2*pi/n
     knot = [0]
     for i in range(n):
-        cp.append([r*np.cos(i*dt), r*np.sin(i*dt)])
+        cp.append([r*cos(i*dt), r*sin(i*dt)])
         knot.append(i)
     knot += [n,n]
     basis = BSplineBasis(2, knot, 0)
@@ -46,10 +47,10 @@ def circle(r=1):
     if r <= 0:
         raise ValueError('radius needs to be positive')
 
-    w = 1.0/np.sqrt(2)
+    w = 1.0/sqrt(2)
     controlpoints = [[r,0,1], [r*w,r*w,w], [0,r,1], [-r*w,r*w,w], [-r,0,1],
                      [-r*w,-r*w,w], [0,-r,1], [r*w,-r*w,w]];
-    knot = np.array([0,0,0, 1,1, 2,2, 3,3, 4,4,4])/4.0*2*np.pi
+    knot = np.array([0,0,0, 1,1, 2,2, 3,3, 4,4,4])/4.0*2*pi
     return Curve(BSplineBasis(3, knot, 0), controlpoints, True)
 
 def circle_segment(theta, r=1):
@@ -62,13 +63,13 @@ def circle_segment(theta, r=1):
     @rtype      : Curve
     """
     # error test input
-    if abs(theta) > 2*np.pi:
+    if abs(theta) > 2*pi:
         raise ValueError('theta needs to be in range [-2pi,2pi]')
     if r <= 0:
         raise ValueError('radius needs to be positive')
 
     # build knot vector
-    knot_spans = int(ceil(theta / (2*np.pi/3) ))
+    knot_spans = int(ceil(theta / (2*pi/3) ))
     knot = [0]
     for i in range(knot_spans+1):
         knot += [i]*2
@@ -82,9 +83,9 @@ def circle_segment(theta, r=1):
 
     # build control points
     for i in range(n):
-        w = 1 - (i%2)*(1-np.cos(dt))      # weights = 1 and cos(dt) every other i
-        x = r*np.cos(t)
-        y = r*np.sin(t)
+        w = 1 - (i%2)*(1-cos(dt))      # weights = 1 and cos(dt) every other i
+        x = r*cos(t)
+        y = r*sin(t)
         cp += [[x,y,w]]
         t  += dt
 
