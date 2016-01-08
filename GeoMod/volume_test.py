@@ -1,7 +1,7 @@
 from Volume import *
 import unittest
 
-class TestSurface(unittest.TestCase):
+class TestVolume(unittest.TestCase):
     def test_evaluate(self):
         # creating the identity mapping by different size for all directions
         vol = Volume(BSplineBasis(7),BSplineBasis(6),BSplineBasis(5))

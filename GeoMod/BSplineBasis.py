@@ -145,6 +145,19 @@ class BSplineBasis:
         b = float(self.end())
         self.knots = (self.knots[::-1]-a)/(b-a) * (a-b) + b
 
+    def get_continuity(self, knot):
+        """Get the continuity of the basis functions at a given point. Will
+        return p-1-m, where m is the knot multiplicity and inf between knots"""
+        p  = self.order
+        mu = bisect_left(self.knots, knot)
+        if abs(self.knots[mu]-knot)>self.tol:
+            return np.inf
+        continuity = p-1
+        while mu<len(self.knots) and abs(self.knots[mu]-knot)<self.tol:
+            continuity -= 1
+            mu += 1
+        return continuity
+
     def get_knot_spans(self):
         """Return the set of unique knots in the knot vector"""
         result = [self.knots[0]]
@@ -154,7 +167,9 @@ class BSplineBasis:
         return result
 
     def get_raise_order_knot(self, amount):
-        """Return the knot vector corresponding to a raise_order operation, keeping the continuity at the knots unchanged by increasing their multiplicity"""
+        """Return the knot vector corresponding to a raise_order operation,
+        keeping the continuity at the knots unchanged by increasing their
+        multiplicity"""
         if type(amount) is not int:
             raise TypeError( 'amount needs to be a positive integer')
         if amount < 0:

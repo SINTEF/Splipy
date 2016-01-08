@@ -1,5 +1,6 @@
 from BSplineBasis import *
 from ControlPointOperations import *
+from bisect import *
 import numpy as np
 import copy
 
@@ -249,8 +250,83 @@ class Curve(ControlPointOperations):
         self.controlpoints = new_controlpoints
 
         return self
+    
+    def get_continuity(self, knot):
+        """Get the parametric continuity of the curve at a given point. Will
+        return p-1-m, where m is the knot multiplicity and inf between knots"""
+        return self.basis.get_continuity(knot)
 
+    def split(self, knots):
+        """ Split a curve into two or more separate representations with C0
+        continuity between them.
+        @param knots: splitting point(s)
+        @type  knots: Float or list of Floats
+        @return     : The curve split into multiple pieces
+        @rtype      : List of Curves
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(knots)
+        except TypeError:
+            knots = [knots]
 
+        p = self.get_order()
+        results = []
+        splitting_curve = copy.deepcopy(self)
+        # insert knots to produce C{-1} at all splitting points
+        for k in knots:
+            continuity = splitting_curve.get_continuity(k)
+            if continuity == np.inf:
+                continuity = p-1
+            splitting_curve.insert_knot([k]*(continuity+1))
+
+        # everything is available now, just have to find the right index range
+        # in the knot vector and controlpoints to store in each separate curve
+        # piece
+        last_cp_i   = 0
+        last_knot_i = 0
+        for k in knots:
+            mu    = bisect_left( splitting_curve.basis.knots, k )
+            n_cp  = mu - last_knot_i
+            basis = BSplineBasis(p, splitting_curve.basis.knots[last_knot_i:mu+p])
+            controlpoints = splitting_curve.controlpoints[last_cp_i:last_cp_i+n_cp,:]
+
+            results.append(Curve(basis, controlpoints))
+            last_knot_i  = mu
+            last_cp_i   += n_cp
+        # with n splitting points, we're getting n+1 pieces. Add the final one:
+        basis = BSplineBasis(p, splitting_curve.basis.knots[last_knot_i:])
+        controlpoints = splitting_curve.controlpoints[last_cp_i:,:]
+        results.append(Curve(basis, controlpoints))
+
+        return results
+
+    def rebuild(self, p, n):
+        """ Creates an approximation to this curve by resampling it using a
+        uniform knot vector of order p and with n control points. 
+        @param p: Discretization order
+        @type  p: Int
+        @param n: Number of control points
+        @type  n: Int
+        @return : Approximation of this curve on a different basis
+        @rtype  : Curve
+        """
+        # establish uniform open knot vector
+        knot  = [0]*p + range(1,n-p+1) + [n-p+1]*p
+        basis = BSplineBasis(p, knot)
+        # set parametric range of the new basis to be the same as the old one
+        basis.normalize()
+        t0    = self.basis.start()
+        t1    = self.basis.end()
+        basis *= (t1-t0)
+        basis += t0
+        # fetch evaluation points and solve interpolation problem
+        t  = basis.greville()
+        N  = basis.evaluate(t)
+        controlpoints = np.linalg.solve(N, self.evaluate(t))
+
+        # return new resampled curve 
+        return Curve(basis, controlpoints)
 
     def write_g2(self, outfile):
         """write GoTools formatted SplineCurve to file"""
