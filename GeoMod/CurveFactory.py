@@ -12,6 +12,26 @@ def line(a, b):
     """
     return Curve(controlpoints=[a,b])
 
+def polygon(points):
+    """ Create a linear interpolation between input points
+    @param points: list of points
+    @type  points: List of Point_like
+    @return      : Linear spline curve through the input points
+    @rtype       : Curve
+    """
+    # establish knot vector based on eucledian length between points
+    knot   = [0,0]
+    prevPt = points[0]
+    dist = 0
+    for pt in points[1:]:
+        for (x0,x1) in zip(prevPt,pt): # loop over (x,y) and maybe z-coordinate
+            dist += (x1-x0)**2
+        knot.append(sqrt(dist))
+        prevPt = pt
+    knot.append(knot[-1])
+
+    return Curve(BSplineBasis(2,knot), points)
+
 def n_gon(n=5, r=1):
     """ Create an n-gon, i.e. a regular polygon of n equal sides centered at the origin
     @param n: Number of sides and vertices

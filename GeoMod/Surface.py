@@ -292,6 +292,30 @@ class Surface(ControlPointOperations):
         self.basis1        = newBasis1
         self.basis2        = newBasis2
 
+    def refine(self, n):
+        """Enrich spline space by inserting n knots into each existing knot
+        span
+        @param n: The number of new knots to insert into each span
+        @type  n: Int
+        """
+        (knots1,knots2) = self.get_knots() # excluding multiple knots
+
+        # insert new knots in the u-direction
+        new_knots = []
+        k_prev = knots1[0]
+        for (k0,k1) in zip(knots1[:-1], knots1[1:]):
+            element_knots = np.linspace(k0,k1,n+2)
+            new_knots += list(element_knots[1:-1])
+        self.insert_knot(0, new_knots)
+
+        # insert new knots in the v-direction
+        new_knots = []
+        k_prev = knots2[0]
+        for (k0,k1) in zip(knots2[:-1], knots2[1:]):
+            element_knots = np.linspace(k0,k1,n+2)
+            new_knots += list(element_knots[1:-1])
+        self.insert_knot(1, new_knots)
+
     def insert_knot(self, direction, knot):
         """Insert a knot into this spline surface
         @param direction: The parametric direction (u=0, v=1)

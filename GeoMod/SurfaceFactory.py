@@ -66,13 +66,14 @@ def extrude(curve, h):
     @return      : an extruded surface
     @rtype       : Surface
     """
-    curve.set_dimension(3) # add z-components (if not already present)
-    n  = len(curve)        # number of control points of the curve
+    crv_copy = copy.deepcopy(curve)
+    crv_copy.set_dimension(3) # add z-components (if not already present)
+    n  = len(crv_copy)        # number of control points of the curve
     cp = np.zeros((2*n,4))
-    cp[:n,:] = curve.controlpoints # the first control points form the bottom
-    curve += (0,0,h)
-    cp[n:,:] = curve.controlpoints # the last control points form the top
-    return Surface(curve.basis, BSplineBasis(2), cp, curve.rational)
+    cp[:n,:] = crv_copy.controlpoints # the first control points form the bottom
+    crv_copy += (0,0,h)
+    cp[n:,:] = crv_copy.controlpoints # the last control points form the top
+    return Surface(crv_copy.basis, BSplineBasis(2), cp, crv_copy.rational)
 
 def revolve(curve, theta=2*pi):
     """ Revolve a surface by sweeping a curve in a rotational fashion around

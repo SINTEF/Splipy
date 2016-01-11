@@ -1,8 +1,8 @@
-from Curve   import *
 from Surface import *
 from Volume import *
 import CurveFactory
 import SurfaceFactory
+import copy
 
 def cube(size=(1,1,1)):
     """ Create a volumetric cube with lower right corner at (0,0,0)
@@ -14,6 +14,37 @@ def cube(size=(1,1,1)):
     result = Volume()
     result.scale(size)
     return result
+
+def revolve(surf, theta=2*pi):
+    """ Revolve a volume by sweeping a surface in a rotational fashion around
+    the z-axis
+    @param surf  : Surface to revolve
+    @type  surf  : Surface
+    @param theta : angle in radians
+    @type  theta : Float
+    @return      : a revolved surface
+    @rtype       : Surface
+    """
+    surf_copy = copy.deepcopy(surf)
+    surf_copy.set_dimension(3) # add z-components (if not already present)
+    surf_copy.force_rational() # add weight (if not already present)
+    n  = len(surf_copy)        # number of control points of the surface
+    cp = np.zeros((8*n,4))
+    basis = BSplineBasis(3, [0,0,0,1,1,2,2,3,3,4,4,4], periodic=0)
+    basis *= 2*pi/4        # set parametric domain to (0,2pi) in w-direction
+
+    # loop around the circle and set control points by the traditional 9-point
+    # circle curve with weights 1/sqrt(2), only here C0-periodic, so 8 points
+    for i in range(8):
+        if i%2 == 0:
+            weight = 1.0
+        else:
+            weight = 1.0/sqrt(2)
+        cp[i*n:(i+1)*n,:]  = np.reshape(surf_copy.controlpoints.transpose(1,0,2), (n,4))
+        cp[i*n:(i+1)*n,2] *= weight
+        cp[i*n:(i+1)*n,3] *= weight
+        surf_copy.rotate(pi/4)
+    return Volume(surf_copy.basis1, surf_copy.basis2, basis, cp, True)
 
 def cylinder(r=1, h=1):
     """ Create a solid cylinder with starting at the xy-plane,
@@ -34,7 +65,7 @@ def cylinder(r=1, h=1):
 
     return Volume(shell.basis1, shell.basis2, BSplineBasis(), cp, True)
 
-def extrude(curve, h):
+def extrude(surf, h):
     """ Extrude a surface by sweeping it straight up in the z-direction
     to a given height 
     @param surf : surf to extrude
@@ -53,3 +84,40 @@ def extrude(curve, h):
         cp.append(list(controlpoint))
     surf -= (0,0,h)
     return Volume(surf.basis1, surf.basis2, BSplineBasis(2), cp, surf.rational)
+
+
+def edge_surfaces(surfaces):
+    """ Create the surface defined by the area between 2 or 6 input surfaces.
+    In case of 6 input surfaces, then these must defined in the following
+    order: bottom, top, left, right, back, front with opposing sides
+    parametrized in the same directions
+    @param surfaces: Two or six edge surfaces
+    @type  surfaces: List of surfaces
+    @return        : enclosed volume
+    @rtype         : Volume
+    """
+    if len(surfaces)==2:
+        surf1 = copy.deepcopy(surfaces[0])
+        surf2 = copy.deepcopy(surfaces[1])
+        Surface.make_surfaces_identical(surf1, surf2)
+        (n1,n2,d) = surf1.controlpoints.shape # d = dimension + rational
+
+        controlpoints          = np.zeros((n1, n2, 2, d))
+        controlpoints[:,:,0,:] = surf1.controlpoints
+        controlpoints[:,:,1,:] = surf2.controlpoints
+        
+        # Volume constructor orders control points in a different way, so we
+        # create it from scratch here
+        result = Volume()
+        result.basis1       = surf1.basis1
+        result.basis2       = surf1.basis2
+        result.basis3       = BSplineBasis(2)
+        result.dimension    = surf1.dimension
+        result.rational     = surf1.rational
+        result.controlpoints= controlpoints
+
+        return result
+    elif len(surfaces)==6:
+        raise NotImplementedError('Should have been coons patch algorithm here. Come back later')
+    else:
+        raise ValueError('Requires two or six input surfaces')

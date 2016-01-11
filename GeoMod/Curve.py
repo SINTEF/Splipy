@@ -184,6 +184,21 @@ class Curve(ControlPointOperations):
         # solve the interpolation problem
         self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
         self.basis         = newBasis
+
+    def refine(self, n):
+        """Enrich spline space by inserting n knots into each existing knot
+        span
+        @param n: The number of new knots to insert into each span
+        @type  n: Int
+        """
+        new_knots = []
+        knots = self.get_knots() # excluding multiple knots
+        k_prev = knots[0]
+        for (k0,k1) in zip(knots[:-1], knots[1:]):
+            element_knots = np.linspace(k0,k1,n+2)
+            new_knots += list(element_knots[1:-1])
+        self.insert_knot(new_knots)
+            
         
     def insert_knot(self, knot):
         """Insert a knot into this spline curve

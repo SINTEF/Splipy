@@ -1,5 +1,6 @@
 from BSplineBasis import *
 from Curve        import *
+from Surface      import *
 import CurveFactory
 import SurfaceFactory
 import VolumeFactory
@@ -303,6 +304,52 @@ class TestFactory(unittest.TestCase):
                     x = vol(u,v,w)
                     self.assertAlmostEqual(np.linalg.norm(x[:2],2), w) # (x,y) coordinates to z-axis
                     self.assertAlmostEqual(x[2],  v)                   # z coordinate should be linear
+
+    def test_edge_surfaces(self):
+        ### test 3D surface vs 2D rational surface
+        
+        # more or less random 3D surface with p=[2,2] and n=[3,4]
+        controlpoints = [[0,0,1],[-1,1,1],[0,2,1],  [1,-1,1],[1,0,.5],[1,1,1],  [2,1,1],[2,2,.5],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
+        basis1 = BSplineBasis(3, [0,0,0,1,1,1])
+        basis2 = BSplineBasis(3, [0,0,0,.64,2,2,2])
+        top = Surface(basis1, basis2, controlpoints)
+
+        
+        # more or less random 2D rational surface with p=[1,2] and n=[3,4]
+        controlpoints = [[0,0,1],[-1,1,.96],[0,2,1],  [1,-1,1],[1,0,.8],[1,1,1],  [2,1,.89],[2,2,.9],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
+        basis1 = BSplineBasis(3, [0,0,0,1,1,1])
+        basis2 = BSplineBasis(2, [0,0,.4,.44,1,1])
+        bottom = Surface(basis1, basis2, controlpoints, True)
+
+        vol = VolumeFactory.edge_surfaces([bottom, top])
+
+        # set parametric domain to [0,1]^2 for easier comparison
+        top.reparametrize()
+        bottom.reparametrize()
+
+        # verify on 7x7x2 evaluation grid
+        for u in np.linspace(0,1,7):
+            for v in np.linspace(0,1,7):
+                for w in np.linspace(0,1,2): # rational basis, not linear in w-direction
+                    self.assertAlmostEqual(vol(u,v,w)[0], bottom(u,v)[0]*(1-w) + top(u,v)[0]*w) # x-coordinate
+                    self.assertAlmostEqual(vol(u,v,w)[1], bottom(u,v)[1]*(1-w) + top(u,v)[1]*w) # y-coordinate
+                    self.assertAlmostEqual(vol(u,v,w)[2],             0 *(1-w) + top(u,v)[2]*w) # z-coordinate
+
+        ### test 3D surface vs 2D surface
+        controlpoints = [[0,0],[-1,1],[0,2],  [1,-1],[1,0],[1,1],  [2,1],[2,2],[2,3],  [3,0],[4,1],[3,2]]
+        basis1 = BSplineBasis(3, [0,0,0,1,1,1])
+        basis2 = BSplineBasis(2, [0,0,.4,.44,1,1])
+        bottom = Surface(basis1, basis2, controlpoints) # non-rational!
+
+        vol = VolumeFactory.edge_surfaces([bottom, top]) # also non-rational!
+
+        # verify on 5x5x7 evaluation grid
+        for u in np.linspace(0,1,5):
+            for v in np.linspace(0,1,5):
+                for w in np.linspace(0,1,7):  # include inner evaluation points
+                    self.assertAlmostEqual(vol(u,v,w)[0], bottom(u,v)[0]*(1-w) + top(u,v)[0]*w) # x-coordinate
+                    self.assertAlmostEqual(vol(u,v,w)[1], bottom(u,v)[1]*(1-w) + top(u,v)[1]*w) # y-coordinate
+                    self.assertAlmostEqual(vol(u,v,w)[2],             0 *(1-w) + top(u,v)[2]*w) # z-coordinate
 
 if __name__ == '__main__':
     unittest.main()
