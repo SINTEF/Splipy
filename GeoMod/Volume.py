@@ -79,10 +79,9 @@ class Volume(ControlPointOperations):
         Nw = self.basis3.evaluate(w)
 
         # compute physical points [x,y,z] for all points (u[i],v[j],w[k]). For rational volumes, compute [X,Y,Z,W] (in projective space)
-        result = np.tensordot(Nu, self.controlpoints, axes=(1,0))
-        result = np.tensordot(Nv, result,             axes=(1,1))
-        result = np.tensordot(Nw, result,             axes=(1,2))
-        result = result.transpose((2,1,0,3)) # I really dont know why it insist on storing it in the wrong order :(
+        result = np.tensordot(Nw, self.controlpoints, axes=(1,2))
+        result = np.tensordot(Nv, result,             axes=(1,2))
+        result = np.tensordot(Nu, result,             axes=(1,2))
 
         # Project rational volumes down to geometry space: x = X/W, y=Y/W, z=Z/W
         if self.rational: 
@@ -143,10 +142,10 @@ class Volume(ControlPointOperations):
         dNw = self.basis3.evaluate(w, dw)
 
         # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j],w[k])
-        result = np.tensordot(dNu, self.controlpoints, axes=(1,0))
-        result = np.tensordot(dNv, result,             axes=(1,1))
-        result = np.tensordot(dNw, result,             axes=(1,2))
-        result = result.transpose((2,1,0,3)) # I really dont know why it insist on storing it in the wrong order :(
+        result = np.tensordot(dNw, self.controlpoints, axes=(1,2))
+        result = np.tensordot(dNv, result,             axes=(1,2))
+        result = np.tensordot(dNu, result,             axes=(1,2))
+        result = np.array(result)
 
         # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
         # x(u,v) = sum_ijk N_i(u) * N_j(v) * N_k(w) * (w_ijk*x_ijk) / W(u,v,w)
@@ -158,10 +157,10 @@ class Volume(ControlPointOperations):
             Nu = self.basis.evaluate(u)
             Nv = self.basis.evaluate(v)
             Nw = self.basis.evaluate(w)
-            non_derivative = np.tensordot(Nu, self.controlpoints, axes=(1,0))
-            non_derivative = np.tensordot(Nv, non_derivative,     axes=(1,1))
-            non_derivative = np.tensordot(Nw, non_derivative,     axes=(1,2))
-            non_derivative = non_derivative.transpose((2,1,0,3))
+            non_derivative = np.tensordot(Nw, self.controlpoints, axes=(1,2))
+            non_derivative = np.tensordot(Nv, non_derivative,     axes=(1,2))
+            non_derivative = np.tensordot(Nu, non_derivative,     axes=(1,2))
+            non_derivative = np.array(non_derivative)
             W    = non_derivative[:,:,:,-1]  # W(u,v,w)
             Wder = result[:,:,:,-1]          # dW/du or dW/dv or dW/dw
             for i in range(self.dimension):
@@ -285,21 +284,21 @@ class Volume(ControlPointOperations):
         N_v_new =   newBasis2.evaluate( interpolation_pts_v )
         N_w_old = self.basis3.evaluate( interpolation_pts_w )
         N_w_new =   newBasis3.evaluate( interpolation_pts_w )
-        tmp = np.tensordot(N_u_old, self.controlpoints, axes=(1,0))
-        tmp = np.tensordot(N_v_old, tmp,                axes=(1,1)) 
-        tmp = np.tensordot(N_w_old, tmp,                axes=(1,2)) # projective interpolation points (x,y,z,w)
-        interpolation_pts_x = tmp.transpose((2,1,0,3)) # 4D-tensor with elements (i,j,k,l) of component x[l] evaluated at u[i] v[j] w[k]
+        tmp = np.tensordot(N_w_old, self.controlpoints, axes=(1,2))
+        tmp = np.tensordot(N_v_old, tmp,                axes=(1,2)) 
+        tmp = np.tensordot(N_u_old, tmp,                axes=(1,2)) # projective interpolation points (x,y,z,w)
+        interpolation_pts_x = tmp
 
         # solve the interpolation problem
         N_u_inv = np.linalg.inv(N_u_new)
         N_v_inv = np.linalg.inv(N_v_new)
         N_w_inv = np.linalg.inv(N_w_new) # these are inverses of the 1D problems, and small compared to the total number of unknowns
-        tmp = np.tensordot(N_u_inv, interpolation_pts_x, axes=(1,0))
-        tmp = np.tensordot(N_v_inv, tmp,                 axes=(1,1))
-        tmp = np.tensordot(N_w_inv, tmp,                 axes=(1,2))
+        tmp = np.tensordot(N_w_inv, interpolation_pts_x, axes=(1,2))
+        tmp = np.tensordot(N_v_inv, tmp,                 axes=(1,2))
+        tmp = np.tensordot(N_u_inv, tmp,                 axes=(1,2))
 
         # update the basis and controlpoints of the volume
-        self.controlpoints = tmp.transpose((2,1,0,3))
+        self.controlpoints = tmp
         self.basis1        = newBasis1
         self.basis2        = newBasis2
         self.basis3        = newBasis3

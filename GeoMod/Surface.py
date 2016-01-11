@@ -163,6 +163,7 @@ class Surface(ControlPointOperations):
         # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j])
         result = np.tensordot(dNv, self.controlpoints, axes=(1,1))
         result = np.tensordot(dNu, result,             axes=(1,1))
+        result = np.array(result)
 
         # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
         # x(u,v) = sum_ij N_i(u) * N_j(v) * (w_ij*x_ij) / W(u,v)
@@ -175,6 +176,7 @@ class Surface(ControlPointOperations):
             Nv = self.basis.evaluate(v)
             non_derivative = np.tensordot(Nv, self.controlpoints, axes=(1,1))
             non_derivative = np.tensordot(Nu, non_derivative,     axes=(1,1))
+            non_derivative = np.array(non_derivative)
             W    = non_derivative[:,:,-1]  # W(u,v)
             Wder = result[:,:,-1]          # dW(u,v)/du or dW(u,v)/dv
             for i in range(self.dimension):

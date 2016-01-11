@@ -3,7 +3,6 @@ from Surface import *
 from math    import pi,sin,cos,sqrt
 import CurveFactory
 import inspect
-import copy
         
 
 def square(size=(1,1)):
@@ -66,14 +65,14 @@ def extrude(curve, h):
     @return      : an extruded surface
     @rtype       : Surface
     """
-    crv_copy = copy.deepcopy(curve)
-    crv_copy.set_dimension(3) # add z-components (if not already present)
-    n  = len(crv_copy)        # number of control points of the curve
+    curve = curve.clone()  # clone input curve, throw away input reference
+    curve.set_dimension(3) # add z-components (if not already present)
+    n  = len(curve)        # number of control points of the curve
     cp = np.zeros((2*n,4))
-    cp[:n,:] = crv_copy.controlpoints # the first control points form the bottom
-    crv_copy += (0,0,h)
-    cp[n:,:] = crv_copy.controlpoints # the last control points form the top
-    return Surface(crv_copy.basis, BSplineBasis(2), cp, crv_copy.rational)
+    cp[:n,:] = curve.controlpoints # the first control points form the bottom
+    curve += (0,0,h)
+    cp[n:,:] = curve.controlpoints # the last control points form the top
+    return Surface(curve.basis, BSplineBasis(2), cp, curve.rational)
 
 def revolve(curve, theta=2*pi):
     """ Revolve a surface by sweeping a curve in a rotational fashion around
@@ -85,6 +84,7 @@ def revolve(curve, theta=2*pi):
     @return      : a revolved surface
     @rtype       : Surface
     """
+    curve = curve.clone()  # clone input curve, throw away input reference
     curve.set_dimension(3) # add z-components (if not already present)
     curve.force_rational() # add weight (if not already present)
     n  = len(curve)        # number of control points of the curve
@@ -143,8 +143,8 @@ def edge_curves(curves):
     @rtype       : Surface
     """
     if len(curves)==2:
-        crv1 = copy.deepcopy(curves[0])
-        crv2 = copy.deepcopy(curves[1])
+        crv1 = curves[0].clone()
+        crv2 = curves[1].clone()
         Curve.make_curves_identical(crv1, crv2)
         (n,d) = crv1.controlpoints.shape # d = dimension + rational
 
@@ -158,8 +158,8 @@ def edge_curves(curves):
         # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
         bottom = curves[0]
         right  = curves[1]
-        top    = copy.deepcopy(curves[2])
-        left   = copy.deepcopy(curves[3]) # gonna change these two, so make copies
+        top    = curves[2].clone()
+        left   = curves[3].clone() # gonna change these two, so make copies
         top.flip_parametrization()
         left.flip_parametrization()
         # create linear interpolation between opposing sides
@@ -216,6 +216,7 @@ def thicken(curve, amount):
     #     acceleration and binormal vectors to the curve and sketch out a
     #     circle in the plane defined by these two vectors
 
+    curve = curve.clone() # clone input curve, throw away input reference
     t = curve.basis.greville()
     if curve.dimension==2:
         # linear parametrization across domain
@@ -226,8 +227,7 @@ def thicken(curve, amount):
 
         x = curve.evaluate(t)            # curve at interpolation points
         v = curve.evaluate_tangent(t)    # velocity at interpolation points
-        v = np.array(v)
-        l = sqrt(v[:,0]**2+v[:,1]**2) # normalizing factor for velocity
+        l = np.sqrt(v[:,0]**2+v[:,1]**2) # normalizing factor for velocity
         v[:,0] = v[:,0] / l
         v[:,1] = v[:,1] / l
         v = np.matrix(v)

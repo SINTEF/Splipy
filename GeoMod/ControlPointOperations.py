@@ -53,6 +53,8 @@ class ControlPointOperations:
         else:
             self.controlpoints = np.reshape(np.array(cp[:,:-1]), self.controlpoints.shape)
 
+        return self
+
     def scale(self, s):
         """Scale, or magnify a B-spline object a given amount
         @param ax: Scaling factors, possible different in each direction
@@ -86,6 +88,8 @@ class ControlPointOperations:
 
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
+
+        return self
 
     def rotate(self, theta, normal=[0,0,1]):
         """Rotate a B-spline object around an axis
@@ -130,6 +134,8 @@ class ControlPointOperations:
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
 
+        return self
+
     def mirror(self, normal):
         """Mirror a B-spline object around a plane through the origin
         @param normal: The plane normal to mirror about
@@ -170,6 +176,8 @@ class ControlPointOperations:
 
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
+
+        return self
         
     def project(self, plane):
         """Projects geometry onto a plane or axis. project('xy') will project it
@@ -193,6 +201,8 @@ class ControlPointOperations:
         for i in range(dim):
             if not keep[i]:
                 self.controlpoints[...,i] = 0
+
+        return self
 
     def bounding_box(self):
         """Get the bounding box of a B-spline computed off the control-point values.
@@ -223,6 +233,8 @@ class ControlPointOperations:
             dim -= 1
         self.dimension = new_dim
 
+        return self
+
     def force_rational(self):
         """Force a rational representation by including weights of all value 1"""
         if not self.rational:
@@ -231,6 +243,12 @@ class ControlPointOperations:
             pardim = len(self.controlpoints.shape)-1 # 1=Curve, 2=Surface, 3=Volume
             self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), pardim)
             self.rational = 1
+
+        return self
+
+    def clone(self):
+        return copy.deepcopy(self)
+
 
 
     def __iadd__(self, x):

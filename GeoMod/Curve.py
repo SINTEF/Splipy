@@ -86,7 +86,7 @@ class Curve(ControlPointOperations):
         dN = self.basis.evaluate(t, d)
 
         # compute physical points [dx/dt,dy/dt,dz/dt] for all points t[i]
-        result = dN * self.controlpoints
+        result = np.array(dN * self.controlpoints)
 
         # Rational curves need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
         # x(t) = sum_i N_i(t) * w_i*x_i / W(t)
@@ -95,16 +95,16 @@ class Curve(ControlPointOperations):
         if self.rational: 
             if d==1:
                 N = self.basis.evaluate(t)
-                non_derivative = N*self.controlpoints
-                W    = non_derivative[:,-1]  # W(t)
-                Wder = result[:,-1]          # W'(t)
+                non_derivative = np.array(N*self.controlpoints)
+                W      = non_derivative[:,-1] # W(t)
+                Wder   = result[:,-1]         # W'(t)
                 for i in range(self.dimension):
                     result[:,i] = result[:,i]/W - non_derivative[:,i]*Wder/W/W
 
             elif d==2:
                 d2 = result
-                d1 = self.basis.evaluate(t,1) * self.controlpoints;
-                d0 = self.basis.evaluate(t)   * self.controlpoints;
+                d1 = np.array(self.basis.evaluate(t,1) * self.controlpoints)
+                d0 = np.array(self.basis.evaluate(t)   * self.controlpoints)
                 W  = d0[:,-1] # W(t)
                 W1 = d1[:,-1] # W'(t)
                 W2 = d1[:,-1] # W''(t)

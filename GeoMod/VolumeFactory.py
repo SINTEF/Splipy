@@ -2,7 +2,6 @@ from Surface import *
 from Volume import *
 import CurveFactory
 import SurfaceFactory
-import copy
 
 def cube(size=(1,1,1)):
     """ Create a volumetric cube with lower right corner at (0,0,0)
@@ -25,10 +24,10 @@ def revolve(surf, theta=2*pi):
     @return      : a revolved surface
     @rtype       : Surface
     """
-    surf_copy = copy.deepcopy(surf)
-    surf_copy.set_dimension(3) # add z-components (if not already present)
-    surf_copy.force_rational() # add weight (if not already present)
-    n  = len(surf_copy)        # number of control points of the surface
+    surf = surf.clone()   # clone input surface, throw away old reference
+    surf.set_dimension(3) # add z-components (if not already present)
+    surf.force_rational() # add weight (if not already present)
+    n  = len(surf)        # number of control points of the surface
     cp = np.zeros((8*n,4))
     basis = BSplineBasis(3, [0,0,0,1,1,2,2,3,3,4,4,4], periodic=0)
     basis *= 2*pi/4        # set parametric domain to (0,2pi) in w-direction
@@ -40,11 +39,11 @@ def revolve(surf, theta=2*pi):
             weight = 1.0
         else:
             weight = 1.0/sqrt(2)
-        cp[i*n:(i+1)*n,:]  = np.reshape(surf_copy.controlpoints.transpose(1,0,2), (n,4))
+        cp[i*n:(i+1)*n,:]  = np.reshape(surf.controlpoints.transpose(1,0,2), (n,4))
         cp[i*n:(i+1)*n,2] *= weight
         cp[i*n:(i+1)*n,3] *= weight
-        surf_copy.rotate(pi/4)
-    return Volume(surf_copy.basis1, surf_copy.basis2, basis, cp, True)
+        surf.rotate(pi/4)
+    return Volume(surf.basis1, surf.basis2, basis, cp, True)
 
 def cylinder(r=1, h=1):
     """ Create a solid cylinder with starting at the xy-plane,
@@ -97,8 +96,8 @@ def edge_surfaces(surfaces):
     @rtype         : Volume
     """
     if len(surfaces)==2:
-        surf1 = copy.deepcopy(surfaces[0])
-        surf2 = copy.deepcopy(surfaces[1])
+        surf1 = surfaces[0].clone()
+        surf2 = surfaces[1].clone()
         Surface.make_surfaces_identical(surf1, surf2)
         (n1,n2,d) = surf1.controlpoints.shape # d = dimension + rational
 
