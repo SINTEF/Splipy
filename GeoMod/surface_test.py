@@ -296,5 +296,52 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(control_point1[1], control_point2[1])
         self.assertEqual(control_point1[2], control_point2[2])
 
+    def test_split(self):
+        # test a rational 2D surface 
+        controlpoints = [[0,0,1],[-1,1,.96],[0,2,1],  [1,-1,1],[1,0,.8],[1,1,1],  [2,1,.89],[2,2,.9],[2,3,1],  [3,0,1],[4,1,1],[3,2,1]]
+        basis1 = BSplineBasis(3, [1,1,1, 1.4,5,5,5])
+        basis2 = BSplineBasis(3, [2,2,2,7,7,7])
+        surf = Surface(basis1, basis2, controlpoints, True)
+
+        split_u_surf = surf.split(0, [1.1, 1.6, 4])
+        split_v_surf = surf.split(1, 3.1)
+
+        self.assertEqual(len(split_u_surf), 4)
+        self.assertEqual(len(split_v_surf), 2)
+        
+        # check that the u-vector is properly split
+        self.assertAlmostEqual(split_u_surf[0].start()[0], 1.0)
+        self.assertAlmostEqual(split_u_surf[0].end()[0],   1.1)
+        self.assertAlmostEqual(split_u_surf[1].start()[0], 1.1)
+        self.assertAlmostEqual(split_u_surf[1].end()[0],   1.6)
+        self.assertAlmostEqual(split_u_surf[2].start()[0], 1.6)
+        self.assertAlmostEqual(split_u_surf[2].end()[0],   4.0)
+        self.assertAlmostEqual(split_u_surf[3].start()[0], 4.0)
+        self.assertAlmostEqual(split_u_surf[3].end()[0],   5.0)
+        # check that the v-vectors remain unchanged
+        self.assertAlmostEqual(split_u_surf[2].start()[1], 2.0)
+        self.assertAlmostEqual(split_u_surf[2].end()[1],   7.0)
+        # check that the v-vector is properly split
+        self.assertAlmostEqual(split_v_surf[0].start()[1], 2.0)
+        self.assertAlmostEqual(split_v_surf[0].end()[1],   3.1)
+        self.assertAlmostEqual(split_v_surf[1].start()[1], 3.1)
+        self.assertAlmostEqual(split_v_surf[1].end()[1],   7.0)
+        # check that the u-vector remain unchanged
+        self.assertAlmostEqual(split_v_surf[1].start()[0], 1.0)
+        self.assertAlmostEqual(split_v_surf[1].end()[0],   5.0)
+
+        # check that evaluations remain unchanged
+        pt1 = surf(3.23, 2.12)
+
+        self.assertAlmostEqual(split_u_surf[2].evaluate(3.23,2.12)[0], pt1[0])
+        self.assertAlmostEqual(split_u_surf[2].evaluate(3.23,2.12)[1], pt1[1])
+
+        self.assertAlmostEqual(split_v_surf[0].evaluate(3.23,2.12)[0], pt1[0])
+        self.assertAlmostEqual(split_v_surf[0].evaluate(3.23,2.12)[1], pt1[1])
+
+
+
+
+
 if __name__ == '__main__':
     unittest.main()

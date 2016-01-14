@@ -303,6 +303,38 @@ class Volume(ControlPointOperations):
         self.basis2        = newBasis2
         self.basis3        = newBasis3
 
+    def refine(self, n):
+        """Enrich spline space by inserting n knots into each existing knot
+        span
+        @param n: The number of new knots to insert into each span
+        @type  n: Int
+        """
+        (knots1,knots2,knots3) = self.get_knots() # excluding multiple knots
+
+        # insert new knots in the u-direction
+        new_knots = []
+        k_prev = knots1[0]
+        for (k0,k1) in zip(knots1[:-1], knots1[1:]):
+            element_knots = np.linspace(k0,k1,n+2)
+            new_knots += list(element_knots[1:-1])
+        self.insert_knot(0, new_knots)
+
+        # insert new knots in the v-direction
+        new_knots = []
+        k_prev = knots2[0]
+        for (k0,k1) in zip(knots2[:-1], knots2[1:]):
+            element_knots = np.linspace(k0,k1,n+2)
+            new_knots += list(element_knots[1:-1])
+        self.insert_knot(1, new_knots)
+
+        # insert new knots in the w-direction
+        new_knots = []
+        k_prev = knots3[0]
+        for (k0,k1) in zip(knots3[:-1], knots3[1:]):
+            element_knots = np.linspace(k0,k1,n+2)
+            new_knots += list(element_knots[1:-1])
+        self.insert_knot(2, new_knots)
+
     def insert_knot(self, direction, knot):
         """Insert a knot into this spline volume
         @param direction: The parametric direction (u=0, v=1, w=2)
@@ -334,6 +366,151 @@ class Volume(ControlPointOperations):
             for k in knot:
                 C = self.basis3.insert_knot(k) * C
             self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,2)).transpose((1,2,0,3))
+
+    def split(self, direction, knots):
+        """ Split a volume into two or more separate representations with C0
+        continuity between them.
+        @param direction: The parametric direction (u=0, v=1, w=2)
+        @type  direction: Int
+        @param knots    : splitting point(s)
+        @type  knots    : Float or list of Floats
+        @return         : The volume split into multiple pieces
+        @rtype          : List of Volume
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(knots)
+        except TypeError:
+            knots = [knots]
+        # error test input
+        if direction != 0 and direction != 1 and direction != 2:
+            raise ValueError('direction must be 0, 1 or 2')
+
+        p              = self.get_order()
+        results        = []
+        splitting_vol  = self.clone()
+        basis          = [self.basis1, self.basis2, self.basis3]
+        # insert knots to produce C{-1} at all splitting points
+        for k in knots:
+            continuity = basis[direction].get_continuity(k)
+            if continuity == np.inf:
+                continuity = p[direction]-1
+            splitting_vol.insert_knot(direction, [k]*(continuity+1))
+
+        # everything is available now, just have to find the right index range
+        # in the knot vector and controlpoints to store in each separate curve
+        # piece
+        last_cp_i   = 0
+        last_knot_i = 0
+        (n1, n2, n3, dim) = splitting_vol.controlpoints.shape
+        if direction==0:
+            for k in knots:
+                mu    = bisect_left( splitting_vol.basis1.knots, k )
+                n_cp  = mu - last_knot_i
+                basis = BSplineBasis(p[0], splitting_vol.basis1.knots[last_knot_i:mu+p[0]])
+                cp = splitting_vol.controlpoints[last_cp_i:last_cp_i+n_cp,:,:,:]
+                cp = np.reshape(cp.transpose((2,1,0,3)), (n_cp*n2*n3, dim))
+
+                results.append(Volume(basis, self.basis2, self.basis3, cp, self.rational))
+                last_knot_i  = mu
+                last_cp_i   += n_cp
+
+            # with n splitting points, we're getting n+1 pieces. Add the final one:
+            basis = BSplineBasis(p[0], splitting_vol.basis1.knots[last_knot_i:])
+            n_cp  = len(basis)
+            cp = splitting_vol.controlpoints[last_cp_i:,:,:,:]
+            cp = np.reshape(cp.transpose((2,1,0,3)), (n_cp*n2*n3, dim))
+            results.append(Volume(basis, self.basis2, self.basis3, cp, self.rational))
+        elif direction==1:
+            for k in knots:
+                mu    = bisect_left( splitting_vol.basis2.knots, k )
+                n_cp  = mu - last_knot_i
+                basis = BSplineBasis(p[1], splitting_vol.basis2.knots[last_knot_i:mu+p[1]])
+                cp = splitting_vol.controlpoints[:,last_cp_i:last_cp_i+n_cp,:,:]
+                cp = np.reshape(cp.transpose((2,1,0,3)), (n_cp*n1*n3, dim))
+
+                results.append(Volume(self.basis1, basis, self.basis3, cp, self.rational))
+                last_knot_i  = mu
+                last_cp_i   += n_cp
+            # with n splitting points, we're getting n+1 pieces. Add the final one:
+            basis = BSplineBasis(p[1], splitting_vol.basis2.knots[last_knot_i:])
+            n_cp  = len(basis)
+            cp = splitting_vol.controlpoints[:,last_cp_i:,:,:]
+            cp = np.reshape(cp.transpose((2,1,0,3)), (n_cp*n1*n3, dim))
+            results.append(Volume(self.basis1, basis, self.basis3, cp, self.rational))
+        else:
+            for k in knots:
+                mu    = bisect_left( splitting_vol.basis3.knots, k )
+                n_cp  = mu - last_knot_i
+                basis = BSplineBasis(p[2], splitting_vol.basis3.knots[last_knot_i:mu+p[2]])
+                cp = splitting_vol.controlpoints[:,:,last_cp_i:last_cp_i+n_cp,:]
+                cp = np.reshape(cp.transpose((2,1,0,3)), (n_cp*n1*n2, dim))
+
+                results.append(Volume(self.basis1, self.basis2, basis, cp, self.rational))
+                last_knot_i  = mu
+                last_cp_i   += n_cp
+            # with n splitting points, we're getting n+1 pieces. Add the final one:
+            basis = BSplineBasis(p[2], splitting_vol.basis3.knots[last_knot_i:])
+            n_cp  = len(basis)
+            cp = splitting_vol.controlpoints[:,:,last_cp_i:,:]
+            cp = np.reshape(cp.transpose((2,1,0,3)), (n_cp*n1*n2, dim))
+            results.append(Volume(self.basis1, self.basis2, basis, cp, self.rational))
+
+        return results
+
+    def rebuild(self, p, n):
+        """ Creates an approximation to this volume by resampling it using a
+        uniform knot vector of order p and with n control points. 
+        @param p: Discretization order
+        @type  p: Int or list of three int
+        @param n: Number of control points
+        @type  n: Int or list of three int
+        @return : Approximation of this volume on a different basis
+        @rtype  : Volume
+        """
+        try:
+            len(p)
+        except TypeError:
+            p = [p,p,p]
+        try:
+            len(n)
+        except TypeError:
+            n = [n,n,n]
+
+        old_basis = [self.basis1, self.basis2, self.basis3]
+        basis     = []
+        u         = []
+        N         = []
+        # establish uniform open knot vectors
+        for i in range(3):
+            knot  = [0]*p[i] + range(1,n[i]-p[i]+1) + [n[i]-p[i]+1]*p[i]
+            basis.append(BSplineBasis(p[i], knot))
+
+            # make these span the same parametric domain as the old ones
+            basis[i].normalize()
+            t0        = old_basis[i].start()
+            t1        = old_basis[i].end()
+            basis[i] *= (t1-t0)
+            basis[i] += t0
+
+            # fetch evaluation points and evaluate basis functions
+            u.append(basis[i].greville() )
+            N.append(basis[i].evaluate(u[i]))
+        
+        # find interpolation points as evaluation of existing volume
+        x = self.evaluate(u[0], u[1], u[2])
+
+        # solve interpolation problem
+        cp = np.tensordot(np.linalg.inv(N[2]), x,   axes=(1,2))
+        cp = np.tensordot(np.linalg.inv(N[1]), cp,  axes=(1,2))
+        cp = np.tensordot(np.linalg.inv(N[0]), cp,  axes=(1,2))
+
+        # re-order controlpoints so they match up with Volume constructor
+        cp = cp.transpose((2,1,0,3))
+        cp = cp.reshape(n[0]*n[1]*n[2], cp.shape[3])
+
+        # return new resampled curve 
+        return Volume(basis[0], basis[1], basis[2], cp)
 
     def write_g2(self, outfile):
         """write GoTools formatted SplineVolume to file"""

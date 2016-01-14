@@ -345,6 +345,133 @@ class Surface(ControlPointOperations):
                 C = self.basis2.insert_knot(k) * C
             self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1,1)).transpose((1,0,2))
 
+    def split(self, direction, knots):
+        """ Split a surface into two or more separate representations with C0
+        continuity between them.
+        @param direction: The parametric direction (u=0, v=1)
+        @type  direction: Int
+        @param knots    : splitting point(s)
+        @type  knots    : Float or list of Floats
+        @return         : The surface split into multiple pieces
+        @rtype          : List of Surface
+        """
+        # for single-value input, wrap it into a list
+        try:
+            len(knots)
+        except TypeError:
+            knots = [knots]
+        # error test input
+        if direction != 0 and direction != 1:
+            raise ValueError('direction must be 0 or 1')
+
+        p              = self.get_order()
+        results        = []
+        splitting_surf = self.clone()
+        basis          = [self.basis1, self.basis2]
+        # insert knots to produce C{-1} at all splitting points
+        for k in knots:
+            continuity = basis[direction].get_continuity(k)
+            if continuity == np.inf:
+                continuity = p[direction]-1
+            splitting_surf.insert_knot(direction, [k]*(continuity+1))
+
+        # everything is available now, just have to find the right index range
+        # in the knot vector and controlpoints to store in each separate curve
+        # piece
+        last_cp_i   = 0
+        last_knot_i = 0
+        (n1, n2, dim) = splitting_surf.controlpoints.shape
+        if direction==0:
+            for k in knots:
+                mu    = bisect_left( splitting_surf.basis1.knots, k )
+                n_cp  = mu - last_knot_i
+                basis = BSplineBasis(p[0], splitting_surf.basis1.knots[last_knot_i:mu+p[0]])
+                cp = splitting_surf.controlpoints[last_cp_i:last_cp_i+n_cp,:,:]
+                cp = np.reshape(cp.transpose((1,0,2)), (n_cp*n2, dim))
+
+                results.append(Surface(basis, self.basis2, cp, self.rational))
+                last_knot_i  = mu
+                last_cp_i   += n_cp
+
+            # with n splitting points, we're getting n+1 pieces. Add the final one:
+            basis = BSplineBasis(p[0], splitting_surf.basis1.knots[last_knot_i:])
+            n_cp  = len(basis)
+            cp = splitting_surf.controlpoints[last_cp_i:,:,:]
+            cp = np.reshape(cp.transpose((1,0,2)), (n_cp*n2, dim))
+            results.append(Surface(basis, self.basis2, cp, self.rational))
+        else:
+            for k in knots:
+                mu    = bisect_left( splitting_surf.basis2.knots, k )
+                n_cp  = mu - last_knot_i
+                basis = BSplineBasis(p[1], splitting_surf.basis2.knots[last_knot_i:mu+p[1]])
+                cp = splitting_surf.controlpoints[:,last_cp_i:last_cp_i+n_cp,:]
+                cp = np.reshape(cp.transpose((1,0,2)), (n_cp*n1, dim))
+
+                results.append(Surface(self.basis1, basis, cp, self.rational))
+                last_knot_i  = mu
+                last_cp_i   += n_cp
+            # with n splitting points, we're getting n+1 pieces. Add the final one:
+            basis = BSplineBasis(p[1], splitting_surf.basis2.knots[last_knot_i:])
+            n_cp  = len(basis)
+            cp = splitting_surf.controlpoints[:,last_cp_i:,:]
+            cp = np.reshape(cp.transpose((1,0,2)), (n_cp*n1, dim))
+            results.append(Surface(self.basis1, basis, cp, self.rational))
+
+        return results
+
+    def rebuild(self, p, n):
+        """ Creates an approximation to this surface by resampling it using a
+        uniform knot vector of order p and with n control points. 
+        @param p: Discretization order
+        @type  p: Int or list of two int
+        @param n: Number of control points
+        @type  n: Int or list of two int
+        @return : Approximation of this surface on a different basis
+        @rtype  : Surface
+        """
+        try:
+            len(p)
+        except TypeError:
+            p = [p,p]
+        try:
+            len(n)
+        except TypeError:
+            n = [n,n]
+
+        old_basis = [self.basis1, self.basis2]
+        basis     = []
+        u         = []
+        N         = []
+        # establish uniform open knot vectors
+        for i in range(2):
+            knot  = [0]*p[i] + range(1,n[i]-p[i]+1) + [n[i]-p[i]+1]*p[i]
+            basis.append(BSplineBasis(p[i], knot))
+
+            # make these span the same parametric domain as the old ones
+            basis[i].normalize()
+            t0        = old_basis[i].start()
+            t1        = old_basis[i].end()
+            basis[i] *= (t1-t0)
+            basis[i] += t0
+
+            # fetch evaluation points and evaluate basis functions
+            u.append(basis[i].greville() )
+            N.append(basis[i].evaluate(u[i]))
+        
+        # find interpolation points as evaluation of existing surface
+        x = self.evaluate(u[0], u[1])
+
+        # solve interpolation problem
+        cp = np.tensordot(np.linalg.inv(N[1]), x,   axes=(1,1))
+        cp = np.tensordot(np.linalg.inv(N[0]), cp,  axes=(1,1))
+
+        # re-order controlpoints so they match up with Surface constructor
+        cp = cp.transpose((1,0,2))
+        cp = cp.reshape(n[0]*n[1], cp.shape[2])
+
+        # return new resampled curve 
+        return Surface(basis[0], basis[1], cp)
+
     def write_g2(self, outfile):
         """write GoTools formatted SplineSurface to file"""
         outfile.write('200 1 0 0\n') # surface header, gotools version 1.0.0

@@ -107,7 +107,7 @@ class Curve(ControlPointOperations):
                 d0 = np.array(self.basis.evaluate(t)   * self.controlpoints)
                 W  = d0[:,-1] # W(t)
                 W1 = d1[:,-1] # W'(t)
-                W2 = d1[:,-1] # W''(t)
+                W2 = d2[:,-1] # W''(t)
                 for i in range(self.dimension):
                     result[:,i] = (d2[:,i]*W*W - 2*W1*(d1[:,i]*W0 - d0[:,i]*W1) - d0[:,i]*W2*W) /W /W /W
             else:
@@ -232,7 +232,7 @@ class Curve(ControlPointOperations):
             raise RuntimeError('Cannot append with periodic curves')
             
         # copy input curve so we don't change that one directly
-        extending_curve = copy.deepcopy(curve)
+        extending_curve = curve.clone()
 
         # make sure both are in the same space, and (if needed) have rational weights
         Curve.make_curves_compatible(self, extending_curve)
@@ -291,7 +291,7 @@ class Curve(ControlPointOperations):
 
         p = self.get_order()
         results = []
-        splitting_curve = copy.deepcopy(self)
+        splitting_curve = self.clone()
         # insert knots to produce C{-1} at all splitting points
         for k in knots:
             continuity = splitting_curve.get_continuity(k)
@@ -310,13 +310,13 @@ class Curve(ControlPointOperations):
             basis = BSplineBasis(p, splitting_curve.basis.knots[last_knot_i:mu+p])
             controlpoints = splitting_curve.controlpoints[last_cp_i:last_cp_i+n_cp,:]
 
-            results.append(Curve(basis, controlpoints))
+            results.append(Curve(basis, controlpoints, self.rational))
             last_knot_i  = mu
             last_cp_i   += n_cp
         # with n splitting points, we're getting n+1 pieces. Add the final one:
         basis = BSplineBasis(p, splitting_curve.basis.knots[last_knot_i:])
         controlpoints = splitting_curve.controlpoints[last_cp_i:,:]
-        results.append(Curve(basis, controlpoints))
+        results.append(Curve(basis, controlpoints, self.rational))
 
         return results
 
