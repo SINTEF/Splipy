@@ -40,6 +40,9 @@ class BSplineBasis:
             if knots[i + 1] - knots[i] < -self.tol:
                 raise ValueError('knot vector needs to be non-decreasing')
 
+    def num_functions(self):
+        return len(self.knots) - self.order - (self.periodic + 1)
+
     def start(self):
         """Start point of parametric domain. For open knot vectors, this is the first knot.
         @return: Knot number p, where p is the spline order
@@ -61,7 +64,7 @@ class BSplineBasis:
         """
         result = []
         p = self.order
-        n = len(self)
+        n = self.num_functions()
         if index is None:
             for i in range(n):
                 result.append(float(np.sum(self.knots[i + 1:i + p])) / (p - 1))
@@ -203,7 +206,7 @@ class BSplineBasis:
             raise ValueError('new_knot out of range')
         # mu is the index of last non-zero (old) basis function
         mu = bisect_right(self.knots, new_knot)
-        n = len(self)
+        n = self.num_functions()
         p = self.order
         C = np.zeros((n + 1, n))
         # the modulus operator i%n in the C-matrix is needed for periodic basis functions
@@ -238,7 +241,8 @@ class BSplineBasis:
 
     def __len__(self):
         """returns the number of functions in this basis"""
-        return len(self.knots) - self.order - (self.periodic + 1)
+        # return len(self.knots) - self.order - (self.periodic + 1)
+        return len(self.knots)
 
     def __getitem__(self, i):
         """returns knot i, including multiplicities"""

@@ -364,7 +364,7 @@ class Curve(ControlPointOperations):
 
     def __len__(self):
         """return the number of control points (basis functions) for this curve"""
-        return len(self.basis)
+        return self.basis.num_functions()
 
     def __getitem__(self, i):
         return self.controlpoints[i, :]

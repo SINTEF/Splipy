@@ -36,8 +36,10 @@ class Volume(ControlPointOperations):
 
         # controlpoints are given in as 2-index (kji,l) for u[i], v[j], w[k], x[l]
         # reshape these into 4-index (k,j,i,l)
-        self.controlpoints = np.reshape(controlpoints, (
-            len(self.basis3), len(self.basis2), len(self.basis1), self.dimension + self.rational))
+        self.controlpoints = np.reshape(controlpoints, (self.basis3.num_functions(),
+                                                        self.basis2.num_functions(),
+                                                        self.basis1.num_functions(),
+                                                        self.dimension + self.rational))
         # swap axis 0 and 2, to make it (i,j,k,l)
         self.controlpoints = self.controlpoints.transpose((2, 1, 0, 3))
 
@@ -433,7 +435,7 @@ class Volume(ControlPointOperations):
 
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[0], splitting_vol.basis1.knots[last_knot_i:])
-            n_cp = len(basis)
+            n_cp = basis.num_functions()
             cp = splitting_vol.controlpoints[last_cp_i:, :, :, :]
             cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n2 * n3, dim))
             results.append(Volume(basis, self.basis2, self.basis3, cp, self.rational))
@@ -450,7 +452,7 @@ class Volume(ControlPointOperations):
                 last_cp_i += n_cp
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[1], splitting_vol.basis2.knots[last_knot_i:])
-            n_cp = len(basis)
+            n_cp = basis.num_functions()
             cp = splitting_vol.controlpoints[:, last_cp_i:, :, :]
             cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n3, dim))
             results.append(Volume(self.basis1, basis, self.basis3, cp, self.rational))
@@ -467,7 +469,7 @@ class Volume(ControlPointOperations):
                 last_cp_i += n_cp
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[2], splitting_vol.basis3.knots[last_knot_i:])
-            n_cp = len(basis)
+            n_cp = basis.num_functions()
             cp = splitting_vol.controlpoints[:, :, last_cp_i:, :]
             cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n2, dim))
             results.append(Volume(self.basis1, self.basis2, basis, cp, self.rational))
@@ -548,7 +550,7 @@ class Volume(ControlPointOperations):
 
     def __len__(self):
         """return the number of control points (basis functions) for this volume"""
-        return len(self.basis1) * len(self.basis2) * len(self.basis3)
+        return self.basis1.num_functions() * self.basis2.num_functions() * self.basis3.num_functions()
 
     def __getitem__(self, i):
         (n1, n2, n3, dim) = self.controlpoints.shape

@@ -31,7 +31,8 @@ class Surface(ControlPointOperations):
 
         # controlpoints are given in at 2-index (ji,k) for u[i], v[j], x[k]
         # reshape theese into 3-index (j,i,k)
-        self.controlpoints = np.reshape(controlpoints, (len(self.basis2), len(self.basis1),
+        self.controlpoints = np.reshape(controlpoints, (self.basis2.num_functions(),
+                                                        self.basis1.num_functions(),
                                                         self.dimension + self.rational))
         # swap axis 0 and 1, to make it (i,j,k)
         self.controlpoints = self.controlpoints.transpose((1, 0, 2))
@@ -401,7 +402,7 @@ class Surface(ControlPointOperations):
 
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[0], splitting_surf.basis1.knots[last_knot_i:])
-            n_cp = len(basis)
+            n_cp = basis.num_functions()
             cp = splitting_surf.controlpoints[last_cp_i:, :, :]
             cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n2, dim))
             results.append(Surface(basis, self.basis2, cp, self.rational))
@@ -418,7 +419,7 @@ class Surface(ControlPointOperations):
                 last_cp_i += n_cp
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[1], splitting_surf.basis2.knots[last_knot_i:])
-            n_cp = len(basis)
+            n_cp = basis.num_functions()
             cp = splitting_surf.controlpoints[:, last_cp_i:, :]
             cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n1, dim))
             results.append(Surface(self.basis1, basis, cp, self.rational))
@@ -496,7 +497,7 @@ class Surface(ControlPointOperations):
 
     def __len__(self):
         """return the number of control points (basis functions) for this surface"""
-        return len(self.basis1) * len(self.basis2)
+        return self.basis1.num_functions() * self.basis2.num_functions()
 
     def __getitem__(self, i):
         (n1, n2, dim) = self.controlpoints.shape
