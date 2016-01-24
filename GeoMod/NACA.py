@@ -2,6 +2,8 @@ from GeoMod import Curve, BSplineBasis
 import GeoMod.SurfaceFactory as SurfaceFactory
 import numpy as np
 
+__all__ = ['camber', 'NACA']
+
 # see http://airfoiltools.com/airfoil/naca4digit
 
 def camber(M,P, order=5):

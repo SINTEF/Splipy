@@ -2,6 +2,8 @@ from math import pi, sqrt, ceil, cos, sin
 from bisect import bisect_right, bisect_left
 import numpy as np
 
+__all__ = ['BSplineBasis']
+
 class BSplineBasis:
 
     knots     = [0,0,1,1]

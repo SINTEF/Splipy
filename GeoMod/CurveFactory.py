@@ -2,6 +2,8 @@ from math import pi, cos, sin, sqrt, ceil
 from GeoMod import Curve, BSplineBasis
 import numpy as np
 
+__all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate']
+
 def line(a, b):
     """ Create a line between the points a and b
     @param a: start point

@@ -4,6 +4,8 @@ from math import ceil
 import numpy as np
 import copy
 
+__all__ = ['Curve']
+
 class Curve(ControlPointOperations):
 
     def __init__(self, basis=None, controlpoints=None, rational=False):

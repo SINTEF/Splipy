@@ -3,6 +3,8 @@ from GeoMod.ControlPointOperations import ControlPointOperations
 from bisect import bisect_left
 import numpy as np
 
+__all__ = ['Volume']
+
 class Volume(ControlPointOperations):
 
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):

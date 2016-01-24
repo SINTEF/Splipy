@@ -4,6 +4,8 @@ from GeoMod import Surface, Volume, BSplineBasis
 import GeoMod.CurveFactory as CurveFactory
 import GeoMod.SurfaceFactory as SurfaceFactory
 
+__all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces']
+
 def cube(size=(1,1,1)):
     """ Create a volumetric cube with lower right corner at (0,0,0)
     @param size: size in all directions, or (width,depth,height)

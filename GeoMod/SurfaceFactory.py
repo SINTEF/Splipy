@@ -3,6 +3,9 @@ from math import pi, sin, cos, sqrt
 import GeoMod.CurveFactory as CurveFactory
 import inspect
 import numpy as np
+
+__all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve',
+           'cylinder', 'torus', 'edge_curves', 'thicken']
         
 
 def square(size=(1,1)):

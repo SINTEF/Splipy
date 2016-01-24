@@ -1,6 +1,8 @@
 import numpy as np
 import copy
 
+__all__ = ['ControlPointOperations']
+
 def get_rotation_matrix(theta,axis):
     axis = axis/np.sqrt(np.dot(axis,axis))
     a = np.cos(theta/2)
