@@ -139,9 +139,7 @@ class Curve(ControlPointOperations):
         return self.basis.end()
 
     # convenience function since I can't remember to use stop or end
-    def stop(self):
-        """Return the end of the parametric domain"""
-        return self.end()
+    stop = end
 
     def get_order(self):
         """Return polynomial order (degree + 1) of spline curve"""
