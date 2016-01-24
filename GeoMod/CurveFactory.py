@@ -1,5 +1,6 @@
-from math  import pi,cos,sin,sqrt
-from Curve import *
+from math import pi, cos, sin, sqrt, ceil
+from GeoMod import Curve, BSplineBasis
+import numpy as np
 
 def line(a, b):
     """ Create a line between the points a and b

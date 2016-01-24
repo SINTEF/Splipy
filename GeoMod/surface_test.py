@@ -1,4 +1,4 @@
-from Surface import *
+from GeoMod import Surface, BSplineBasis
 import unittest
 
 class TestSurface(unittest.TestCase):

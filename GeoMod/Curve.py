@@ -1,6 +1,6 @@
-from BSplineBasis import *
-from ControlPointOperations import *
-from bisect import *
+from GeoMod import BSplineBasis
+from GeoMod.ControlPointOperations import ControlPointOperations
+from math import ceil
 import numpy as np
 import copy
 

@@ -1,8 +1,8 @@
-from Curve   import *
-from Surface import *
-from math    import pi,sin,cos,sqrt
-import CurveFactory
+from GeoMod import BSplineBasis, Curve, Surface
+from math import pi, sin, cos, sqrt
+import GeoMod.CurveFactory as CurveFactory
 import inspect
+import numpy as np
         
 
 def square(size=(1,1)):

@@ -1,7 +1,8 @@
-from Surface import *
-from Volume import *
-import CurveFactory
-import SurfaceFactory
+from math import pi
+import numpy as np
+from GeoMod import Surface, Volume, BSplineBasis
+import GeoMod.CurveFactory as CurveFactory
+import GeoMod.SurfaceFactory as SurfaceFactory
 
 def cube(size=(1,1,1)):
     """ Create a volumetric cube with lower right corner at (0,0,0)

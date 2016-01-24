@@ -1,5 +1,5 @@
-from Curve import *
-import SurfaceFactory
+from GeoMod import Curve, BSplineBasis
+import GeoMod.SurfaceFactory as SurfaceFactory
 import numpy as np
 
 # see http://airfoiltools.com/airfoil/naca4digit

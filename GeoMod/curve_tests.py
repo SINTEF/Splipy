@@ -1,4 +1,4 @@
-from Curve import *
+from GeoMod import Curve
 from math import sqrt
 import unittest
 

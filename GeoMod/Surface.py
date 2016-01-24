@@ -1,6 +1,6 @@
-from BSplineBasis import *
-from Curve import *
-from ControlPointOperations import *
+from GeoMod import Curve, BSplineBasis
+from GeoMod.ControlPointOperations import ControlPointOperations
+from bisect import bisect_left
 import numpy as np
 
 class Surface(ControlPointOperations):

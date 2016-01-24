@@ -1,5 +1,6 @@
-from BSplineBasis import *
-from ControlPointOperations import *
+from GeoMod import BSplineBasis
+from GeoMod.ControlPointOperations import ControlPointOperations
+from bisect import bisect_left
 import numpy as np
 
 class Volume(ControlPointOperations):

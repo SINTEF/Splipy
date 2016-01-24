@@ -1,9 +1,8 @@
-from BSplineBasis import *
-from Curve        import *
-from Surface      import *
-import CurveFactory
-import SurfaceFactory
-import VolumeFactory
+from GeoMod import BSplineBasis, Curve, Surface
+import GeoMod.CurveFactory as CurveFactory
+import GeoMod.SurfaceFactory as SurfaceFactory
+import GeoMod.VolumeFactory as VolumeFactory
+from math import pi, sqrt, cos, sin
 import numpy as np
 import unittest
 

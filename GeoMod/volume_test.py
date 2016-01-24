@@ -1,5 +1,6 @@
-from Volume import *
+from GeoMod import BSplineBasis, Volume
 import unittest
+import numpy as np
 
 class TestVolume(unittest.TestCase):
     def test_evaluate(self):
