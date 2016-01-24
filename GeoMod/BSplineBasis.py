@@ -175,8 +175,8 @@ class BSplineBasis:
                 result.append(k)
         return result
 
-    def get_raise_order_knot(self, amount):
-        """Return the knot vector corresponding to a raise_order operation,
+    def raise_order(self, amount):
+        """Return a basis corresponding to a raise_order operation,
         keeping the continuity at the knots unchanged by increasing their
         multiplicity"""
         if type(amount) is not int:
@@ -185,9 +185,10 @@ class BSplineBasis:
             raise ValueError('amount needs to be a positive integer')
         knot_spans = list(self.get_knot_spans())  # list of unique knots
         # For every degree we raise, we need to increase the multiplicity by one
-        result = list(self.knots) + knot_spans * amount
-        result.sort()  # make it a proper knot vector by ensuring that it is non-decreasing
-        return result
+        knots = list(self.knots) + knot_spans * amount
+        knots.sort()  # make it a proper knot vector by ensuring that it is non-decreasing
+
+        return BSplineBasis(self.order + amount, knots, self.periodic)
 
     def insert_knot(self, new_knot):
         """ Returns an extremely sparse matrix C such that N_new = N_old*C,

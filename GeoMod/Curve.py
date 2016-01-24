@@ -177,8 +177,7 @@ class Curve(ControlPointOperations):
         elif amount == 0:
             return
         # create the new basis
-        newKnot = self.basis.get_raise_order_knot(amount)
-        newBasis = BSplineBasis(self.basis.order + amount, newKnot, self.basis.periodic)
+        newBasis = self.basis.raise_order(amount)
 
         # set up an interpolation problem. This is in projective space, so no problems for rational cases
         interpolation_pts_t = newBasis.greville()  # parametric interpolation points (t)

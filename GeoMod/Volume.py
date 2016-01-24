@@ -283,12 +283,9 @@ class Volume(ControlPointOperations):
         @type  raise_w: Int
         """
         # create the new basis
-        newKnot1 = self.basis1.get_raise_order_knot(raise_u)
-        newBasis1 = BSplineBasis(self.basis1.order + raise_u, newKnot1, self.basis1.periodic)
-        newKnot2 = self.basis2.get_raise_order_knot(raise_v)
-        newBasis2 = BSplineBasis(self.basis2.order + raise_v, newKnot2, self.basis2.periodic)
-        newKnot3 = self.basis3.get_raise_order_knot(raise_w)
-        newBasis3 = BSplineBasis(self.basis3.order + raise_w, newKnot3, self.basis3.periodic)
+        newBasis1 = self.basis1.raise_order(raise_u)
+        newBasis2 = self.basis2.raise_order(raise_v)
+        newBasis3 = self.basis3.raise_order(raise_w)
 
         # set up an interpolation problem. This is in projective space, so no problems for rational cases
         interpolation_pts_u = newBasis1.greville()  # parametric interpolation points u
