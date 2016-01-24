@@ -360,9 +360,7 @@ class Curve(ControlPointOperations):
                 outfile.write('%f ' % self.controlpoints[i, j])
             outfile.write('\n')
 
-    def __call__(self, t):
-        """see evaluate(t)"""
-        return self.evaluate(t)
+    __call__ = evaluate
 
     def __len__(self):
         """return the number of control points (basis functions) for this curve"""

@@ -492,9 +492,7 @@ class Surface(ControlPointOperations):
                     outfile.write('%f ' % self.controlpoints[i, j, k])
                 outfile.write('\n')
 
-    def __call__(self, u, v):
-        """see evaluate(u,v)"""
-        return self.evaluate(u, v)
+    __call__ = evaluate
 
     def __len__(self):
         """return the number of control points (basis functions) for this surface"""

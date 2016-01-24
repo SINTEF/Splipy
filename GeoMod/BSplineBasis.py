@@ -234,9 +234,7 @@ class BSplineBasis:
             outfile.write('%f ' % k)
         outfile.write('\n')
 
-    def __call__(self, t):
-        """see evaluate(t)"""
-        return self.evaluate(t)
+    __call__ = evaluate
 
     def __len__(self):
         """returns the number of functions in this basis"""

@@ -544,9 +544,7 @@ class Volume(ControlPointOperations):
                         outfile.write('%f ' % self.controlpoints[i, j, k, d])
                     outfile.write('\n')
 
-    def __call__(self, u, v, w):
-        """see evaluate(u,v,w)"""
-        return self.evaluate(u, v, w)
+    __call__ = evaluate
 
     def __len__(self):
         """return the number of control points (basis functions) for this volume"""
