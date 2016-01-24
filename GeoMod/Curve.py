@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from GeoMod import BSplineBasis
 from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike
@@ -8,27 +10,55 @@ __all__ = ['Curve']
 
 
 class Curve(SplineObject):
+    """Curve()
+
+    Represents a curve: an object with a one-dimensional parameter space."""
+
     def __init__(self, basis=None, controlpoints=None, rational=False):
+        """__init__([basis=None], [controlpoints=None], [rational=False])
+
+        Construct a curve with the given basis and control points.
+
+        The default is to create a linear one-element mapping from (0,1) to the
+        unit interval.
+
+        :param BSplineBasis basis: The underlying B-Spline basis
+        :param array-like controlpoints: An *n* × *d* matrix of control points
+        :param bool rational: Whether the curve is rational (in which case the
+            control points are interpreted as pre-multiplied with the weight,
+            which is the last coordinate)
+        """
         super(Curve, self).__init__([basis], controlpoints, rational)
-        self.basis = self.bases[0]
 
     def evaluate_tangent(self, t):
-        """Evaluate the tangent of the curve at given parametric values
-        @param t: Parametric coordinate point(s)
-        @type  t: Float or list of Floats
-        @return : Tangent evaluation. Matrix DX(i,j) of component x(j) evaluated at t(i)
-        @rtype  : numpy.array
+        """Evaluate the tangent of the curve at given parametric values.
+
+        This is equivalent to :func:`GeoMod.Curve.evaluate_derivative` with the
+        default value of *d* = 1.
+
+        :param t: Parametric coordinate(s) in which to evaluate
+        :type t: float or [float]
+        :return: Tangent matrix *X[i,j]* of component *xj'(t)* evaluated at *t(i)*
+        :rtype: numpy.array
         """
         return self.evaluate_derivative(t, d=1)
 
     def evaluate_derivative(self, t, d=1):
-        """Evaluate the derivative of the curve at given parametric values
-        @param t: Parametric coordinate point(s)
-        @type  t: Float or list of Floats
-        @param d: Number of derivatives
-        @type  d: Int
-        @return : Matrix D^n X(i,j) of component x(j) differentiated d times at point t(i)
-        @rtype  : numpy.array
+        """evaluate_derivative(u, [d=1])
+
+        Evaluate the derivative of the curve at the given parametric values.
+
+        This function returns an *n* × *dim* array, where *n* is the number of
+        evaluation points, and *dim* is the physical dimension of the curve.
+
+        If there is only one evaluation point, a vector of length *dim* is
+        returned instead.
+
+        :param u: Parametric coordinates in which to evaluate
+        :type u: float or [float]
+        :param int d: Number of derivatives to compute
+        :return: Derivative array
+        :rtype: numpy.array
         """
         if not self.rational or d != 2:
             return super(Curve, self).evaluate_derivative(t, d=d)
@@ -55,9 +85,9 @@ class Curve(SplineObject):
         return result
 
     def raise_order(self, amount):
-        """Raise the order of a spline curve
-        @param amount: Number of polynomial degrees to increase
-        @type  amount: Int
+        """Raise the order of the curve.
+
+        :param int amount: Number of degrees to increase
         """
         if amount < 0:
             raise ValueError('Raise order requires a non-negative parameter')
@@ -77,10 +107,10 @@ class Curve(SplineObject):
         self.bases = [newBasis]
 
     def refine(self, n):
-        """Enrich spline space by inserting n knots into each existing knot
-        span
-        @param n: The number of new knots to insert into each span
-        @type  n: Int
+        """Enrich the spline space by inserting *n* knots into each existing
+        knot span.
+
+        :param int n: The number of new knots to insert into each span
         """
         new_knots = []
         knots = self.knots()  # excluding multiple knots
@@ -90,9 +120,10 @@ class Curve(SplineObject):
         self.insert_knot(new_knots)
 
     def insert_knot(self, knot):
-        """Insert a knot into this spline curve
-        @param knot: The knot(s) to insert
-        @type  knot: Float or list of Floats
+        """Insert a new knot into the curve.
+
+        :param knot: The new knot(s) to insert
+        :type knot: float or [float]
         """
         # for single-value input, wrap it into a list
         knot = ensure_listlike(knot)
@@ -104,12 +135,14 @@ class Curve(SplineObject):
         self.controlpoints = C * self.controlpoints
 
     def append(self, curve):
-        """ Extend this curve by merging another curve to the end of it. The
-        curves are glued together in a C0 fashion with enough repeated knots.
-        The function assumes that the end of this curve perfectly matches the
-        start of the input curve.
-        @param curve: Another curve
-        @type  curve: Curve
+        """Extend the curve by merging another curve to the end of it.
+
+        The curves are glued together in a C0 fashion with enough repeated
+        knots. The function assumes that the end of this curve perfectly
+        matches the start of the input curve.
+
+        :param Curve curve: Another curve
+        :raises RuntimeError: If either curve is periodic
         """
         # ASSUMPTION: open knot vectors
 
@@ -161,12 +194,13 @@ class Curve(SplineObject):
         return self.bases[0].get_continuity(knot)
 
     def split(self, knots):
-        """ Split a curve into two or more separate representations with C0
+        """Split a curve into two or more separate representations with C0
         continuity between them.
-        @param knots: splitting point(s)
-        @type  knots: Float or list of Floats
-        @return     : The curve split into multiple pieces
-        @rtype      : List of Curves
+
+        :param knots: The splitting points
+        :type knots: float or [float]
+        :return: The new curves
+        :rtype: [Curve]
         """
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
@@ -203,14 +237,13 @@ class Curve(SplineObject):
         return results
 
     def rebuild(self, p, n):
-        """ Creates an approximation to this curve by resampling it using a
-        uniform knot vector of order p and with n control points.
-        @param p: Discretization order
-        @type  p: Int
-        @param n: Number of control points
-        @type  n: Int
-        @return : Approximation of this curve on a different basis
-        @rtype  : Curve
+        """Creates an approximation to this curve by resampling it using a
+        uniform knot vector of order *p* with *n* control points.
+
+        :param int p: Polynomial discretization order
+        :param int n: Number of control points
+        :return: A new approximate curve
+        :rtype: Curve
         """
         # establish uniform open knot vector
         knot = [0] * p + range(1, n - p + 1) + [n - p + 1] * p
@@ -230,7 +263,10 @@ class Curve(SplineObject):
         return Curve(basis, controlpoints)
 
     def write_g2(self, outfile):
-        """write GoTools formatted SplineCurve to file"""
+        """Write the curve in GoTools format.
+
+        :param file-like outfile: The file to write to
+        """
         outfile.write('100 1 0 0\n')  # surface header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
         self.bases[0].write_g2(outfile)
@@ -242,13 +278,22 @@ class Curve(SplineObject):
             outfile.write('\n')
 
     def __len__(self):
-        """return the number of control points (basis functions) for this curve"""
+        """Return the number of control points (basis functions) for the curve."""
         return self.bases[0].num_functions()
 
     def __getitem__(self, i):
+        """Get the control point at a given index.
+
+        :rtype: numpy.array
+        """
         return self.controlpoints[i, :]
 
     def __setitem__(self, i, newCP):
+        """Set the control point at a given index.
+
+        :param int i: Index
+        :param numpy.array newCP: New control point
+        """
         self.controlpoints[i, :] = newCP
         return self
 
@@ -257,13 +302,13 @@ class Curve(SplineObject):
 
     @classmethod
     def make_curves_compatible(cls, crv1, crv2):
-        """ Make sure that curves are compatible, i.e. for merging. This
-        will manipulate one or both to make sure that they are both rational
-        and in the same geometric space (2D/3D).
-        @param crv1: first curve
-        @type  crv1: Curve
-        @param crv2: second curve
-        @type  crv2: Curve
+        """Ensure that two curves are compatible.
+
+        This will manipulate one or both to ensure that they are both rational
+        or nonrational, and that they lie in the same physical space.
+
+        :param Curve crv1: The first curve
+        :param Curve crv2: The second curve
         """
         # make both rational
         if crv1.rational:
@@ -279,13 +324,14 @@ class Curve(SplineObject):
 
     @classmethod
     def make_curves_identical(cls, crv1, crv2):
-        """ Make sure that curves have identical discretization, i.e. same
-        knot vector and order. May be used to draw a linear surface
-        interpolation between them, or to add curves together.
-        @param crv1: first curve
-        @type  crv1: Curve
-        @param crv2: second curve
-        @type  crv2: Curve
+        """Ensure that two curves have identical discretization.
+
+        This will first make them compatible (see
+        :func:`GeoMod.Curve.make_curves_compatible`), reparametrize them,
+        and possibly raise the order and insert knots as required.
+
+        :param Curve crv1: The first curve
+        :param Curve crv2: The second curve
         """
         # make sure that rational/dimension is the same
         Curve.make_curves_compatible(crv1, crv2)

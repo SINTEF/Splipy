@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from GeoMod import BSplineBasis, Surface
 from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike
@@ -8,11 +10,37 @@ __all__ = ['Volume']
 
 
 class Volume(SplineObject):
+    """Volume()
+
+    Represents a volume: an object with a three-dimensional parameter space."""
+
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
+        """__init__([basis1=None], [basis2=None], [basis3=None], [controlpoints=None], [rational=False])
+
+        Construct a volume with the given basis and control points.
+
+        The default is to create a linear one-element mapping from and to the
+        unit cube.
+
+        :param BSplineBasis basis1: The basis of the first parameter direction
+        :param BSplineBasis basis2: The basis of the second parameter direction
+        :param BSplineBasis basis3: The basis of the third parameter direction
+        :param array-like controlpoints: An *n1* × *n2* × *n3* × *d* matrix of
+            control points
+        :param bool rational: Whether the volume is rational (in which case the
+            control points are interpreted as pre-multiplied with the weight,
+            which is the last coordinate)
+        """
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
     def swap_parametrization(self, pardir1, pardir2):
-        """Swaps the two volume parameter directions"""
+        """Swaps two parameter directions.
+
+        :param int pardir1: A direction
+        :param int pardir2: Another direction
+        :raises ValueError: If the parameter directions are not different and
+            do not correspond to actual directions
+        """
         if (pardir1 == 0 and pardir2 == 1) or (pardir1 == 1 and pardir2 == 0):
             self.controlpoints = self.controlpoints.transpose(
                 (1, 0, 2, 3))  # re-order controlpoints
@@ -30,8 +58,12 @@ class Volume(SplineObject):
                 'pardir1 and pardir2 must be different from each other and either 0,1 or 2')
 
     def get_faces(self):
-        """Return a list of the 6 boundary faces of this volume (with outward normal vector). They are ordered as (umin,umax,vmin,vmax,wmin,wmax)"""
-        # ASSUMPTION: open knot vectors
+        """Return the six faces of this volume (with outward normal vectors) in
+        order: umin, umax, vmin, vmax, wmin, wmax.
+
+        :return: Boundary faces
+        :rtype: (Surface)
+        """
         (p1, p2, p3) = self.order()
         (n1, n2, n3, dim) = self.controlpoints.shape
         rat = self.rational
@@ -53,13 +85,11 @@ class Volume(SplineObject):
         return [umin, umax, vmin, vmax, wmin, wmax]
 
     def raise_order(self, raise_u, raise_v, raise_w):
-        """Raise the order of a spline volume
-        @param raise_u: Number of polynomial degrees to increase in u
-        @type  raise_u: Int
-        @param raise_v: Number of polynomial degrees to increase in v
-        @type  raise_v: Int
-        @param raise_w: Number of polynomial degrees to increase in w
-        @type  raise_w: Int
+        """Raise the order of the surface.
+
+        :param int raise_u: Number of degrees to increase in the first direction
+        :param int raise_v: Number of degrees to increase in the second direction
+        :param int raise_w: Number of degrees to increase in the third direction
         """
         # create the new basis
         newBasis1 = self.bases[0].raise_order(raise_u)
@@ -96,10 +126,10 @@ class Volume(SplineObject):
         self.bases = [newBasis1, newBasis2, newBasis3]
 
     def refine(self, n):
-        """Enrich spline space by inserting n knots into each existing knot
-        span
-        @param n: The number of new knots to insert into each span
-        @type  n: Int
+        """Enrich the spline space by inserting *n* knots into each existing
+        knot span.
+
+        :param int n: The number of new knots to insert into each span
         """
         (knots1, knots2, knots3) = self.knots()  # excluding multiple knots
 
@@ -125,11 +155,12 @@ class Volume(SplineObject):
         self.insert_knot(2, new_knots)
 
     def insert_knot(self, direction, knot):
-        """Insert a knot into this spline volume
-        @param direction: The parametric direction (u=0, v=1, w=2)
-        @type  direction: Int
-        @param knot:      The knot(s) to insert
-        @type  knot:      Float or list of Floats
+        """Insert a new knot into the volume.
+
+        :param int direction: The direction to insert in
+        :param knot: The new knot(s) to insert
+        :type knot: float or [float]
+        :raises ValueError: For invalid direction
         """
         # for single-value input, wrap it into a list
         knot = ensure_listlike(knot)
@@ -158,14 +189,14 @@ class Volume(SplineObject):
                                               axes=(1, 2)).transpose((1, 2, 0, 3))
 
     def split(self, direction, knots):
-        """ Split a volume into two or more separate representations with C0
+        """Split a volume into two or more separate representations with C0
         continuity between them.
-        @param direction: The parametric direction (u=0, v=1, w=2)
-        @type  direction: Int
-        @param knots    : splitting point(s)
-        @type  knots    : Float or list of Floats
-        @return         : The volume split into multiple pieces
-        @rtype          : List of Volume
+
+        :param int direction: The parametric direction to split in
+        :param knots: The splitting points
+        :type knots: float or [float]
+        :return: The new volumes
+        :rtype: [Volume]
         """
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
@@ -246,14 +277,13 @@ class Volume(SplineObject):
         return results
 
     def rebuild(self, p, n):
-        """ Creates an approximation to this volume by resampling it using a
-        uniform knot vector of order p and with n control points.
-        @param p: Discretization order
-        @type  p: Int or list of three int
-        @param n: Number of control points
-        @type  n: Int or list of three int
-        @return : Approximation of this volume on a different basis
-        @rtype  : Volume
+        """Creates an approximation to this volume by resampling it using
+        uniform knot vectors of order *p* with *n* control points.
+
+        :param int p: Polynomial discretization order
+        :param int n: Number of control points
+        :return: A new approximate volume
+        :rtype: Volume
         """
         p = ensure_listlike(p, dups=3)
         n = ensure_listlike(n, dups=3)
@@ -294,7 +324,10 @@ class Volume(SplineObject):
         return Volume(basis[0], basis[1], basis[2], cp)
 
     def write_g2(self, outfile):
-        """write GoTools formatted SplineVolume to file"""
+        """Write the volume in GoTools format.
+
+        :param file-like outfile: The file to write to
+        """
         outfile.write('700 1 0 0\n')  # volume header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
         self.bases[0].write_g2(outfile)
@@ -310,10 +343,14 @@ class Volume(SplineObject):
                     outfile.write('\n')
 
     def __len__(self):
-        """return the number of control points (basis functions) for this volume"""
+        """Return the number of control points (basis functions) for the surface."""
         return self.bases[0].num_functions() * self.bases[1].num_functions() * self.bases[2].num_functions()
 
     def __getitem__(self, i):
+        """Get the control point at a given index.
+
+        :rtype: numpy.array
+        """
         (n1, n2, n3, dim) = self.controlpoints.shape
         i1 = int(i % n1)
         i2 = int(i / n1) % n2
@@ -321,6 +358,11 @@ class Volume(SplineObject):
         return self.controlpoints[i1, i2, i3, :]
 
     def __setitem__(self, i, newCP):
+        """Set the control point at a given index.
+
+        :param int i: Index
+        :param numpy.array newCP: New control point
+        """
         (n1, n2, n3, dim) = self.controlpoints.shape
         i1 = int(i % n1)
         i2 = int(i / n1) % n2

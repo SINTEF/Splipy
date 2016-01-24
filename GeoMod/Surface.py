@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from GeoMod import Curve, BSplineBasis
 from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike
@@ -8,19 +10,40 @@ __all__ = ['Surface']
 
 
 class Surface(SplineObject):
+    """Surface()
+
+    Represents a surface: an object with a two-dimensional parameter space."""
+
     def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False):
+        """__init__([basis1=None], [basis2=None], [controlpoints=None], [rational=False])
+
+        Construct a surface with the given basis and control points.
+
+        The default is to create a linear one-element mapping from and to the
+        unit square.
+
+        :param BSplineBasis basis1: The basis of the first parameter direction
+        :param BSplineBasis basis2: The basis of the second parameter direction
+        :param array-like controlpoints: An *n1* × *n2* × *d* matrix of control points
+        :param bool rational: Whether the surface is rational (in which case the
+            control points are interpreted as pre-multiplied with the weight,
+            which is the last coordinate)
+        """
         super(Surface, self).__init__([basis1, basis2], controlpoints, rational)
 
     def evaluate_normal(self, u, v):
-        """Evaluate the normal vector of the surface at given parametric value(s). The returned values are not normalized
-        @param t : Parametric coordinate point(s)
-        @type  t : Float or list of Floats
-        @param u : Parametric coordinate point(s) in first direction
-        @type  u : Float or list of Floats
-        @param v : Parametric coordinate point(s) in second direction
-        @type  v : Float or list of Floats
-        @return  : 3D-array X(i,j,k) of the normal component x(k) evaluated at (u[i],v[j])
-        @rtype   : numpy.ndarray
+        """Evaluate the normal of the surface at given parametric values.
+
+        This is equal to the cross-product between tangents. The return value
+        is **not** normalized.
+
+        :param u: Parametric coordinate(s) in the first direction
+        :type u: float or [float]
+        :param v: Parametric coordinate(s) in the second direction
+        :type v: float or [float]
+        :return: Normal array *X[i,j,k]* of component *xj* evaluated at *(u[i], v[j])*
+        :rtype: numpy.array
+        :raises RuntimeError: If the physical dimension is not 2 or 3
         """
         if self.dimension == 2:
             try:
@@ -46,26 +69,33 @@ class Surface(SplineObject):
             raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
 
     def evaluate_tangent(self, u, v):
-        """Evaluate the two tangent vectors of the surface at given parametric values
-        @param t : Parametric coordinate point(s)
-        @type  t : Float or list of Floats
-        @param u : Parametric coordinate point(s) in first direction
-        @type  u : Float or list of Floats
-        @param v : Parametric coordinate point(s) in second direction
-        @type  v : Float or list of Floats
-        @return  : two 3D-arrays (dX/du, dX/dv) of the tangential component x(k) evaluated at (u[i],v[j])
-        @rtype   : tuple of two numpy.ndarray
+        """Evaluate the tangents of the surface at given parametric values.
+
+        This is equivalent to :func:`GeoMod.Surface.evaluate_derivative` with
+        ``d=(1,0)`` and ``d=(0,1)``.
+
+        :param u: Parametric coordinate(s) in the first direction
+        :type u: float or [float]
+        :param v: Parametric coordinate(s) in the second direction
+        :type v: float or [float]
+        :return: Two arrays *dX/du[i,j,k]* and *dX/dv[i,j,k]* of the tangent
+            component *xk* evaluated at *(u[i], v[j])*
+        :rtype: (numpy.array)
         """
         return (self.evaluate_derivative(u, v, d=(1, 0)),
                 self.evaluate_derivative(u, v, d=(0, 1)))
 
     def swap_parametrization(self):
-        """Swaps the two surface parameter directions"""
+        """Swaps the two surface parameter directions."""
         self.controlpoints = self.controlpoints.transpose((1, 0, 2))
         self.bases = self.bases[::-1]
 
     def get_edges(self):
-        """Return the four edge curves in (parametric) order: bottom, right, top, left"""
+        """Return the four edge curves in (parametric) order: bottom, right, top, left.
+
+        :return: Edge curves
+        :rtype: (Curve)
+        """
         # ASSUMPTION: open knot vectors
         (p1, p2) = self.order()
         (n1, n2, dim) = self.controlpoints.shape
@@ -80,11 +110,10 @@ class Surface(SplineObject):
         return (vmin, umax, vmax, umin)
 
     def raise_order(self, raise_u, raise_v):
-        """Raise the order of a spline surface
-        @param raise_u: Number of polynomial degrees to increase in u
-        @type  raise_u: Int
-        @param raise_v: Number of polynomial degrees to increase in v
-        @type  raise_v: Int
+        """Raise the order of the surface.
+
+        :param int raise_u: Number of degrees to increase in the first direction
+        :param int raise_v: Number of degrees to increase in the second direction
         """
         # create the new basis
         newBasis1 = self.bases[0].raise_order(raise_u)
@@ -114,10 +143,10 @@ class Surface(SplineObject):
         self.bases = [newBasis1, newBasis2]
 
     def refine(self, n):
-        """Enrich spline space by inserting n knots into each existing knot
-        span
-        @param n: The number of new knots to insert into each span
-        @type  n: Int
+        """Enrich the spline space by inserting *n* knots into each existing
+        knot span.
+
+        :param int n: The number of new knots to insert into each span
         """
         (knots1, knots2) = self.knots()  # excluding multiple knots
 
@@ -136,11 +165,12 @@ class Surface(SplineObject):
         self.insert_knot(1, new_knots)
 
     def insert_knot(self, direction, knot):
-        """Insert a knot into this spline surface
-        @param direction: The parametric direction (u=0, v=1)
-        @type  direction: Int
-        @param knot:      The knot(s) to insert
-        @type  knot:      Float or list of Floats
+        """Insert a new knot into the surface.
+
+        :param int direction: The direction to insert in
+        :param knot: The new knot(s) to insert
+        :type knot: float or [float]
+        :raises ValueError: For invalid direction
         """
         # for single-value input, wrap it into a list
         knot = ensure_listlike(knot)
@@ -162,14 +192,14 @@ class Surface(SplineObject):
                                               axes=(1, 1)).transpose((1, 0, 2))
 
     def split(self, direction, knots):
-        """ Split a surface into two or more separate representations with C0
+        """Split a surface into two or more separate representations with C0
         continuity between them.
-        @param direction: The parametric direction (u=0, v=1)
-        @type  direction: Int
-        @param knots    : splitting point(s)
-        @type  knots    : Float or list of Floats
-        @return         : The surface split into multiple pieces
-        @rtype          : List of Surface
+
+        :param int direction: The parametric direction to split in
+        :param knots: The splitting points
+        :type knots: float or [float]
+        :return: The new surfaces
+        :rtype: [Surface]
         """
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
@@ -233,14 +263,13 @@ class Surface(SplineObject):
         return results
 
     def rebuild(self, p, n):
-        """ Creates an approximation to this surface by resampling it using a
-        uniform knot vector of order p and with n control points.
-        @param p: Discretization order
-        @type  p: Int or list of two int
-        @param n: Number of control points
-        @type  n: Int or list of two int
-        @return : Approximation of this surface on a different basis
-        @rtype  : Surface
+        """Creates an approximation to this surface by resampling it using
+        uniform knot vectors of order *p* with *n* control points.
+
+        :param int p: Polynomial discretization order
+        :param int n: Number of control points
+        :return: A new approximate surface
+        :rtype: Surface
         """
         p = ensure_listlike(p, dups=2)
         n = ensure_listlike(n, dups=2)
@@ -280,7 +309,10 @@ class Surface(SplineObject):
         return Surface(basis[0], basis[1], cp)
 
     def write_g2(self, outfile):
-        """write GoTools formatted SplineSurface to file"""
+        """Write the surface in GoTools format.
+
+        :param file-like outfile: The file to write to
+        """
         outfile.write('200 1 0 0\n')  # surface header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
         self.bases[0].write_g2(outfile)
@@ -294,16 +326,25 @@ class Surface(SplineObject):
                 outfile.write('\n')
 
     def __len__(self):
-        """return the number of control points (basis functions) for this surface"""
+        """Return the number of control points (basis functions) for the surface."""
         return self.bases[0].num_functions() * self.bases[1].num_functions()
 
     def __getitem__(self, i):
+        """Get the control point at a given index.
+
+        :rtype: numpy.array
+        """
         (n1, n2, dim) = self.controlpoints.shape
         i1 = i % n1
         i2 = int(i / n1)
         return self.controlpoints[i1, i2, :]
 
     def __setitem__(self, i, newCP):
+        """Set the control point at a given index.
+
+        :param int i: Index
+        :param numpy.array newCP: New control point
+        """
         (n1, n2, dim) = self.controlpoints.shape
         i1 = i % n1
         i2 = int(i / n1)
@@ -321,13 +362,13 @@ class Surface(SplineObject):
 
     @classmethod
     def make_surfaces_compatible(cls, surf1, surf2):
-        """ Make sure that surfaces are compatible, i.e. for merging. This
-        will manipulate one or both to make sure that they are both rational
-        and in the same geometric space (2D/3D).
-        @param surf1: first surface
-        @type  surf1: Surface
-        @param surf2: second surface
-        @type  surf2: Surface
+        """Ensure that two surfaces are compatible.
+
+        This will manipulate one or both to ensure that they are both rational
+        or nonrational, and that they lie in the same physical space.
+
+        :param Surface surf1: The first surface
+        :param Surface surf2: The second surface
         """
         # make both rational (if needed)
         if surf1.rational:
@@ -343,13 +384,14 @@ class Surface(SplineObject):
 
     @classmethod
     def make_surfaces_identical(cls, surf1, surf2):
-        """ Make sure that surfaces have identical discretization, i.e. same
-        knot vector and order. May be used to draw a linear surface
-        interpolation between them, or to add surfaces together.
-        @param surf1: first surface
-        @type  surf1: Surface
-        @param surf2: second surface
-        @type  surf2: Surface
+        """Ensure that two curves have identical discretization.
+
+        This will first make them compatible (see
+        :func:`GeoMod.Surface.make_curves_compatible`), reparametrize them, and
+        possibly raise the order and insert knots as required.
+
+        :param Surface surf1: The first surface
+        :param Surface surf2: The second surface
         """
         # make sure that rational/dimension is the same
         Surface.make_surfaces_compatible(surf1, surf2)

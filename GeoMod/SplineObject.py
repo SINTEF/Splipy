@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import copy
 from operator import attrgetter, methodcaller
@@ -18,8 +20,32 @@ def get_rotation_matrix(theta, axis):
 
 
 class SplineObject(object):
+    """SplineObject()
 
-    def __init__(self, bases, controlpoints, rational):
+    Master class for spline objects with arbitrary dimensions.
+
+    This class should be subclassed instead of used directly.
+
+    All SplineObjects support basic arithmetic operators, which are interpreted
+    as translation and scaling. In-place operators (e.g. ``+=``) mutate the
+    object, while infix operators (e.g. ``+``) create new objects.
+    """
+
+    def __init__(self, bases=None, controlpoints=None, rational=False):
+        """__init__([bases=None], [controlpoints=None], [rational=False])
+
+        Construct a spline object with the given bases and control points.
+
+        The default is to create a linear one-element mapping from and to the
+        unit (hyper)cube.
+
+        :param [BSplineBasis] bases: The basis of each parameter direction
+        :param array-like controlpoints: An *n1* × *n2* × ... × *d* matrix of
+            control points
+        :param bool rational: Whether the object is rational (in which case the
+            control points are interpreted as pre-multiplied with the weight,
+            which is the last coordinate)
+        """
         bases = [(b if b else BSplineBasis()) for b in bases]
         self.bases = bases
         if controlpoints is None:
@@ -46,18 +72,30 @@ class SplineObject(object):
         self.controlpoints = controlpoints.transpose(spec)
 
     def _validate_domain(self, *params):
-        """Check whether the given evaluation parameters are valid."""
+        """Check whether the given evaluation parameters are valid.
+
+        :raises ValueError: If the parameters are outside the domain"""
         for b, p in zip(self.bases, params):
             if b.periodic < 0:
                 if min(p) < b.start() or b.end() < max(p):
                     raise ValueError('Evaluation outside parametric domain')
 
     def evaluate(self, *params):
-        """Evaluate the object at given parametric values
-        @param params: Parametric coordinate point(s)
-        @type  params: Float or list of Floats
-        @return : Geometry coordinates. Matrix X(i1,i2,...,j) of component x(j) evaluated at t(i1,i2,...)
-        @rtype  : numpy.array
+        """evaluate(u, v, ...)
+
+        Evaluate the object at given parametric values.
+
+        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
+        the number of evaluation points in direction *i*, and *dim* is the
+        physical dimension of the object.
+
+        If there is only one evaluation point, a vector of length *dim* is
+        returned instead.
+
+        :param u,v,...: Parametric coordinates in which to evaluate
+        :type u,v,...: float or [float]
+        :return: Geometry coordinates
+        :rtype: numpy.array
         """
         params = [ensure_listlike(p) for p in params]
 
@@ -85,34 +123,42 @@ class SplineObject(object):
         return result
 
     def evaluate_derivative(self, *params, **kwargs):
-        """Evaluate the derivative of the object at given parametric values
+        """evaluate_derivative(u, v, ..., [d=(1,1,...)])
 
-        This function accepts n parametric coordinate point(s) (which are
-        floats or list of floats), and an optional order of the derivative
-        to compute.
+        Evaluate the derivative of the object at the given parametric values.
 
-        @param params: Parametric coordinate point(s)
-        @type  params: Float or list of Floats
-        @param d: Derivative order (default (1,1,...))
-        @type  d: Int or Tuple
-        @return: Derivatives. Matrix X(i1,i2,...,j) of component x(j)
-            differentiationed d(j) times, evaluated at t(i1,i2,....)
+        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
+        the number of evaluation points in direction *i*, and *dim* is the
+        physical dimension of the object.
 
-        Tangent of curve at single point
-        curve.evaluate_derivative(1.0)
+        If there is only one evaluation point, a vector of length *dim* is
+        returned instead.
 
-        Double derivative of curve at single point
-        curve.evaluate_derivative(1.0, d=2)
+        Examples:
 
-        Third derivative of curve at several points
-        curve.evaluate_derivative([0.0, 1.0, 2.0], d=3)
+        .. code:: python
 
-        Tangents of surface
-        surface.evaluate_derivative(0.5, 0.7, d=(1,0))
-        surface.evaluate_derivative(0.5, 0.7, d=(0,1))
+           # Tangent of curve at single point
+           curve.evaluate_derivative(1.0)
 
-        Cross-derivative of surface
-        surface.evaluate_derivative(0.5, 0.7, d=(1,1))
+           # Double derivative of curve at single point:
+           curve.evaluate_derivative(1.0, d=2)
+
+           # Third derivative of curve at several points:
+           curve.evaluate_derivative([0.0, 1.0, 2.0], d=3)
+
+           # Tangents of surface:
+           surface.evaluate_derivative(0.5, 0.7, d=(1,0))
+           surface.evaluate_derivative(0.5, 0.7, d=(0,1))
+
+           # Cross-derivative of surface:
+           surface.evaluate_derivative(0.5, 0.7, d=(1,1))
+
+        :param u,v,...: Parametric coordinates in which to evaluate
+        :type u,v,...: float or [float]
+        :param (int) d: Order of derivative to compute
+        :return: Derivatives
+        :rtype: numpy.array
         """
         params = [ensure_listlike(p) for p in params]
 
@@ -154,33 +200,75 @@ class SplineObject(object):
         return result
 
     def start(self, direction=None):
-        """Return the start of the parametric domain"""
+        """start([direction=None])
+
+        Return the start of the parametric domain.
+
+        If `direction` is given, returns the start of that direction, as a
+        float. If it is not given, returns the start of all directions, as a
+        tuple.
+
+        :param int direction: Direction in which to get the start.
+        """
         if direction is None:
             return tuple(b.start() for b in self.bases)
         return self.bases[direction].start()
 
     def end(self, direction=None):
-        """Return the end of the parametric domain"""
+        """end([direction=None])
+
+        Return the end of the parametric domain.
+
+        If `direction` is given, returns the end of that direction, as a float.
+        If it is not given, returns the end of all directions, as a tuple.
+
+        :param int direction: Direction in which to get the end.
+        """
         if direction is None:
             return tuple(b.end() for b in self.bases)
         return self.bases[direction].end()
 
     def order(self, direction=None):
-        """Return polynomial order (degree + 1)"""
+        """order([direction=None])
+
+        Return polynomial order (degree + 1).
+
+        If `direction` is given, returns the order of that direction, as an
+        int. If it is not given, returns the order of all directions, as a
+        tuple.
+
+        :param int direction: Direction in which to get the order.
+        """
         if direction is None:
             return tuple(b.order for b in self.bases)
         return self.bases[direction].order
 
     def knots(self, direction=None, with_multiplicities=False):
-        """Return knots"""
+        """knots([direction=None], [with_multiplicities=False])
+
+        Return knots.
+
+        If `direction` is given, returns the knots in that direction, as a
+        list. If it is not given, returns the knots of all directions, as a
+        tuple.
+
+        :param int direction: Direction in which to get the knots.
+        :param bool with_multiplicities: If true, return knots with
+            multiplicities (i.e. repeated).
+        """
         getter = attrgetter('knots') if with_multiplicities else methodcaller('get_knot_spans')
         if direction is None:
             return tuple(getter(b) for b in self.bases)
         return getter(self.bases[direction])
 
     def flip_parametrization(self, direction=0):
-        """Swap the direction of a parameter by making it go in the reverse direction.
-        The parametric domain remains unchanged."""
+        """flip_parametrization([direction=0])
+
+        Swap the direction of a parameter by making it go in the reverse
+        direction. The parametric domain remains unchanged.
+
+        :param int direction: The direction to flip.
+        """
         self.bases[direction].reverse()
 
         # This creates the following slice programmatically
@@ -192,7 +280,23 @@ class SplineObject(object):
         self.controlpoints = self.controlpoints[tuple(slices)]
 
     def reparametrize(self, *args, **kwargs):
-        """Redefine the parametric domain"""
+        """reparametrize([u, v, ...], [direction=None])
+
+        Redefine the parametric domain. This function accepts two calling
+        conventions:
+
+        `reparametrize(u, v, ...)` reparametrizes each direction to the domains
+        given by the tuples *u*, *v*, etc. It is equivalent to calling
+        `reparametrize(u[0], u[1])` on each basis. The default domain for
+        directions not given is (0,1). In particular, if no arguments are
+        given, the new parametric domain will be the unit (hyper)cube.
+
+        `reparametrize(u, direction=d)` reparametrizes just the direction given
+        by *d* and leaves the others untouched.
+
+        :param tuple u, v, ...: New parametric domains, default to (0,1)
+        :param int direction: The direction to reparametrize
+        """
         if 'direction' not in kwargs:
             # Pad the args with (0, 1) for the extra directions
             args = list(args) + [(0, 1)] * (len(self.bases) - len(args))
@@ -204,9 +308,9 @@ class SplineObject(object):
             self.bases[direction].reparametrize(start, end)
 
     def translate(self, x):
-        """Translate, i.e. move a B-spline object a given distance
-        @param x: The direction and amount to move
-        @type  x: Point_like
+        """Translate (i.e. move) the object by a given distance.
+
+        :param point-like x: The vector to translate by.
         """
         # 3D rational example: create a 4x4 translation matrix
         #
@@ -248,9 +352,10 @@ class SplineObject(object):
         return self
 
     def scale(self, s):
-        """Scale, or magnify a B-spline object a given amount
-        @param ax: Scaling factors, possible different in each direction
-        @type  ax: Point_like or Float
+        """Scale, or magnify the object by a given amount.
+
+        :param s: Scaling factors, possibly different in each direction.
+        :type s: point-like or float
         """
         # 3D rational example: create a 4x4 scaling matrix
         #
@@ -280,12 +385,14 @@ class SplineObject(object):
 
         return self
 
-    def rotate(self, theta, normal=[0, 0, 1]):
-        """Rotate a B-spline object around an axis
-        @param theta:  Angle to rotate, as measured in radians
-        @type  theta:  Float
-        @param normal: The normal axis (if 3D) to rotate object around
-        @type  normal: Point_like
+    def rotate(self, theta, normal=(0, 0, 1)):
+        """rotate(theta, [normal=(0,0,1)])
+
+        Rotate the object around an axis.
+
+        :param float theta: Angle to rotate about, measured in radians
+        :param point-like normal: The normal axis (if 3D) to rotate about
+        :raises RuntimeError: If the physical dimension is not 2 or 3
         """
         # 2D rational example: create a 3x3 rotation matrix
         #
@@ -326,9 +433,10 @@ class SplineObject(object):
         return self
 
     def mirror(self, normal):
-        """Mirror a B-spline object around a plane through the origin
-        @param normal: The plane normal to mirror about
-        @type  normal: Point_like
+        """Mirror the object around a plane through the origin.
+
+        :param point-like normal: The plane normal to mirror about.
+        :raises RuntimeError: If the physical dimension is not 2 or 3
         """
         # 3D rational example: create a 4x4 reflection matrix
         #
@@ -369,11 +477,14 @@ class SplineObject(object):
         return self
 
     def project(self, plane):
-        """Projects geometry onto a plane or axis. project('xy') will project it
-        onto the xy-plane, by setting all z-components to 0. project('y') will
-        project it onto the y-axis by setting all x and z coordinates to 0.
-        @param plane: Any combination of 'x', 'y' and/or 'z'
-        @type  plane: String
+        """Projects the geometry onto a plane or axis.
+
+        - `project('xy')` will project the object onto the *xy* plane, setting
+          all *z* components to zero.
+        - `project('y')` will project the object onto the *y* axis, setting all
+          *x* and *z* components to zero.
+
+        :param string plane: Any combination of 'x', 'y' and 'z'
         """
         keep = [False] * 3
         for s in plane:
@@ -392,10 +503,14 @@ class SplineObject(object):
         return self
 
     def bounding_box(self):
-        """Get the bounding box of a B-spline computed off the control-point values.
-        Might be inaccurate for rational splines with wild weight values
-        @return: List of minimum and maximum values, sorted as xmin,xmax,ymin,ymax,...
-        @rtype : list
+        """Gets the bounding box of a spline object, computed from the
+        control-point values. Could be inaccurate for rational splines.
+
+        Returns the minima and maxima for each direction:
+        [xmin, xmax, ymin, ymax, ...]
+
+        :return: Bounding box
+        :rtype: [float]
         """
         dim = self.dimension
 
@@ -406,6 +521,11 @@ class SplineObject(object):
         return result
 
     def set_dimension(self, new_dim):
+        """Sets the physical dimension of the object. If increased, the new
+        components are set to zero.
+
+        :param int new_dim: New dimension.
+        """
         dim = self.dimension
         pardim = len(self.controlpoints.shape) - 1  # 1=Curve, 2=Surface, 3=Volume
         shape = self.controlpoints.shape
@@ -420,7 +540,10 @@ class SplineObject(object):
         return self
 
     def force_rational(self):
-        """Force a rational representation by including weights of all value 1"""
+        """Force a rational representation of the object.
+
+        The weights of a non-rational object will be set to 1.
+        """
         if not self.rational:
             dim = self.dimension
             shape = self.controlpoints.shape
@@ -431,6 +554,7 @@ class SplineObject(object):
         return self
 
     def clone(self):
+        """Clone the object."""
         return copy.deepcopy(self)
 
     __call__ = evaluate

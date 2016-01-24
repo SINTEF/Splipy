@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from GeoMod import BSplineBasis, Curve, Surface
 import GeoMod.CurveFactory as CurveFactory
 import GeoMod.SurfaceFactory as SurfaceFactory

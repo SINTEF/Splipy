@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 def ensure_listlike(x, dups=1):
     """Wraps x in a list if it's not list-like."""
     try:

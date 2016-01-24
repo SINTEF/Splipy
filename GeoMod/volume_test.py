@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from GeoMod import BSplineBasis, Volume
 import unittest
 import numpy as np

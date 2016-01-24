@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from GeoMod import Surface, BSplineBasis
 import unittest
 
