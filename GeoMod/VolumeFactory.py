@@ -47,7 +47,7 @@ def revolve(surf, theta=2 * pi):
         cp[i * n:(i + 1) * n, 2] *= weight
         cp[i * n:(i + 1) * n, 3] *= weight
         surf.rotate(pi / 4)
-    return Volume(surf.basis1, surf.basis2, basis, cp, True)
+    return Volume(surf.bases[0], surf.bases[1], basis, cp, True)
 
 
 def cylinder(r=1, h=1):
@@ -67,7 +67,7 @@ def cylinder(r=1, h=1):
     for controlpoint in shell:
         cp.append(list(controlpoint))
 
-    return Volume(shell.basis1, shell.basis2, BSplineBasis(), cp, True)
+    return Volume(shell.bases[0], shell.bases[1], BSplineBasis(), cp, True)
 
 
 def extrude(surf, h):
@@ -88,7 +88,7 @@ def extrude(surf, h):
     for controlpoint in surf:
         cp.append(list(controlpoint))
     surf -= (0, 0, h)
-    return Volume(surf.basis1, surf.basis2, BSplineBasis(2), cp, surf.rational)
+    return Volume(surf.bases[0], surf.bases[1], BSplineBasis(2), cp, surf.rational)
 
 
 def edge_surfaces(surfaces):
@@ -114,9 +114,7 @@ def edge_surfaces(surfaces):
         # Volume constructor orders control points in a different way, so we
         # create it from scratch here
         result = Volume()
-        result.basis1 = surf1.basis1
-        result.basis2 = surf1.basis2
-        result.basis3 = BSplineBasis(2)
+        result.bases = [surf1.bases[0], surf1.bases[1], BSplineBasis(2)]
         result.dimension = surf1.dimension
         result.rational = surf1.rational
         result.controlpoints = controlpoints

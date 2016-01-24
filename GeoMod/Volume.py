@@ -8,40 +8,7 @@ __all__ = ['Volume']
 
 class Volume(ControlPointOperations):
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
-
-        if basis1 is None:
-            basis1 = BSplineBasis()
-        if basis2 is None:
-            basis2 = BSplineBasis()
-        if basis3 is None:
-            basis3 = BSplineBasis()
-
-        self.basis1 = basis1
-        self.basis2 = basis2
-        self.basis3 = basis3
-
-        # if none provided, create the default geometry which is the linear mapping onto the unit cube (0,1)^3
-        if controlpoints is None:
-            controlpoints = []
-            greville_points1 = self.basis1.greville()
-            greville_points2 = self.basis2.greville()
-            greville_points3 = self.basis3.greville()
-            for p3 in greville_points3:
-                for p2 in greville_points2:
-                    for p1 in greville_points1:
-                        controlpoints.append([p1, p2, p3])
-
-        self.dimension = len(controlpoints[0]) - rational
-        self.rational = rational
-
-        # controlpoints are given in as 2-index (kji,l) for u[i], v[j], w[k], x[l]
-        # reshape these into 4-index (k,j,i,l)
-        self.controlpoints = np.reshape(controlpoints, (self.basis3.num_functions(),
-                                                        self.basis2.num_functions(),
-                                                        self.basis1.num_functions(),
-                                                        self.dimension + self.rational))
-        # swap axis 0 and 2, to make it (i,j,k,l)
-        self.controlpoints = self.controlpoints.transpose((2, 1, 0, 3))
+        super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
     def evaluate(self, u, v, w):
         """Evaluate the volume at given parametric values
@@ -69,20 +36,20 @@ class Volume(ControlPointOperations):
             w = [w]
 
         # error test input
-        if self.basis1.periodic < 0:  # periodic functions can evaluate everywhere
-            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+        if self.bases[0].periodic < 0:  # periodic functions can evaluate everywhere
+            if min(u) < self.bases[0].start() or self.bases[0].end() < max(u):
                 raise ValueError('evaluation outside parametric domain')
-        if self.basis2.periodic < 0:
-            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+        if self.bases[1].periodic < 0:
+            if min(v) < self.bases[1].start() or self.bases[1].end() < max(v):
                 raise ValueError('evaluation outside parametric domain')
-        if self.basis3.periodic < 0:
-            if min(w) < self.basis3.start() or self.basis3.end() < max(w):
+        if self.bases[2].periodic < 0:
+            if min(w) < self.bases[2].start() or self.bases[2].end() < max(w):
                 raise ValueError('evaluation outside parametric domain')
 
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
-        Nu = self.basis1.evaluate(u)
-        Nv = self.basis2.evaluate(v)
-        Nw = self.basis3.evaluate(w)
+        Nu = self.bases[0].evaluate(u)
+        Nv = self.bases[1].evaluate(v)
+        Nw = self.bases[2].evaluate(w)
 
         # compute physical points [x,y,z] for all points (u[i],v[j],w[k]). For rational volumes, compute [X,Y,Z,W] (in projective space)
         result = np.tensordot(Nw, self.controlpoints, axes=(1, 2))
@@ -132,20 +99,20 @@ class Volume(ControlPointOperations):
             w = [w]
 
         # error test input
-        if self.basis1.periodic < 0:  # periodic functions can evaluate everywhere
-            if min(u) < self.basis1.start() or self.basis1.end() < max(u):
+        if self.bases[0].periodic < 0:  # periodic functions can evaluate everywhere
+            if min(u) < self.bases[0].start() or self.bases[0].end() < max(u):
                 raise ValueError('evaluation outside parametric domain')
-        if self.basis2.periodic < 0:
-            if min(v) < self.basis2.start() or self.basis2.end() < max(v):
+        if self.bases[1].periodic < 0:
+            if min(v) < self.bases[1].start() or self.bases[1].end() < max(v):
                 raise ValueError('evaluation outside parametric domain')
-        if self.basis3.periodic < 0:
-            if min(w) < self.basis3.start() or self.basis3.end() < max(w):
+        if self.bases[2].periodic < 0:
+            if min(w) < self.bases[2].start() or self.bases[2].end() < max(w):
                 raise ValueError('evaluation outside parametric domain')
 
         # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
-        dNu = self.basis1.evaluate(u, du)
-        dNv = self.basis2.evaluate(v, dv)
-        dNw = self.basis3.evaluate(w, dw)
+        dNu = self.bases[0].evaluate(u, du)
+        dNv = self.bases[1].evaluate(v, dv)
+        dNw = self.bases[2].evaluate(w, dw)
 
         # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j],w[k])
         result = np.tensordot(dNw, self.controlpoints, axes=(1, 2))
@@ -184,20 +151,20 @@ class Volume(ControlPointOperations):
            @type  direction: Int
         """
         if direction == 0:
-            self.basis1.reverse()
+            self.bases[0].reverse()
             self.controlpoints = self.controlpoints[::-1, :, :, :]
         elif direction == 1:
-            self.basis2.reverse()
+            self.bases[1].reverse()
             self.controlpoints = self.controlpoints[:, ::-1, :, :]
         elif direction == 2:
-            self.basis3.reverse()
+            self.bases[2].reverse()
             self.controlpoints = self.controlpoints[:, :, ::-1, :]
         else:
             raise ValueError('direction must be 0,1 or 2')
 
     def get_order(self):
         """Return spline volume order (polynomial degree + 1) in all parametric directions"""
-        return (self.basis1.order, self.basis2.order, self.basis3.order)
+        return (self.bases[0].order, self.bases[1].order, self.bases[2].order)
 
     def get_knots(self, with_multiplicities=False):
         """Get the knots of the spline volume
@@ -207,33 +174,33 @@ class Volume(ControlPointOperations):
         @rtype :                    Tuple with List of float
         """
         if with_multiplicities:
-            return (self.basis1.knots, self.basis2.knots, self.basis3.knots)
+            return (self.bases[0].knots, self.bases[1].knots, self.bases[2].knots)
         else:
-            return (self.basis1.get_knot_spans(), self.basis2.get_knot_spans(),
-                    self.basis3.get_knot_spans())
+            return (self.bases[0].get_knot_spans(), self.bases[1].get_knot_spans(),
+                    self.bases[2].get_knot_spans())
 
     def start(self):
         """Return the start of the parametric domain"""
-        return (self.basis1.start(), self.basis2.start(), self.basis3.start())
+        return (self.bases[0].start(), self.bases[1].start(), self.bases[2].start())
 
     def end(self):
         """Return the end of the parametric domain"""
-        return (self.basis1.end(), self.basis2.end(), self.basis3.end())
+        return (self.bases[0].end(), self.bases[1].end(), self.bases[2].end())
 
     def swap_parametrization(self, pardir1, pardir2):
         """Swaps the two volume parameter directions"""
         if (pardir1 == 0 and pardir2 == 1) or (pardir1 == 1 and pardir2 == 0):
             self.controlpoints = self.controlpoints.transpose(
                 (1, 0, 2, 3))  # re-order controlpoints
-            self.basis1, self.basis2 = self.basis2, self.basis1  # swap knot vectors
+            self.bases[0], self.bases[1] = self.bases[1], self.bases[0]  # swap knot vectors
         elif (pardir1 == 0 and pardir2 == 2) or (pardir1 == 2 and pardir2 == 0):
             self.controlpoints = self.controlpoints.transpose(
                 (2, 1, 0, 3))  # re-order controlpoints
-            self.basis1, self.basis3 = self.basis3, self.basis1  # swap knot vectors
+            self.bases[0], self.bases[2] = self.bases[2], self.bases[0]  # swap knot vectors
         elif (pardir1 == 1 and pardir2 == 2) or (pardir1 == 2 and pardir2 == 1):
             self.controlpoints = self.controlpoints.transpose(
                 (0, 2, 1, 3))  # re-order controlpoints
-            self.basis2, self.basis3 = self.basis3, self.basis2  # swap knot vectors
+            self.bases[1], self.bases[2] = self.bases[2], self.bases[1]  # swap knot vectors
         else:
             raise ValueError(
                 'pardir1 and pardir2 must be different from each other and either 0,1 or 2')
@@ -242,15 +209,15 @@ class Volume(ControlPointOperations):
         """Redefine the parametric domain to be (umin,umax) x (vmin,vmax) x (wmin,wmax)"""
         if umax <= umin or vmax <= vmin or wmax <= wmin:
             raise ValueError('end must be larger than start')
-        self.basis1.normalize()  # set domain to (0,1)
-        self.basis1 *= (umax - umin)
-        self.basis1 += umin
-        self.basis2.normalize()
-        self.basis2 *= (vmax - vmin)
-        self.basis2 += vmin
-        self.basis3.normalize()
-        self.basis3 *= (wmax - wmin)
-        self.basis3 += wmin
+        self.bases[0].normalize()  # set domain to (0,1)
+        self.bases[0] *= (umax - umin)
+        self.bases[0] += umin
+        self.bases[1].normalize()
+        self.bases[1] *= (vmax - vmin)
+        self.bases[1] += vmin
+        self.bases[2].normalize()
+        self.bases[2] *= (wmax - wmin)
+        self.bases[2] += wmin
 
     def get_faces(self):
         """Return a list of the 6 boundary faces of this volume (with outward normal vector). They are ordered as (umin,umax,vmin,vmax,wmin,wmax)"""
@@ -258,17 +225,17 @@ class Volume(ControlPointOperations):
         (p1, p2, p3) = self.get_order()
         (n1, n2, n3, dim) = self.controlpoints.shape
         rat = self.rational
-        umin = Surface(p3, p2, self.basis3, self.basis2, np.reshape(self.controlpoints[0, :, :, :],
+        umin = Surface(p3, p2, self.bases[2], self.bases[1], np.reshape(self.controlpoints[0, :, :, :],
                                                                     (n2 * n3, dim), rat))
-        umax = Surface(p3, p2, self.basis3, self.basis2, np.reshape(self.controlpoints[-1, :, :, :],
+        umax = Surface(p3, p2, self.bases[2], self.bases[1], np.reshape(self.controlpoints[-1, :, :, :],
                                                                     (n2 * n3, dim), rat))
-        vmin = Surface(p3, p1, self.basis3, self.basis1, np.reshape(self.controlpoints[:, 0, :, :],
+        vmin = Surface(p3, p1, self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, 0, :, :],
                                                                     (n1 * n3, dim), rat))
-        vmax = Surface(p3, p1, self.basis3, self.basis1, np.reshape(self.controlpoints[:, -1, :, :],
+        vmax = Surface(p3, p1, self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, -1, :, :],
                                                                     (n1 * n3, dim), rat))
-        wmin = Surface(p2, p1, self.basis2, self.basis1, np.reshape(self.controlpoints[:, :, 0, :],
+        wmin = Surface(p2, p1, self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, 0, :],
                                                                     (n1 * n2, dim), rat))
-        wmax = Surface(p2, p1, self.basis2, self.basis1, np.reshape(self.controlpoints[:, :, -1, :],
+        wmax = Surface(p2, p1, self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, -1, :],
                                                                     (n1 * n2, dim), rat))
         umax.swap_parametrization()
         vmax.swap_parametrization()
@@ -285,19 +252,19 @@ class Volume(ControlPointOperations):
         @type  raise_w: Int
         """
         # create the new basis
-        newBasis1 = self.basis1.raise_order(raise_u)
-        newBasis2 = self.basis2.raise_order(raise_v)
-        newBasis3 = self.basis3.raise_order(raise_w)
+        newBasis1 = self.bases[0].raise_order(raise_u)
+        newBasis2 = self.bases[1].raise_order(raise_v)
+        newBasis3 = self.bases[2].raise_order(raise_w)
 
         # set up an interpolation problem. This is in projective space, so no problems for rational cases
         interpolation_pts_u = newBasis1.greville()  # parametric interpolation points u
         interpolation_pts_v = newBasis2.greville()  # parametric interpolation points v
         interpolation_pts_w = newBasis3.greville()  # parametric interpolation points w
-        N_u_old = self.basis1.evaluate(interpolation_pts_u)
+        N_u_old = self.bases[0].evaluate(interpolation_pts_u)
         N_u_new = newBasis1.evaluate(interpolation_pts_u)
-        N_v_old = self.basis2.evaluate(interpolation_pts_v)
+        N_v_old = self.bases[1].evaluate(interpolation_pts_v)
         N_v_new = newBasis2.evaluate(interpolation_pts_v)
-        N_w_old = self.basis3.evaluate(interpolation_pts_w)
+        N_w_old = self.bases[2].evaluate(interpolation_pts_w)
         N_w_new = newBasis3.evaluate(interpolation_pts_w)
         tmp = np.tensordot(N_w_old, self.controlpoints, axes=(1, 2))
         tmp = np.tensordot(N_v_old, tmp, axes=(1, 2))
@@ -316,9 +283,7 @@ class Volume(ControlPointOperations):
 
         # update the basis and controlpoints of the volume
         self.controlpoints = tmp
-        self.basis1 = newBasis1
-        self.basis2 = newBasis2
-        self.basis3 = newBasis3
+        self.bases = [newBasis1, newBasis2, newBasis3]
 
     def refine(self, n):
         """Enrich spline space by inserting n knots into each existing knot
@@ -368,19 +333,19 @@ class Volume(ControlPointOperations):
         if direction == 0:
             C = np.matrix(np.identity(n1))
             for k in knot:
-                C = self.basis1.insert_knot(k) * C
+                C = self.bases[0].insert_knot(k) * C
             self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, 0))
         elif direction == 1:
             C = np.matrix(np.identity(n2))
             for k in knot:
-                C = self.basis2.insert_knot(k) * C
+                C = self.bases[1].insert_knot(k) * C
             self.controlpoints = np.tensordot(C,
                                               self.controlpoints,
                                               axes=(1, 1)).transpose((1, 0, 2, 3))
         elif direction == 2:
             C = np.matrix(np.identity(n3))
             for k in knot:
-                C = self.basis3.insert_knot(k) * C
+                C = self.bases[2].insert_knot(k) * C
             self.controlpoints = np.tensordot(C,
                                               self.controlpoints,
                                               axes=(1, 2)).transpose((1, 2, 0, 3))
@@ -407,7 +372,7 @@ class Volume(ControlPointOperations):
         p = self.get_order()
         results = []
         splitting_vol = self.clone()
-        basis = [self.basis1, self.basis2, self.basis3]
+        basis = [self.bases[0], self.bases[1], self.bases[2]]
         # insert knots to produce C{-1} at all splitting points
         for k in knots:
             continuity = basis[direction].get_continuity(k)
@@ -423,56 +388,56 @@ class Volume(ControlPointOperations):
         (n1, n2, n3, dim) = splitting_vol.controlpoints.shape
         if direction == 0:
             for k in knots:
-                mu = bisect_left(splitting_vol.basis1.knots, k)
+                mu = bisect_left(splitting_vol.bases[0].knots, k)
                 n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[0], splitting_vol.basis1.knots[last_knot_i:mu + p[0]])
+                basis = BSplineBasis(p[0], splitting_vol.bases[0].knots[last_knot_i:mu + p[0]])
                 cp = splitting_vol.controlpoints[last_cp_i:last_cp_i + n_cp, :, :, :]
                 cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n2 * n3, dim))
 
-                results.append(Volume(basis, self.basis2, self.basis3, cp, self.rational))
+                results.append(Volume(basis, self.bases[1], self.bases[2], cp, self.rational))
                 last_knot_i = mu
                 last_cp_i += n_cp
 
             # with n splitting points, we're getting n+1 pieces. Add the final one:
-            basis = BSplineBasis(p[0], splitting_vol.basis1.knots[last_knot_i:])
+            basis = BSplineBasis(p[0], splitting_vol.bases[0].knots[last_knot_i:])
             n_cp = basis.num_functions()
             cp = splitting_vol.controlpoints[last_cp_i:, :, :, :]
             cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n2 * n3, dim))
-            results.append(Volume(basis, self.basis2, self.basis3, cp, self.rational))
+            results.append(Volume(basis, self.bases[1], self.bases[2], cp, self.rational))
         elif direction == 1:
             for k in knots:
-                mu = bisect_left(splitting_vol.basis2.knots, k)
+                mu = bisect_left(splitting_vol.bases[1].knots, k)
                 n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[1], splitting_vol.basis2.knots[last_knot_i:mu + p[1]])
+                basis = BSplineBasis(p[1], splitting_vol.bases[1].knots[last_knot_i:mu + p[1]])
                 cp = splitting_vol.controlpoints[:, last_cp_i:last_cp_i + n_cp, :, :]
                 cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n3, dim))
 
-                results.append(Volume(self.basis1, basis, self.basis3, cp, self.rational))
+                results.append(Volume(self.bases[0], basis, self.bases[2], cp, self.rational))
                 last_knot_i = mu
                 last_cp_i += n_cp
             # with n splitting points, we're getting n+1 pieces. Add the final one:
-            basis = BSplineBasis(p[1], splitting_vol.basis2.knots[last_knot_i:])
+            basis = BSplineBasis(p[1], splitting_vol.bases[1].knots[last_knot_i:])
             n_cp = basis.num_functions()
             cp = splitting_vol.controlpoints[:, last_cp_i:, :, :]
             cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n3, dim))
-            results.append(Volume(self.basis1, basis, self.basis3, cp, self.rational))
+            results.append(Volume(self.bases[0], basis, self.bases[2], cp, self.rational))
         else:
             for k in knots:
-                mu = bisect_left(splitting_vol.basis3.knots, k)
+                mu = bisect_left(splitting_vol.bases[2].knots, k)
                 n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[2], splitting_vol.basis3.knots[last_knot_i:mu + p[2]])
+                basis = BSplineBasis(p[2], splitting_vol.bases[2].knots[last_knot_i:mu + p[2]])
                 cp = splitting_vol.controlpoints[:, :, last_cp_i:last_cp_i + n_cp, :]
                 cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n2, dim))
 
-                results.append(Volume(self.basis1, self.basis2, basis, cp, self.rational))
+                results.append(Volume(self.bases[0], self.bases[1], basis, cp, self.rational))
                 last_knot_i = mu
                 last_cp_i += n_cp
             # with n splitting points, we're getting n+1 pieces. Add the final one:
-            basis = BSplineBasis(p[2], splitting_vol.basis3.knots[last_knot_i:])
+            basis = BSplineBasis(p[2], splitting_vol.bases[2].knots[last_knot_i:])
             n_cp = basis.num_functions()
             cp = splitting_vol.controlpoints[:, :, last_cp_i:, :]
             cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n2, dim))
-            results.append(Volume(self.basis1, self.basis2, basis, cp, self.rational))
+            results.append(Volume(self.bases[0], self.bases[1], basis, cp, self.rational))
 
         return results
 
@@ -495,7 +460,7 @@ class Volume(ControlPointOperations):
         except TypeError:
             n = [n, n, n]
 
-        old_basis = [self.basis1, self.basis2, self.basis3]
+        old_basis = [self.bases[0], self.bases[1], self.bases[2]]
         basis = []
         u = []
         N = []
@@ -534,14 +499,14 @@ class Volume(ControlPointOperations):
         """write GoTools formatted SplineVolume to file"""
         outfile.write('700 1 0 0\n')  # volume header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
-        self.basis1.write_g2(outfile)
-        self.basis2.write_g2(outfile)
-        self.basis3.write_g2(outfile)
+        self.bases[0].write_g2(outfile)
+        self.bases[1].write_g2(outfile)
+        self.bases[2].write_g2(outfile)
 
         (n1, n2, n3, n4) = self.controlpoints.shape
-        for k in range(n3) + range(self.basis3.periodic + 1):
-            for j in range(n2) + range(self.basis2.periodic + 1):
-                for i in range(n1) + range(self.basis1.periodic + 1):
+        for k in range(n3) + range(self.bases[2].periodic + 1):
+            for j in range(n2) + range(self.bases[1].periodic + 1):
+                for i in range(n1) + range(self.bases[0].periodic + 1):
                     for d in range(n4):
                         outfile.write('%f ' % self.controlpoints[i, j, k, d])
                     outfile.write('\n')
@@ -550,7 +515,7 @@ class Volume(ControlPointOperations):
 
     def __len__(self):
         """return the number of control points (basis functions) for this volume"""
-        return self.basis1.num_functions() * self.basis2.num_functions() * self.basis3.num_functions()
+        return self.bases[0].num_functions() * self.bases[1].num_functions() * self.bases[2].num_functions()
 
     def __getitem__(self, i):
         (n1, n2, n3, dim) = self.controlpoints.shape
@@ -568,9 +533,9 @@ class Volume(ControlPointOperations):
         return self
 
     def __repr__(self):
-        result = str(self.basis1) + '\n'
-        result += str(self.basis2) + '\n'
-        result += str(self.basis3) + '\n'
+        result = str(self.bases[0]) + '\n'
+        result += str(self.bases[1]) + '\n'
+        result += str(self.bases[2]) + '\n'
         # print legacy controlpoint enumeration
         n1, n2, n3, dim = self.controlpoints.shape
         for k in range(n3):

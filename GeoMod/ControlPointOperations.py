@@ -1,5 +1,7 @@
 import numpy as np
 import copy
+from itertools import product
+from GeoMod import BSplineBasis
 
 __all__ = ['ControlPointOperations']
 
@@ -13,7 +15,27 @@ def get_rotation_matrix(theta, axis):
                       [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
 
 
-class ControlPointOperations:
+class ControlPointOperations(object):
+
+    def __init__(self, bases, controlpoints, rational):
+        bases = [(b if b else BSplineBasis()) for b in bases]
+        self.bases = bases
+        if controlpoints is None:
+            # We want to generate tuples in column-major format, hence the [::-1]
+            controlpoints = [c[::-1] for c in product(*(b.greville() for b in bases[::-1]))]
+            if len(controlpoints[0]) == 1:
+                controlpoints = [tuple(list(c) + [0.0]) for c in controlpoints]
+        controlpoints = np.array(controlpoints)
+        self.dimension = controlpoints.shape[-1] - rational
+        self.rational = rational
+
+        cp_shape = tuple([b.num_functions() for b in bases[::-1]] + [self.dimension + rational])
+        controlpoints = np.reshape(controlpoints, cp_shape)
+
+        # Compensate for numpy's row-major ordering
+        spec = tuple(list(range(len(bases)))[::-1] + [len(bases)])
+        self.controlpoints = controlpoints.transpose(spec)
+
 
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
