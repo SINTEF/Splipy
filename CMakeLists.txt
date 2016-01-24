@@ -186,6 +186,8 @@ configure_file(${PROJECT_SOURCE_DIR}/tests/dotest.in
 
 install(DIRECTORY GeoUtils DESTINATION ${PYTHON_DESTDIR}
         COMPONENT bin FILES_MATCHING PATTERN *.py)
+install(DIRECTORY GeoMod DESTINATION ${PYTHON_DESTDIR}
+        COMPONENT bin FILES_MATCHING PATTERN *.py)
 
 enable_testing()
 file(GLOB_RECURSE GEOMOD_TESTFILES RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*.reg)
@@ -219,5 +221,6 @@ add_custom_target(check-commits COMMAND ${CMAKE_COMMAND}
 # PIP/Distutils Package
 configure_file(${CMAKE_SOURCE_DIR}/setup.py.in ${CMAKE_BINARY_DIR}/setup.py)
 file(COPY ${CMAKE_SOURCE_DIR}/GeoUtils DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/GeoMod DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY ${CMAKE_SOURCE_DIR}/README.rst DESTINATION ${CMAKE_BINARY_DIR})
 add_custom_target(pip DEPENDS GoTools COMMAND python2 setup.py sdist --dist-dir ${CMAKE_BINARY_DIR})

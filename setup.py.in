@@ -8,6 +8,6 @@ setup(name='Geomodeler',
       maintainer='Arne Morten Kvarving',
       maintainer_email='arne.morten.kvarving@sintef.no',
       url='http://afem/geomod-wiki/index.php/Main_Page',
-      packages=['GeoUtils'],
+      packages=['GeoUtils', 'GeoMod'],
       package_data={'GeoUtils': ['../GoTools.so']},
       )
