@@ -2,6 +2,7 @@ import numpy as np
 import copy
 from itertools import product
 from GeoMod import BSplineBasis
+from GeoMod.Utils import ensure_listlike
 
 __all__ = ['ControlPointOperations']
 
@@ -50,12 +51,7 @@ class ControlPointOperations(object):
         @return : Geometry coordinates. Matrix X(i1,i2,...,j) of component x(j) evaluated at t(i1,i2,...)
         @rtype  : numpy.array
         """
-        params = list(params)
-        for i, p in enumerate(params):
-            try:
-                len(p)
-            except TypeError:
-                params[i] = [p]
+        params = [ensure_listlike(p) for p in params]
 
         self._validate_domain(*params)
 
@@ -134,10 +130,7 @@ class ControlPointOperations(object):
         dim = self.dimension
         rat = self.rational
         n = len(self)  # number of control points
-        try:
-            len(s)
-        except TypeError:
-            s = [s, s, s]
+        s = ensure_listlike(s, dups=3)
 
         # set up the scaling matrix
         scale_matrix = np.matrix(np.identity(dim + rat))

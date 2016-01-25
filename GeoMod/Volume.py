@@ -1,5 +1,6 @@
 from GeoMod import BSplineBasis, Surface
 from GeoMod.ControlPointOperations import ControlPointOperations
+from GeoMod.Utils import ensure_listlike
 from bisect import bisect_left
 import numpy as np
 
@@ -28,18 +29,9 @@ class Volume(ControlPointOperations):
         @rtype   : numpy.ndarray
         """
         # for single-value input, wrap it into a list
-        try:
-            len(u)
-        except TypeError:
-            u = [u]
-        try:
-            len(v)
-        except TypeError:
-            v = [v]
-        try:
-            len(w)
-        except TypeError:
-            w = [w]
+        u = ensure_listlike(u)
+        v = ensure_listlike(v)
+        w = ensure_listlike(w)
 
         self._validate_domain(u, v, w)
 
@@ -256,10 +248,7 @@ class Volume(ControlPointOperations):
         @type  knot:      Float or list of Floats
         """
         # for single-value input, wrap it into a list
-        try:
-            len(knot)
-        except TypeError:
-            knot = [knot]
+        knot = ensure_listlike(knot)
         if direction != 0 and direction != 1 and direction != 2:
             raise ValueError('direction must be 0, 1 or 2')
 
@@ -295,10 +284,7 @@ class Volume(ControlPointOperations):
         @rtype          : List of Volume
         """
         # for single-value input, wrap it into a list
-        try:
-            len(knots)
-        except TypeError:
-            knots = [knots]
+        knots = ensure_listlike(knots)
         # error test input
         if direction != 0 and direction != 1 and direction != 2:
             raise ValueError('direction must be 0, 1 or 2')
@@ -385,14 +371,8 @@ class Volume(ControlPointOperations):
         @return : Approximation of this volume on a different basis
         @rtype  : Volume
         """
-        try:
-            len(p)
-        except TypeError:
-            p = [p, p, p]
-        try:
-            len(n)
-        except TypeError:
-            n = [n, n, n]
+        p = ensure_listlike(p, dups=3)
+        n = ensure_listlike(n, dups=3)
 
         old_basis = [self.bases[0], self.bases[1], self.bases[2]]
         basis = []

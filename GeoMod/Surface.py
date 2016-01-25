@@ -1,5 +1,6 @@
 from GeoMod import Curve, BSplineBasis
 from GeoMod.ControlPointOperations import ControlPointOperations
+from GeoMod.Utils import ensure_listlike
 from bisect import bisect_left
 import numpy as np
 
@@ -71,14 +72,8 @@ class Surface(ControlPointOperations):
         @rtype   : numpy.array
         """
         # for single-value input, wrap it into a list
-        try:
-            len(u)
-        except TypeError:
-            u = [u]
-        try:
-            len(v)
-        except TypeError:
-            v = [v]
+        u = ensure_listlike(u)
+        v = ensure_listlike(v)
 
         # error test input
         self._validate_domain(u, v)
@@ -252,10 +247,7 @@ class Surface(ControlPointOperations):
         @type  knot:      Float or list of Floats
         """
         # for single-value input, wrap it into a list
-        try:
-            len(knot)
-        except TypeError:
-            knot = [knot]
+        knot = ensure_listlike(knot)
         if direction != 0 and direction != 1:
             raise ValueError('direction must be 0 or 1')
 
@@ -284,10 +276,7 @@ class Surface(ControlPointOperations):
         @rtype          : List of Surface
         """
         # for single-value input, wrap it into a list
-        try:
-            len(knots)
-        except TypeError:
-            knots = [knots]
+        knots = ensure_listlike(knots)
         # error test input
         if direction != 0 and direction != 1:
             raise ValueError('direction must be 0 or 1')
@@ -357,14 +346,8 @@ class Surface(ControlPointOperations):
         @return : Approximation of this surface on a different basis
         @rtype  : Surface
         """
-        try:
-            len(p)
-        except TypeError:
-            p = [p, p]
-        try:
-            len(n)
-        except TypeError:
-            n = [n, n]
+        p = ensure_listlike(p, dups=2)
+        n = ensure_listlike(n, dups=2)
 
         old_basis = self.bases
         basis = []

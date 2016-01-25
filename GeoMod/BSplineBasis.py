@@ -1,3 +1,4 @@
+from GeoMod.Utils import ensure_listlike
 from bisect import bisect_right, bisect_left
 import numpy as np
 
@@ -85,10 +86,7 @@ class BSplineBasis:
         """
 
         # for single-value input, wrap it into a list so it don't crash on the loop below
-        try:
-            len(t)
-        except TypeError:
-            t = [t]
+        t = ensure_listlike(t)
 
         p = self.order  # knot vector order
         n = len(self.knots) - p  # number of basis functions (without periodicity)

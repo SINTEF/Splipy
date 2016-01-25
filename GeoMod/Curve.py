@@ -1,5 +1,6 @@
 from GeoMod import BSplineBasis
 from GeoMod.ControlPointOperations import ControlPointOperations
+from GeoMod.Utils import ensure_listlike
 from bisect import bisect_left
 import numpy as np
 
@@ -30,10 +31,7 @@ class Curve(ControlPointOperations):
         @rtype  : numpy.array
         """
         # for single-value input, wrap it into a list
-        try:
-            len(t)
-        except TypeError:
-            t = [t]
+        t = ensure_listlike(t)
 
         # compute basis functions for all points t.
         # dN(i,j) is a matrix of the derivative of all functions j for all points i
@@ -157,10 +155,7 @@ class Curve(ControlPointOperations):
         @type  knot: Float or list of Floats
         """
         # for single-value input, wrap it into a list
-        try:
-            len(knot)
-        except TypeError:
-            knot = [knot]
+        knot = ensure_listlike(knot)
 
         C = np.matrix(np.identity(len(self)))
         for k in knot:
@@ -234,10 +229,7 @@ class Curve(ControlPointOperations):
         @rtype      : List of Curves
         """
         # for single-value input, wrap it into a list
-        try:
-            len(knots)
-        except TypeError:
-            knots = [knots]
+        knots = ensure_listlike(knots)
 
         p = self.get_order()
         results = []
