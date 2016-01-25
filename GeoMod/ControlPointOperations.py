@@ -171,6 +171,17 @@ class ControlPointOperations(object):
         slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
         self.controlpoints = self.controlpoints[tuple(slices)]
 
+    def reparametrize(self, *args, **kwargs):
+        """Redefine the parametric domain"""
+        if 'direction' not in kwargs:
+            args = list(args) + [(0, 1)] * (len(self.bases) - len(args))
+            for b, (start, end) in zip(self.bases, args):
+                b.reparametrize(start, end)
+        else:
+            direction = kwargs['direction']
+            start, end = args[0]
+            self.bases[direction].reparametrize(start, end)
+
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
         @param x: The direction and amount to move

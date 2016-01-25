@@ -216,7 +216,7 @@ class TestCurve(unittest.TestCase):
         self.assertEqual(knots1[-1], 3)
 
         # reparametrize
-        crv.reparametrize(6.0, 9.0)
+        crv.reparametrize((6.0, 9.0))
 
         # get some info on the reparametrized curve
         knots2 = crv.knots(0)
@@ -245,9 +245,9 @@ class TestCurve(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            crv.reparametrize(9, 3)
+            crv.reparametrize((9, 3))
         with self.assertRaises(TypeError):
-            crv.reparametrize("one", "two")
+            crv.reparametrize(("one", "two"))
 
     def test_split(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve

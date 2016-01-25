@@ -29,20 +29,6 @@ class Volume(ControlPointOperations):
             raise ValueError(
                 'pardir1 and pardir2 must be different from each other and either 0,1 or 2')
 
-    def reparametrize(self, umin=0, umax=1, vmin=0, vmax=1, wmin=0, wmax=1):
-        """Redefine the parametric domain to be (umin,umax) x (vmin,vmax) x (wmin,wmax)"""
-        if umax <= umin or vmax <= vmin or wmax <= wmin:
-            raise ValueError('end must be larger than start')
-        self.bases[0].normalize()  # set domain to (0,1)
-        self.bases[0] *= (umax - umin)
-        self.bases[0] += umin
-        self.bases[1].normalize()
-        self.bases[1] *= (vmax - vmin)
-        self.bases[1] += vmin
-        self.bases[2].normalize()
-        self.bases[2] *= (wmax - wmin)
-        self.bases[2] += wmin
-
     def get_faces(self):
         """Return a list of the 6 boundary faces of this volume (with outward normal vector). They are ordered as (umin,umax,vmin,vmax,wmin,wmax)"""
         # ASSUMPTION: open knot vectors

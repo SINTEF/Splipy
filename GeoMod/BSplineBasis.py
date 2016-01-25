@@ -149,6 +149,14 @@ class BSplineBasis:
         self -= self.start()  # set start-point to 0
         self /= self.end()  # set end-point to 1
 
+    def reparametrize(self, start=0, end=1):
+        """Set the parametric domain to be (start, end)"""
+        if end <= start:
+            raise ValueError('end must be larger than start')
+        self.normalize()
+        self *= (end - start)
+        self += start
+
     def reverse(self):
         """Reverse parametric domain, keeping start/end values unchanged"""
         a = float(self.start())

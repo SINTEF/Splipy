@@ -54,14 +54,6 @@ class Curve(ControlPointOperations):
 
         return result
 
-    def reparametrize(self, start=0, end=1):
-        """Redefine the parametric domain to be (start,end)"""
-        if end <= start:
-            raise ValueError('end must be larger than start')
-        self.bases[0].normalize()  # set domain to (0,1)
-        self.bases[0] *= (end - start)
-        self.bases[0] += start
-
     def raise_order(self, amount):
         """Raise the order of a spline curve
         @param amount: Number of polynomial degrees to increase

@@ -64,17 +64,6 @@ class Surface(ControlPointOperations):
         self.controlpoints = self.controlpoints.transpose((1, 0, 2))
         self.bases = self.bases[::-1]
 
-    def reparametrize(self, umin=0, umax=1, vmin=0, vmax=1):
-        """Redefine the parametric domain to be (umin,umax) x (vmin,vmax)"""
-        if umax <= umin or vmax <= vmin:
-            raise ValueError('end must be larger than start')
-        self.bases[0].normalize()  # set domain to (0,1)
-        self.bases[0] *= (umax - umin)
-        self.bases[0] += umin
-        self.bases[1].normalize()
-        self.bases[1] *= (vmax - vmin)
-        self.bases[1] += vmin
-
     def get_edges(self):
         """Return the four edge curves in (parametric) order: bottom, right, top, left"""
         # ASSUMPTION: open knot vectors
