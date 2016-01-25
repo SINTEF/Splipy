@@ -11,39 +11,6 @@ class Curve(ControlPointOperations):
         super(Curve, self).__init__([basis], controlpoints, rational)
         self.basis = self.bases[0]
 
-    def evaluate(self, t):
-        """Evaluate the curve at given parametric values
-        @param t: Parametric coordinate point(s)
-        @type  t: Float or list of Floats
-        @return : Geometry coordinates. Matrix X(i,j) of component x(j) evaluated at t(i)
-        @rtype  : numpy.array
-        """
-        # for single-value input, wrap it into a list
-        try:
-            len(t)
-        except TypeError:
-            t = [t]
-
-        self._validate_domain(t)
-
-        # compute basis functions for all points t. N(i,j) is a matrix of all functions j for all points i
-        N = self.bases[0].evaluate(t)
-
-        # Compute physical points [x,y,z] for all points t[i].
-        # For rational curves, compute [X,Y,Z,W] (in projective space)
-        result = N * self.controlpoints
-
-        # Project rational curves down to geometry space: x = X/W, y=Y/W, z=Z/W
-        if self.rational:
-            for i in range(self.dimension):
-                result[:, i] /= result[:, -1]
-            result = np.delete(result, self.dimension, 1)  # remove the weight column
-
-        if result.shape[0] == 1:  # in case of single value input t, return vector instead of matrix
-            result = np.array(result).reshape(self.dimension)
-
-        return result
-
     def evaluate_tangent(self, t):
         """Evaluate the tangent of the curve at given parametric values
         @param t: Parametric coordinate point(s)
@@ -341,8 +308,6 @@ class Curve(ControlPointOperations):
             for j in range(n2):
                 outfile.write('%f ' % self.controlpoints[i, j])
             outfile.write('\n')
-
-    __call__ = evaluate
 
     def __len__(self):
         """return the number of control points (basis functions) for this curve"""

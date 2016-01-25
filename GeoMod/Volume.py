@@ -10,54 +10,6 @@ class Volume(ControlPointOperations):
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
-    def evaluate(self, u, v, w):
-        """Evaluate the volume at given parametric values
-        @param u: Parametric coordinate point(s) in first direction
-        @type  u: Float or list of Floats
-        @param v: Parametric coordinate point(s) in second direction
-        @type  v: Float or list of Floats
-        @param w: Parametric coordinate point(s) in second direction
-        @type  w: Float or list of Floats
-        @return : Geometry coordinates. 4D-array X(i,j,k,l) of component x(l) evaluated at (u[i],v[j],w[k])
-        @rtype  : numpy.array
-        """
-        # for single-value input, wrap it into a list
-        try:
-            len(u)
-        except TypeError:
-            u = [u]
-        try:
-            len(v)
-        except TypeError:
-            v = [v]
-        try:
-            len(w)
-        except TypeError:
-            w = [w]
-
-        self._validate_domain(u, v, w)
-
-        # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
-        Nu = self.bases[0].evaluate(u)
-        Nv = self.bases[1].evaluate(v)
-        Nw = self.bases[2].evaluate(w)
-
-        # compute physical points [x,y,z] for all points (u[i],v[j],w[k]). For rational volumes, compute [X,Y,Z,W] (in projective space)
-        result = np.tensordot(Nw, self.controlpoints, axes=(1, 2))
-        result = np.tensordot(Nv, result, axes=(1, 2))
-        result = np.tensordot(Nu, result, axes=(1, 2))
-
-        # Project rational volumes down to geometry space: x = X/W, y=Y/W, z=Z/W
-        if self.rational:
-            for i in range(self.dimension):
-                result[:, :, :, i] /= result[:, :, :, -1]
-            result = np.delete(result, self.dimension, 3)  # remove all weight evaluations
-
-        # in case of single value input (u,v,w), return vector instead of 4D-matrix
-        if result.shape[0] == 1 and result.shape[1] == 1 and result.shape[2] == 1:
-            result = np.array(result[0, 0, 0, :]).reshape(self.dimension)
-        return result
-
     def evaluate_derivative(self, u, v, w, du=1, dv=1, dw=1):
         """Evaluate the derivative of the volume at given parametric values
         @param u : Parametric coordinate point(s) in first direction
@@ -492,8 +444,6 @@ class Volume(ControlPointOperations):
                     for d in range(n4):
                         outfile.write('%f ' % self.controlpoints[i, j, k, d])
                     outfile.write('\n')
-
-    __call__ = evaluate
 
     def __len__(self):
         """return the number of control points (basis functions) for this volume"""

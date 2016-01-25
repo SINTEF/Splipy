@@ -43,6 +43,38 @@ class ControlPointOperations(object):
                 if min(p) < b.start() or b.end() < max(p):
                     raise ValueError('Evaluation outside parametric domain')
 
+    def evaluate(self, *params):
+        """Evaluate the object at given parametric values
+        @param params: Parametric coordinate point(s)
+        @type  params: Float or list of Floats
+        @return : Geometry coordinates. Matrix X(i1,i2,...,j) of component x(j) evaluated at t(i1,i2,...)
+        @rtype  : numpy.array
+        """
+        params = list(params)
+        for i, p in enumerate(params):
+            try:
+                len(p)
+            except TypeError:
+                params[i] = [p]
+
+        self._validate_domain(*params)
+
+        Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+        idx = len(self.bases) - 1
+        result = self.controlpoints
+        for N in Ns[::-1]:
+            result = np.tensordot(N, result, axes=(1, idx))
+
+        if self.rational:
+            for i in range(self.dimension):
+                result[..., i] /= result[..., -1]
+            result = np.delete(result, self.dimension, -1)
+
+        if all(s == 1 for s in result.shape[:-1]):
+            result = result.reshape(self.dimension)
+
+        return result
+
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
         @param x: The direction and amount to move
@@ -275,6 +307,8 @@ class ControlPointOperations(object):
 
     def clone(self):
         return copy.deepcopy(self)
+
+    __call__ = evaluate
 
     def __iadd__(self, x):
         self.translate(x)

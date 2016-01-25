@@ -10,47 +10,6 @@ class Surface(ControlPointOperations):
     def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False):
         super(Surface, self).__init__([basis1, basis2], controlpoints, rational)
 
-    def evaluate(self, u, v):
-        """Evaluate the surface at given parametric values
-        @param u: Parametric coordinate point(s) in first direction
-        @type  u: Float or list of Floats
-        @param v: Parametric coordinate point(s) in second direction
-        @type  v: Float or list of Floats
-        @return : Geometry coordinates. 3D-array X(i,j,k) of component x(k) evaluated at (u[i],v[j])
-        @rtype  : numpy.array
-        """
-        # for single-value input, wrap it into a list
-        try:
-            len(u)
-        except TypeError:
-            u = [u]
-        try:
-            len(v)
-        except TypeError:
-            v = [v]
-
-        self._validate_domain(u, v)
-
-        # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
-        Nu = self.bases[0].evaluate(u)
-        Nv = self.bases[1].evaluate(v)
-
-        # compute physical points [x,y,z] for all points (u[i],v[j]).
-        # For rational surfaces, compute [X,Y,Z,W] (in projective space)
-        result = np.tensordot(Nv, self.controlpoints, axes=(1, 1))
-        result = np.tensordot(Nu, result, axes=(1, 1))
-
-        # Project rational surfaces down to geometry space: x = X/W, y=Y/W, z=Z/W
-        if self.rational:
-            for i in range(self.dimension):
-                result[:, :, i] /= result[:, :, -1]
-            result = np.delete(result, self.dimension, 2)  # remove the matrix of weight evaluation
-
-        if result.shape[0] == 1 and result.shape[
-                1] == 1:  # in case of single value input (u,v), return vector instead of 3D-matrix
-            result = np.array(result[0, 0, :]).reshape(self.dimension)
-        return result
-
     def evaluate_normal(self, u, v):
         """Evaluate the normal vector of the surface at given parametric value(s). The returned values are not normalized
         @param t : Parametric coordinate point(s)
@@ -454,8 +413,6 @@ class Surface(ControlPointOperations):
                 for k in range(n3):
                     outfile.write('%f ' % self.controlpoints[i, j, k])
                 outfile.write('\n')
-
-    __call__ = evaluate
 
     def __len__(self):
         """return the number of control points (basis functions) for this surface"""
