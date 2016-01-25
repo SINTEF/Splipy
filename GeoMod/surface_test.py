@@ -209,7 +209,7 @@ class TestSurface(unittest.TestCase):
         surf.insert_knot(0, .7)
         surf.insert_knot(1, .1)
         surf.insert_knot(1, 1.0 / 3)
-        knot1, knot2 = surf.get_knots(True)
+        knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 11)  # 8 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 
@@ -233,7 +233,7 @@ class TestSurface(unittest.TestCase):
         surf.insert_knot(0, .7)
         surf.insert_knot(1, .1)
         surf.insert_knot(1, 1.0 / 3)
-        knot1, knot2 = surf.get_knots(True)
+        knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 

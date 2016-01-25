@@ -73,18 +73,6 @@ class Surface(ControlPointOperations):
         else:
             raise ValueError('direction must be 0 or 1')
 
-    def get_knots(self, with_multiplicities=False):
-        """Get the knots of the spline surface
-        @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
-        @type with_multiplicities : Boolean
-        @return:                    List with the knot values
-        @rtype :                    Tuple with List of float
-        """
-        if with_multiplicities:
-            return tuple(b.knots for b in self.bases)
-        else:
-            return tuple(b.get_knot_spans() for b in self.bases)
-
     def swap_parametrization(self):
         """Swaps the two surface parameter directions"""
         self.controlpoints = self.controlpoints.transpose((1, 0, 2))
@@ -156,7 +144,7 @@ class Surface(ControlPointOperations):
         @param n: The number of new knots to insert into each span
         @type  n: Int
         """
-        (knots1, knots2) = self.get_knots()  # excluding multiple knots
+        (knots1, knots2) = self.knots()  # excluding multiple knots
 
         # insert new knots in the u-direction
         new_knots = []
@@ -403,8 +391,8 @@ class Surface(ControlPointOperations):
         surf2.raise_order(p[0] - p2[0], p[1] - p2[1])
 
         # make sure both have the same knot vector in u-direction
-        knot1 = surf1.get_knots(True)
-        knot2 = surf2.get_knots(True)
+        knot1 = surf1.knots(with_multiplicities=True)
+        knot2 = surf2.knots(with_multiplicities=True)
         i1 = 0
         i2 = 0
         while i1 < len(knot1[0]) and i2 < len(knot2[0]):

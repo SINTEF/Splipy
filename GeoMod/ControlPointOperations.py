@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+from operator import attrgetter, methodcaller
 from itertools import product
 from GeoMod import BSplineBasis
 from GeoMod.Utils import ensure_listlike
@@ -149,6 +150,13 @@ class ControlPointOperations(object):
         if direction is None:
             return tuple(b.order for b in self.bases)
         return self.bases[direction].order
+
+    def knots(self, direction=None, with_multiplicities=False):
+        """Return knots"""
+        getter = attrgetter('knots') if with_multiplicities else methodcaller('get_knot_spans')
+        if direction is None:
+            return tuple(getter(b) for b in self.bases)
+        return getter(self.bases[direction])
 
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance

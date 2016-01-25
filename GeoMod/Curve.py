@@ -59,18 +59,6 @@ class Curve(ControlPointOperations):
         self.bases[0].reverse()
         self.controlpoints = self.controlpoints[::-1]
 
-    def get_knots(self, with_multiplicities=False):
-        """Get the knots of a spline curve
-        @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
-        @type with_multiplicities : Boolean
-        @return:                    List with the knot values
-        @rtype :                    List of float
-        """
-        if with_multiplicities:
-            return self.bases[0].knots
-        else:
-            return self.bases[0].get_knot_spans()
-
     def reparametrize(self, start=0, end=1):
         """Redefine the parametric domain to be (start,end)"""
         if end <= start:
@@ -108,7 +96,7 @@ class Curve(ControlPointOperations):
         @type  n: Int
         """
         new_knots = []
-        knots = self.get_knots()  # excluding multiple knots
+        knots = self.knots()  # excluding multiple knots
         for (k0, k1) in zip(knots[:-1], knots[1:]):
             element_knots = np.linspace(k0, k1, n + 2)
             new_knots += list(element_knots[1:-1])
@@ -158,8 +146,8 @@ class Curve(ControlPointOperations):
         p = max(p1, p2)
 
         # build new knot vector by merging the two existing ones
-        old_knot = self.get_knots(True)
-        add_knot = extending_curve.get_knots(True)
+        old_knot = self.knots(with_multiplicities=True)
+        add_knot = extending_curve.knots(with_multiplicities=True)
         # make sure that the new one starts where the old one stops
         add_knot -= add_knot[0]
         add_knot += old_knot[-1]
@@ -328,8 +316,8 @@ class Curve(ControlPointOperations):
             crv2.raise_order(p1 - p2)
 
         # make sure both have the same knot vector
-        knot1 = crv1.get_knots(True)
-        knot2 = crv2.get_knots(True)
+        knot1 = crv1.knots(0, with_multiplicities=True)
+        knot2 = crv2.knots(0, with_multiplicities=True)
         i1 = 0
         i2 = 0
         while i1 < len(knot1) and i2 < len(knot2):

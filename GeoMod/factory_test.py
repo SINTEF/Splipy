@@ -30,7 +30,7 @@ class TestFactory(unittest.TestCase):
         # test default 5 side n-gon
         c = CurveFactory.n_gon()
         self.assertEqual(len(c), 5)
-        self.assertEqual(len(c.get_knots()), 6)
+        self.assertEqual(len(c.knots(0)), 6)
         self.assertEqual(c.order(0), 2)
         # evaluate at second corner (clockwise from (1,0) )
         self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0)[0], cos(2 * pi / 5))
@@ -109,7 +109,7 @@ class TestFactory(unittest.TestCase):
         c = CurveFactory.circle_segment(2 * pi / 3)
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
-        self.assertEqual(len(c.get_knots()), 2)
+        self.assertEqual(len(c.knots(0)), 2)
         # test evaluation at 25 points for radius=1
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
@@ -120,7 +120,7 @@ class TestFactory(unittest.TestCase):
         c = CurveFactory.circle_segment(2 * pi)
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
-        self.assertEqual(len(c.get_knots()), 4)
+        self.assertEqual(len(c.knots(0)), 4)
         # test evaluation at 25 points for radius=1
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)

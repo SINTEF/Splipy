@@ -108,7 +108,7 @@ class TestVolume(unittest.TestCase):
         vol.insert_knot(1, 1.0 / 3)
         vol.insert_knot(2, .8)
         vol.insert_knot(2, .9)
-        knot1, knot2, knot3 = vol.get_knots(True)
+        knot1, knot2, knot3 = vol.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
         self.assertEqual(len(knot3), 6)  # 4 to start with, 2 new ones
@@ -137,7 +137,7 @@ class TestVolume(unittest.TestCase):
         vol.insert_knot(0, [.20, .5, .7])
         vol.insert_knot(1, [.1, 1.0 / 3])
         vol.insert_knot(2, [.8, .9])
-        knot1, knot2, knot3 = vol.get_knots(True)
+        knot1, knot2, knot3 = vol.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
         self.assertEqual(len(knot3), 6)  # 4 to start with, 2 new ones

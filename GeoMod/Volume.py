@@ -28,19 +28,6 @@ class Volume(ControlPointOperations):
         else:
             raise ValueError('direction must be 0,1 or 2')
 
-    def get_knots(self, with_multiplicities=False):
-        """Get the knots of the spline volume
-        @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
-        @type with_multiplicities : Boolean
-        @return:                    List with the knot values
-        @rtype :                    Tuple with List of float
-        """
-        if with_multiplicities:
-            return (self.bases[0].knots, self.bases[1].knots, self.bases[2].knots)
-        else:
-            return (self.bases[0].get_knot_spans(), self.bases[1].get_knot_spans(),
-                    self.bases[2].get_knot_spans())
-
     def swap_parametrization(self, pardir1, pardir2):
         """Swaps the two volume parameter directions"""
         if (pardir1 == 0 and pardir2 == 1) or (pardir1 == 1 and pardir2 == 0):
@@ -145,7 +132,7 @@ class Volume(ControlPointOperations):
         @param n: The number of new knots to insert into each span
         @type  n: Int
         """
-        (knots1, knots2, knots3) = self.get_knots()  # excluding multiple knots
+        (knots1, knots2, knots3) = self.knots()  # excluding multiple knots
 
         # insert new knots in the u-direction
         new_knots = []

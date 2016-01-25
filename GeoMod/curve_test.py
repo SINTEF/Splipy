@@ -137,7 +137,7 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
-        self.assertEqual(len(crv.get_knots(True)), 11)
+        self.assertEqual(len(crv.knots(0, with_multiplicities=True)), 11)
 
         # test knot insertion on single knot span
         crv = Curve(BSplineBasis(5), [[0, 0, 0], [1, 1, 1], [2, -1, 0], [3, 0, -1], [0, 0, -5]])
@@ -192,7 +192,7 @@ class TestCurve(unittest.TestCase):
         evaluation_point2 = crv(0.37)
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
-        self.assertEqual(len(crv.get_knots(True)), 15)
+        self.assertEqual(len(crv.knots(0, with_multiplicities=True)), 15)
 
         # test errors and exceptions
         with self.assertRaises(TypeError):
@@ -210,7 +210,7 @@ class TestCurve(unittest.TestCase):
         crv = Curve(BSplineBasis(3, [0, 0, 0, 1.32, 3, 3, 3]), controlpoints)
 
         # get some info on the initial curve
-        knots1 = crv.get_knots()
+        knots1 = crv.knots(0)
         evaluation_point1 = crv(1.20)
         self.assertEqual(knots1[0], 0)
         self.assertEqual(knots1[-1], 3)
@@ -219,7 +219,7 @@ class TestCurve(unittest.TestCase):
         crv.reparametrize(6.0, 9.0)
 
         # get some info on the reparametrized curve
-        knots2 = crv.get_knots()
+        knots2 = crv.knots(0)
         evaluation_point2 = crv(7.20)
         self.assertEqual(knots2[0], 6)
         self.assertEqual(knots2[-1], 9)
@@ -233,7 +233,7 @@ class TestCurve(unittest.TestCase):
         crv.reparametrize()
 
         # get some info on the normalized curve
-        knots3 = crv.get_knots()
+        knots3 = crv.knots(0)
         evaluation_point3 = crv(0.40)
         self.assertEqual(knots3[0], 0)
         self.assertEqual(knots3[-1], 1)
@@ -263,27 +263,27 @@ class TestCurve(unittest.TestCase):
         new_curves_050 = crv.split(0.50)
         self.assertEqual(len(new_curves_050), 2)
         self.assertEqual(
-            len(new_curves_050[0].get_knots(True)), 6)  # open knot vector [0,0,0,.5,.5,.5]
+            len(new_curves_050[0].knots(0, with_multiplicities=True)), 6)  # open knot vector [0,0,0,.5,.5,.5]
         self.assertEqual(
-            len(new_curves_050[1].get_knots(True)), 7)  # open knot vector [.5,.5,.5,.7,1,1,1]
+            len(new_curves_050[1].knots(0, with_multiplicities=True)), 7)  # open knot vector [.5,.5,.5,.7,1,1,1]
 
         # split curves at existing knot
         new_curves_070 = crv.split(0.70)
         self.assertEqual(len(new_curves_070), 2)
         self.assertEqual(
-            len(new_curves_070[0].get_knots(True)), 6)  # open knot vector [0,0,0,.7,.7,.7]
+            len(new_curves_070[0].knots(0, with_multiplicities=True)), 6)  # open knot vector [0,0,0,.7,.7,.7]
         self.assertEqual(
-            len(new_curves_070[1].get_knots(True)), 6)  # open knot vector [.7,.7,.7,1,1,1]
+            len(new_curves_070[1].knots(0, with_multiplicities=True)), 6)  # open knot vector [.7,.7,.7,1,1,1]
 
         # split curves multiple points
         new_curves_all = crv.split([0.50, 0.70])
         self.assertEqual(len(new_curves_all), 3)
         self.assertEqual(
-            len(new_curves_all[0].get_knots(True)), 6)  # open knot vector [0,0,0,.5,.5,.5]
+            len(new_curves_all[0].knots(0, with_multiplicities=True)), 6)  # open knot vector [0,0,0,.5,.5,.5]
         self.assertEqual(
-            len(new_curves_all[1].get_knots(True)), 6)  # open knot vector [.5,.5,.5,.7,.7,.7]
+            len(new_curves_all[1].knots(0, with_multiplicities=True)), 6)  # open knot vector [.5,.5,.5,.7,.7,.7]
         self.assertEqual(
-            len(new_curves_all[2].get_knots(True)), 6)  # open knot vector [.7,.7,.7,1,1,1]
+            len(new_curves_all[2].knots(0, with_multiplicities=True)), 6)  # open knot vector [.7,.7,.7,1,1,1]
 
         # compare all curves which exist at parametric point 0.5
         for c in new_curves_050 + [new_curves_070[0]] + new_curves_all[0:2]:
