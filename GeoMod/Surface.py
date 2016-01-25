@@ -29,13 +29,7 @@ class Surface(ControlPointOperations):
         except TypeError:
             v = [v]
 
-        # error test input
-        if self.bases[0].periodic < 0:  # periodic functions can evaluate everywhere
-            if min(u) < self.bases[0].start() or self.bases[0].end() < max(u):
-                raise ValueError('evaluation outside parametric domain')
-        if self.bases[1].periodic < 0:  # periodic functions can evaluate everywhere
-            if min(v) < self.bases[1].start() or self.bases[1].end() < max(v):
-                raise ValueError('evaluation outside parametric domain')
+        self._validate_domain(u, v)
 
         # compute basis functions for all points t. Nu(i,j) is a matrix of all functions j for all points u[i]
         Nu = self.bases[0].evaluate(u)
@@ -128,12 +122,7 @@ class Surface(ControlPointOperations):
             v = [v]
 
         # error test input
-        if self.bases[0].periodic < 0:  # periodic functions can evaluate everywhere
-            if min(u) < self.bases[0].start() or self.bases[0].end() < max(u):
-                raise ValueError('evaluation outside parametric domain')
-        if self.bases[1].periodic < 0:  # periodic functions can evaluate everywhere
-            if min(v) < self.bases[1].start() or self.bases[1].end() < max(v):
-                raise ValueError('evaluation outside parametric domain')
+        self._validate_domain(u, v)
 
         # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
         dNu = self.bases[0].evaluate(u, du)

@@ -36,6 +36,12 @@ class ControlPointOperations(object):
         spec = tuple(list(range(len(bases)))[::-1] + [len(bases)])
         self.controlpoints = controlpoints.transpose(spec)
 
+    def _validate_domain(self, *params):
+        """Check whether the given evaluation parameters are valid."""
+        for b, p in zip(self.bases, params):
+            if b.periodic < 0:
+                if min(p) < b.start() or b.end() < max(p):
+                    raise ValueError('Evaluation outside parametric domain')
 
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance

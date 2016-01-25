@@ -24,10 +24,7 @@ class Curve(ControlPointOperations):
         except TypeError:
             t = [t]
 
-        # error test input
-        if self.basis.periodic < 0:  # periodic functions can evaluate everywhere
-            if min(t) < self.basis.start() or self.basis.end() < max(t):
-                raise ValueError('evaluation outside parametric domain')
+        self._validate_domain(t)
 
         # compute basis functions for all points t. N(i,j) is a matrix of all functions j for all points i
         N = self.bases[0].evaluate(t)
