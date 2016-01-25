@@ -17,7 +17,7 @@ class TestVolume(unittest.TestCase):
         self.assertEqual(value.shape[1], 3)  # 3 v-evaluation points
         self.assertEqual(value.shape[2], 4)  # 4 w-evaluation points
         self.assertEqual(value.shape[3], 3)  # 3 dimensions (x,y,z)
-        self.assertEqual(vol.get_order(), (7, 6, 5))
+        self.assertEqual(vol.order(), (7, 6, 5))
         for i, u in enumerate(u_val):
             for j, v in enumerate(v_val):
                 for k, w in enumerate(w_val):
@@ -50,12 +50,12 @@ class TestVolume(unittest.TestCase):
         basis3 = BSplineBasis(2, [0, 0, 1, 1])
         vol = Volume(basis1, basis2, basis3, controlpoints)
 
-        self.assertEqual(vol.get_order(), (3, 3, 2))
+        self.assertEqual(vol.order(), (3, 3, 2))
         evaluation_point1 = vol(0.23, 0.37, 0.44)  # pick some evaluation point (could be anything)
 
         vol.raise_order(1, 2, 4)
 
-        self.assertEqual(vol.get_order(), (4, 5, 6))
+        self.assertEqual(vol.order(), (4, 5, 6))
         evaluation_point2 = vol(0.23, 0.37, 0.44)
 
         # evaluation before and after RaiseOrder should remain unchanged
@@ -74,13 +74,13 @@ class TestVolume(unittest.TestCase):
         basis3 = BSplineBasis(2, [0, 0, 1, 1])
         vol = Volume(basis1, basis2, basis3, controlpoints, True)
 
-        self.assertEqual(vol.get_order()[0], 3)
-        self.assertEqual(vol.get_order()[1], 3)
+        self.assertEqual(vol.order()[0], 3)
+        self.assertEqual(vol.order()[1], 3)
         evaluation_point1 = vol(0.23, 0.37, 0.44)
 
         vol.raise_order(1, 2, 1)
 
-        self.assertEqual(vol.get_order(), (4, 5, 3))
+        self.assertEqual(vol.order(), (4, 5, 3))
         evaluation_point2 = vol(0.23, 0.37, 0.44)
 
         # evaluation before and after RaiseOrder should remain unchanged
@@ -189,11 +189,11 @@ class TestVolume(unittest.TestCase):
 
         evaluation_point1 = vol(0.23, .56, .12)
         control_point1 = vol[1]  # this is control point i=(1,0,0), when n=(4,3,2)
-        self.assertEqual(vol.get_order(), (4, 3, 2))
+        self.assertEqual(vol.order(), (4, 3, 2))
         vol.swap_parametrization(0, 1)
         evaluation_point2 = vol(0.56, .23, .12)
         control_point2 = vol[3]  # this is control point i=(0,1,0), when n=(3,4,2)
-        self.assertEqual(vol.get_order(), (3, 4, 2))
+        self.assertEqual(vol.order(), (3, 4, 2))
 
         # ensure that volume has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -208,7 +208,7 @@ class TestVolume(unittest.TestCase):
         vol.swap_parametrization(1, 2)
         evaluation_point3 = vol(.56, .12, .23)
         control_point3 = vol[6]  # this is control point i=(0,0,1), when n=(3,2,4)
-        self.assertEqual(vol.get_order(), (3, 2, 4))
+        self.assertEqual(vol.order(), (3, 2, 4))
 
         # ensure that volume has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point3[0])

@@ -28,10 +28,6 @@ class Volume(ControlPointOperations):
         else:
             raise ValueError('direction must be 0,1 or 2')
 
-    def get_order(self):
-        """Return spline volume order (polynomial degree + 1) in all parametric directions"""
-        return (self.bases[0].order, self.bases[1].order, self.bases[2].order)
-
     def get_knots(self, with_multiplicities=False):
         """Get the knots of the spline volume
         @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
@@ -80,7 +76,7 @@ class Volume(ControlPointOperations):
     def get_faces(self):
         """Return a list of the 6 boundary faces of this volume (with outward normal vector). They are ordered as (umin,umax,vmin,vmax,wmin,wmax)"""
         # ASSUMPTION: open knot vectors
-        (p1, p2, p3) = self.get_order()
+        (p1, p2, p3) = self.order()
         (n1, n2, n3, dim) = self.controlpoints.shape
         rat = self.rational
         umin = Surface(p3, p2, self.bases[2], self.bases[1], np.reshape(self.controlpoints[0, :, :, :],
@@ -221,7 +217,7 @@ class Volume(ControlPointOperations):
         if direction != 0 and direction != 1 and direction != 2:
             raise ValueError('direction must be 0, 1 or 2')
 
-        p = self.get_order()
+        p = self.order()
         results = []
         splitting_vol = self.clone()
         basis = [self.bases[0], self.bases[1], self.bases[2]]

@@ -112,7 +112,7 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
 
         # ensure that curve has the right order
-        self.assertEqual(crv.get_order(), 5)
+        self.assertEqual(crv.order(0), 5)
 
         # check integer type for argument
         with self.assertRaises(TypeError):

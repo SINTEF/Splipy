@@ -144,6 +144,12 @@ class ControlPointOperations(object):
             return tuple(b.end() for b in self.bases)
         return self.bases[direction].end()
 
+    def order(self, direction=None):
+        """Return polynomial order (degree + 1)"""
+        if direction is None:
+            return tuple(b.order for b in self.bases)
+        return self.bases[direction].order
+
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
         @param x: The direction and amount to move

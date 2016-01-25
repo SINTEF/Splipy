@@ -59,10 +59,6 @@ class Curve(ControlPointOperations):
         self.bases[0].reverse()
         self.controlpoints = self.controlpoints[::-1]
 
-    def get_order(self):
-        """Return polynomial order (degree + 1) of spline curve"""
-        return self.bases[0].order
-
     def get_knots(self, with_multiplicities=False):
         """Get the knots of a spline curve
         @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
@@ -153,8 +149,8 @@ class Curve(ControlPointOperations):
         Curve.make_curves_compatible(self, extending_curve)
 
         # make sure both have the same discretization order
-        p1 = self.get_order()
-        p2 = extending_curve.get_order()
+        p1 = self.order(0)
+        p2 = extending_curve.order(0)
         if p1 < p2:
             self.raise_order(p2 - p1)
         else:
@@ -200,7 +196,7 @@ class Curve(ControlPointOperations):
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
 
-        p = self.get_order()
+        p = self.order(0)
         results = []
         splitting_curve = self.clone()
         # insert knots to produce C{-1} at all splitting points
@@ -324,8 +320,8 @@ class Curve(ControlPointOperations):
         crv2.reparametrize()
 
         # make sure both have the same order
-        p1 = crv1.get_order()
-        p2 = crv2.get_order()
+        p1 = crv1.order(0)
+        p2 = crv2.order(0)
         if p1 < p2:
             crv1.raise_order(p2 - p1)
         else:

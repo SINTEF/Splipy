@@ -158,14 +158,14 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
 
-        self.assertEqual(surf.get_order()[0], 3)
-        self.assertEqual(surf.get_order()[1], 3)
+        self.assertEqual(surf.order()[0], 3)
+        self.assertEqual(surf.order()[1], 3)
         evaluation_point1 = surf(0.23, 0.37)  # pick some evaluation point (could be anything)
 
         surf.raise_order(1, 2)
 
-        self.assertEqual(surf.get_order()[0], 4)
-        self.assertEqual(surf.get_order()[1], 5)
+        self.assertEqual(surf.order()[0], 4)
+        self.assertEqual(surf.order()[1], 5)
         evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged
@@ -179,14 +179,14 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints, True)
 
-        self.assertEqual(surf.get_order()[0], 3)
-        self.assertEqual(surf.get_order()[1], 3)
+        self.assertEqual(surf.order()[0], 3)
+        self.assertEqual(surf.order()[1], 3)
         evaluation_point1 = surf(0.23, 0.37)
 
         surf.raise_order(1, 2)
 
-        self.assertEqual(surf.get_order()[0], 4)
-        self.assertEqual(surf.get_order()[1], 5)
+        self.assertEqual(surf.order()[0], 4)
+        self.assertEqual(surf.order()[1], 5)
         evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged

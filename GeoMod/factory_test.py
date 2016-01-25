@@ -12,7 +12,7 @@ class TestFactory(unittest.TestCase):
 
         # 2D line
         c = CurveFactory.line([1, 1], [2, 0])
-        self.assertEqual(c.get_order(), 2)  # linear discretization
+        self.assertEqual(c.order(0), 2)  # linear discretization
         self.assertEqual(len(c), 2)  # two control points
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c[0][0], 1)
@@ -22,7 +22,7 @@ class TestFactory(unittest.TestCase):
 
         # 3D line
         c = CurveFactory.line([1, 2, 3], [8, 7, 6])
-        self.assertEqual(c.get_order(), 2)  # linear discretization
+        self.assertEqual(c.order(0), 2)  # linear discretization
         self.assertEqual(len(c), 2)  # two control points
         self.assertEqual(c.dimension, 3)
 
@@ -31,7 +31,7 @@ class TestFactory(unittest.TestCase):
         c = CurveFactory.n_gon()
         self.assertEqual(len(c), 5)
         self.assertEqual(len(c.get_knots()), 6)
-        self.assertEqual(c.get_order(), 2)
+        self.assertEqual(c.order(0), 2)
         # evaluate at second corner (clockwise from (1,0) )
         self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0)[0], cos(2 * pi / 5))
         self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0)[1], sin(2 * pi / 5))
@@ -139,7 +139,7 @@ class TestFactory(unittest.TestCase):
         surf = SurfaceFactory.square((4, 5))
         self.assertEqual(surf.dimension, 2)
         self.assertEqual(surf.rational, False)
-        self.assertEqual(surf.get_order(), (2, 2))
+        self.assertEqual(surf.order(), (2, 2))
 
     def test_curve_interpolation(self):
         basis = BSplineBasis(4, [0, 0, 0, 0, .3, .9, 1, 1, 1, 1])
@@ -150,7 +150,7 @@ class TestFactory(unittest.TestCase):
         x_pts[:, 1] = 1 - t
         x_pts[:, 2] = t * t * t + 2 * t
         crv = CurveFactory.interpolate(x_pts, basis)
-        self.assertEqual(crv.get_order(), 4)
+        self.assertEqual(crv.order(0), 4)
         self.assertAlmostEqual(crv(.4)[0], .4**2)  # x=t^2
         self.assertAlmostEqual(crv(.4)[1], 1 - .4)  # y=1-t
         self.assertAlmostEqual(crv(.4)[2], .4**3 + 2 * .4)  # z=t^3+2t

@@ -73,10 +73,6 @@ class Surface(ControlPointOperations):
         else:
             raise ValueError('direction must be 0 or 1')
 
-    def get_order(self):
-        """Return spline surface order (polynomial degree + 1) in all parametric directions"""
-        return tuple(b.order for b in self.bases)
-
     def get_knots(self, with_multiplicities=False):
         """Get the knots of the spline surface
         @param with_multiplicities: Set to true to obtain the knot vector with multiplicities
@@ -108,7 +104,7 @@ class Surface(ControlPointOperations):
     def get_edges(self):
         """Return the four edge curves in (parametric) order: bottom, right, top, left"""
         # ASSUMPTION: open knot vectors
-        (p1, p2) = self.get_order()
+        (p1, p2) = self.order()
         (n1, n2, dim) = self.controlpoints.shape
         rat = self.rational
         umin = Curve(self.bases[1], np.reshape(self.controlpoints[0, :, :], (n2, dim)), rat)
@@ -218,7 +214,7 @@ class Surface(ControlPointOperations):
         if direction != 0 and direction != 1:
             raise ValueError('direction must be 0 or 1')
 
-        p = self.get_order()
+        p = self.order()
         results = []
         splitting_surf = self.clone()
         basis = self.bases
@@ -400,8 +396,8 @@ class Surface(ControlPointOperations):
         surf2.reparametrize()
 
         # make sure both have the same order
-        p1 = surf1.get_order()
-        p2 = surf2.get_order()
+        p1 = surf1.order()
+        p2 = surf2.order()
         p = (max(p1[0], p2[0]), max(p1[1], p2[1]))
         surf1.raise_order(p[0] - p1[0], p[1] - p1[1])
         surf2.raise_order(p[0] - p2[0], p[1] - p2[1])
