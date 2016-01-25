@@ -54,11 +54,6 @@ class Curve(ControlPointOperations):
 
         return result
 
-    def flip_parametrization(self):
-        """Swap direction of the curve by making it go in the reverse direction. Parametric domain remain unchanged"""
-        self.bases[0].reverse()
-        self.controlpoints = self.controlpoints[::-1]
-
     def reparametrize(self, start=0, end=1):
         """Redefine the parametric domain to be (start,end)"""
         if end <= start:

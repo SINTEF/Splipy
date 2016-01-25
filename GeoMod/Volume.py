@@ -11,23 +11,6 @@ class Volume(ControlPointOperations):
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
-    def flip_parametrization(self, direction):
-        """Swap direction of the volume by making it go in the reverse direction. Parametric domain remain unchanged
-           @param direction: The parametric direction to flip (0=u, 1=v, 2=w)
-           @type  direction: Int
-        """
-        if direction == 0:
-            self.bases[0].reverse()
-            self.controlpoints = self.controlpoints[::-1, :, :, :]
-        elif direction == 1:
-            self.bases[1].reverse()
-            self.controlpoints = self.controlpoints[:, ::-1, :, :]
-        elif direction == 2:
-            self.bases[2].reverse()
-            self.controlpoints = self.controlpoints[:, :, ::-1, :]
-        else:
-            raise ValueError('direction must be 0,1 or 2')
-
     def swap_parametrization(self, pardir1, pardir2):
         """Swaps the two volume parameter directions"""
         if (pardir1 == 0 and pardir2 == 1) or (pardir1 == 1 and pardir2 == 0):

@@ -59,20 +59,6 @@ class Surface(ControlPointOperations):
         return (self.evaluate_derivative(u, v, d=(1, 0)),
                 self.evaluate_derivative(u, v, d=(0, 1)))
 
-    def flip_parametrization(self, direction):
-        """Swap direction of the surface by making it go in the reverse direction. Parametric domain remain unchanged
-           @param direction: The parametric direction to flip (0=u, 1=v)
-           @type  direction: Int
-        """
-        if direction == 0:
-            self.bases[0].reverse()
-            self.controlpoints = self.controlpoints[::-1, :, :]
-        elif direction == 1:
-            self.bases[1].reverse()
-            self.controlpoints = self.controlpoints[:, ::-1, :]
-        else:
-            raise ValueError('direction must be 0 or 1')
-
     def swap_parametrization(self):
         """Swaps the two surface parameter directions"""
         self.controlpoints = self.controlpoints.transpose((1, 0, 2))

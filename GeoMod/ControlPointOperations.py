@@ -158,6 +158,19 @@ class ControlPointOperations(object):
             return tuple(getter(b) for b in self.bases)
         return getter(self.bases[direction])
 
+    def flip_parametrization(self, direction=0):
+        """Swap the direction of a parameter by making it go in the reverse direction.
+        The parametric domain remains unchanged."""
+        self.bases[direction].reverse()
+
+        # This creates the following slice programmatically
+        # array[:, :, :, ..., ::-1,]
+        # index=direction -----^
+        # :    => slice(None, None, None)
+        # ::-1 => slice(None, None, -1)
+        slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
+        self.controlpoints = self.controlpoints[tuple(slices)]
+
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
         @param x: The direction and amount to move
