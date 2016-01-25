@@ -45,14 +45,6 @@ class Volume(ControlPointOperations):
             return (self.bases[0].get_knot_spans(), self.bases[1].get_knot_spans(),
                     self.bases[2].get_knot_spans())
 
-    def start(self):
-        """Return the start of the parametric domain"""
-        return (self.bases[0].start(), self.bases[1].start(), self.bases[2].start())
-
-    def end(self):
-        """Return the end of the parametric domain"""
-        return (self.bases[0].end(), self.bases[1].end(), self.bases[2].end())
-
     def swap_parametrization(self, pardir1, pardir2):
         """Swaps the two volume parameter directions"""
         if (pardir1 == 0 and pardir2 == 1) or (pardir1 == 1 and pardir2 == 0):

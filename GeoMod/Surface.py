@@ -89,14 +89,6 @@ class Surface(ControlPointOperations):
         else:
             return tuple(b.get_knot_spans() for b in self.bases)
 
-    def start(self):
-        """Return the start of the parametric domain"""
-        return tuple(b.start() for b in self.bases)
-
-    def end(self):
-        """Return the end of the parametric domain"""
-        return tuple(b.end() for b in self.bases)
-
     def swap_parametrization(self):
         """Swaps the two surface parameter directions"""
         self.controlpoints = self.controlpoints.transpose((1, 0, 2))

@@ -33,18 +33,18 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(len(c.get_knots()), 6)
         self.assertEqual(c.get_order(), 2)
         # evaluate at second corner (clockwise from (1,0) )
-        self.assertAlmostEqual(c.evaluate(c.stop() / 5.0)[0], cos(2 * pi / 5))
-        self.assertAlmostEqual(c.evaluate(c.stop() / 5.0)[1], sin(2 * pi / 5))
+        self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0)[0], cos(2 * pi / 5))
+        self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0)[1], sin(2 * pi / 5))
         # evaluate at fourh corner (clockwise from (1,0) )
-        self.assertAlmostEqual(c.evaluate(c.stop() / 5.0 * 4)[0], cos(2 * pi / 5 * 4))
-        self.assertAlmostEqual(c.evaluate(c.stop() / 5.0 * 4)[1], sin(2 * pi / 5 * 4))
+        self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0 * 4)[0], cos(2 * pi / 5 * 4))
+        self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0 * 4)[1], sin(2 * pi / 5 * 4))
 
         # test a radius 3 septagon
         c = CurveFactory.n_gon(n=7, r=3)
         self.assertEqual(len(c), 7)
         # evaluate at third corner (clockwise from (1,0) )
-        self.assertAlmostEqual(c.evaluate(c.stop() / 7.0)[0], 3 * cos(2 * pi / 7))
-        self.assertAlmostEqual(c.evaluate(c.stop() / 7.0)[1], 3 * sin(2 * pi / 7))
+        self.assertAlmostEqual(c.evaluate(c.end(0) / 7.0)[0], 3 * cos(2 * pi / 7))
+        self.assertAlmostEqual(c.evaluate(c.end(0) / 7.0)[1], 3 * sin(2 * pi / 7))
 
     def test_circle(self):
 
@@ -53,7 +53,7 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
         # test evaluation at 25 points for radius=1
-        t = np.linspace(c.start(), c.end(), 25)
+        t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
@@ -61,20 +61,20 @@ class TestFactory(unittest.TestCase):
         pt = c.evaluate(0)  # evaluate at 0
         self.assertAlmostEqual(pt[0], 1.0)
         self.assertAlmostEqual(pt[1], 0.0)
-        pt = c.evaluate(c.end() / 4)  # evaluate at pi/2
+        pt = c.evaluate(c.end(0) / 4)  # evaluate at pi/2
         self.assertAlmostEqual(pt[0], 0.0)
         self.assertAlmostEqual(pt[1], 1.0)
-        pt = c.evaluate(c.end() / 2)  # evaluate at pi
+        pt = c.evaluate(c.end(0) / 2)  # evaluate at pi
         self.assertAlmostEqual(pt[0], -1.0)
         self.assertAlmostEqual(pt[1], 0.0)
-        pt = c.evaluate(c.end() * 2)  # evaluate outside domain (test periodic)
+        pt = c.evaluate(c.end(0) * 2)  # evaluate outside domain (test periodic)
         self.assertAlmostEqual(pt[0], 1.0)
         self.assertAlmostEqual(pt[1], 0.0)
 
         # circle of radius different from 1
         c = CurveFactory.circle(3)
         # test evaluation at 25 points for radius=3, outside domain
-        t = np.linspace(c.start() - 3, c.end() + 2, 25)
+        t = np.linspace(c.start(0) - 3, c.end(0) + 2, 25)
         x = c.evaluate(t)
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 3.0)  # check radius=3
@@ -90,7 +90,7 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
         # test evaluation at 25 points for radius=1
-        t = np.linspace(c.start(), c.end(), 25)
+        t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 1.0)  # check radius=1
@@ -100,7 +100,7 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
         # test evaluation at 25 points for radius=7
-        t = np.linspace(c.start(), c.end(), 25)
+        t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 7.0)  # check radius=7
@@ -111,7 +111,7 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(c.rational, True)
         self.assertEqual(len(c.get_knots()), 2)
         # test evaluation at 25 points for radius=1
-        t = np.linspace(c.start(), c.end(), 25)
+        t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 1.0)  # check radius=1
@@ -122,7 +122,7 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(c.rational, True)
         self.assertEqual(len(c.get_knots()), 4)
         # test evaluation at 25 points for radius=1
-        t = np.linspace(c.start(), c.end(), 25)
+        t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 1.0)  # check radius=1

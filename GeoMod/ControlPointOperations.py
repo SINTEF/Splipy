@@ -132,6 +132,18 @@ class ControlPointOperations(object):
 
         return result
 
+    def start(self, direction=None):
+        """Return the start of the parametric domain"""
+        if direction is None:
+            return tuple(b.start() for b in self.bases)
+        return self.bases[direction].start()
+
+    def end(self, direction=None):
+        """Return the end of the parametric domain"""
+        if direction is None:
+            return tuple(b.end() for b in self.bases)
+        return self.bases[direction].end()
+
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
         @param x: The direction and amount to move

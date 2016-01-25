@@ -59,17 +59,6 @@ class Curve(ControlPointOperations):
         self.bases[0].reverse()
         self.controlpoints = self.controlpoints[::-1]
 
-    def start(self):
-        """Return the start of the parametric domain"""
-        return self.bases[0].start()
-
-    def end(self):
-        """Return the end of the parametric domain"""
-        return self.bases[0].end()
-
-    # convenience function since I can't remember to use stop or end
-    stop = end
-
     def get_order(self):
         """Return polynomial order (degree + 1) of spline curve"""
         return self.bases[0].order
