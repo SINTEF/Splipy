@@ -19,7 +19,7 @@ class Curve(ControlPointOperations):
         @return : Tangent evaluation. Matrix DX(i,j) of component x(j) evaluated at t(i)
         @rtype  : numpy.array
         """
-        return self.evaluate_derivative(t, 1)
+        return self.evaluate_derivative(t, d=1)
 
     def evaluate_derivative(self, t, d=1):
         """Evaluate the derivative of the curve at given parametric values
@@ -30,44 +30,24 @@ class Curve(ControlPointOperations):
         @return : Matrix D^n X(i,j) of component x(j) differentiated d times at point t(i)
         @rtype  : numpy.array
         """
-        # for single-value input, wrap it into a list
+        if not self.rational or d != 2:
+            return super(Curve, self).evaluate_derivative(t, d=d)
+
         t = ensure_listlike(t)
-
-        # compute basis functions for all points t.
-        # dN(i,j) is a matrix of the derivative of all functions j for all points i
         dN = self.bases[0].evaluate(t, d)
-
-        # compute physical points [dx/dt,dy/dt,dz/dt] for all points t[i]
         result = np.array(dN * self.controlpoints)
 
-        # Rational curves need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
-        # x(t) = sum_i N_i(t) * w_i*x_i / W(t)
-        # W(t) = sum_j N_j(t) * w_j
-        # dx/dt =  sum_i N_i'(t)*w_i*x_i / W(t) - sum_i N_i(t)*w_i*x_i* W'(t)/W(t)^2
-        if self.rational:
-            if d == 1:
-                N = self.bases[0].evaluate(t)
-                non_derivative = np.array(N * self.controlpoints)
-                W = non_derivative[:, -1]  # W(t)
-                Wder = result[:, -1]  # W'(t)
-                for i in range(self.dimension):
-                    result[:, i] = result[:, i] / W - non_derivative[:, i] * Wder / W / W
+        d2 = result
+        d1 = np.array(self.bases[0].evaluate(t, 1) * self.controlpoints)
+        d0 = np.array(self.bases[0].evaluate(t) * self.controlpoints)
+        W = d0[:, -1]   # W(t)
+        W1 = d1[:, -1]  # W'(t)
+        W2 = d2[:, -1]  # W''(t)
+        for i in range(self.dimension):
+            result[:, i] = (d2[:, i] * W * W - 2 * W1 *
+                            (d1[:, i] * W - d0[:, i] * W1) - d0[:, i] * W2 * W) / W / W / W
 
-            elif d == 2:
-                d2 = result
-                d1 = np.array(self.bases[0].evaluate(t, 1) * self.controlpoints)
-                d0 = np.array(self.bases[0].evaluate(t) * self.controlpoints)
-                W = d0[:, -1]  # W(t)
-                W1 = d1[:, -1]  # W'(t)
-                W2 = d2[:, -1]  # W''(t)
-                for i in range(self.dimension):
-                    result[:, i] = (d2[:, i] * W * W - 2 * W1 *
-                                    (d1[:, i] * W - d0[:, i] * W1) - d0[:, i] * W2 * W) / W / W / W
-            else:
-                raise RuntimeError(
-                    'Rational derivatives not implemented for derivatives larger than 2')
-
-            result = np.delete(result, self.dimension, 1)  # remove the weight column
+        result = np.delete(result, self.dimension, 1)  # remove the weight column
 
         if result.shape[0] == 1:  # in case of single value input t, return vector instead of matrix
             result = np.array(result[0, :]).reshape(self.dimension)

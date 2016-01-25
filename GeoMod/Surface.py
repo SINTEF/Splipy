@@ -56,63 +56,8 @@ class Surface(ControlPointOperations):
         @return  : two 3D-arrays (dX/du, dX/dv) of the tangential component x(k) evaluated at (u[i],v[j])
         @rtype   : tuple of two numpy.ndarray
         """
-        return (self.evaluate_derivative(u, v, 1, 0), self.evaluate_derivative(u, v, 0, 1))
-
-    def evaluate_derivative(self, u, v, du=1, dv=1):
-        """Evaluate the derivative of the surface at given parametric values
-        @param u : Parametric coordinate point(s) in first direction
-        @type  u : Float or list of Floats
-        @param v : Parametric coordinate point(s) in second direction
-        @type  v : Float or list of Floats
-        @param du: Number of derivatives in u
-        @type  du: Int
-        @param dv: Number of derivatives in v
-        @type  dv: Int
-        @return  : 3D-array D^(du,dv) X(i,j) of component x(k) differentiated (du,dv) times at (u[i],v[j])
-        @rtype   : numpy.array
-        """
-        # for single-value input, wrap it into a list
-        u = ensure_listlike(u)
-        v = ensure_listlike(v)
-
-        # error test input
-        self._validate_domain(u, v)
-
-        # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
-        dNu = self.bases[0].evaluate(u, du)
-        dNv = self.bases[1].evaluate(v, dv)
-
-        # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j])
-        result = np.tensordot(dNv, self.controlpoints, axes=(1, 1))
-        result = np.tensordot(dNu, result, axes=(1, 1))
-        result = np.array(result)
-
-        # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
-        # x(u,v) = sum_ij N_i(u) * N_j(v) * (w_ij*x_ij) / W(u,v)
-        # W(u,v) = sum_ij N_i(u) * N_j(v) * w_ij
-        # dx/du =  sum_ij N_i'(u)*N_j(v) * (w_ij*x_ij) / W(u,v) - sum_ij N_i(u)N_j(v)*w_ij*x_ij* W'(u,v)/W(u,v)^2
-        if self.rational:
-            if du + dv > 1:
-                raise RuntimeError(
-                    'Rational derivatives not implemented for derivatives larger than 1')
-            Nu = self.basis.evaluate(u)
-            Nv = self.basis.evaluate(v)
-            non_derivative = np.tensordot(Nv, self.controlpoints, axes=(1, 1))
-            non_derivative = np.tensordot(Nu, non_derivative, axes=(1, 1))
-            non_derivative = np.array(non_derivative)
-            W = non_derivative[:, :, -1]  # W(u,v)
-            Wder = result[:, :, -1]  # dW(u,v)/du or dW(u,v)/dv
-            for i in range(self.dimension):
-                result[:, :, i] = result[:, :, i] / W - non_derivative[:, :, i] * Wder / W / W
-
-            result = np.delete(result, self.dimension, 1)  # remove the weight column
-
-        if result.shape[0] == 1 and result.shape[
-                1] == 1:  # in case of single value input (u,v), return vector instead of 3D-matrix
-            result = np.array(result[0, 0, :]).reshape(self.dimension)
-        return result
-
-        return result
+        return (self.evaluate_derivative(u, v, d=(1, 0)),
+                self.evaluate_derivative(u, v, d=(0, 1)))
 
     def flip_parametrization(self, direction):
         """Swap direction of the surface by making it go in the reverse direction. Parametric domain remain unchanged

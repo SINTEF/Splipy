@@ -71,6 +71,67 @@ class ControlPointOperations(object):
 
         return result
 
+    def evaluate_derivative(self, *params, **kwargs):
+        """Evaluate the derivative of the object at given parametric values
+
+        This function accepts n parametric coordinate point(s) (which are
+        floats or list of floats), and an optional order of the derivative
+        to compute.
+
+        @param params: Parametric coordinate point(s)
+        @type  params: Float or list of Floats
+        @param d: Derivative order (default (1,1,...))
+        @type  d: Int or Tuple
+        @return: Derivatives. Matrix X(i1,i2,...,j) of component x(j)
+            differentiationed d(j) times, evaluated at t(i1,i2,....)
+
+        Tangent of curve at single point
+        curve.evaluate_derivative(1.0)
+
+        Double derivative of curve at single point
+        curve.evaluate_derivative(1.0, d=2)
+
+        Third derivative of curve at several points
+        curve.evaluate_derivative([0.0, 1.0, 2.0], d=3)
+
+        Tangents of surface
+        surface.evaluate_derivative(0.5, 0.7, d=(1,0))
+        surface.evaluate_derivative(0.5, 0.7, d=(0,1))
+
+        Cross-derivative of surface
+        surface.evaluate_derivative(0.5, 0.7, d=(1,1))
+        """
+        params = [ensure_listlike(p) for p in params]
+
+        derivs = kwargs.get('d', [1] * len(self.bases))
+        derivs = ensure_listlike(derivs)
+
+        self._validate_domain(*params)
+
+        dNs = [b.evaluate(p, d) for b, p, d in zip(self.bases, params, derivs)]
+        idx = len(self.bases) - 1
+        result = self.controlpoints
+        for dN in dNs[::-1]:
+            result = np.tensordot(dN, result, axes=(1, idx))
+
+        if self.rational:
+            if sum(derivs) > 1:
+                raise RuntimeError('Rational derivative not implemented for order %i' % sum(derivs))
+            Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+            non_derivative = self.controlpoints
+            for N in Ns[::-1]:
+                non_derivative = np.tensordot(N, non_derivative, axes=(1, idx))
+            W = non_derivative[..., -1]  # W(u,v)
+            Wd = result[..., -1]         # dW(u,v)/du or /dv
+            for i in range(self.dimension):
+                result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W;
+            result = np.delete(result, self.dimension, 1)
+
+        if all(s == 1 for s in result.shape[:-1]):
+            result = result.reshape(self.dimension)
+
+        return result
+
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
         @param x: The direction and amount to move

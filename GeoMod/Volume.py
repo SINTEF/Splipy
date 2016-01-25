@@ -11,66 +11,6 @@ class Volume(ControlPointOperations):
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
-    def evaluate_derivative(self, u, v, w, du=1, dv=1, dw=1):
-        """Evaluate the derivative of the volume at given parametric values
-        @param u : Parametric coordinate point(s) in first direction
-        @type  u : Float or list of Floats
-        @param v : Parametric coordinate point(s) in second direction
-        @type  v : Float or list of Floats
-        @param w : Parametric coordinate point(s) in third direction
-        @type  w : Float or list of Floats
-        @param du: Number of derivatives in u
-        @type  du: Int
-        @param dv: Number of derivatives in v
-        @type  dv: Int
-        @param dw: Number of derivatives in w
-        @type  dw: Int
-        @return  : 4D-array D^(du,dv,dw) X(i,j) of component x(l) differentiated (du,dv,dw) times at (u[i],v[j],w[k])
-        @rtype   : numpy.ndarray
-        """
-        # for single-value input, wrap it into a list
-        u = ensure_listlike(u)
-        v = ensure_listlike(v)
-        w = ensure_listlike(w)
-
-        self._validate_domain(u, v, w)
-
-        # compute basis functions for all points t. dNu(i,j) is a matrix of the derivative of all functions j for all points u[i]
-        dNu = self.bases[0].evaluate(u, du)
-        dNv = self.bases[1].evaluate(v, dv)
-        dNw = self.bases[2].evaluate(w, dw)
-
-        # compute physical points [dx/dt,dy/dt,dz/dt] for all points (u[i],v[j],w[k])
-        result = np.tensordot(dNw, self.controlpoints, axes=(1, 2))
-        result = np.tensordot(dNv, result, axes=(1, 2))
-        result = np.tensordot(dNu, result, axes=(1, 2))
-        result = np.array(result)
-
-        # Rational surfaces need the quotient rule to compute derivatives (controlpoints are stored as x_i*w_i)
-        # x(u,v) = sum_ijk N_i(u) * N_j(v) * N_k(w) * (w_ijk*x_ijk) / W(u,v,w)
-        # W(u,v) = sum_ijk N_i(u) * N_j(v) * N_k(w) * w_ijk
-        # dx/du =  sum_ijk N_i'(u)*N_j(v)*N_k(w) * (w_ijk*x_ijk) / W(u,v,w) - sum_ijk N_i(u)N_j(v)_N_k(w)*w_ijk*x_ijk* W'(u,v,w)/W(u,v,w)^2
-        if self.rational:
-            if du + dv + dw > 1:
-                raise RuntimeError(
-                    'Rational derivatives not implemented for derivatives larger than 1')
-            Nu = self.basis.evaluate(u)
-            Nv = self.basis.evaluate(v)
-            Nw = self.basis.evaluate(w)
-            non_derivative = np.tensordot(Nw, self.controlpoints, axes=(1, 2))
-            non_derivative = np.tensordot(Nv, non_derivative, axes=(1, 2))
-            non_derivative = np.tensordot(Nu, non_derivative, axes=(1, 2))
-            non_derivative = np.array(non_derivative)
-            W = non_derivative[:, :, :, -1]  # W(u,v,w)
-            Wder = result[:, :, :, -1]  # dW/du or dW/dv or dW/dw
-            for i in range(self.dimension):
-                result[:, :, :, i] = result[:, :, :, i] / W - non_derivative[:, :, :,
-                                                                             i] * Wder / W / W
-
-            result = np.delete(result, self.dimension, 1)  # remove the weight column
-
-        return result
-
     def flip_parametrization(self, direction):
         """Swap direction of the volume by making it go in the reverse direction. Parametric domain remain unchanged
            @param direction: The parametric direction to flip (0=u, 1=v, 2=w)
