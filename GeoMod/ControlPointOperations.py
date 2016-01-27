@@ -23,18 +23,25 @@ class ControlPointOperations(object):
         bases = [(b if b else BSplineBasis()) for b in bases]
         self.bases = bases
         if controlpoints is None:
-            # We want to generate tuples in column-major format, hence the [::-1]
+            # `product' produces tuples in row-major format (the last input varies quickest)
+            # We want them in column-major format, so we reverse the basis orders, and then
+            # also reverse the output tuples
             controlpoints = [c[::-1] for c in product(*(b.greville() for b in bases[::-1]))]
+
+            # Minimum two dimensions
             if len(controlpoints[0]) == 1:
                 controlpoints = [tuple(list(c) + [0.0]) for c in controlpoints]
+
         controlpoints = np.array(controlpoints)
         self.dimension = controlpoints.shape[-1] - rational
         self.rational = rational
 
+        # Reshape the array so that it's not just flat
         cp_shape = tuple([b.num_functions() for b in bases[::-1]] + [self.dimension + rational])
         controlpoints = np.reshape(controlpoints, cp_shape)
 
         # Compensate for numpy's row-major ordering
+        # cps = cps.transpose((n-1,n-2,...,0,n))
         spec = tuple(list(range(len(bases)))[::-1] + [len(bases)])
         self.controlpoints = controlpoints.transpose(spec)
 
@@ -56,17 +63,22 @@ class ControlPointOperations(object):
 
         self._validate_domain(*params)
 
+        # Evaluate the derivatives of the corresponding bases at the corresponding points
+        # and build the result array
         Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
         idx = len(self.bases) - 1
         result = self.controlpoints
         for N in Ns[::-1]:
             result = np.tensordot(N, result, axes=(1, idx))
 
+        # For rational objects, we divide out the weights, which are stored in the
+        # last coordinate
         if self.rational:
             for i in range(self.dimension):
                 result[..., i] /= result[..., -1]
             result = np.delete(result, self.dimension, -1)
 
+        # Squeeze the singleton dimensions if we only have one point
         if all(s == 1 for s in result.shape[:-1]):
             result = result.reshape(self.dimension)
 
@@ -109,12 +121,19 @@ class ControlPointOperations(object):
 
         self._validate_domain(*params)
 
+        # Evaluate the derivatives of the corresponding bases at the corresponding points
+        # and build the result array
         dNs = [b.evaluate(p, d) for b, p, d in zip(self.bases, params, derivs)]
         idx = len(self.bases) - 1
         result = self.controlpoints
         for dN in dNs[::-1]:
             result = np.tensordot(dN, result, axes=(1, idx))
 
+        # For rational curves, we need to use the quotient rule
+        # (n/W)' = (n' W - n W') / W^2 = n'/W - nW'/W^2
+        # * n'(i) = result[..., i]
+        # * W'(i) = result[..., -1]
+        # We evaluate in the regular way to compute n and W.
         if self.rational:
             if sum(derivs) > 1:
                 raise RuntimeError('Rational derivative not implemented for order %i' % sum(derivs))
@@ -122,12 +141,13 @@ class ControlPointOperations(object):
             non_derivative = self.controlpoints
             for N in Ns[::-1]:
                 non_derivative = np.tensordot(N, non_derivative, axes=(1, idx))
-            W = non_derivative[..., -1]  # W(u,v)
-            Wd = result[..., -1]         # dW(u,v)/du or /dv
+            W = non_derivative[..., -1]  # W
+            Wd = result[..., -1]         # W'
             for i in range(self.dimension):
                 result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W;
             result = np.delete(result, self.dimension, 1)
 
+        # Squeeze the singleton dimensions if we only have one point
         if all(s == 1 for s in result.shape[:-1]):
             result = result.reshape(self.dimension)
 
@@ -174,6 +194,7 @@ class ControlPointOperations(object):
     def reparametrize(self, *args, **kwargs):
         """Redefine the parametric domain"""
         if 'direction' not in kwargs:
+            # Pad the args with (0, 1) for the extra directions
             args = list(args) + [(0, 1)] * (len(self.bases) - len(args))
             for b, (start, end) in zip(self.bases, args):
                 b.reparametrize(start, end)
