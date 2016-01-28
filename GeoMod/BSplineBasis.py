@@ -1,3 +1,4 @@
+from GeoMod.Utils import ensure_listlike
 from bisect import bisect_right, bisect_left
 import numpy as np
 
@@ -40,6 +41,9 @@ class BSplineBasis:
             if knots[i + 1] - knots[i] < -self.tol:
                 raise ValueError('knot vector needs to be non-decreasing')
 
+    def num_functions(self):
+        return len(self.knots) - self.order - (self.periodic + 1)
+
     def start(self):
         """Start point of parametric domain. For open knot vectors, this is the first knot.
         @return: Knot number p, where p is the spline order
@@ -61,7 +65,7 @@ class BSplineBasis:
         """
         result = []
         p = self.order
-        n = len(self)
+        n = self.num_functions()
         if index is None:
             for i in range(n):
                 result.append(float(np.sum(self.knots[i + 1:i + p])) / (p - 1))
@@ -82,10 +86,7 @@ class BSplineBasis:
         """
 
         # for single-value input, wrap it into a list so it don't crash on the loop below
-        try:
-            len(t)
-        except TypeError:
-            t = [t]
+        t = ensure_listlike(t)
 
         p = self.order  # knot vector order
         n = len(self.knots) - p  # number of basis functions (without periodicity)
@@ -148,6 +149,14 @@ class BSplineBasis:
         self -= self.start()  # set start-point to 0
         self /= self.end()  # set end-point to 1
 
+    def reparametrize(self, start=0, end=1):
+        """Set the parametric domain to be (start, end)"""
+        if end <= start:
+            raise ValueError('end must be larger than start')
+        self.normalize()
+        self *= (end - start)
+        self += start
+
     def reverse(self):
         """Reverse parametric domain, keeping start/end values unchanged"""
         a = float(self.start())
@@ -175,8 +184,8 @@ class BSplineBasis:
                 result.append(k)
         return result
 
-    def get_raise_order_knot(self, amount):
-        """Return the knot vector corresponding to a raise_order operation,
+    def raise_order(self, amount):
+        """Return a basis corresponding to a raise_order operation,
         keeping the continuity at the knots unchanged by increasing their
         multiplicity"""
         if type(amount) is not int:
@@ -185,9 +194,10 @@ class BSplineBasis:
             raise ValueError('amount needs to be a positive integer')
         knot_spans = list(self.get_knot_spans())  # list of unique knots
         # For every degree we raise, we need to increase the multiplicity by one
-        result = list(self.knots) + knot_spans * amount
-        result.sort()  # make it a proper knot vector by ensuring that it is non-decreasing
-        return result
+        knots = list(self.knots) + knot_spans * amount
+        knots.sort()  # make it a proper knot vector by ensuring that it is non-decreasing
+
+        return BSplineBasis(self.order + amount, knots, self.periodic)
 
     def insert_knot(self, new_knot):
         """ Returns an extremely sparse matrix C such that N_new = N_old*C,
@@ -202,7 +212,7 @@ class BSplineBasis:
             raise ValueError('new_knot out of range')
         # mu is the index of last non-zero (old) basis function
         mu = bisect_right(self.knots, new_knot)
-        n = len(self)
+        n = self.num_functions()
         p = self.order
         C = np.zeros((n + 1, n))
         # the modulus operator i%n in the C-matrix is needed for periodic basis functions
@@ -233,13 +243,12 @@ class BSplineBasis:
             outfile.write('%f ' % k)
         outfile.write('\n')
 
-    def __call__(self, t):
-        """see evaluate(t)"""
-        return self.evaluate(t)
+    __call__ = evaluate
 
     def __len__(self):
         """returns the number of functions in this basis"""
-        return len(self.knots) - self.order - (self.periodic + 1)
+        # return len(self.knots) - self.order - (self.periodic + 1)
+        return len(self.knots)
 
     def __getitem__(self, i):
         """returns knot i, including multiplicities"""

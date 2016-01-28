@@ -125,20 +125,20 @@ class TestSurface(unittest.TestCase):
         surf = Surface(basis1, basis2, controlpoints)
 
         # call evaluation at a 5x4 grid of points
-        val = surf.evaluate_derivative([0, .2, .5, .6, 1], [0, .2, .4, 1], 1, 0)
+        val = surf.evaluate_derivative([0, .2, .5, .6, 1], [0, .2, .4, 1], d=(1, 0))
         self.assertEqual(len(val.shape), 3)  # result should be wrapped in 3-index tensor
         self.assertEqual(val.shape[0], 5)  # 5 evaluation points in u-direction
         self.assertEqual(val.shape[1], 4)  # 4 evaluation points in v-direction
         self.assertEqual(val.shape[2], 2)  # 2 coordinates (x,y)
 
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 1, 0)[0], .88)  # dx/du=2uv+(1-v)
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 1, 0)[1], 0)  # dy/du=0
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 0, 1)[0], -.16)  # dx/dv=u^2-u
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 0, 1)[1], 1)  # dy/dv=1
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 1, 1)[0], -.60)  # d2x/dudv=2u-1
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 2, 0)[0], 0.40)  # d2x/dudu=2v
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 3, 0)[0], 0.00)  # d3x/du3=0
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, 0, 2)[0], 0.00)  # d2y/dv2=0
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(1, 0))[0], .88)  # dx/du=2uv+(1-v)
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(1, 0))[1], 0)  # dy/du=0
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(0, 1))[0], -.16)  # dx/dv=u^2-u
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(0, 1))[1], 1)  # dy/dv=1
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(1, 1))[0], -.60)  # d2x/dudv=2u-1
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(2, 0))[0], 0.40)  # d2x/dudu=2v
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(3, 0))[0], 0.00)  # d3x/du3=0
+        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(0, 2))[0], 0.00)  # d2y/dv2=0
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
@@ -158,14 +158,14 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
 
-        self.assertEqual(surf.get_order()[0], 3)
-        self.assertEqual(surf.get_order()[1], 3)
+        self.assertEqual(surf.order()[0], 3)
+        self.assertEqual(surf.order()[1], 3)
         evaluation_point1 = surf(0.23, 0.37)  # pick some evaluation point (could be anything)
 
         surf.raise_order(1, 2)
 
-        self.assertEqual(surf.get_order()[0], 4)
-        self.assertEqual(surf.get_order()[1], 5)
+        self.assertEqual(surf.order()[0], 4)
+        self.assertEqual(surf.order()[1], 5)
         evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged
@@ -179,14 +179,14 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints, True)
 
-        self.assertEqual(surf.get_order()[0], 3)
-        self.assertEqual(surf.get_order()[1], 3)
+        self.assertEqual(surf.order()[0], 3)
+        self.assertEqual(surf.order()[1], 3)
         evaluation_point1 = surf(0.23, 0.37)
 
         surf.raise_order(1, 2)
 
-        self.assertEqual(surf.get_order()[0], 4)
-        self.assertEqual(surf.get_order()[1], 5)
+        self.assertEqual(surf.order()[0], 4)
+        self.assertEqual(surf.order()[1], 5)
         evaluation_point2 = surf(0.23, 0.37)
 
         # evaluation before and after RaiseOrder should remain unchanged
@@ -209,7 +209,7 @@ class TestSurface(unittest.TestCase):
         surf.insert_knot(0, .7)
         surf.insert_knot(1, .1)
         surf.insert_knot(1, 1.0 / 3)
-        knot1, knot2 = surf.get_knots(True)
+        knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 11)  # 8 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 
@@ -233,7 +233,7 @@ class TestSurface(unittest.TestCase):
         surf.insert_knot(0, .7)
         surf.insert_knot(1, .1)
         surf.insert_knot(1, 1.0 / 3)
-        knot1, knot2 = surf.get_knots(True)
+        knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
 

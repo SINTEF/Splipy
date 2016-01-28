@@ -1,7 +1,11 @@
 import numpy as np
 import copy
+from operator import attrgetter, methodcaller
+from itertools import product
+from GeoMod import BSplineBasis
+from GeoMod.Utils import ensure_listlike
 
-__all__ = ['ControlPointOperations']
+__all__ = ['SplineObject']
 
 
 def get_rotation_matrix(theta, axis):
@@ -13,7 +17,191 @@ def get_rotation_matrix(theta, axis):
                       [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
 
 
-class ControlPointOperations:
+class SplineObject(object):
+
+    def __init__(self, bases, controlpoints, rational):
+        bases = [(b if b else BSplineBasis()) for b in bases]
+        self.bases = bases
+        if controlpoints is None:
+            # `product' produces tuples in row-major format (the last input varies quickest)
+            # We want them in column-major format, so we reverse the basis orders, and then
+            # also reverse the output tuples
+            controlpoints = [c[::-1] for c in product(*(b.greville() for b in bases[::-1]))]
+
+            # Minimum two dimensions
+            if len(controlpoints[0]) == 1:
+                controlpoints = [tuple(list(c) + [0.0]) for c in controlpoints]
+
+        controlpoints = np.array(controlpoints)
+        self.dimension = controlpoints.shape[-1] - rational
+        self.rational = rational
+
+        # Reshape the array so that it's not just flat
+        cp_shape = tuple([b.num_functions() for b in bases[::-1]] + [self.dimension + rational])
+        controlpoints = np.reshape(controlpoints, cp_shape)
+
+        # Compensate for numpy's row-major ordering
+        # cps = cps.transpose((n-1,n-2,...,0,n))
+        spec = tuple(list(range(len(bases)))[::-1] + [len(bases)])
+        self.controlpoints = controlpoints.transpose(spec)
+
+    def _validate_domain(self, *params):
+        """Check whether the given evaluation parameters are valid."""
+        for b, p in zip(self.bases, params):
+            if b.periodic < 0:
+                if min(p) < b.start() or b.end() < max(p):
+                    raise ValueError('Evaluation outside parametric domain')
+
+    def evaluate(self, *params):
+        """Evaluate the object at given parametric values
+        @param params: Parametric coordinate point(s)
+        @type  params: Float or list of Floats
+        @return : Geometry coordinates. Matrix X(i1,i2,...,j) of component x(j) evaluated at t(i1,i2,...)
+        @rtype  : numpy.array
+        """
+        params = [ensure_listlike(p) for p in params]
+
+        self._validate_domain(*params)
+
+        # Evaluate the derivatives of the corresponding bases at the corresponding points
+        # and build the result array
+        Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+        idx = len(self.bases) - 1
+        result = self.controlpoints
+        for N in Ns[::-1]:
+            result = np.tensordot(N, result, axes=(1, idx))
+
+        # For rational objects, we divide out the weights, which are stored in the
+        # last coordinate
+        if self.rational:
+            for i in range(self.dimension):
+                result[..., i] /= result[..., -1]
+            result = np.delete(result, self.dimension, -1)
+
+        # Squeeze the singleton dimensions if we only have one point
+        if all(s == 1 for s in result.shape[:-1]):
+            result = result.reshape(self.dimension)
+
+        return result
+
+    def evaluate_derivative(self, *params, **kwargs):
+        """Evaluate the derivative of the object at given parametric values
+
+        This function accepts n parametric coordinate point(s) (which are
+        floats or list of floats), and an optional order of the derivative
+        to compute.
+
+        @param params: Parametric coordinate point(s)
+        @type  params: Float or list of Floats
+        @param d: Derivative order (default (1,1,...))
+        @type  d: Int or Tuple
+        @return: Derivatives. Matrix X(i1,i2,...,j) of component x(j)
+            differentiationed d(j) times, evaluated at t(i1,i2,....)
+
+        Tangent of curve at single point
+        curve.evaluate_derivative(1.0)
+
+        Double derivative of curve at single point
+        curve.evaluate_derivative(1.0, d=2)
+
+        Third derivative of curve at several points
+        curve.evaluate_derivative([0.0, 1.0, 2.0], d=3)
+
+        Tangents of surface
+        surface.evaluate_derivative(0.5, 0.7, d=(1,0))
+        surface.evaluate_derivative(0.5, 0.7, d=(0,1))
+
+        Cross-derivative of surface
+        surface.evaluate_derivative(0.5, 0.7, d=(1,1))
+        """
+        params = [ensure_listlike(p) for p in params]
+
+        derivs = kwargs.get('d', [1] * len(self.bases))
+        derivs = ensure_listlike(derivs)
+
+        self._validate_domain(*params)
+
+        # Evaluate the derivatives of the corresponding bases at the corresponding points
+        # and build the result array
+        dNs = [b.evaluate(p, d) for b, p, d in zip(self.bases, params, derivs)]
+        idx = len(self.bases) - 1
+        result = self.controlpoints
+        for dN in dNs[::-1]:
+            result = np.tensordot(dN, result, axes=(1, idx))
+
+        # For rational curves, we need to use the quotient rule
+        # (n/W)' = (n' W - n W') / W^2 = n'/W - nW'/W^2
+        # * n'(i) = result[..., i]
+        # * W'(i) = result[..., -1]
+        # We evaluate in the regular way to compute n and W.
+        if self.rational:
+            if sum(derivs) > 1:
+                raise RuntimeError('Rational derivative not implemented for order %i' % sum(derivs))
+            Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+            non_derivative = self.controlpoints
+            for N in Ns[::-1]:
+                non_derivative = np.tensordot(N, non_derivative, axes=(1, idx))
+            W = non_derivative[..., -1]  # W
+            Wd = result[..., -1]         # W'
+            for i in range(self.dimension):
+                result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W;
+            result = np.delete(result, self.dimension, 1)
+
+        # Squeeze the singleton dimensions if we only have one point
+        if all(s == 1 for s in result.shape[:-1]):
+            result = result.reshape(self.dimension)
+
+        return result
+
+    def start(self, direction=None):
+        """Return the start of the parametric domain"""
+        if direction is None:
+            return tuple(b.start() for b in self.bases)
+        return self.bases[direction].start()
+
+    def end(self, direction=None):
+        """Return the end of the parametric domain"""
+        if direction is None:
+            return tuple(b.end() for b in self.bases)
+        return self.bases[direction].end()
+
+    def order(self, direction=None):
+        """Return polynomial order (degree + 1)"""
+        if direction is None:
+            return tuple(b.order for b in self.bases)
+        return self.bases[direction].order
+
+    def knots(self, direction=None, with_multiplicities=False):
+        """Return knots"""
+        getter = attrgetter('knots') if with_multiplicities else methodcaller('get_knot_spans')
+        if direction is None:
+            return tuple(getter(b) for b in self.bases)
+        return getter(self.bases[direction])
+
+    def flip_parametrization(self, direction=0):
+        """Swap the direction of a parameter by making it go in the reverse direction.
+        The parametric domain remains unchanged."""
+        self.bases[direction].reverse()
+
+        # This creates the following slice programmatically
+        # array[:, :, :, ..., ::-1,]
+        # index=direction -----^
+        # :    => slice(None, None, None)
+        # ::-1 => slice(None, None, -1)
+        slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
+        self.controlpoints = self.controlpoints[tuple(slices)]
+
+    def reparametrize(self, *args, **kwargs):
+        """Redefine the parametric domain"""
+        if 'direction' not in kwargs:
+            # Pad the args with (0, 1) for the extra directions
+            args = list(args) + [(0, 1)] * (len(self.bases) - len(args))
+            for b, (start, end) in zip(self.bases, args):
+                b.reparametrize(start, end)
+        else:
+            direction = kwargs['direction']
+            start, end = args[0]
+            self.bases[direction].reparametrize(start, end)
 
     def translate(self, x):
         """Translate, i.e. move a B-spline object a given distance
@@ -74,10 +262,7 @@ class ControlPointOperations:
         dim = self.dimension
         rat = self.rational
         n = len(self)  # number of control points
-        try:
-            len(s)
-        except TypeError:
-            s = [s, s, s]
+        s = ensure_listlike(s, dups=3)
 
         # set up the scaling matrix
         scale_matrix = np.matrix(np.identity(dim + rat))
@@ -247,6 +432,8 @@ class ControlPointOperations:
 
     def clone(self):
         return copy.deepcopy(self)
+
+    __call__ = evaluate
 
     def __iadd__(self, x):
         self.translate(x)
