@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+"""Handy utilities for creating surfaces."""
+
 from GeoMod import BSplineBasis, Curve, Surface
 from math import pi, sqrt
 import GeoMod.CurveFactory as CurveFactory
@@ -8,12 +12,15 @@ __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus'
            'thicken']
 
 
-def square(size=(1, 1)):
-    """ Create a 2D square with lower right corner at (0,0)
-    @param size: size in all directions, or (width,height)
-    @type  size: Float or List of Floats
-    @return    : a square
-    @rtype     : Surface
+def square(size=1):
+    """square([size=1])
+
+    Create a square with parametric origin at *(0,0)*.
+
+    :param size: Size(s), either a single scalar or a tuple of scalars per axis
+    :type size: float or (float)
+    :return: A linear parametrized square
+    :rtype: Surface
     """
     result = Surface()  # unit square
     result.scale(size)
@@ -21,21 +28,23 @@ def square(size=(1, 1)):
 
 
 def disc(r=1, type='radial'):
-    """ Create surface representation of a circular disc with center at (0,0)
-    @param r   : radius
-    @type  r   : Float
-    @param type: 'radial' or 'square'
-    @type  type: String
-    @return    : a circular disc
-    @rtype     : Surface
+    """disc([r=1], [type='radial'])
+
+    Create a circular disc with center at (0,0). The *type* parameter
+    distinguishes between different parametrizations.
+
+    :param float r: Radius
+    :param string type: The type of parametrization ('radial' or 'square')
+    :return: The disc
+    :rtype: Surface
     """
-    if type is 'radial':
+    if type == 'radial':
         c = CurveFactory.circle(r)
         cp = np.zeros((16, 3))
         cp[:, -1] = 1
         cp[1::2, :] = c.controlpoints
-        return Surface(BSplineBasis(), c.basis, cp, True)
-    elif type is 'square':
+        return Surface(BSplineBasis(), c.bases[0], cp, True)
+    elif type == 'square':
         w = 1 / sqrt(2)
         cp = [[-r * w, -r * w, 1],
               [0, -r, w],
@@ -54,11 +63,13 @@ def disc(r=1, type='radial'):
 
 
 def sphere(r=1):
-    """ Create sphere shell
-    @param r   : radius of sphere
-    @type  r   : Float
-    @return    : a sphere
-    @rtype     : Surface
+    """sphere([r=1])
+
+    Create a spherical shell.
+
+    :param float r: Radius
+    :return: The spherical shell
+    :rtype: Surface
     """
     circle = CurveFactory.circle_segment(pi, r)
     circle.rotate(-pi / 2)
@@ -67,14 +78,12 @@ def sphere(r=1):
 
 
 def extrude(curve, h):
-    """ Extrude a curve by sweeping it straight up in the z-direction
-    to a given height
-    @param curve : curve to extrude
-    @type  curve : Curve
-    @param h     : height in z-direction
-    @type  h     : Float
-    @return      : an extruded surface
-    @rtype       : Surface
+    """Extrude a curve by sweeping it in the *z* direction to a given height.
+
+    :param Curve curve: Curve to extrude
+    :param float h: Height in the *z* direction
+    :return: The extruded curve
+    :rtype: Surface
     """
     curve = curve.clone()  # clone input curve, throw away input reference
     curve.set_dimension(3)  # add z-components (if not already present)
@@ -83,18 +92,19 @@ def extrude(curve, h):
     cp[:n, :] = curve.controlpoints  # the first control points form the bottom
     curve += (0, 0, h)
     cp[n:, :] = curve.controlpoints  # the last control points form the top
-    return Surface(curve.basis, BSplineBasis(2), cp, curve.rational)
+    return Surface(curve.bases[0], BSplineBasis(2), cp, curve.rational)
 
 
 def revolve(curve, theta=2 * pi):
-    """ Revolve a surface by sweeping a curve in a rotational fashion around
-    the z-axis
-    @param curve : curve to revolve
-    @type  curve : Curve
-    @param theta : angle in radians
-    @type  theta : Float
-    @return      : a revolved surface
-    @rtype       : Surface
+    """revolve(curve, [theta=2pi])
+
+    Revolve a surface by sweeping a curve in a rotational fashion around the
+    *z* axis.
+
+    :param Curve curve: Curve to revolve
+    :param float theta: Angle to revolve, in radians
+    :return: The revolved curve
+    :rtype: Surface
     """
     curve = curve.clone()  # clone input curve, throw away input reference
     curve.set_dimension(3)  # add z-components (if not already present)
@@ -115,31 +125,32 @@ def revolve(curve, theta=2 * pi):
         cp[i * n:(i + 1) * n, 2] *= weight
         cp[i * n:(i + 1) * n, 3] *= weight
         curve.rotate(pi / 4)
-    return Surface(curve.basis, basis, cp, True)
+    return Surface(curve.bases[0], basis, cp, True)
 
 
 def cylinder(r=1, h=1):
-    """ Create cylinder shell with no top or bottom starting at the xy-plane,
-    and the height increases in the z-direction
-    @param r   : radius of cylinder
-    @type  r   : Float
-    @param h   : height in z-direction
-    @type  h   : Float
-    @return    : a cylinder shell
-    @rtype     : Surface
+    """cylinder([r=1], [h=1])
+
+    Create a cylinder shell with no top or bottom with the *z* axis as central axis.
+
+    :param float r: Radius
+    :param float h: Height
+    :return: The cylinder shell
+    :rtype: Surface
     """
     return extrude(CurveFactory.circle(r), h)
 
 
 def torus(minor_r=1, major_r=3):
-    """ Create a torus (doughnut) by revolving a circle of size minor_r around
-    the z-axis with radius major_r
-    @param minor_r: the thickness of the torus, or radius in xz-plane
-    @type  minor_r: Float
-    @param major_r: the size of the torus, or radius in xy-plane
-    @type  major_r: Float
-    @return       : a periodic torus
-    @rtype        : Surface
+    """torus([minor_r=1], [major_r=3])
+
+    Create a torus (doughnut) by revolving a circle of size *minor_r* around
+    the *z* axis with radius *major_r*.
+
+    :param float minor_r: The thickness of the torus (radius in the *xz* plane)
+    :param float major_r: The size of the torus (radius in the *xy* plane)
+    :return: A periodic torus
+    :rtype: Surface
     """
     circle = CurveFactory.circle(minor_r)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
@@ -148,13 +159,15 @@ def torus(minor_r=1, major_r=3):
 
 
 def edge_curves(curves):
-    """ Create the surface defined by the area between 2 or 4 input curves. In
-    case of 4 input curves, then these must define an ordered directional
+    """Create the surface defined by the region between the input curves.
+
+    In case of four input curves, these must be given in an ordered directional
     closed loop around the resulting surface.
-    @param curves: Two or four edge curves
-    @type  curves: List of curves
-    @return      : intermediate surface
-    @rtype       : Surface
+
+    :param [Curve] curves: Two or four edge curves
+    :return: The enclosed surface
+    :rtype: Surface
+    :raises ValueError: If the length of *curves* is not two or four
     """
     if len(curves) == 2:
         crv1 = curves[0].clone()
@@ -167,7 +180,7 @@ def edge_curves(curves):
         controlpoints[n:, :] = crv2.controlpoints
         linear = BSplineBasis(2)
 
-        return Surface(crv1.basis, linear, controlpoints, crv1.rational)
+        return Surface(crv1.bases[0], linear, controlpoints, crv1.rational)
     elif len(curves) == 4:
         # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
         bottom = curves[0]
@@ -199,19 +212,23 @@ def edge_curves(curves):
 
 
 def thicken(curve, amount):
-    """ Add a thickness to a curve to generate a surface. For 2D-curves this
-    is going to generate a 2D planar surface with the curve through the center,
-    while 3D curves will generate a surface tube around it and with open ends.
-    The resulting surface is an approximation generated by interpolating at
-    the greville points. It will use the same discretization as the input
-    curve. Function does not check for self-intersection.
-    @param curve : generating curve
-    @type  curve : Curve
-    @param amount: Either a constant or variable thickness. For function input
-                   one needs to specify parameters x,y,z and/or t.
-    @type  amount: Float or function
-    @return      : Surrounding surface
-    @rtype       : Surface
+    """Generate a surface by adding thickness to a curve.
+
+    - For 2D curves this will generate a 2D planar surface with the curve
+      through the center.
+
+    - For 3D curves this will generate a surface "tube" which is open at both
+      ends (that is, for a straight line it will generate a cylinder shell).
+
+    The resulting surface is an approximation generated by interpolating at the
+    Greville points. It does not use the same discretization as the input
+    curve. It does not check for self-intersecting geometries.
+
+    :param Curve curve: The generating curve
+    :param amount: The amount of thickness, either constant or variable (if
+        variable, the function must accept parameters named *x*, *y*, *z* and/or *t*)
+    :return: Surrounding surface
+    :rtype: Surface
     """
     # NOTES: There are several pitfalls with this function
     #  * self intersection:

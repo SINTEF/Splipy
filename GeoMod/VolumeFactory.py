@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+"""Handy utilities for creating volumes."""
+
 from math import pi, sqrt
 import numpy as np
 from GeoMod import Surface, Volume, BSplineBasis
@@ -6,12 +10,15 @@ import GeoMod.SurfaceFactory as SurfaceFactory
 __all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces']
 
 
-def cube(size=(1, 1, 1)):
-    """ Create a volumetric cube with lower right corner at (0,0,0)
-    @param size: size in all directions, or (width,depth,height)
-    @type  size: Float or List of Floats
-    @return    : a linear parametrized box
-    @rtype     : Volume
+def cube(size=1):
+    """cube([size=1])
+
+    Create a cube with parmetric origin at *(0,0,0)*.
+
+    :param size: Size(s), either a single scalar or a tuple of scalars per axis
+    :type size: float or (float)
+    :return: A linear parametrized box
+    :rtype: Volume
     """
     result = Volume()
     result.scale(size)
@@ -19,14 +26,15 @@ def cube(size=(1, 1, 1)):
 
 
 def revolve(surf, theta=2 * pi):
-    """ Revolve a volume by sweeping a surface in a rotational fashion around
-    the z-axis
-    @param surf  : Surface to revolve
-    @type  surf  : Surface
-    @param theta : angle in radians
-    @type  theta : Float
-    @return      : a revolved surface
-    @rtype       : Surface
+    """revolve(surf, [theta=2pi])
+
+    Revolve a volume by sweeping a surface in a rotational fashion around the
+    *z* axis.
+
+    :param Surface surf: Surface to revolve
+    :param float theta: Angle to revolve, in radians
+    :return: The revolved surface
+    :rtype: Volume
     """
     surf = surf.clone()  # clone input surface, throw away old reference
     surf.set_dimension(3)  # add z-components (if not already present)
@@ -51,14 +59,14 @@ def revolve(surf, theta=2 * pi):
 
 
 def cylinder(r=1, h=1):
-    """ Create a solid cylinder with starting at the xy-plane,
-    and the height increases in the z-direction
-    @param r   : radius of cylinder
-    @type  r   : Float
-    @param h   : height in z-direction
-    @type  h   : Float
-    @return    : a solid cylinder
-    @rtype     : Volume
+    """cylinder([r=1], [h=1])
+
+    Create a solid cylinder with the *z* axis as central axis.
+
+    :param float r: Radius
+    :param float h: Height
+    :return: The cylinder
+    :rtype: Volume
     """
     shell = SurfaceFactory.cylinder(r, h)
     cp = []
@@ -71,14 +79,12 @@ def cylinder(r=1, h=1):
 
 
 def extrude(surf, h):
-    """ Extrude a surface by sweeping it straight up in the z-direction
-    to a given
-    @param surf : surf to extrude
-    @type  surf : Surface
-    @param h     : height in z-direction
-    @type  h     : Float
-    @return      : an extruded surface
-    @rtype       : Surface
+    """Extrude a surface by sweeping it in the *z* direction to a given height.
+
+    :param Surface surf: Surface to extrude
+    :param float h: Height in the *z* direction
+    :return: The extruded surface
+    :rtype: Volume
     """
     surf.set_dimension(3)  # add z-components (if not already present)
     cp = []
@@ -92,14 +98,16 @@ def extrude(surf, h):
 
 
 def edge_surfaces(surfaces):
-    """ Create the surface defined by the area between 2 or 6 input surfaces.
-    In case of 6 input surfaces, then these must defined in the following
-    order: bottom, top, left, right, back, front with opposing sides
-    parametrized in the same directions
-    @param surfaces: Two or six edge surfaces
-    @type  surfaces: List of surfaces
-    @return        : enclosed volume
-    @rtype         : Volume
+    """Create the volume defined by the region between the input surfaces.
+
+    In case of six input surfaces, these must be given in the order: bottom,
+    top, left, right, back, front. Opposing sides must be parametrized in the
+    same directions.
+
+    :param [Surface] surfaces: Two or six edge surfaces
+    :return: The enclosed volume
+    :rtype: Volume
+    :raises ValueError: If the length of *surfaces* is not two or six
     """
     if len(surfaces) == 2:
         surf1 = surfaces[0].clone()

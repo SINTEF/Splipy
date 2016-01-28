@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from GeoMod import Curve, BSplineBasis
 from math import sqrt
 import unittest

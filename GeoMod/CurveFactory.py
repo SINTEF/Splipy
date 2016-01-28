@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+"""Handy utilities for creating curves."""
+
 from math import pi, cos, sin, sqrt, ceil
 from GeoMod import Curve, BSplineBasis
 import numpy as np
@@ -6,23 +10,22 @@ __all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate'
 
 
 def line(a, b):
-    """ Create a line between the points a and b
-    @param a: start point
-    @type  a: Point_like
-    @param b: end point
-    @type  b: Point_like
-    @return : Linear spline curve from a to b
-    @rtype  : Curve
+    """Create a line between two points.
+
+    :param point-like a: Start point
+    :param point-like b: End point
+    :return: Linear curve from *a* to *b*
+    :rtype: Curve
     """
     return Curve(controlpoints=[a, b])
 
 
 def polygon(points):
-    """ Create a linear interpolation between input points
-    @param points: list of points
-    @type  points: List of Point_like
-    @return      : Linear spline curve through the input points
-    @rtype       : Curve
+    """Create a linear interpolation between input points.
+
+    :param [point-like] points: The points to interpolate
+    :return: Linear curve through the input points
+    :rtype: Curve
     """
     # establish knot vector based on eucledian length between points
     knot = [0, 0]
@@ -39,13 +42,16 @@ def polygon(points):
 
 
 def n_gon(n=5, r=1):
-    """ Create an n-gon, i.e. a regular polygon of n equal sides centered at the origin
-    @param n: Number of sides and vertices
-    @type  n: Int
-    @param r: Radius, distance from (0,0) to the vertices
-    @type  r: Float
-    @return : A linear, periodic curve in 2 dimensions
-    @rtype  : Curve
+    """n_gon([n=5], [r=1])
+
+    Create a regular polygon of *n* equal sides centered at the origin.
+
+    :param int n: Number of sides and vertices
+    :param float r: Radius
+    :return: A linear, periodic, 2D curve
+    :rtype: Curve
+    :raises ValueError: If radius is not positive
+    :raises ValueError: If *n* < 3
     """
     if r <= 0:
         raise ValueError('radius needs to be positive')
@@ -64,11 +70,14 @@ def n_gon(n=5, r=1):
 
 
 def circle(r=1):
-    """ Create a circle at the origin
-    @param r: circle radius
-    @type  r: Float
-    @return : A periodic, quadratic NURBS curve
-    @rtype  : Curve
+    """circle([r=1])
+
+    Create a circle at the origin.
+
+    :param float r: Radius
+    :return: A periodic, quadratic rational curve
+    :rtype: Curve
+    :raises ValueError: If radius is not positive
     """
     if r <= 0:
         raise ValueError('radius needs to be positive')
@@ -87,13 +96,16 @@ def circle(r=1):
 
 
 def circle_segment(theta, r=1):
-    """ Create a circle segment at the origin with start at (r,0)
-    @param theta: circle angle in radians
-    @type  theta: Float
-    @param r    : circle radius
-    @type  r    : Float
-    @return     : A quadratic NURBS curve
-    @rtype      : Curve
+    """circle_segment(theta, [r=1])
+
+    Create a circle segment centered at the origin, starting at *(r,0)*.
+
+    :param float theta: Angle in radians
+    :param float r: Radius
+    :return: A quadratic rational curve
+    :rtype: Curve
+    :raises ValueError: If radiusis not positive
+    :raises ValueError: If theta is not in the range *[-2pi, 2pi]*
     """
     # error test input
     if abs(theta) > 2 * pi:
@@ -126,13 +138,13 @@ def circle_segment(theta, r=1):
 
 
 def interpolate(x_pts, basis):
-    """ Perform general spline interpolation (at the greville points) on a basis
-    @param x_pts: Matrix x[i,j] of interpolation points x[i] with (x,y,z)-components j
-    @type  x_pts: Matrix_like
-    @param basis: Basis to interpolate on
-    @type  basis: BSplineBasis
-    @return     : Interpolated curve
-    @rtype      : Curve
+    """Perform general spline interpolation at the Greville points of a basis.
+
+    :param array-like x_pts: Matrix *X[i,j]* of interpolation points *xj* with
+        components *j*
+    :param BSplineBasis basis: Basis on which to interpolate
+    :return: Interpolated curve
+    :rtype: Curve
     """
     # wrap x_pts into a numpy matrix
     x_pts = np.matrix(x_pts)
