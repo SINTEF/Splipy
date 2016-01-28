@@ -32,7 +32,7 @@ class TestFactory(unittest.TestCase):
         # test default 5 side n-gon
         c = CurveFactory.n_gon()
         self.assertEqual(len(c), 5)
-        self.assertEqual(len(c.knots(0)), 6)
+        self.assertEqual(len(c.knots(0)), 8)
         self.assertEqual(c.order(0), 2)
         # evaluate at second corner (clockwise from (1,0) )
         self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0)[0], cos(2 * pi / 5))

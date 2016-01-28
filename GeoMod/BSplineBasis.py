@@ -35,18 +35,24 @@ class BSplineBasis:
 
         if knots is None:
             knots = [0] * order + [1] * order
+            for i in range(periodic+1):
+                knots[   i] = -1
+                knots[-i-1] =  2
 
         self.knots = np.array(knots)
         self.knots = self.knots.astype(float)
         self.order = order
+        p          = order
         self.periodic = periodic
 
         # error test input
         if len(knots) < order:
             raise ValueError('knot vector has too few elements')
+        if len(knots) < 2*(order+periodic):
+            raise ValueError('knot vector has too few elements')
         if periodic >= 0:
             for i in range(periodic + 1):
-                if abs((knots[i + 1] - knots[i]) - (knots[-i - 1] - knots[-i - 2])) > self.tol:
+                if abs((knots[i + 1] - knots[i]) - (knots[-p - periodic + i ] - knots[-p - periodic - 1 + i])) > self.tol:
                     raise ValueError('periodic knot vector is mis-matching at the start/end')
         for i in range(len(knots) - 1):
             if knots[i + 1] - knots[i] < -self.tol:
@@ -166,7 +172,7 @@ class BSplineBasis:
 
         # collapse periodic functions onto themselves
         for j in range(self.periodic + 1):
-            N[:, j] += N[:, -j - 1]
+            N[:, j] += N[:, -self.periodic - 1 + j]
         N = np.delete(N, range(n - self.periodic - 1, n), 1)
 
         return N
@@ -256,7 +262,7 @@ class BSplineBasis:
         :rtype: numpy.array
         :raises ValueError: If the new knot is outside the domain
         """
-        if new_knot < self.knots[0] or self.knots[-1] < new_knot:
+        if new_knot < self.start() or self.end() < new_knot:
             raise ValueError('new_knot out of range')
         # mu is the index of last non-zero (old) basis function
         mu = bisect_right(self.knots, new_knot)
@@ -281,7 +287,21 @@ class BSplineBasis:
             C[i % (n + 1), (i - 1) % n] = 1
 
         self.knots = np.insert(self.knots, mu, new_knot)
-
+        
+        # make sure that it is correct periodic after knot insertion
+        if self.periodic > -1:
+            m  = len(self.knots)
+            r  = self.periodic
+            if mu <= p+r: # need to fix ghost knots on right side
+                k0 = self.knots[0]
+                k1 = self.knots[-p-r-1]
+                for i in range(p+r+1):
+                    self.knots[m-p-r-1+i] = k1 + (self.knots[i]-k0)
+            elif mu >= m-p-r-1: # need to fix ghost knots on left side
+                k0 = self.knots[p+r]
+                k1 = self.knots[-1]
+                for i in range(p+r+1):
+                    self.knots[i] = k0 - (k1-self.knots[m-p-r-1+i])
         return C
 
     def write_g2(self, outfile):

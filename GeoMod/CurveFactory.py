@@ -60,11 +60,11 @@ def n_gon(n=5, r=1):
 
     cp = []
     dt = 2 * pi / n
-    knot = [0]
+    knot = [-1]
     for i in range(n):
         cp.append([r * cos(i * dt), r * sin(i * dt)])
         knot.append(i)
-    knot += [n, n]
+    knot += [n, n+1]
     basis = BSplineBasis(2, knot, 0)
     return Curve(basis, cp)
 
@@ -91,7 +91,7 @@ def circle(r=1):
                      [-r*w, -r*w, w],
                      [0, -r, 1],
                      [r*w, -r*w, w]]
-    knot = np.array([0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4]) / 4.0 * 2 * pi
+    knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]) / 4.0 * 2 * pi
     return Curve(BSplineBasis(3, knot, 0), controlpoints, True)
 
 

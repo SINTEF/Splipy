@@ -186,7 +186,7 @@ class TestCurve(unittest.TestCase):
         s = 1.0 / sqrt(2)
         controlpoints = [[1, 0, 1], [s, s, s], [0, 1, 1], [-s, s, s], [-1, 0, 1], [-s, -s, s],
                          [0, -1, 1], [s, -s, s], [1, 0, 1]]
-        crv = Curve(BSplineBasis(3, [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4]), controlpoints, True)
+        crv = Curve(BSplineBasis(3, [-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]), controlpoints, True)
         evaluation_point1 = crv(0.37)
         crv.insert_knot(.2)
         crv.insert_knot(.3)
