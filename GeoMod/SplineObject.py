@@ -5,7 +5,7 @@ from itertools import product
 from GeoMod import BSplineBasis
 from GeoMod.Utils import ensure_listlike
 
-__all__ = ['ControlPointOperations']
+__all__ = ['SplineObject']
 
 
 def get_rotation_matrix(theta, axis):
@@ -17,7 +17,7 @@ def get_rotation_matrix(theta, axis):
                       [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
 
 
-class ControlPointOperations(object):
+class SplineObject(object):
 
     def __init__(self, bases, controlpoints, rational):
         bases = [(b if b else BSplineBasis()) for b in bases]

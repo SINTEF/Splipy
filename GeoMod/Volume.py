@@ -1,5 +1,5 @@
 from GeoMod import BSplineBasis, Surface
-from GeoMod.ControlPointOperations import ControlPointOperations
+from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike
 from bisect import bisect_left
 import numpy as np
@@ -7,7 +7,7 @@ import numpy as np
 __all__ = ['Volume']
 
 
-class Volume(ControlPointOperations):
+class Volume(SplineObject):
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 

@@ -1,5 +1,5 @@
 from GeoMod import Curve, BSplineBasis
-from GeoMod.ControlPointOperations import ControlPointOperations
+from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike
 from bisect import bisect_left
 import numpy as np
@@ -7,7 +7,7 @@ import numpy as np
 __all__ = ['Surface']
 
 
-class Surface(ControlPointOperations):
+class Surface(SplineObject):
     def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False):
         super(Surface, self).__init__([basis1, basis2], controlpoints, rational)
 
