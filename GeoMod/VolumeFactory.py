@@ -41,7 +41,7 @@ def revolve(surf, theta=2 * pi):
     surf.force_rational()  # add weight (if not already present)
     n = len(surf)  # number of control points of the surface
     cp = np.zeros((8 * n, 4))
-    basis = BSplineBasis(3, [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4], periodic=0)
+    basis = BSplineBasis(3, [-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5], periodic=0)
     basis *= 2 * pi / 4  # set parametric domain to (0,2pi) in w-direction
 
     # loop around the circle and set control points by the traditional 9-point

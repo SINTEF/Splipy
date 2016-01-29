@@ -54,7 +54,7 @@ class TestBasis(unittest.TestCase):
 
     def test_repr(self):
         self.assertEqual(repr(BSplineBasis()), 'p=2, [ 0.  0.  1.  1.]')
-        self.assertEqual(repr(BSplineBasis(periodic=0)), 'p=2, [ 0.  0.  1.  1.], C0-periodic')
+        self.assertEqual(repr(BSplineBasis(periodic=0)), 'p=2, [-1.  0.  1.  2.], C0-periodic')
 
 if __name__ == '__main__':
     unittest.main()
