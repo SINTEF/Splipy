@@ -287,7 +287,7 @@ class BSplineBasis:
             C[i % (n + 1), (i - 1) % n] = 1
 
         self.knots = np.insert(self.knots, mu, new_knot)
-        
+
         # make sure that it is correct periodic after knot insertion
         if self.periodic > -1:
             m  = len(self.knots)
