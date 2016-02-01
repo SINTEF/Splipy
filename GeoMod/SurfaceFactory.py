@@ -158,7 +158,7 @@ def torus(minor_r=1, major_r=3):
     return revolve(circle)
 
 
-def edge_curves(curves):
+def edge_curves(*curves):
     """Create the surface defined by the region between the input curves.
 
     In case of four input curves, these must be given in an ordered directional
@@ -169,6 +169,8 @@ def edge_curves(curves):
     :rtype: Surface
     :raises ValueError: If the length of *curves* is not two or four
     """
+    if len(curves) == 1: # probably gives input as a list-like single variable
+        curves = curves[0]
     if len(curves) == 2:
         crv1 = curves[0].clone()
         crv2 = curves[1].clone()

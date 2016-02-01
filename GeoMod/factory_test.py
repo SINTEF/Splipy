@@ -273,7 +273,7 @@ class TestFactory(unittest.TestCase):
         c3.rotate(pi)
         c4 = Curve(BSplineBasis(2), [[0, -1], [1, 0]])
 
-        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4])
+        surf = SurfaceFactory.edge_curves(c1, c2, c3, c4)
 
         # srf spits out parametric space (0,1)^2, so we sync these up to input curves
         c3.flip_parametrization()
@@ -325,7 +325,7 @@ class TestFactory(unittest.TestCase):
         basis2 = BSplineBasis(2, [0, 0, .4, .44, 1, 1])
         bottom = Surface(basis1, basis2, controlpoints, True)
 
-        vol = VolumeFactory.edge_surfaces([bottom, top])
+        vol = VolumeFactory.edge_surfaces(bottom, top)
 
         # set parametric domain to [0,1]^2 for easier comparison
         top.reparametrize()
@@ -351,7 +351,7 @@ class TestFactory(unittest.TestCase):
         basis2 = BSplineBasis(2, [0, 0, .4, .44, 1, 1])
         bottom = Surface(basis1, basis2, controlpoints)  # non-rational!
 
-        vol = VolumeFactory.edge_surfaces([bottom, top])  # also non-rational!
+        vol = VolumeFactory.edge_surfaces(bottom, top)  # also non-rational!
 
         # verify on 5x5x7 evaluation grid
         for u in np.linspace(0, 1, 5):

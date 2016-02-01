@@ -5,7 +5,7 @@ import copy
 from operator import attrgetter, methodcaller
 from itertools import product
 from GeoMod import BSplineBasis
-from GeoMod.Utils import ensure_listlike
+from GeoMod.Utils import ensure_listlike, ensure_flatlist
 
 __all__ = ['SplineObject']
 
@@ -351,11 +351,11 @@ class SplineObject(object):
 
         return self
 
-    def scale(self, s):
+    def scale(self, *args):
         """Scale, or magnify the object by a given amount.
 
-        :param s: Scaling factors, possibly different in each direction.
-        :type s: point-like or float
+        :param args: Scaling factors, possibly different in each direction.
+        :type args: point-like or float
         """
         # 3D rational example: create a 4x4 scaling matrix
         #
@@ -367,6 +367,7 @@ class SplineObject(object):
         dim = self.dimension
         rat = self.rational
         n = len(self)  # number of control points
+        s = ensure_flatlist(args)
         s = ensure_listlike(s, dups=3)
 
         # set up the scaling matrix

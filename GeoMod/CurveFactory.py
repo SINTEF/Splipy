@@ -20,13 +20,16 @@ def line(a, b):
     return Curve(controlpoints=[a, b])
 
 
-def polygon(points):
+def polygon(*points):
     """Create a linear interpolation between input points.
 
     :param [point-like] points: The points to interpolate
     :return: Linear curve through the input points
     :rtype: Curve
     """
+    if len(points) == 1:
+        points = points[0]
+
     # establish knot vector based on eucledian length between points
     knot = [0, 0]
     prevPt = points[0]

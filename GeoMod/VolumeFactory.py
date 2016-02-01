@@ -97,7 +97,7 @@ def extrude(surf, h):
     return Volume(surf.bases[0], surf.bases[1], BSplineBasis(2), cp, surf.rational)
 
 
-def edge_surfaces(surfaces):
+def edge_surfaces(*surfaces):
     """Create the volume defined by the region between the input surfaces.
 
     In case of six input surfaces, these must be given in the order: bottom,
@@ -109,6 +109,8 @@ def edge_surfaces(surfaces):
     :rtype: Volume
     :raises ValueError: If the length of *surfaces* is not two or six
     """
+    if len(surfaces) == 1: # probably gives input as a list-like single variable
+        surfaces = surfaces[0]
     if len(surfaces) == 2:
         surf1 = surfaces[0].clone()
         surf2 = surfaces[1].clone()
