@@ -246,7 +246,13 @@ class BSplineBasis:
         knot_spans = list(self.get_knot_spans())  # list of unique knots
         # For every degree we raise, we need to increase the multiplicity by one
         knots = list(self.knots) + knot_spans * amount
-        knots.sort()  # make it a proper knot vector by ensuring that it is non-decreasing
+        # make it a proper knot vector by ensuring that it is non-decreasing
+        knots.sort()
+        if self.periodic > -1:
+            # remove excessive ghost knots which appear at both ends of the knot vector
+            n0 =                   bisect_left(knot_spans, self.start())
+            n1 = len(knot_spans) - bisect_left(knot_spans, self.end())   - 1
+            knots = knots[n0*amount : -n1*amount]
 
         return BSplineBasis(self.order + amount, knots, self.periodic)
 
