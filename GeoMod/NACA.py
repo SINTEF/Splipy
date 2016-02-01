@@ -87,7 +87,7 @@ def NACA(M, P, X, n=40, order=5):
 
     surf = SurfaceFactory.thicken(center_line, thickness)
     edg = surf.get_edges()
-    edg[0].flip_parametrization()
-    edg[2].flip_parametrization()
+    edg[0].reverse()
+    edg[2].reverse()
     edg[0].append(edg[2])
     return edg[0]

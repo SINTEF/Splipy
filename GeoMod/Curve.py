@@ -337,8 +337,8 @@ class Curve(SplineObject):
         Curve.make_curves_compatible(crv1, crv2)
 
         # make both have knot vectors in domain (0,1)
-        crv1.reparametrize()
-        crv2.reparametrize()
+        crv1.reparam()
+        crv2.reparam()
 
         # make sure both have the same order
         p1 = crv1.order(0)

@@ -72,7 +72,7 @@ class TestCurve(unittest.TestCase):
         crv = Curve(BSplineBasis(3, [0, 0, 0, .3, 1, 1, 1]), controlpoints)
 
         p1 = crv(0.23)
-        crv.flip_parametrization()
+        crv.reverse()
         p2 = crv(0.77)
         self.assertAlmostEqual(p1[0], p2[0])
         self.assertAlmostEqual(p1[1], p2[1])
@@ -206,7 +206,7 @@ class TestCurve(unittest.TestCase):
         with self.assertRaises(ValueError):
             crv.insert_knot(4.4)  # Outside-domain error
 
-    def test_reparametrize(self):
+    def test_reparam(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
         controlpoints = [[0, 0, 0], [1, 1, 0], [2, -1, 0], [3, 0, 0]]
         crv = Curve(BSplineBasis(3, [0, 0, 0, 1.32, 3, 3, 3]), controlpoints)
@@ -218,7 +218,7 @@ class TestCurve(unittest.TestCase):
         self.assertEqual(knots1[-1], 3)
 
         # reparametrize
-        crv.reparametrize((6.0, 9.0))
+        crv.reparam((6.0, 9.0))
 
         # get some info on the reparametrized curve
         knots2 = crv.knots(0)
@@ -232,7 +232,7 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
 
         # normalize, i.e. set domain to [0,1]
-        crv.reparametrize()
+        crv.reparam()
 
         # get some info on the normalized curve
         knots3 = crv.knots(0)
@@ -247,9 +247,9 @@ class TestCurve(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            crv.reparametrize((9, 3))
+            crv.reparam((9, 3))
         with self.assertRaises(TypeError):
-            crv.reparametrize(("one", "two"))
+            crv.reparam(("one", "two"))
 
     def test_split(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve

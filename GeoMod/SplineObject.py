@@ -261,8 +261,8 @@ class SplineObject(object):
             return tuple(getter(b) for b in self.bases)
         return getter(self.bases[direction])
 
-    def flip_parametrization(self, direction=0):
-        """flip_parametrization([direction=0])
+    def reverse(self, direction=0):
+        """reverse([direction=0])
 
         Swap the direction of a parameter by making it go in the reverse
         direction. The parametric domain remains unchanged.
@@ -279,7 +279,7 @@ class SplineObject(object):
         slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
         self.controlpoints = self.controlpoints[tuple(slices)]
 
-    def reparametrize(self, *args, **kwargs):
+    def reparam(self, *args, **kwargs):
         """reparametrize([u, v, ...], [direction=None])
 
         Redefine the parametric domain. This function accepts two calling
@@ -301,11 +301,11 @@ class SplineObject(object):
             # Pad the args with (0, 1) for the extra directions
             args = list(args) + [(0, 1)] * (len(self.bases) - len(args))
             for b, (start, end) in zip(self.bases, args):
-                b.reparametrize(start, end)
+                b.reparam(start, end)
         else:
             direction = kwargs['direction']
             start, end = args[0]
-            self.bases[direction].reparametrize(start, end)
+            self.bases[direction].reparam(start, end)
 
     def translate(self, x):
         """Translate (i.e. move) the object by a given distance.

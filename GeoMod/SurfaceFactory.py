@@ -189,8 +189,8 @@ def edge_curves(*curves):
         right = curves[1]
         top = curves[2].clone()
         left = curves[3].clone()  # gonna change these two, so make copies
-        top.flip_parametrization()
-        left.flip_parametrization()
+        top.reverse()
+        left.reverse()
         # create linear interpolation between opposing sides
         s1 = edge_curves([bottom, top])
         s2 = edge_curves([left, right])

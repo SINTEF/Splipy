@@ -105,8 +105,8 @@ class Surface(SplineObject):
         vmin = Curve(self.bases[0], np.reshape(self.controlpoints[:, 0, :], (n1, dim)), rat)
         vmax = Curve(self.bases[0], np.reshape(self.controlpoints[:, -1, :], (n1, dim)), rat)
         # make the curves form a clockwise oriented closed loop around surface
-        umax.flip_parametrization()
-        vmax.flip_parametrization()
+        umax.reverse()
+        vmax.reverse()
         return (vmin, umax, vmax, umin)
 
     def raise_order(self, raise_u, raise_v):
@@ -397,8 +397,8 @@ class Surface(SplineObject):
         Surface.make_surfaces_compatible(surf1, surf2)
 
         # make both have knot vectors in domain (0,1)
-        surf1.reparametrize()
-        surf2.reparametrize()
+        surf1.reparam()
+        surf2.reparam()
 
         # make sure both have the same order
         p1 = surf1.order()

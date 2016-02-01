@@ -182,8 +182,8 @@ class BSplineBasis:
         self -= self.start()  # set start-point to 0
         self /= self.end()  # set end-point to 1
 
-    def reparametrize(self, start=0, end=1):
-        """reparametrize([start=0], [end=1])
+    def reparam(self, start=0, end=1):
+        """reparam([start=0], [end=1])
 
         Set the parametric domain to be (start, end)
 

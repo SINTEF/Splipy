@@ -203,7 +203,7 @@ class TestFactory(unittest.TestCase):
         square.rotate(pi / 2, (1, 0, 0))
         square.translate((2, 0, 0))  # in xz-plane with corners at (3,0),(2,1),(1,0),(2,-1)
         surf = SurfaceFactory.revolve(square)
-        surf.reparametrize()  # set parametric space to (0,1)^2
+        surf.reparam()  # set parametric space to (0,1)^2
         v = np.linspace(0, 1, 13)
         x = surf.evaluate(0, v)  # outer ring evaluation u=0
         for pt in np.array(x[0, :, :]):
@@ -276,12 +276,12 @@ class TestFactory(unittest.TestCase):
         surf = SurfaceFactory.edge_curves(c1, c2, c3, c4)
 
         # srf spits out parametric space (0,1)^2, so we sync these up to input curves
-        c3.flip_parametrization()
-        c4.flip_parametrization()
-        c1.reparametrize()
-        c2.reparametrize()
-        c3.reparametrize()
-        c4.reparametrize()
+        c3.reverse()
+        c4.reverse()
+        c1.reparam()
+        c2.reparam()
+        c3.reparam()
+        c4.reparam()
 
         for u in np.linspace(0, 1, 7):
             self.assertAlmostEqual(surf(u, 0)[0], c1(u)[0])  # x-coord, bottom crv
@@ -328,8 +328,8 @@ class TestFactory(unittest.TestCase):
         vol = VolumeFactory.edge_surfaces(bottom, top)
 
         # set parametric domain to [0,1]^2 for easier comparison
-        top.reparametrize()
-        bottom.reparametrize()
+        top.reparam()
+        bottom.reparam()
 
         # verify on 7x7x2 evaluation grid
         for u in np.linspace(0, 1, 7):
