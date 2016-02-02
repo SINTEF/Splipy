@@ -279,6 +279,44 @@ class SplineObject(object):
         slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
         self.controlpoints = self.controlpoints[tuple(slices)]
 
+    def insert_knot(self, direction, knot):
+        """Insert a new knot into the spline.
+
+        :param int direction: The direction to insert in
+        :param knot: The new knot(s) to insert
+        :type knot: float or [float]
+        :raises ValueError: For invalid direction
+        """
+        # for single-value input, wrap it into a list
+        knot = ensure_listlike(knot)
+        if direction != 0 and direction != 1 and direction != 2:
+            raise ValueError('direction must be 0, 1 or 2')
+
+        shape  = self.controlpoints.shape
+        pardim = len(shape)-1
+        transpose_fix = [[], [(0,1)], [(0,1,2), (1,0,2)], [(0,1,2,3),(1,0,2,3),(1,2,0,3)]]
+        C = np.matrix(np.identity(shape[direction]))
+        for k in knot:
+            C = self.bases[direction].insert_knot(k) * C
+        self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
+        self.controlpoints = self.controlpoints.transpose(transpose_fix[pardim][direction])
+
+    def refine(self, n):
+        """Enrich the spline space by inserting *n* knots into each existing
+        knot span.
+
+        :param int n: The number of new knots to insert into each span
+        """
+        (knots1, knots2, knots3) = self.knots()  # excluding multiple knots
+        pardir = 0
+        for knot in self.knots():
+            new_knots = []
+            for (k0, k1) in zip(knot[:-1], knot[1:]):
+                element_knots = np.linspace(k0, k1, n + 2)
+                new_knots += list(element_knots[1:-1])
+            self.insert_knot(pardir, new_knots)
+            pardir += 1
+
     def reparam(self, *args, **kwargs):
         """reparametrize([u, v, ...], [direction=None])
 
@@ -598,3 +636,4 @@ class SplineObject(object):
         new_obj = copy.deepcopy(self)
         new_obj /= x
         return new_obj
+

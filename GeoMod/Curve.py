@@ -106,33 +106,13 @@ class Curve(SplineObject):
         self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
         self.bases = [newBasis]
 
-    def refine(self, n):
-        """Enrich the spline space by inserting *n* knots into each existing
-        knot span.
-
-        :param int n: The number of new knots to insert into each span
-        """
-        new_knots = []
-        knots = self.knots()  # excluding multiple knots
-        for (k0, k1) in zip(knots[:-1], knots[1:]):
-            element_knots = np.linspace(k0, k1, n + 2)
-            new_knots += list(element_knots[1:-1])
-        self.insert_knot(new_knots)
-
     def insert_knot(self, knot):
         """Insert a new knot into the curve.
 
         :param knot: The new knot(s) to insert
         :type knot: float or [float]
         """
-        # for single-value input, wrap it into a list
-        knot = ensure_listlike(knot)
-
-        C = np.matrix(np.identity(len(self)))
-        for k in knot:
-            C = self.bases[0].insert_knot(k) * C
-
-        self.controlpoints = C * self.controlpoints
+        return super(Curve, self).insert_knot(direction=0, knot=knot)
 
     def append(self, curve):
         """Extend the curve by merging another curve to the end of it.

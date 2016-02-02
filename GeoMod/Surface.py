@@ -142,55 +142,6 @@ class Surface(SplineObject):
         self.controlpoints = tmp
         self.bases = [newBasis1, newBasis2]
 
-    def refine(self, n):
-        """Enrich the spline space by inserting *n* knots into each existing
-        knot span.
-
-        :param int n: The number of new knots to insert into each span
-        """
-        (knots1, knots2) = self.knots()  # excluding multiple knots
-
-        # insert new knots in the u-direction
-        new_knots = []
-        for (k0, k1) in zip(knots1[:-1], knots1[1:]):
-            element_knots = np.linspace(k0, k1, n + 2)
-            new_knots += list(element_knots[1:-1])
-        self.insert_knot(0, new_knots)
-
-        # insert new knots in the v-direction
-        new_knots = []
-        for (k0, k1) in zip(knots2[:-1], knots2[1:]):
-            element_knots = np.linspace(k0, k1, n + 2)
-            new_knots += list(element_knots[1:-1])
-        self.insert_knot(1, new_knots)
-
-    def insert_knot(self, direction, knot):
-        """Insert a new knot into the surface.
-
-        :param int direction: The direction to insert in
-        :param knot: The new knot(s) to insert
-        :type knot: float or [float]
-        :raises ValueError: For invalid direction
-        """
-        # for single-value input, wrap it into a list
-        knot = ensure_listlike(knot)
-        if direction != 0 and direction != 1:
-            raise ValueError('direction must be 0 or 1')
-
-        (n1, n2, dim) = self.controlpoints.shape
-        if direction == 0:
-            C = np.matrix(np.identity(n1))
-            for k in knot:
-                C = self.bases[0].insert_knot(k) * C
-            self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, 0))
-        else:
-            C = np.matrix(np.identity(n2))
-            for k in knot:
-                C = self.bases[1].insert_knot(k) * C
-            self.controlpoints = np.tensordot(C,
-                                              self.controlpoints,
-                                              axes=(1, 1)).transpose((1, 0, 2))
-
     def split(self, direction, knots):
         """Split a surface into two or more separate representations with C0
         continuity between them.
