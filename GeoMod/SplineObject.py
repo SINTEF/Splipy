@@ -342,8 +342,11 @@ class SplineObject(object):
                 b.reparam(start, end)
         else:
             direction = kwargs['direction']
-            start, end = args[0]
-            self.bases[direction].reparam(start, end)
+            if len(args) == 0:
+                self.bases[direction].reparam(0,1)
+            else:
+                start, end = args[0]
+                self.bases[direction].reparam(start, end)
 
     def translate(self, x):
         """Translate (i.e. move) the object by a given distance.

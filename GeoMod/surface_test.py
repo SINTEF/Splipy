@@ -348,6 +348,54 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(split_v_surf[0].evaluate(3.23, 2.12)[0], pt1[0])
         self.assertAlmostEqual(split_v_surf[0].evaluate(3.23, 2.12)[1], pt1[1])
 
+    def test_reparam(self):
+        # identity mapping, control points generated from knot vector
+        basis1 = BSplineBasis(4, [2,2,2,2,3,6,7,7,7,7])
+        basis2 = BSplineBasis(3, [-3,-3,-3,20,30,31,31,31])
+        surf = Surface(basis1, basis2)
+
+        self.assertAlmostEqual(surf.start(0),  2)
+        self.assertAlmostEqual(surf.end(0),    7)
+        self.assertAlmostEqual(surf.start(1), -3)
+        self.assertAlmostEqual(surf.end(1),   31)
+
+        surf.reparam((4,10), (0,9))
+        self.assertAlmostEqual(surf.start(0),  4)
+        self.assertAlmostEqual(surf.end(0),   10)
+        self.assertAlmostEqual(surf.start(1),  0)
+        self.assertAlmostEqual(surf.end(1),    9)
+
+        surf.reparam((5,11), direction=0)
+        self.assertAlmostEqual(surf.start(0),  5)
+        self.assertAlmostEqual(surf.end(0),   11)
+        self.assertAlmostEqual(surf.start(1),  0)
+        self.assertAlmostEqual(surf.end(1),    9)
+
+        surf.reparam((5,11), direction=1)
+        self.assertAlmostEqual(surf.start(0),  5)
+        self.assertAlmostEqual(surf.end(0),   11)
+        self.assertAlmostEqual(surf.start(1),  5)
+        self.assertAlmostEqual(surf.end(1),   11)
+
+        surf.reparam((-9,9))
+        self.assertAlmostEqual(surf.start(0), -9)
+        self.assertAlmostEqual(surf.end(0),    9)
+        self.assertAlmostEqual(surf.start(1),  0)
+        self.assertAlmostEqual(surf.end(1),    1)
+
+        surf.reparam()
+        self.assertAlmostEqual(surf.start(0),  0)
+        self.assertAlmostEqual(surf.end(0),    1)
+        self.assertAlmostEqual(surf.start(1),  0)
+        self.assertAlmostEqual(surf.end(1),    1)
+
+        surf.reparam((4,10), (0,9))
+        surf.reparam(direction=1)
+        self.assertAlmostEqual(surf.start(0),  4)
+        self.assertAlmostEqual(surf.end(0),   10)
+        self.assertAlmostEqual(surf.start(1),  0)
+        self.assertAlmostEqual(surf.end(1),    1)
+
 
 if __name__ == '__main__':
     unittest.main()
