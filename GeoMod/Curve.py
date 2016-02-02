@@ -168,10 +168,10 @@ class Curve(SplineObject):
 
         return self
 
-    def get_continuity(self, knot):
+    def continuity(self, knot):
         """Get the parametric continuity of the curve at a given point. Will
         return p-1-m, where m is the knot multiplicity and inf between knots"""
-        return self.bases[0].get_continuity(knot)
+        return self.bases[0].continuity(knot)
 
     def split(self, knots):
         """Split a curve into two or more separate representations with C0
@@ -190,7 +190,7 @@ class Curve(SplineObject):
         splitting_curve = self.clone()
         # insert knots to produce C{-1} at all splitting points
         for k in knots:
-            continuity = splitting_curve.get_continuity(k)
+            continuity = splitting_curve.continuity(k)
             if continuity == np.inf:
                 continuity = p - 1
             splitting_curve.insert_knot([k] * (continuity + 1))

@@ -90,7 +90,7 @@ class Surface(SplineObject):
         self.controlpoints = self.controlpoints.transpose((1, 0, 2))
         self.bases = self.bases[::-1]
 
-    def get_edges(self):
+    def edges(self):
         """Return the four edge curves in (parametric) order: bottom, right, top, left.
 
         :return: Edge curves
@@ -164,7 +164,7 @@ class Surface(SplineObject):
         basis = self.bases
         # insert knots to produce C{-1} at all splitting points
         for k in knots:
-            continuity = basis[direction].get_continuity(k)
+            continuity = basis[direction].continuity(k)
             if continuity == np.inf:
                 continuity = p[direction] - 1
             splitting_surf.insert_knot(direction, [k] * (continuity + 1))

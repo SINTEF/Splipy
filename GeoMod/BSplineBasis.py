@@ -200,7 +200,7 @@ class BSplineBasis:
         b = float(self.end())
         self.knots = (self.knots[::-1] - a) / (b - a) * (a - b) + b
 
-    def get_continuity(self, knot):
+    def continuity(self, knot):
         """Get the continuity of the basis functions at a given point.
 
         :return: *p*--*m*--1 at a knot with multiplicity *m*, or ``inf``
@@ -217,7 +217,7 @@ class BSplineBasis:
             mu += 1
         return continuity
 
-    def get_knot_spans(self):
+    def knot_spans(self):
         """Return the set of unique knots in the knot vector.
 
         :return: List of unique knots
@@ -243,7 +243,7 @@ class BSplineBasis:
             raise TypeError('amount needs to be a non-negative integer')
         if amount < 0:
             raise ValueError('amount needs to be a non-negative integer')
-        knot_spans = list(self.get_knot_spans())  # list of unique knots
+        knot_spans = list(self.knot_spans())  # list of unique knots
         # For every degree we raise, we need to increase the multiplicity by one
         knots = list(self.knots) + knot_spans * amount
         # make it a proper knot vector by ensuring that it is non-decreasing

@@ -57,7 +57,7 @@ class Volume(SplineObject):
             raise ValueError(
                 'pardir1 and pardir2 must be different from each other and either 0,1 or 2')
 
-    def get_faces(self):
+    def faces(self):
         """Return the six faces of this volume (with outward normal vectors) in
         order: umin, umax, vmin, vmax, wmin, wmax.
 
@@ -147,7 +147,7 @@ class Volume(SplineObject):
         basis = [self.bases[0], self.bases[1], self.bases[2]]
         # insert knots to produce C{-1} at all splitting points
         for k in knots:
-            continuity = basis[direction].get_continuity(k)
+            continuity = basis[direction].continuity(k)
             if continuity == np.inf:
                 continuity = p[direction] - 1
             splitting_vol.insert_knot(direction, [k] * (continuity + 1))

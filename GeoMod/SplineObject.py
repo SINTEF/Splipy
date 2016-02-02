@@ -10,7 +10,7 @@ from GeoMod.Utils import ensure_listlike, ensure_flatlist
 __all__ = ['SplineObject']
 
 
-def get_rotation_matrix(theta, axis):
+def rotation_matrix(theta, axis):
     axis = axis / np.sqrt(np.dot(axis, axis))
     a = np.cos(theta / 2)
     b, c, d = -axis*np.sin(theta / 2)
@@ -256,7 +256,7 @@ class SplineObject(object):
         :param bool with_multiplicities: If true, return knots with
             multiplicities (i.e. repeated).
         """
-        getter = attrgetter('knots') if with_multiplicities else methodcaller('get_knot_spans')
+        getter = attrgetter('knots') if with_multiplicities else methodcaller('knot_spans')
         if direction is None:
             return tuple(getter(b) for b in self.bases)
         return getter(self.bases[direction])
@@ -453,18 +453,18 @@ class SplineObject(object):
                            ]).T  # we do right-multiplication, so we need a transpose
         elif dim == 3:
             normal = np.array(normal)
-            R = get_rotation_matrix(theta, normal)
+            R = rotation_matrix(theta, normal)
         else:
             raise RuntimeError('rotation undefined for geometries other than 2D and 3D')
 
-        rotation_matrix = np.matrix(np.identity(dim + rat))
-        rotation_matrix[0:dim, 0:dim] = R
+        rot_matrix = np.matrix(np.identity(dim + rat))
+        rot_matrix[0:dim, 0:dim] = R
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
         cp = np.matrix(np.reshape(self.controlpoints, (n, dim + rat)))
 
         # do the actual rotation by matrix-matrix multiplication
-        cp = cp * rotation_matrix
+        cp = cp * rot_matrix
 
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
