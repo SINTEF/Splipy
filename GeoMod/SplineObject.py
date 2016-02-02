@@ -5,7 +5,7 @@ import copy
 from operator import attrgetter, methodcaller
 from itertools import product
 from GeoMod import BSplineBasis
-from GeoMod.Utils import ensure_listlike, ensure_flatlist
+from GeoMod.Utils import *
 
 __all__ = ['SplineObject']
 
@@ -209,9 +209,11 @@ class SplineObject(object):
         tuple.
 
         :param int direction: Direction in which to get the start.
+        :raises ValueError: For invalid direction
         """
         if direction is None:
             return tuple(b.start() for b in self.bases)
+        direction = check_direction(direction, self.pardim())
         return self.bases[direction].start()
 
     def end(self, direction=None):
@@ -223,9 +225,11 @@ class SplineObject(object):
         If it is not given, returns the end of all directions, as a tuple.
 
         :param int direction: Direction in which to get the end.
+        :raises ValueError: For invalid direction
         """
         if direction is None:
             return tuple(b.end() for b in self.bases)
+        direction = check_direction(direction, self.pardim())
         return self.bases[direction].end()
 
     def order(self, direction=None):
@@ -238,9 +242,11 @@ class SplineObject(object):
         tuple.
 
         :param int direction: Direction in which to get the order.
+        :raises ValueError: For invalid direction
         """
         if direction is None:
             return tuple(b.order for b in self.bases)
+        direction = check_direction(direction, self.pardim())
         return self.bases[direction].order
 
     def knots(self, direction=None, with_multiplicities=False):
@@ -255,10 +261,12 @@ class SplineObject(object):
         :param int direction: Direction in which to get the knots.
         :param bool with_multiplicities: If true, return knots with
             multiplicities (i.e. repeated).
+        :raises ValueError: For invalid direction
         """
         getter = attrgetter('knots') if with_multiplicities else methodcaller('knot_spans')
         if direction is None:
             return tuple(getter(b) for b in self.bases)
+        direction = check_direction(direction, self.pardim())
         return getter(self.bases[direction])
 
     def reverse(self, direction=0):
@@ -269,6 +277,7 @@ class SplineObject(object):
 
         :param int direction: The direction to flip.
         """
+        direction = check_direction(direction, self.pardim())
         self.bases[direction].reverse()
 
         # This creates the following slice programmatically
@@ -276,6 +285,7 @@ class SplineObject(object):
         # index=direction -----^
         # :    => slice(None, None, None)
         # ::-1 => slice(None, None, -1)
+        direction = check_direction(direction, self.pardim())
         slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
         self.controlpoints = self.controlpoints[tuple(slices)]
 
@@ -287,19 +297,19 @@ class SplineObject(object):
         :type knot: float or [float]
         :raises ValueError: For invalid direction
         """
+        shape  = self.controlpoints.shape
+
         # for single-value input, wrap it into a list
         knot = ensure_listlike(knot)
-        if direction != 0 and direction != 1 and direction != 2:
-            raise ValueError('direction must be 0, 1 or 2')
 
-        shape  = self.controlpoints.shape
-        pardim = len(shape)-1
+        direction = check_direction(direction, self.pardim())
+
         transpose_fix = [[], [(0,1)], [(0,1,2), (1,0,2)], [(0,1,2,3),(1,0,2,3),(1,2,0,3)]]
         C = np.matrix(np.identity(shape[direction]))
         for k in knot:
             C = self.bases[direction].insert_knot(k) * C
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
-        self.controlpoints = self.controlpoints.transpose(transpose_fix[pardim][direction])
+        self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim()][direction])
 
     def refine(self, n):
         """Enrich the spline space by inserting *n* knots into each existing
@@ -342,6 +352,7 @@ class SplineObject(object):
                 b.reparam(start, end)
         else:
             direction = kwargs['direction']
+            direction = check_direction(direction, self.pardim())
             if len(args) == 0:
                 self.bases[direction].reparam(0,1)
             else:
@@ -569,7 +580,7 @@ class SplineObject(object):
         :param int new_dim: New dimension.
         """
         dim = self.dimension
-        pardim = len(self.controlpoints.shape) - 1  # 1=Curve, 2=Surface, 3=Volume
+        pardim = self.pardim() # 1=Curve, 2=Surface, 3=Volume
         shape = self.controlpoints.shape
         while new_dim > dim:
             self.controlpoints = np.insert(self.controlpoints, dim, np.zeros(shape[:-1]), pardim)
@@ -589,11 +600,14 @@ class SplineObject(object):
         if not self.rational:
             dim = self.dimension
             shape = self.controlpoints.shape
-            pardim = len(self.controlpoints.shape) - 1  # 1=Curve, 2=Surface, 3=Volume
-            self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), pardim)
+            self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), self.pardim())
             self.rational = 1
 
         return self
+
+    def pardim(self):
+        """Returns the number of parametric dimensions: 1 for curves, 2 for surfaces, 3 for volumes"""
+        return len(self.controlpoints.shape)-1
 
     def clone(self):
         """Clone the object."""

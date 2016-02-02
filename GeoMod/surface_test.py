@@ -371,7 +371,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(surf.start(1),  0)
         self.assertAlmostEqual(surf.end(1),    9)
 
-        surf.reparam((5,11), direction=1)
+        surf.reparam((5,11), direction='v')
         self.assertAlmostEqual(surf.start(0),  5)
         self.assertAlmostEqual(surf.end(0),   11)
         self.assertAlmostEqual(surf.start(1),  5)

@@ -103,13 +103,13 @@ class TestVolume(unittest.TestCase):
 
         evaluation_point1 = vol(0.23, 0.37, 0.44)  # pick some evaluation point (could be anything)
 
-        vol.insert_knot(0, .20)
-        vol.insert_knot(0, .5)
-        vol.insert_knot(0, .7)
-        vol.insert_knot(1, .1)
-        vol.insert_knot(1, 1.0 / 3)
-        vol.insert_knot(2, .8)
-        vol.insert_knot(2, .9)
+        vol.insert_knot(0,  .20)
+        vol.insert_knot('u', .5)
+        vol.insert_knot(0,   .7)
+        vol.insert_knot(1,   .1)
+        vol.insert_knot(1,   1.0 / 3)
+        vol.insert_knot(2,   .8)
+        vol.insert_knot('W', .9)
         knot1, knot2, knot3 = vol.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -241,39 +241,39 @@ class TestVolume(unittest.TestCase):
         self.assertEqual(len(split_w_vol), 4)
 
         # check that the u-vector is properly split
-        self.assertAlmostEqual(split_u_vol[0].start()[0], 0.0)
-        self.assertAlmostEqual(split_u_vol[0].end()[0], 0.1)
-        self.assertAlmostEqual(split_u_vol[1].start()[0], 0.1)
-        self.assertAlmostEqual(split_u_vol[1].end()[0], 0.2)
-        self.assertAlmostEqual(split_u_vol[2].start()[0], 0.2)
-        self.assertAlmostEqual(split_u_vol[2].end()[0], 0.3)
-        self.assertAlmostEqual(split_u_vol[6].start()[0], 0.6)
-        self.assertAlmostEqual(split_u_vol[6].end()[0], 2.0)
+        self.assertAlmostEqual(split_u_vol[0].start(0), 0.0)
+        self.assertAlmostEqual(split_u_vol[0].end(0),   0.1)
+        self.assertAlmostEqual(split_u_vol[1].start(0), 0.1)
+        self.assertAlmostEqual(split_u_vol[1].end(0),   0.2)
+        self.assertAlmostEqual(split_u_vol[2].start(0), 0.2)
+        self.assertAlmostEqual(split_u_vol[2].end(0),   0.3)
+        self.assertAlmostEqual(split_u_vol[6].start(0), 0.6)
+        self.assertAlmostEqual(split_u_vol[6].end(0),   2.0)
         # check that the other vectors remain unchanged
-        self.assertAlmostEqual(split_u_vol[2].start()[1], 0.0)
-        self.assertAlmostEqual(split_u_vol[2].end()[1], 1.0)
-        self.assertAlmostEqual(split_u_vol[2].start()[2], 0.0)
-        self.assertAlmostEqual(split_u_vol[2].end()[2], 1.0)
+        self.assertAlmostEqual(split_u_vol[2].start(1), 0.0)
+        self.assertAlmostEqual(split_u_vol[2].end(1),   1.0)
+        self.assertAlmostEqual(split_u_vol[2].start(2), 0.0)
+        self.assertAlmostEqual(split_u_vol[2].end(2),   1.0)
         # check that the v-vector is properly split
-        self.assertAlmostEqual(split_v_vol[0].start()[1], 0.0)
-        self.assertAlmostEqual(split_v_vol[0].end()[1], 0.1)
-        self.assertAlmostEqual(split_v_vol[1].start()[1], 0.1)
-        self.assertAlmostEqual(split_v_vol[1].end()[1], 1.0)
+        self.assertAlmostEqual(split_v_vol[0].start(1), 0.0)
+        self.assertAlmostEqual(split_v_vol[0].end(1),   0.1)
+        self.assertAlmostEqual(split_v_vol[1].start(1), 0.1)
+        self.assertAlmostEqual(split_v_vol[1].end(1),   1.0)
         # check that the others remain unchanged
-        self.assertAlmostEqual(split_v_vol[1].start()[0], 0.0)
-        self.assertAlmostEqual(split_v_vol[1].end()[0], 2.0)
-        self.assertAlmostEqual(split_v_vol[1].start()[2], 0.0)
-        self.assertAlmostEqual(split_v_vol[1].end()[2], 1.0)
+        self.assertAlmostEqual(split_v_vol[1].start(0), 0.0)
+        self.assertAlmostEqual(split_v_vol[1].end(0),   2.0)
+        self.assertAlmostEqual(split_v_vol[1].start(2), 0.0)
+        self.assertAlmostEqual(split_v_vol[1].end(2),   1.0)
         # check that the w-vector is properly split
-        self.assertAlmostEqual(split_w_vol[1].start()[2], 0.4)
-        self.assertAlmostEqual(split_w_vol[1].end()[2], 0.5)
-        self.assertAlmostEqual(split_w_vol[2].start()[2], 0.5)
-        self.assertAlmostEqual(split_w_vol[2].end()[2], 0.6)
+        self.assertAlmostEqual(split_w_vol[1].start(2), 0.4)
+        self.assertAlmostEqual(split_w_vol[1].end(2),   0.5)
+        self.assertAlmostEqual(split_w_vol[2].start(2), 0.5)
+        self.assertAlmostEqual(split_w_vol[2].end(2),   0.6)
         # check that the others remain unchanged
-        self.assertAlmostEqual(split_w_vol[1].start()[0], 0.0)
-        self.assertAlmostEqual(split_w_vol[1].end()[0], 2.0)
-        self.assertAlmostEqual(split_w_vol[1].start()[1], 0.0)
-        self.assertAlmostEqual(split_w_vol[1].end()[1], 1.0)
+        self.assertAlmostEqual(split_w_vol[1].start(0), 0.0)
+        self.assertAlmostEqual(split_w_vol[1].end(0),   2.0)
+        self.assertAlmostEqual(split_w_vol[1].start(1), 0.0)
+        self.assertAlmostEqual(split_w_vol[1].end(1),   1.0)
 
         # check that evaluations remain unchanged
         pt1 = vol(0.23, 0.12, 0.3)
@@ -360,6 +360,32 @@ class TestVolume(unittest.TestCase):
         self.assertAlmostEqual(vol.end(1),    1)
         self.assertAlmostEqual(vol.start(2),  2)
         self.assertAlmostEqual(vol.end(2),    7)
+
+    def test_reverse(self):
+        # identity mapping, control points generated from knot vector
+        basis1 = BSplineBasis(4, [2,2,2,2,3,6,12,12,12,12])
+        basis2 = BSplineBasis(3, [-3,-3,-3,20,30,33,33,33])
+        basis3 = BSplineBasis(5, [0,0,0,0,0,8,8,8,8,8])
+        vol = Volume(basis1, basis2, basis3)
+        
+        u = np.linspace( 2,12,5)
+        v = np.linspace(-3,33,5)
+        w = np.linspace( 0, 8,5)
+
+        pt = vol(u,v,w)
+
+        vol.reverse('v')
+        pt2 = vol(u,v[::-1],w)
+        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(vol.start('v'),  -3)
+        self.assertAlmostEqual(vol.end('v'),    33)
+
+        vol.reverse(2)
+        pt2 = vol(u,v[::-1],w[::-1])
+        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(vol.start('w'),   0)
+        self.assertAlmostEqual(vol.end('w'),     8)
+
 
 if __name__ == '__main__':
     unittest.main()

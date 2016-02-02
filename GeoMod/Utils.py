@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+def check_direction(direction, pardim):
+    if   (direction == 0 or direction == 'u' or direction == 'U') and 0<pardim:
+        return 0
+    elif (direction == 1 or direction == 'v' or direction == 'V') and 1<pardim:
+        return 1
+    elif (direction == 2 or direction == 'w' or direction == 'W') and 2<pardim:
+        return 2
+    else:
+        raise ValueError('Invalid direction')
+
 def ensure_flatlist(x):
     """Flattens a multi-list x to a single index list."""
     try:
