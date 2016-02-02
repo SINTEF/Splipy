@@ -125,6 +125,7 @@ class BSplineBasis:
         n = len(self.knots) - p  # number of basis functions (without periodicity)
         N = np.matrix(np.zeros((len(t), n)))
         for i in range(len(t)):
+            right = from_right
             if p <= d:
                 continue  # requesting more derivatives than polymoial degree: return all zeros
             evalT = t[i]
@@ -135,13 +136,13 @@ class BSplineBasis:
             else:
                 # Special-case the endpoint, so the user doesn't need to
                 if abs(t[i] - self.end()) < self.tol:
-                    from_right = False
+                    right = False
                 # Skip non-periodic evaluation points outside the domain
                 if t[i] < self.start() or t[i] > self.end():
                     continue
 
             # mu = index of last non-zero basis function
-            if from_right:
+            if right:
                 mu = bisect_right(self.knots, evalT)
             else:
                 mu = bisect_left(self.knots, evalT)
