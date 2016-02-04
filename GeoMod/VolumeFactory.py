@@ -98,7 +98,9 @@ def extrude(surf, h):
 
 
 def edge_surfaces(*surfaces):
-    """Create the volume defined by the region between the input surfaces.
+    """edge_surfaces(surfaces...)
+
+    Create the volume defined by the region between the input surfaces.
 
     In case of six input surfaces, these must be given in the order: bottom,
     top, left, right, back, front. Opposing sides must be parametrized in the

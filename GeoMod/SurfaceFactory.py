@@ -159,7 +159,9 @@ def torus(minor_r=1, major_r=3):
 
 
 def edge_curves(*curves):
-    """Create the surface defined by the region between the input curves.
+    """edge_curves(curves...)
+
+    Create the surface defined by the region between the input curves.
 
     In case of four input curves, these must be given in an ordered directional
     closed loop around the resulting surface.

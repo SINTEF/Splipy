@@ -21,7 +21,9 @@ def line(a, b):
 
 
 def polygon(*points):
-    """Create a linear interpolation between input points.
+    """polygon(points...)
+
+    Create a linear interpolation between input points.
 
     :param [point-like] points: The points to interpolate
     :return: Linear curve through the input points

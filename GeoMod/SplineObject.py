@@ -328,7 +328,7 @@ class SplineObject(object):
             pardir += 1
 
     def reparam(self, *args, **kwargs):
-        """reparametrize([u, v, ...], [direction=None])
+        """reparam([u, v, ...], [direction=None])
 
         Redefine the parametric domain. This function accepts two calling
         conventions:
@@ -404,7 +404,11 @@ class SplineObject(object):
         return self
 
     def scale(self, *args):
-        """Scale, or magnify the object by a given amount.
+        """scale(sx, [sy, sz, ...])
+
+        Scale, or magnify the object by a given amount.
+
+        In case of one input argument, the scaling is uniform.
 
         :param args: Scaling factors, possibly different in each direction.
         :type args: point-like or float
@@ -606,7 +610,9 @@ class SplineObject(object):
         return self
 
     def pardim(self):
-        """Returns the number of parametric dimensions: 1 for curves, 2 for surfaces, 3 for volumes"""
+        """Returns the number of parametric dimensions: 1 for curves, 2 for
+        surfaces, 3 for volumes, etc.
+        """
         return len(self.controlpoints.shape)-1
 
     def clone(self):
@@ -653,4 +659,3 @@ class SplineObject(object):
         new_obj = copy.deepcopy(self)
         new_obj /= x
         return new_obj
-
