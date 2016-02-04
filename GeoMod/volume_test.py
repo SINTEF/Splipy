@@ -41,6 +41,41 @@ class TestVolume(unittest.TestCase):
         with self.assertRaises(ValueError):
             val = vol(.5, .2, -10)  # evalaute outside parametric domain
 
+    def test_indexing(self):
+        v = Volume()
+
+        self.assertEqual(v[0][0], 0.0)
+        self.assertEqual(v[0][1], 0.0)
+        self.assertEqual(v[0][2], 0.0)
+        self.assertEqual(v[1][0], 1.0)
+        self.assertEqual(v[1][1], 0.0)
+        self.assertEqual(v[1][2], 0.0)
+        self.assertEqual(v[-1][0], 1.0)
+        self.assertEqual(v[-1][1], 1.0)
+        self.assertEqual(v[-1][2], 1.0)
+
+        self.assertEqual(v[:][0,0], 0.0)
+        self.assertEqual(v[:][1,0], 1.0)
+        self.assertEqual(v[:][1,1], 0.0)
+        self.assertEqual(v[:][2,1], 1.0)
+        self.assertEqual(v[:][2,2], 0.0)
+        self.assertEqual(v[:][5,0], 1.0)
+        self.assertEqual(v[:][5,1], 0.0)
+        self.assertEqual(v[:][5,2], 1.0)
+
+        self.assertEqual(v[0,0,0][0], 0.0)
+        self.assertEqual(v[0,0,0][1], 0.0)
+        self.assertEqual(v[0,0,0][2], 0.0)
+        self.assertEqual(v[0,1,0][0], 0.0)
+        self.assertEqual(v[0,1,0][1], 1.0)
+        self.assertEqual(v[0,1,0][2], 0.0)
+        self.assertEqual(v[0,:,1][0,0], 0.0)
+        self.assertEqual(v[0,:,1][0,1], 0.0)
+        self.assertEqual(v[0,:,1][0,2], 1.0)
+        self.assertEqual(v[0,:,1][1,0], 0.0)
+        self.assertEqual(v[0,:,1][1,1], 1.0)
+        self.assertEqual(v[0,:,1][1,2], 1.0)
+
     def test_raise_order(self):
         # more or less random 3D volume with p=[2,2,1] and n=[4,3,2]
         controlpoints = [[0, 0, 0], [-1, 1, 0], [0, 2, 0], [1, -1, 0], [1, 0, 0], [1, 1, 0],
