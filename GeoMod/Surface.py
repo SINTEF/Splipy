@@ -85,11 +85,6 @@ class Surface(SplineObject):
         return (self.evaluate_derivative(u, v, d=(1, 0)),
                 self.evaluate_derivative(u, v, d=(0, 1)))
 
-    def swap_parametrization(self):
-        """Swaps the two surface parameter directions."""
-        self.controlpoints = self.controlpoints.transpose((1, 0, 2))
-        self.bases = self.bases[::-1]
-
     def edges(self):
         """Return the four edge curves in (parametric) order: bottom, right, top, left.
 

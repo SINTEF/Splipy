@@ -33,30 +33,6 @@ class Volume(SplineObject):
         """
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
-    def swap_parametrization(self, pardir1, pardir2):
-        """Swaps two parameter directions.
-
-        :param int pardir1: A direction
-        :param int pardir2: Another direction
-        :raises ValueError: If the parameter directions are not different and
-            do not correspond to actual directions
-        """
-        if (pardir1 == 0 and pardir2 == 1) or (pardir1 == 1 and pardir2 == 0):
-            self.controlpoints = self.controlpoints.transpose(
-                (1, 0, 2, 3))  # re-order controlpoints
-            self.bases[0], self.bases[1] = self.bases[1], self.bases[0]  # swap knot vectors
-        elif (pardir1 == 0 and pardir2 == 2) or (pardir1 == 2 and pardir2 == 0):
-            self.controlpoints = self.controlpoints.transpose(
-                (2, 1, 0, 3))  # re-order controlpoints
-            self.bases[0], self.bases[2] = self.bases[2], self.bases[0]  # swap knot vectors
-        elif (pardir1 == 1 and pardir2 == 2) or (pardir1 == 2 and pardir2 == 1):
-            self.controlpoints = self.controlpoints.transpose(
-                (0, 2, 1, 3))  # re-order controlpoints
-            self.bases[1], self.bases[2] = self.bases[2], self.bases[1]  # swap knot vectors
-        else:
-            raise ValueError(
-                'pardir1 and pardir2 must be different from each other and either 0,1 or 2')
-
     def faces(self):
         """Return the six faces of this volume (with outward normal vectors) in
         order: umin, umax, vmin, vmax, wmin, wmax.
@@ -79,9 +55,9 @@ class Volume(SplineObject):
                                                                     (n1 * n2, dim), rat))
         wmax = Surface(p2, p1, self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, -1, :],
                                                                     (n1 * n2, dim), rat))
-        umax.swap_parametrization()
-        vmax.swap_parametrization()
-        wmax.swap_parametrization()
+        umax.swap()
+        vmax.swap()
+        wmax.swap()
         return [umin, umax, vmin, vmax, wmin, wmax]
 
     def raise_order(self, raise_u, raise_v, raise_w):
