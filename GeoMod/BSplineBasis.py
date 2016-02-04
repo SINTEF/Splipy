@@ -178,6 +178,37 @@ class BSplineBasis:
 
         return N
 
+    def integrate(self, t0, t1):
+        """integrate(t0, t1)
+
+        Integrate all basis functions over a given domain
+
+        :param float t0: The parametric starting point
+        :param float t1: The parametric end point
+        :return: The integration of all functions over the input domain
+        :rtype: list
+        """
+        if self.periodic > -1 and (t0<self.start() or t1>self.end()):
+            raise NotImplemented('Periodic functions integrated across sem')
+
+        t0 = max(t0, self.start())
+        t1 = min(t1, self.end()  )
+        p  = self.order
+        knot = [self.knots[0]] + list(self.knots) + [self.knots[-1]]
+        integration_basis = BSplineBasis(p + 1, knot)
+        N0 = np.array(integration_basis.evaluate(t0)).flatten()
+        N1 = np.array(integration_basis.evaluate(t1)).flatten()
+        N  = [(knot[i+p]-knot[i])*1.0/p * np.sum(N1[i:]-N0[i:]) for i in range(N0.size)]
+        N  = N[1:]
+
+        # collapse periodic functions onto themselves
+        if self.periodic > -1:
+            for j in range(self.periodic + 1):
+                N[j] += N[-self.periodic - 1 + j]
+            N = N[:-self.periodic-1]
+
+        return N
+
     def normalize(self):
         """Set the parametric domain to be (0,1)."""
         self -= self.start()  # set start-point to 0

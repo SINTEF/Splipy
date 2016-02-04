@@ -600,6 +600,38 @@ class SplineObject(object):
             result.append(np.max(self.controlpoints[..., i]))
         return result
 
+    def center(self):
+        """Gets the center of the domain
+        
+        For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
+
+        .. math:: \\tilde{x} = \\frac{1}{L} \int_{t_0}^{t_1} x(t) \; dt 
+
+        and :math:`L=t_1-t_0` is the length of the parametric domain :math:`[t_0,t_1]`.
+
+        For surfaces this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
+
+        .. math:: \\tilde{x} = \\frac{1}{A} \int_{v_0}^{v_1} \int_{u_0}^{u_1} x(u,v) \; du \; dv
+
+        and :math:`A=(u_1-u_0)(v_1-v_0)` is the area of the parametric domain :math:`[u_0,u_1]\\times[v_0,v_1]`.
+
+        .. warning:: For rational splines, this will return center in projective coordinates (including weight)
+        """
+
+        # compute integration of basis functions
+        Ns = [b.integrate(b.start(), b.end()) for b in self.bases]
+
+        # compute parametric size
+        par_size = np.prod([t1-t0 for (t0,t1) in zip(self.start(), self.end())])
+
+        # multiply basis functions with control points
+        idx = self.pardim - 1
+        result = self.controlpoints
+        for N in Ns[::-1]:
+            result = np.tensordot(N, result, axes=(0, idx))
+
+        return result / par_size
+
     def set_dimension(self, new_dim):
         """Sets the physical dimension of the object. If increased, the new
         components are set to zero.

@@ -305,3 +305,6 @@ def thicken(curve, amount):
 
     else:  # dimension=3, we will create a surrounding tube
         raise NotImplementedError('Currently only 2D supported. See comments in source code')
+
+# def loft(curves):
+    

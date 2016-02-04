@@ -56,5 +56,39 @@ class TestBasis(unittest.TestCase):
         self.assertEqual(repr(BSplineBasis()), 'p=2, [ 0.  0.  1.  1.]')
         self.assertEqual(repr(BSplineBasis(periodic=0)), 'p=2, [-1.  0.  1.  2.], C0-periodic')
 
+    def test_integrate(self):
+        # create the linear functions x(t) = [1-t, t] on t=[0,1]
+        b = BSplineBasis()
+        self.assertAlmostEqual(b.integrate(0,1)[0], 0.5)
+        self.assertAlmostEqual(b.integrate(0,1)[1], 0.5)
+        self.assertAlmostEqual(b.integrate(.25,.5)[0], 5.0/32)
+        self.assertAlmostEqual(b.integrate(.25,.5)[1], 3.0/32)
+
+        # create the quadratic functions x(t) = [(1-t)^2, 2t(1-t), t^2] on t=[0,1]
+        b = BSplineBasis(3)
+        self.assertAlmostEqual(b.integrate(0,1)[0], 1.0/3)
+        self.assertAlmostEqual(b.integrate(0,1)[1], 1.0/3)
+        self.assertAlmostEqual(b.integrate(0,1)[2], 1.0/3)
+        self.assertAlmostEqual(b.integrate(.25,.5)[0], 19.0/192)
+        self.assertAlmostEqual(b.integrate(.25,.5)[1], 11.0/96)
+        self.assertAlmostEqual(b.integrate(.25,.5)[2], 7.0/192)
+
+        # create periodic quadratic functions on [0,3]. This is 3 functions, which are all
+        # translated versions of the one below:
+        #        | 1/2 t^2          t=[0,1]
+        # N[3] = { -t^2 + 3t - 3/2  t=[1,2]
+        #        | 1/2 (3-t)^2      t=[2,3]
+        b = BSplineBasis(3, [-2,-1,0,1,2,3,4,5], periodic=1)
+        self.assertEqual(len(b.integrate(0,3)), 3) # returns 3 functions
+        self.assertAlmostEqual(b.integrate(0,3)[0], 1)
+        self.assertAlmostEqual(b.integrate(0,3)[1], 1)
+        self.assertAlmostEqual(b.integrate(0,3)[2], 1)
+        self.assertAlmostEqual(b.integrate(0,1)[0], 1.0/6)
+        self.assertAlmostEqual(b.integrate(0,1)[1], 2.0/3)
+        self.assertAlmostEqual(b.integrate(0,1)[2], 1.0/6)
+        self.assertAlmostEqual(b.integrate(0,2)[0], 2.0/6)
+        self.assertAlmostEqual(b.integrate(0,2)[1], 5.0/6)
+        self.assertAlmostEqual(b.integrate(0,2)[2], 5.0/6)
+
 if __name__ == '__main__':
     unittest.main()
