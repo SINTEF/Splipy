@@ -312,7 +312,7 @@ class SplineObject(object):
         # Swap knot vectors
         self.bases[dir1], self.bases[dir2] = self.bases[dir2], self.bases[dir1]
 
-    def insert_knot(self, direction, knot):
+    def insert_knot(self, knot, direction=0):
         """Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
@@ -347,7 +347,7 @@ class SplineObject(object):
             for (k0, k1) in zip(knot[:-1], knot[1:]):
                 element_knots = np.linspace(k0, k1, n + 2)
                 new_knots += list(element_knots[1:-1])
-            self.insert_knot(pardir, new_knots)
+            self.insert_knot(new_knots, pardir)
             pardir += 1
 
     def reparam(self, *args, **kwargs):
@@ -766,3 +766,71 @@ class SplineObject(object):
         new_obj = copy.deepcopy(self)
         new_obj /= x
         return new_obj
+
+    @classmethod
+    def make_splines_compatible(cls, spline1, spline2):
+        """Ensure that two splines are compatible.
+
+        This will manipulate one or both to ensure that they are both rational
+        or nonrational, and that they lie in the same physical space.
+
+        :param SplineObject spline1: The first spline
+        :param SplineObject spline2: The second spline
+        """
+        # make both rational (if needed)
+        if spline1.rational:
+            spline2.force_rational()
+        elif spline2.rational:
+            spline1.force_rational()
+
+        # make both in the same geometric space
+        if spline1.dimension > spline2.dimension:
+            spline2.set_dimension(spline1.dimension)
+        else:
+            spline1.set_dimension(spline2.dimension)
+
+    @classmethod
+    def make_splines_identical(cls, spline1, spline2):
+        """Ensure that two splines have identical discretization.
+
+        This will first make them compatible (see
+        :func:`GeoMod.SplineObject.make_curves_compatible`), reparametrize them, and
+        possibly raise the order and insert knots as required.
+
+        :param SplineObject spline1: The first spline
+        :param SplineObject spline2: The second spline
+        """
+        # make sure that rational/dimension is the same
+        SplineObject.make_splines_compatible(spline1, spline2)
+
+        # make both have knot vectors in domain (0,1)
+        spline1.reparam()
+        spline2.reparam()
+
+        # make sure both have the same order
+        p1 = spline1.order()
+        p2 = spline2.order()
+        p  = tuple(max(q,r) for (q,r) in zip(p1,p2))
+        raise1 = tuple(max(q-r,0) for (q,r) in zip(p,p1))
+        raise2 = tuple(max(q-r,0) for (q,r) in zip(p,p2))
+
+        spline1.raise_order( *raise1 )
+        spline2.raise_order( *raise2 )
+
+        # make sure both have the same knot vectors
+        for i in range(spline1.pardim):
+            knot1 = spline1.knots(direction=i, with_multiplicities=True)
+            knot2 = spline2.knots(direction=i, with_multiplicities=True)
+            i1 = 0
+            i2 = 0
+            while i1 < len(knot1) and i2 < len(knot2):
+                if abs(knot1[i1] - knot2[i2]) < spline1.bases[i].tol:
+                    i1 += 1
+                    i2 += 1
+                elif knot1[i1] < knot2[i2]:
+                    spline2.insert_knot(knot1[i1], direction=i)
+                    i1 += 1
+                else:
+                    spline1.insert_knot(knot2[i2], direction=i)
+                    i2 += 1
+

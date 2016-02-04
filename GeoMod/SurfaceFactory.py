@@ -176,7 +176,7 @@ def edge_curves(*curves):
     if len(curves) == 2:
         crv1 = curves[0].clone()
         crv2 = curves[1].clone()
-        Curve.make_curves_identical(crv1, crv2)
+        Curve.make_splines_identical(crv1, crv2)
         (n, d) = crv1.controlpoints.shape  # d = dimension + rational
 
         controlpoints = np.zeros((2 * n, d))
@@ -188,14 +188,14 @@ def edge_curves(*curves):
     elif len(curves) == 4:
         # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
         bottom = curves[0]
-        right = curves[1]
-        top = curves[2].clone()
-        left = curves[3].clone()  # gonna change these two, so make copies
+        right  = curves[1]
+        top    = curves[2].clone()
+        left   = curves[3].clone()  # gonna change these two, so make copies
         top.reverse()
         left.reverse()
         # create linear interpolation between opposing sides
-        s1 = edge_curves([bottom, top])
-        s2 = edge_curves([left, right])
+        s1 = edge_curves(bottom, top)
+        s2 = edge_curves(left, right)
         s2.swap()
         # create (linear,linear) corner parametrization
         linear = BSplineBasis(2)
@@ -203,9 +203,9 @@ def edge_curves(*curves):
         s3 = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]], rat)
 
         # in order to add spline surfaces, they need identical parametrization
-        Surface.make_surfaces_identical(s1, s2)
-        Surface.make_surfaces_identical(s1, s3)
-        Surface.make_surfaces_identical(s2, s3)
+        Surface.make_splines_identical(s1, s2)
+        Surface.make_splines_identical(s1, s3)
+        Surface.make_splines_identical(s2, s3)
 
         result = s1
         result.controlpoints += s2.controlpoints

@@ -198,7 +198,9 @@ class TestCurve(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(TypeError):
-            crv.insert_knot(1, 2)  # too many arguments
+            crv.insert_knot(1, 2, 3)  # too many arguments
+        with self.assertRaises(ValueError):
+            crv.insert_knot(1, 2)  # direction=2 is illegal for curves
         with self.assertRaises(TypeError):
             crv.insert_knot()  # too few arguments
         with self.assertRaises(ValueError):

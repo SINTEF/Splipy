@@ -206,11 +206,11 @@ class TestSurface(unittest.TestCase):
         # pick some evaluation point (could be anything)
         evaluation_point1 = surf(0.23, 0.37)
 
-        surf.insert_knot(0, .22)
-        surf.insert_knot(0, .5)
-        surf.insert_knot(0, .7)
-        surf.insert_knot(1, .1)
-        surf.insert_knot(1, 1.0 / 3)
+        surf.insert_knot(.22,     0)
+        surf.insert_knot(.5,      0)
+        surf.insert_knot(.7,      0)
+        surf.insert_knot(.1,      1)
+        surf.insert_knot(1.0 / 3, 1)
         knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 11)  # 8 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -230,11 +230,11 @@ class TestSurface(unittest.TestCase):
 
         evaluation_point1 = surf(0.23, 0.37)
 
-        surf.insert_knot(0, .22)
-        surf.insert_knot(0, .5)
-        surf.insert_knot(0, .7)
-        surf.insert_knot(1, .1)
-        surf.insert_knot(1, 1.0 / 3)
+        surf.insert_knot(.22,     0)
+        surf.insert_knot(.5,      0)
+        surf.insert_knot(.7,      0)
+        surf.insert_knot(.1,      1)
+        surf.insert_knot(1.0 / 3, 1)
         knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -248,8 +248,6 @@ class TestSurface(unittest.TestCase):
         # test errors and exceptions
         with self.assertRaises(TypeError):
             surf.insert_knot(1, 2, 3)  # too many arguments
-        with self.assertRaises(TypeError):
-            surf.insert_knot(1)  # too few arguments
         with self.assertRaises(ValueError):
             surf.insert_knot("tree-fiddy", .5)  # wrong argument type
         with self.assertRaises(ValueError):

@@ -138,13 +138,13 @@ class TestVolume(unittest.TestCase):
 
         evaluation_point1 = vol(0.23, 0.37, 0.44)  # pick some evaluation point (could be anything)
 
-        vol.insert_knot(0,  .20)
-        vol.insert_knot('u', .5)
-        vol.insert_knot(0,   .7)
-        vol.insert_knot(1,   .1)
-        vol.insert_knot(1,   1.0 / 3)
-        vol.insert_knot(2,   .8)
-        vol.insert_knot('W', .9)
+        vol.insert_knot(.20,        0)
+        vol.insert_knot( .5,       'u')
+        vol.insert_knot( .7,        0)
+        vol.insert_knot( .1,        1)
+        vol.insert_knot( 1.0 / 3,   1)
+        vol.insert_knot( .8,        2)
+        vol.insert_knot( .9,       'W')
         knot1, knot2, knot3 = vol.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -171,9 +171,9 @@ class TestVolume(unittest.TestCase):
 
         evaluation_point1 = vol(0.23, 0.37, 0.44)
 
-        vol.insert_knot(0, [.20, .5, .7])
-        vol.insert_knot(1, [.1, 1.0 / 3])
-        vol.insert_knot(2, [.8, .9])
+        vol.insert_knot([.20, .5, .7], 0)
+        vol.insert_knot([.1, 1.0 / 3], 1)
+        vol.insert_knot([.8, .9], 2)
         knot1, knot2, knot3 = vol.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones

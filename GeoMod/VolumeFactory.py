@@ -116,7 +116,7 @@ def edge_surfaces(*surfaces):
     if len(surfaces) == 2:
         surf1 = surfaces[0].clone()
         surf2 = surfaces[1].clone()
-        Surface.make_surfaces_identical(surf1, surf2)
+        Surface.make_splines_identical(surf1, surf2)
         (n1, n2, d) = surf1.controlpoints.shape  # d = dimension + rational
 
         controlpoints = np.zeros((n1, n2, 2, d))
@@ -133,6 +133,31 @@ def edge_surfaces(*surfaces):
 
         return result
     elif len(surfaces) == 6:
-        raise NotImplementedError('Should have been coons patch algorithm here. Come back later')
+        # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
+        umin = surfaces[0]
+        umax = surfaces[1]
+        vmin = surfaces[2]
+        vmax = surfaces[3]
+        wmin = surfaces[4]
+        wmax = surfaces[5]
+        vol1 = edge_surfaces(umin,umax)
+        vol2 = edge_surfaces(vmin,vmax)
+        vol3 = edge_surfaces(wmin,wmax)
+        vol4 = Volume(controlpoints=vol1.corners(), rational=vol1.rational)
+        vol1.swap(0, 2)
+        vol1.swap(1, 2)
+        vol2.swap(1, 2)
+        vol4.swap(1, 2)
+        Volume.make_splines_identical(vol1, vol2)
+        Volume.make_splines_identical(vol1, vol3)
+        Volume.make_splines_identical(vol1, vol4)
+        Volume.make_splines_identical(vol2, vol3)
+        Volume.make_splines_identical(vol2, vol4)
+        Volume.make_splines_identical(vol3, vol4)
+        result  = vol1.clone()
+        result.controlpoints +=   vol2.controlpoints
+        result.controlpoints +=   vol3.controlpoints
+        result.controlpoints -= 2*vol4.controlpoints
+        return result
     else:
         raise ValueError('Requires two or six input surfaces')

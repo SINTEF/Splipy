@@ -18,7 +18,7 @@ def insert_knot(p,knot):
             if pardim==1:
                 result += '        %s2.insert_knot([%.3f]*%d) # insert C%d-knot\n'   % (obj_name[pardim],k,j+1,q-j-2)
             else:
-                result += '        %s2.insert_knot(%d, [%.3f]*%d) # insert C%d-knot\n'   % (obj_name[pardim],i,k,j+1,q-j-2)
+                result += '        %s2.insert_knot([%.3f]*%d, %d) # insert C%d-knot\n'   % (obj_name[pardim],k,j+1,i,q-j-2)
             result += '        self.assertEqual(len(%s2.knots(direction=%d,with_multiplicities=True)), %d)\n' % (obj_name[pardim], i, n)
     return result
 
