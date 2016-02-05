@@ -276,32 +276,6 @@ class Surface(SplineObject):
                     outfile.write('%f ' % self.controlpoints[i, j, k])
                 outfile.write('\n')
 
-    def __len__(self):
-        """Return the number of control points (basis functions) for the surface."""
-        return self.bases[0].num_functions() * self.bases[1].num_functions()
-
-    def __getitem__(self, i):
-        """Get the control point at a given index.
-
-        :rtype: numpy.array
-        """
-        (n1, n2, dim) = self.controlpoints.shape
-        i1 = i % n1
-        i2 = int(i / n1)
-        return self.controlpoints[i1, i2, :]
-
-    def __setitem__(self, i, newCP):
-        """Set the control point at a given index.
-
-        :param int i: Index
-        :param numpy.array newCP: New control point
-        """
-        (n1, n2, dim) = self.controlpoints.shape
-        i1 = i % n1
-        i2 = int(i / n1)
-        self.controlpoints[i1, i2, :] = newCP
-        return self
-
     def __repr__(self):
         result = str(self.bases[0]) + '\n' + str(self.bases[1]) + '\n'
         # print legacy controlpoint enumeration

@@ -257,26 +257,6 @@ class Curve(SplineObject):
                 outfile.write('%f ' % self.controlpoints[i, j])
             outfile.write('\n')
 
-    def __len__(self):
-        """Return the number of control points (basis functions) for the curve."""
-        return self.bases[0].num_functions()
-
-    def __getitem__(self, i):
-        """Get the control point at a given index.
-
-        :rtype: numpy.array
-        """
-        return self.controlpoints[i, :]
-
-    def __setitem__(self, i, newCP):
-        """Set the control point at a given index.
-
-        :param int i: Index
-        :param numpy.array newCP: New control point
-        """
-        self.controlpoints[i, :] = newCP
-        return self
-
     def __repr__(self):
         return str(self.bases[0]) + '\n' + str(self.controlpoints)
 

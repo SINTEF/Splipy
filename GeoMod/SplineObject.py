@@ -621,6 +621,90 @@ class SplineObject(object):
 
     __call__ = evaluate
 
+    def __len__(self):
+        """Return the number of control points (basis functions) for the object."""
+        n = 1
+        for b in self.bases:
+            n *= b.num_functions()
+        return n
+
+    def _unravel_flat_index(self, i):
+        """Unravels a flat index i to multi-indexes.
+
+        :param i: Flat index
+        :type i: int or slice
+        :rtype: Tuple of np.array
+        :raises IndexError: If the index is out of bounds
+        """
+        # i is int => make sure we deal with negative i properly
+        # i is slice => use i.indices to compute the actual indices
+        total = len(self)
+        if isinstance(i, int):
+            indexes = [i] if i >= 0 else [total + i]
+        else:
+            indexes = list(range(*i.indices(total)))
+
+        # Convert to multi-indexes
+        try:
+            unraveled = np.unravel_index(indexes, self.controlpoints.shape[:-1], order='F')
+        except ValueError:
+            raise IndexError
+
+        return unraveled
+
+    def __getitem__(self, i):
+        """Get the control point at a given index.
+
+        Indexing is in column-major order. Examples of supported indexing
+        modes:
+
+        .. code:: python
+
+           # Flat indexing with an int
+           obj[4]
+
+           # Flat indexing from the end
+           obj[-1]
+
+           # Flat indexing with a slice
+           obj[2:5]
+
+           # Multi-indexing with ints, negative ints and slices
+           obj[0,-1,:]
+
+        :rtype: numpy.array
+        """
+        if isinstance(i, tuple):
+            return self.controlpoints[i]
+
+        unraveled = self._unravel_flat_index(i)
+
+        # Singleton dimensions should be squeezed if the input was an int
+        if isinstance(i, int):
+            return self.controlpoints[unraveled][0]
+        return self.controlpoints[unraveled]
+
+    def __setitem__(self, i, cp):
+        """Set the control points at given indices.
+
+        This function supports the same indexing modes as
+        :func:`SplineObject.__getitem__`
+
+        :param int i: Index or indices
+        :param numpy.array cp: New control point(s)
+        """
+        if isinstance(i, tuple):
+            self.controlpoints[i] = cp
+            return
+
+        unraveled = self._unravel_flat_index(i)
+        self.controlpoints[unraveled] = cp
+
+    @property
+    def shape(self):
+        """The dimensions of the control point array."""
+        return self.controlpoints.shape[:-1]
+
     def __iadd__(self, x):
         self.translate(x)
         return self

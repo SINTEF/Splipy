@@ -279,34 +279,6 @@ class Volume(SplineObject):
                         outfile.write('%f ' % self.controlpoints[i, j, k, d])
                     outfile.write('\n')
 
-    def __len__(self):
-        """Return the number of control points (basis functions) for the surface."""
-        return self.bases[0].num_functions() * self.bases[1].num_functions() * self.bases[2].num_functions()
-
-    def __getitem__(self, i):
-        """Get the control point at a given index.
-
-        :rtype: numpy.array
-        """
-        (n1, n2, n3, dim) = self.controlpoints.shape
-        i1 = int(i % n1)
-        i2 = int(i / n1) % n2
-        i3 = int(i / n1 / n2)
-        return self.controlpoints[i1, i2, i3, :]
-
-    def __setitem__(self, i, newCP):
-        """Set the control point at a given index.
-
-        :param int i: Index
-        :param numpy.array newCP: New control point
-        """
-        (n1, n2, n3, dim) = self.controlpoints.shape
-        i1 = int(i % n1)
-        i2 = int(i / n1) % n2
-        i3 = int(i / n1 / n2)
-        self.controlpoints[i1, i2, i3, :] = newCP
-        return self
-
     def __repr__(self):
         result = str(self.bases[0]) + '\n'
         result += str(self.bases[1]) + '\n'
