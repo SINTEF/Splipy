@@ -196,7 +196,7 @@ def edge_curves(*curves):
         # create linear interpolation between opposing sides
         s1 = edge_curves([bottom, top])
         s2 = edge_curves([left, right])
-        s2.swap_parametrization()
+        s2.swap()
         # create (linear,linear) corner parametrization
         linear = BSplineBasis(2)
         rat = s1.rational  # using control-points from top/bottom, so need to know if these are rational

@@ -280,7 +280,7 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(control_point2[3], 1)
         self.assertEqual(surf.rational, True)
 
-    def test_swap_parametrization(self):
+    def test_swap(self):
         # more or less random 3D surface with p=[2,2] and n=[4,3]
         controlpoints = [[0, 0, 1], [-1, 1, 1], [0, 2, 1], [1, -1, 1], [1, 0, .5], [1, 1, 1],
                          [2, 1, 1], [2, 2, .5], [2, 3, 1], [3, 0, 1], [4, 1, 1], [3, 2, 1]]
@@ -290,7 +290,7 @@ class TestSurface(unittest.TestCase):
 
         evaluation_point1 = surf(0.23, .56)
         control_point1 = surf[1]  # this is control point i=(1,0), when n=(4,3)
-        surf.swap_parametrization()
+        surf.swap()
         evaluation_point2 = surf(0.56, .23)
         control_point2 = surf[3]  # this is control point i=(0,1), when n=(3,4)
 

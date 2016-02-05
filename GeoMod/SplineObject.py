@@ -289,6 +289,29 @@ class SplineObject(object):
         slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
         self.controlpoints = self.controlpoints[tuple(slices)]
 
+    def swap(self, dir1=0, dir2=1):
+        """Swaps two parameter directions.
+
+        This function silently passes for curves.
+
+        :param direction dir1: The first direction (default u)
+        :param direction dir2: The second direction (default v)
+        """
+        if self.pardim == 1:
+            return
+
+        dir1 = check_direction(dir1, self.pardim)
+        dir2 = check_direction(dir2, self.pardim)
+
+        # Reorder control points
+        new_directions = list(range(self.pardim + 1))
+        new_directions[dir1] = dir2
+        new_directions[dir2] = dir1
+        self.controlpoints = self.controlpoints.transpose(new_directions)
+
+        # Swap knot vectors
+        self.bases[dir1], self.bases[dir2] = self.bases[dir2], self.bases[dir1]
+
     def insert_knot(self, direction, knot):
         """Insert a new knot into the spline.
 

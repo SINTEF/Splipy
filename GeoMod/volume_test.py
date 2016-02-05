@@ -213,7 +213,7 @@ class TestVolume(unittest.TestCase):
         self.assertEqual(control_point2[3], 1)
         self.assertEqual(vol.rational, True)
 
-    def test_swap_parametrization(self):
+    def test_swap(self):
         # more or less random 3D volume with p=[3,2,1] and n=[4,3,2]
         controlpoints = [[0, 0, 1], [-1, 1, 1], [0, 2, 1], [1, -1, 2], [1, 0, 2], [1, 1, 2],
                          [2, 1, 2], [2, 2, 2], [2, 3, 2], [3, 0, 0], [4, 1, 0], [3, 2, 0],
@@ -227,7 +227,7 @@ class TestVolume(unittest.TestCase):
         evaluation_point1 = vol(0.23, .56, .12)
         control_point1 = vol[1]  # this is control point i=(1,0,0), when n=(4,3,2)
         self.assertEqual(vol.order(), (4, 3, 2))
-        vol.swap_parametrization(0, 1)
+        vol.swap(0, 1)
         evaluation_point2 = vol(0.56, .23, .12)
         control_point2 = vol[3]  # this is control point i=(0,1,0), when n=(3,4,2)
         self.assertEqual(vol.order(), (3, 4, 2))
@@ -242,7 +242,7 @@ class TestVolume(unittest.TestCase):
         self.assertEqual(control_point1[1], control_point2[1])
         self.assertEqual(control_point1[2], control_point2[2])
 
-        vol.swap_parametrization(1, 2)
+        vol.swap(1, 2)
         evaluation_point3 = vol(.56, .12, .23)
         control_point3 = vol[6]  # this is control point i=(0,0,1), when n=(3,2,4)
         self.assertEqual(vol.order(), (3, 2, 4))
