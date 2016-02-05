@@ -213,7 +213,7 @@ class SplineObject(object):
         """
         if direction is None:
             return tuple(b.start() for b in self.bases)
-        direction = check_direction(direction, self.pardim())
+        direction = check_direction(direction, self.pardim)
         return self.bases[direction].start()
 
     def end(self, direction=None):
@@ -229,7 +229,7 @@ class SplineObject(object):
         """
         if direction is None:
             return tuple(b.end() for b in self.bases)
-        direction = check_direction(direction, self.pardim())
+        direction = check_direction(direction, self.pardim)
         return self.bases[direction].end()
 
     def order(self, direction=None):
@@ -246,7 +246,7 @@ class SplineObject(object):
         """
         if direction is None:
             return tuple(b.order for b in self.bases)
-        direction = check_direction(direction, self.pardim())
+        direction = check_direction(direction, self.pardim)
         return self.bases[direction].order
 
     def knots(self, direction=None, with_multiplicities=False):
@@ -266,7 +266,7 @@ class SplineObject(object):
         getter = attrgetter('knots') if with_multiplicities else methodcaller('knot_spans')
         if direction is None:
             return tuple(getter(b) for b in self.bases)
-        direction = check_direction(direction, self.pardim())
+        direction = check_direction(direction, self.pardim)
         return getter(self.bases[direction])
 
     def reverse(self, direction=0):
@@ -277,7 +277,7 @@ class SplineObject(object):
 
         :param int direction: The direction to flip.
         """
-        direction = check_direction(direction, self.pardim())
+        direction = check_direction(direction, self.pardim)
         self.bases[direction].reverse()
 
         # This creates the following slice programmatically
@@ -285,7 +285,7 @@ class SplineObject(object):
         # index=direction -----^
         # :    => slice(None, None, None)
         # ::-1 => slice(None, None, -1)
-        direction = check_direction(direction, self.pardim())
+        direction = check_direction(direction, self.pardim)
         slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
         self.controlpoints = self.controlpoints[tuple(slices)]
 
@@ -302,14 +302,14 @@ class SplineObject(object):
         # for single-value input, wrap it into a list
         knot = ensure_listlike(knot)
 
-        direction = check_direction(direction, self.pardim())
+        direction = check_direction(direction, self.pardim)
 
         transpose_fix = [[], [(0,1)], [(0,1,2), (1,0,2)], [(0,1,2,3),(1,0,2,3),(1,2,0,3)]]
         C = np.matrix(np.identity(shape[direction]))
         for k in knot:
             C = self.bases[direction].insert_knot(k) * C
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
-        self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim()][direction])
+        self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim][direction])
 
     def refine(self, n):
         """Enrich the spline space by inserting *n* knots into each existing
@@ -352,7 +352,7 @@ class SplineObject(object):
                 b.reparam(start, end)
         else:
             direction = kwargs['direction']
-            direction = check_direction(direction, self.pardim())
+            direction = check_direction(direction, self.pardim)
             if len(args) == 0:
                 self.bases[direction].reparam(0,1)
             else:
@@ -584,13 +584,12 @@ class SplineObject(object):
         :param int new_dim: New dimension.
         """
         dim = self.dimension
-        pardim = self.pardim() # 1=Curve, 2=Surface, 3=Volume
         shape = self.controlpoints.shape
         while new_dim > dim:
-            self.controlpoints = np.insert(self.controlpoints, dim, np.zeros(shape[:-1]), pardim)
+            self.controlpoints = np.insert(self.controlpoints, dim, np.zeros(shape[:-1]), self.pardim)
             dim += 1
         while new_dim < dim:
-            np.insert(self.controlpoints, dim, pardim)
+            np.insert(self.controlpoints, dim, self.pardim)
             dim -= 1
         self.dimension = new_dim
 
@@ -604,14 +603,15 @@ class SplineObject(object):
         if not self.rational:
             dim = self.dimension
             shape = self.controlpoints.shape
-            self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), self.pardim())
+            self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), self.pardim)
             self.rational = 1
 
         return self
 
+    @property
     def pardim(self):
-        """Returns the number of parametric dimensions: 1 for curves, 2 for
-        surfaces, 3 for volumes, etc.
+        """The number of parametric dimensions: 1 for curves, 2 for surfaces, 3
+        for volumes, etc.
         """
         return len(self.controlpoints.shape)-1
 
