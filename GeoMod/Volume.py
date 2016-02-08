@@ -268,9 +268,9 @@ class Volume(SplineObject):
         vol.bases[2].write_g2(outfile)
 
         (n1, n2, n3, n4) = vol.controlpoints.shape
-        for k in range(n3) + range(vol.bases[2].periodic + 1):
-            for j in range(n2) + range(vol.bases[1].periodic + 1):
-                for i in range(n1) + range(vol.bases[0].periodic + 1):
+        for k in chain(range(n3), range(vol.bases[2].periodic + 1)):
+            for j in chain(range(n2), range(vol.bases[1].periodic + 1)):
+                for i in chain(range(n1), range(vol.bases[0].periodic + 1)):
                     for d in range(n4):
                         outfile.write('%f ' % vol.controlpoints[i, j, k, d])
                     outfile.write('\n')

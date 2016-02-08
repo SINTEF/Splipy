@@ -4,6 +4,7 @@ from GeoMod import BSplineBasis
 from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike
 from bisect import bisect_left
+from itertools import chain
 import numpy as np
 
 __all__ = ['Curve']
@@ -261,7 +262,7 @@ class Curve(SplineObject):
         self.bases[0].write_g2(outfile)
 
         (n1, n2) = self.controlpoints.shape
-        for i in range(n1) + range(self.bases[0].periodic + 1):
+        for i in chain(range(n1), range(self.bases[0].periodic + 1)):
             for j in range(n2):
                 outfile.write('%f ' % self.controlpoints[i, j])
             outfile.write('\n')

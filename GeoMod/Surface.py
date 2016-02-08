@@ -4,6 +4,7 @@ from GeoMod import Curve, BSplineBasis
 from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike
 from bisect import bisect_left
+from itertools import chain
 import numpy as np
 
 __all__ = ['Surface']
@@ -299,8 +300,8 @@ class Surface(SplineObject):
         surf.bases[1].write_g2(outfile)
 
         (n1, n2, n3) = surf.controlpoints.shape
-        for j in range(n2) + range(surf.bases[1].periodic + 1):
-            for i in range(n1) + range(surf.bases[0].periodic + 1):
+        for j in chain(range(n2), range(surf.bases[1].periodic + 1)):
+            for i in chain(range(n1), range(surf.bases[0].periodic + 1)):
                 for k in range(n3):
                     outfile.write('%f ' % surf.controlpoints[i, j, k])
                 outfile.write('\n')
