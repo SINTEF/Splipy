@@ -31,19 +31,6 @@ class Curve(SplineObject):
         """
         super(Curve, self).__init__([basis], controlpoints, rational)
 
-    def evaluate_tangent(self, t):
-        """Evaluate the tangent of the curve at given parametric values.
-
-        This is equivalent to :func:`GeoMod.Curve.evaluate_derivative` with the
-        default value of *d* = 1.
-
-        :param t: Parametric coordinate(s) in which to evaluate
-        :type t: float or [float]
-        :return: Tangent matrix *X[i,j]* of component *xj'(t)* evaluated at *t(i)*
-        :rtype: numpy.array
-        """
-        return self.evaluate_derivative(t, d=1)
-
     def evaluate_derivative(self, t, d=1):
         """evaluate_derivative(u, [d=1])
 

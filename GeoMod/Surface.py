@@ -69,23 +69,6 @@ class Surface(SplineObject):
         else:
             raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
 
-    def evaluate_tangent(self, u, v):
-        """Evaluate the tangents of the surface at given parametric values.
-
-        This is equivalent to :func:`GeoMod.Surface.evaluate_derivative` with
-        ``d=(1,0)`` and ``d=(0,1)``.
-
-        :param u: Parametric coordinate(s) in the first direction
-        :type u: float or [float]
-        :param v: Parametric coordinate(s) in the second direction
-        :type v: float or [float]
-        :return: Two arrays *dX/du[i,j,k]* and *dX/dv[i,j,k]* of the tangent
-            component *xk* evaluated at *(u[i], v[j])*
-        :rtype: (numpy.array)
-        """
-        return (self.evaluate_derivative(u, v, d=(1, 0)),
-                self.evaluate_derivative(u, v, d=(0, 1)))
-
     def edges(self):
         """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
 

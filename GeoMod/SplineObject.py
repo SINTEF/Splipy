@@ -199,6 +199,41 @@ class SplineObject(object):
 
         return result
 
+    def evaluate_tangent(self, *params, **kwargs):
+        """evaluate_tangent(u, v, ..., [direction=None])
+
+        Evaluate the tangents of the object at the given parametric values.
+
+        If `direction` is given, only the derivatives in that direction are
+        evaluated. This is equivalent to calling
+        :func:`GeoMod.SplineObject.evaluate_derivative` with
+        `d=(0,...,0,1,0,...,0)`, the unit vector corresponding to the given
+        direction.
+
+        If `direction` is not given, this function returns a tuple of all
+        tangential derivatives at the given points.
+
+        :param u,v,...: Parametric coordinates in which to evaluate
+        :type u,v,...: float or [float]
+        :param int direction: The tangential direction
+        :return: Tangents
+        :rtype: numpy.array
+        """
+        direction = kwargs.get('direction', None)
+        derivative = [0] * self.pardim
+
+        if direction is None:
+            result = ()
+            for i in range(self.pardim):
+                derivative[i] = 1
+                result += (self.evaluate_derivative(*params, d=derivative),)
+                derivative[i] = 0
+            return result
+
+        i = check_direction(direction, self.pardim)
+        derivative[i] = 1
+        return self.evaluate_derivative(*params, d=derivative)
+
     def raise_order(self, *raises):
         """raise_order(u, v, ...)
 
