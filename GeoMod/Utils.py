@@ -26,3 +26,5 @@ def ensure_listlike(x, dups=1):
         return x
     except TypeError:
         return [x] * dups
+    except IndexError:
+        return []

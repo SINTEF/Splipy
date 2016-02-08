@@ -42,17 +42,17 @@ class BSplineBasis:
         self.knots = np.array(knots)
         self.knots = self.knots.astype(float)
         self.order = order
-        p          = order
         self.periodic = periodic
 
         # error test input
-        if len(knots) < order:
-            raise ValueError('knot vector has too few elements')
-        if len(knots) < 2*(order+periodic):
+        p          = order
+        k          = periodic
+        n          = len(knots)
+        if n < 2*p:
             raise ValueError('knot vector has too few elements')
         if periodic >= 0:
-            for i in range(periodic + 1):
-                if abs((knots[i + 1] - knots[i]) - (knots[-p - periodic + i ] - knots[-p - periodic - 1 + i])) > self.tol:
+            for i in range(p + k - 1):
+                if abs((knots[i + 1] - knots[i]) - (knots[-p - k + i ] - knots[-p - k - 1 + i])) > self.tol:
                     raise ValueError('periodic knot vector is mis-matching at the start/end')
         for i in range(len(knots) - 1):
             if knots[i + 1] - knots[i] < -self.tol:
@@ -341,6 +341,23 @@ class BSplineBasis:
                 for i in range(p+r+1):
                     self.knots[i] = k0 - (k1-self.knots[m-p-r-1+i])
         return C
+
+    def roll(self, new_start):
+        """rotate a periodic knot vector by setting a new starting index.
+
+        :param int new_start: The index of to the new first knot
+        """
+        if self.periodic < 0:
+            raise  RuntimeError("roll only applicable for periodic knot vectors")
+
+        p = self.order
+        k = self.periodic
+        n = len(self.knots)
+        t1 = self.knots[0] - self.knots[-p - k - 1]
+        left  = slice(new_start, n-p-k-1, None)
+        len_left = left.stop - left.start
+        right = slice(0, n-len_left, None)
+        (self.knots[:len_left], self.knots[len_left:]) = (self.knots[left], self.knots[right] - t1)
 
     def write_g2(self, outfile):
         """Write the basis in GoTools format.

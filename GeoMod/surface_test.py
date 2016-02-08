@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from GeoMod import Surface, BSplineBasis
+import GeoMod.SurfaceFactory as SurfaceFactory
+from math import pi
+import numpy as np
 import unittest
 
 
@@ -393,6 +396,52 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(surf.end(0),   10)
         self.assertAlmostEqual(surf.start(1),  0)
         self.assertAlmostEqual(surf.end(1),    1)
+
+    def test_periodic_split(self):
+        # create a double-periodic spline on the knot vector [-1,0,0,1,1,2,2,3,3,4,4,5]*pi/2
+        surf = SurfaceFactory.torus()
+
+        surf2 = surf.split( 0, pi/2) # split on existing knot
+        surf3 = surf.split( 1, 1.23) # split between knots
+        surf4 = surf2.split(1, pi, ) # split both periodicities
+
+        # check periodicity tags
+        self.assertEqual(surf.periodic(0), True)
+        self.assertEqual(surf.periodic(1), True)
+        self.assertEqual(surf2.periodic(0), False)
+        self.assertEqual(surf2.periodic(1), True)
+        self.assertEqual(surf3.periodic(0), True)
+        self.assertEqual(surf3.periodic(1), False)
+        self.assertEqual(surf4.periodic(0), False)
+        self.assertEqual(surf4.periodic(1), False)
+
+        # check parametric domain boundaries
+        self.assertAlmostEqual(surf2.start(0),   pi/2)
+        self.assertAlmostEqual(surf2.end(0),   5*pi/2)
+        self.assertAlmostEqual(surf3.start(0),      0)
+        self.assertAlmostEqual(surf3.end(0),     2*pi)
+        self.assertAlmostEqual(surf3.start(1),   1.23)
+        self.assertAlmostEqual(surf3.end(1),   1.23+2*pi)
+
+        # check knot vector lengths
+        self.assertEqual(len(surf2.knots(0, True)), 12)
+        self.assertEqual(len(surf2.knots(1, True)), 12)
+        self.assertEqual(len(surf3.knots(0, True)), 12)
+        self.assertEqual(len(surf3.knots(1, True)), 14)
+        self.assertEqual(len(surf4.knots(0, True)), 12)
+        self.assertEqual(len(surf4.knots(1, True)), 12)
+
+        # check that evaluation is unchanged over a 9x9 grid of shared parametric coordinates
+        u   = np.linspace(pi/2, 2*pi, 9)
+        v   = np.linspace(pi,   2*pi, 9)
+        pt  = surf( u,v)
+        pt2 = surf2(u,v)
+        pt3 = surf3(u,v)
+        pt4 = surf4(u,v)
+        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.max(pt-pt3), 0.0)
+        self.assertAlmostEqual(np.max(pt-pt4), 0.0)
+
 
 
 if __name__ == '__main__':

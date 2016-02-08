@@ -134,6 +134,18 @@ class Volume(SplineObject):
                 continuity = p[direction] - 1
             splitting_vol.insert_knot([k] * (continuity + 1), direction)
 
+        b = splitting_vol.bases[direction]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_vol.controlpoints = np.roll(splitting_vol.controlpoints, -mu, direction)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_vol.split(knots[1:], direction)
+            else:
+                return splitting_vol
+
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
         # piece

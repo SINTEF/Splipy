@@ -179,6 +179,19 @@ class Surface(SplineObject):
                 continuity = p[direction] - 1
             splitting_surf.insert_knot([k] * (continuity + 1), direction)
 
+        b = splitting_surf.bases[direction]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_surf.controlpoints = np.roll(splitting_surf.controlpoints, -mu, direction)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_surf.split(knots[1:], direction)
+            else:
+                return splitting_surf
+
+
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
         # piece

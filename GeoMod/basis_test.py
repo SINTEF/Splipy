@@ -56,6 +56,25 @@ class TestBasis(unittest.TestCase):
         self.assertEqual(repr(BSplineBasis()), 'p=2, [ 0.  0.  1.  1.]')
         self.assertEqual(repr(BSplineBasis(periodic=0)), 'p=2, [-1.  0.  1.  2.], C0-periodic')
 
+    def test_roll(self):
+        b = BSplineBasis(4, [-2, -1, -1, 0, 2, 4, 6.5, 7, 8, 8, 9, 11, 13, 15.5], periodic=2)
+        b.roll(3)
+        self.assertEqual(len(b.knots), 14)
+        self.assertAlmostEqual(b.knots[0], 0)
+        self.assertAlmostEqual(b.knots[1], 2)
+        self.assertAlmostEqual(b.knots[2], 4)
+        self.assertAlmostEqual(b.knots[3], 6.5)
+        self.assertAlmostEqual(b.knots[4], 7)
+        self.assertAlmostEqual(b.knots[5], 8)
+        self.assertAlmostEqual(b.knots[6], 8)
+        self.assertAlmostEqual(b.knots[7], 9)
+        self.assertAlmostEqual(b.knots[8], 11)
+        self.assertAlmostEqual(b.knots[9], 13)
+        self.assertAlmostEqual(b.knots[10], 15.5)
+        self.assertAlmostEqual(b.knots[11], 16)
+        self.assertAlmostEqual(b.knots[12], 17)
+        self.assertAlmostEqual(b.knots[13], 17)
+
     def test_integrate(self):
         # create the linear functions x(t) = [1-t, t] on t=[0,1]
         b = BSplineBasis()

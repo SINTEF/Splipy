@@ -187,6 +187,19 @@ class Curve(SplineObject):
                 continuity = p - 1
             splitting_curve.insert_knot([k] * (continuity + 1))
 
+        b = splitting_curve.bases[0]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_curve.controlpoints = np.roll(splitting_curve.controlpoints, -mu, 0)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_curve.split(knots[1:])
+            else:
+                return splitting_curve
+
+
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
         # piece

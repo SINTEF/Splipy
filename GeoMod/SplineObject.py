@@ -650,6 +650,12 @@ class SplineObject(object):
 
         return self
 
+    def periodic(self, direction=0):
+        """Returns true if the spline object is periodic in the given parametric direction"""
+        direction = check_direction(direction, self.pardim)
+
+        return self.bases[direction].periodic > -1
+
     def force_rational(self):
         """Force a rational representation of the object.
 
