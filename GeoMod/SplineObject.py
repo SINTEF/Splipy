@@ -660,17 +660,17 @@ class SplineObject(object):
         control-point values. Could be inaccurate for rational splines.
 
         Returns the minima and maxima for each direction:
-        [xmin, xmax, ymin, ymax, ...]
+        [(xmin, xmax), (ymin, ymax), ...]
 
         :return: Bounding box
-        :rtype: [float]
+        :rtype: [(float)]
         """
         dim = self.dimension
 
         result = []
         for i in range(dim):
-            result.append(np.min(self.controlpoints[..., i]))
-            result.append(np.max(self.controlpoints[..., i]))
+            result.append((np.min(self.controlpoints[..., i]),
+                           np.max(self.controlpoints[..., i])))
         return result
 
     def center(self):
