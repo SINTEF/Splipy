@@ -199,6 +199,42 @@ class SplineObject(object):
 
         return result
 
+    def raise_order(self, *raises):
+        """raise_order(u, v, ...)
+
+        Raise the polynomial order of the object. If only one argument is
+        given, the order is raised equally over all directions.
+
+        :param int u,v,...: Number of times to raise the order in a given
+            direction.
+        """
+        if len(raises) == 1:
+            raises = [raises[0]] * self.pardim
+        if not all(r >= 0 for r in raises):
+            raise ValueError("Cannot lower order using raise_order")
+        if all(r == 0 for r in raises):
+            return
+
+        new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
+
+        # Set up an interpolation problem
+        # This works in projective space, so no special handling for rational objects
+        interpolation_pts = [b.greville() for b in new_bases]
+        N_old = [b(pts) for b, pts in zip(self.bases, interpolation_pts)]
+        N_new = [b(pts) for b, pts in zip(new_bases, interpolation_pts)]
+
+        # Calculate the projective interpolation points
+        result = self.controlpoints
+        for n in N_old[::-1]:
+            result = np.tensordot(n, result, axes=(1, self.pardim-1))
+
+        # Solve the interpolation problem
+        for n in N_new[::-1]:
+            result = np.tensordot(np.linalg.inv(n), result, axes=(1, self.pardim-1))
+
+        self.controlpoints = result
+        self.bases = new_bases
+
     def start(self, direction=None):
         """start([direction=None])
 

@@ -63,49 +63,6 @@ class Volume(SplineObject):
         (n1, n2, n3, dim) = self.controlpoints.shape
         return self.controlpoints[::n1-1, ::n2-1, ::n3-1, :].reshape((8,dim))
 
-    def raise_order(self, raise_u, raise_v, raise_w):
-        """Raise the order of the surface.
-
-        :param int raise_u: Number of degrees to increase in the first direction
-        :param int raise_v: Number of degrees to increase in the second direction
-        :param int raise_w: Number of degrees to increase in the third direction
-        """
-        if raise_u + raise_v + raise_w == 0:
-            return
-        # create the new basis
-        newBasis1 = self.bases[0].raise_order(raise_u)
-        newBasis2 = self.bases[1].raise_order(raise_v)
-        newBasis3 = self.bases[2].raise_order(raise_w)
-
-        # set up an interpolation problem. This is in projective space, so no problems for rational cases
-        interpolation_pts_u = newBasis1.greville()  # parametric interpolation points u
-        interpolation_pts_v = newBasis2.greville()  # parametric interpolation points v
-        interpolation_pts_w = newBasis3.greville()  # parametric interpolation points w
-        N_u_old = self.bases[0].evaluate(interpolation_pts_u)
-        N_u_new = newBasis1.evaluate(interpolation_pts_u)
-        N_v_old = self.bases[1].evaluate(interpolation_pts_v)
-        N_v_new = newBasis2.evaluate(interpolation_pts_v)
-        N_w_old = self.bases[2].evaluate(interpolation_pts_w)
-        N_w_new = newBasis3.evaluate(interpolation_pts_w)
-        tmp = np.tensordot(N_w_old, self.controlpoints, axes=(1, 2))
-        tmp = np.tensordot(N_v_old, tmp, axes=(1, 2))
-        tmp = np.tensordot(N_u_old, tmp, axes=(1, 2))  # projective interpolation points (x,y,z,w)
-        interpolation_pts_x = tmp
-
-        ### solve the interpolation problem
-        # these are inverses of the 1D problems, and small compared to the total number of unknowns
-        N_u_inv = np.linalg.inv(N_u_new)
-        N_v_inv = np.linalg.inv(N_v_new)
-        N_w_inv = np.linalg.inv(N_w_new)
-        
-        tmp = np.tensordot(N_w_inv, interpolation_pts_x, axes=(1, 2))
-        tmp = np.tensordot(N_v_inv, tmp, axes=(1, 2))
-        tmp = np.tensordot(N_u_inv, tmp, axes=(1, 2))
-
-        # update the basis and controlpoints of the volume
-        self.controlpoints = tmp
-        self.bases = [newBasis1, newBasis2, newBasis3]
-
     def split(self, knots, direction):
         """Split a volume into two or more separate representations with C0
         continuity between them.

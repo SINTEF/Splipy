@@ -86,14 +86,15 @@ class Curve(SplineObject):
         return result
 
     def raise_order(self, amount):
-        """Raise the order of the curve.
+        """Raise the polynomial order of the curve.
 
-        :param int amount: Number of degrees to increase
+        :param int amount: Number of times to raise the order
         """
         if amount < 0:
             raise ValueError('Raise order requires a non-negative parameter')
         elif amount == 0:
             return
+
         # create the new basis
         newBasis = self.bases[0].raise_order(amount)
 
