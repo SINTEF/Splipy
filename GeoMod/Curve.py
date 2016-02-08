@@ -165,7 +165,7 @@ class Curve(SplineObject):
         return p-1-m, where m is the knot multiplicity and inf between knots"""
         return self.bases[0].continuity(knot)
 
-    def split(self, knots):
+    def split(self, knots, direction=0):
         """Split a curve into two or more separate representations with C0
         continuity between them.
 
@@ -252,6 +252,10 @@ class Curve(SplineObject):
 
         :param file-like outfile: The file to write to
         """
+        if self.periodic():
+            crv = self.split(self.start())
+            crv.write_g2(outfile)
+            return
         outfile.write('100 1 0 0\n')  # surface header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
         self.bases[0].write_g2(outfile)

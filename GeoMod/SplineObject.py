@@ -845,6 +845,17 @@ class SplineObject(object):
         spline1.reparam()
         spline2.reparam()
 
+        # cut periodic splines up if paired with non-periodic
+        for i in range(spline1.pardim):
+            if spline1.periodic(i) == True and spline2.periodic(i) == False:
+                new_spline = spline1.split(spline1.start(i), i)
+                spline1.controlpoints = new_spline.controlpoints
+                spline1.bases[i] = new_spline.bases[i]
+            elif spline1.periodic(i) == False and spline2.periodic(i) == True:
+                new_spline = spline2.split(spline2.start(i), i)
+                spline2.controlpoints = new_spline.controlpoints
+                spline2.bases[i] = new_spline.bases[i]
+
         # make sure both have the same order
         p1 = spline1.order()
         p2 = spline2.order()

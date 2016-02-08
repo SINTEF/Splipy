@@ -313,8 +313,8 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [2, 2, 2, 7, 7, 7])
         surf = Surface(basis1, basis2, controlpoints, True)
 
-        split_u_surf = surf.split(0, [1.1, 1.6, 4])
-        split_v_surf = surf.split(1, 3.1)
+        split_u_surf = surf.split([1.1, 1.6, 4], 0)
+        split_v_surf = surf.split(3.1, 1)
 
         self.assertEqual(len(split_u_surf), 4)
         self.assertEqual(len(split_v_surf), 2)
@@ -401,9 +401,9 @@ class TestSurface(unittest.TestCase):
         # create a double-periodic spline on the knot vector [-1,0,0,1,1,2,2,3,3,4,4,5]*pi/2
         surf = SurfaceFactory.torus()
 
-        surf2 = surf.split( 0, pi/2) # split on existing knot
-        surf3 = surf.split( 1, 1.23) # split between knots
-        surf4 = surf2.split(1, pi, ) # split both periodicities
+        surf2 = surf.split( pi/2, 0) # split on existing knot
+        surf3 = surf.split( 1.23, 1) # split between knots
+        surf4 = surf2.split(pi,   1) # split both periodicities
 
         # check periodicity tags
         self.assertEqual(surf.periodic(0), True)

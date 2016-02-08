@@ -152,7 +152,7 @@ class Surface(SplineObject):
         self.controlpoints = tmp
         self.bases = [newBasis1, newBasis2]
 
-    def split(self, direction, knots):
+    def split(self, knots, direction):
         """Split a surface into two or more separate representations with C0
         continuity between them.
 
@@ -287,16 +287,20 @@ class Surface(SplineObject):
 
         :param file-like outfile: The file to write to
         """
+        surf = self
+        for i in range(self.pardim):
+            if self.periodic(i):
+                surf = surf.split(surf.start(i), i)
         outfile.write('200 1 0 0\n')  # surface header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
-        self.bases[0].write_g2(outfile)
-        self.bases[1].write_g2(outfile)
+        surf.bases[0].write_g2(outfile)
+        surf.bases[1].write_g2(outfile)
 
-        (n1, n2, n3) = self.controlpoints.shape
-        for j in range(n2) + range(self.bases[1].periodic + 1):
-            for i in range(n1) + range(self.bases[0].periodic + 1):
+        (n1, n2, n3) = surf.controlpoints.shape
+        for j in range(n2) + range(surf.bases[1].periodic + 1):
+            for i in range(n1) + range(surf.bases[0].periodic + 1):
                 for k in range(n3):
-                    outfile.write('%f ' % self.controlpoints[i, j, k])
+                    outfile.write('%f ' % surf.controlpoints[i, j, k])
                 outfile.write('\n')
 
     def __repr__(self):

@@ -6,6 +6,10 @@ import numpy as np
 import unittest
 import matplotlib.pyplot as plt
 
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 class TestCurve(unittest.TestCase):
     def test_constructor(self):
@@ -343,6 +347,23 @@ class TestCurve(unittest.TestCase):
 
         self.assertAlmostEqual(np.max(pt-pt2), 0.0)
         self.assertAlmostEqual(np.max(pt-pt3), 0.0)
+
+    def test_write_g2(self):
+        buf = StringIO()
+        # test that periodic knot vectors are properly cut up before written
+        controlpoints = [[1,0], [0,1], [-1,0]]
+        basis = BSplineBasis(3, [-1,0,0,1,2,2,3], periodic=0)
+        crv = Curve(basis, controlpoints)
+        crv.write_g2(buf)
+        self.assertEqual(buf.getvalue().strip(),
+                         '100 1 0 0\n'
+                         '2 0\n'
+                         '4 3\n'
+                         '0.000000 0.000000 0.000000 1.000000 2.000000 2.000000 2.000000 \n'
+                         '1.000000 0.000000 \n'
+                         '0.000000 1.000000 \n'
+                         '-1.000000 0.000000 \n'
+                         '1.000000 0.000000')
 
 
 

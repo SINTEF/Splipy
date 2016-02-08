@@ -2,7 +2,7 @@
 
 from GeoMod import BSplineBasis, Surface
 from GeoMod.SplineObject import SplineObject
-from GeoMod.Utils import ensure_listlike
+from GeoMod.Utils import ensure_listlike, check_direction
 from bisect import bisect_left
 import numpy as np
 
@@ -107,7 +107,7 @@ class Volume(SplineObject):
         self.controlpoints = tmp
         self.bases = [newBasis1, newBasis2, newBasis3]
 
-    def split(self, direction, knots):
+    def split(self, knots, direction):
         """Split a volume into two or more separate representations with C0
         continuity between them.
 
@@ -120,8 +120,7 @@ class Volume(SplineObject):
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
         # error test input
-        if direction != 0 and direction != 1 and direction != 2:
-            raise ValueError('direction must be 0, 1 or 2')
+        direction = check_direction(direction, self.pardim)
 
         p = self.order()
         results = []
@@ -259,18 +258,22 @@ class Volume(SplineObject):
 
         :param file-like outfile: The file to write to
         """
+        vol = self
+        for i in range(self.pardim):
+            if self.periodic(i):
+                vol = vol.split(vol.start(i), i)
         outfile.write('700 1 0 0\n')  # volume header, gotools version 1.0.0
-        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
-        self.bases[0].write_g2(outfile)
-        self.bases[1].write_g2(outfile)
-        self.bases[2].write_g2(outfile)
+        outfile.write('%i %i\n' % (vol.dimension, int(vol.rational)))
+        vol.bases[0].write_g2(outfile)
+        vol.bases[1].write_g2(outfile)
+        vol.bases[2].write_g2(outfile)
 
-        (n1, n2, n3, n4) = self.controlpoints.shape
-        for k in range(n3) + range(self.bases[2].periodic + 1):
-            for j in range(n2) + range(self.bases[1].periodic + 1):
-                for i in range(n1) + range(self.bases[0].periodic + 1):
+        (n1, n2, n3, n4) = vol.controlpoints.shape
+        for k in range(n3) + range(vol.bases[2].periodic + 1):
+            for j in range(n2) + range(vol.bases[1].periodic + 1):
+                for i in range(n1) + range(vol.bases[0].periodic + 1):
                     for d in range(n4):
-                        outfile.write('%f ' % self.controlpoints[i, j, k, d])
+                        outfile.write('%f ' % vol.controlpoints[i, j, k, d])
                     outfile.write('\n')
 
     def __repr__(self):
