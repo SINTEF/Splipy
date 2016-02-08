@@ -97,6 +97,7 @@ class SplineObject(object):
         :return: Geometry coordinates
         :rtype: numpy.array
         """
+        squeeze = all(is_singleton(p) for p in params)
         params = [ensure_listlike(p) for p in params]
 
         self._validate_domain(*params)
@@ -117,7 +118,7 @@ class SplineObject(object):
             result = np.delete(result, self.dimension, -1)
 
         # Squeeze the singleton dimensions if we only have one point
-        if all(s == 1 for s in result.shape[:-1]):
+        if squeeze:
             result = result.reshape(self.dimension)
 
         return result
@@ -160,6 +161,7 @@ class SplineObject(object):
         :return: Derivatives
         :rtype: numpy.array
         """
+        squeeze = all(is_singleton(p) for p in params)
         params = [ensure_listlike(p) for p in params]
 
         derivs = kwargs.get('d', [1] * len(self.bases))
@@ -194,7 +196,7 @@ class SplineObject(object):
             result = np.delete(result, self.dimension, 1)
 
         # Squeeze the singleton dimensions if we only have one point
-        if all(s == 1 for s in result.shape[:-1]):
+        if squeeze:
             result = result.reshape(self.dimension)
 
         return result

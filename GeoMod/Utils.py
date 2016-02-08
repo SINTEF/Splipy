@@ -17,6 +17,14 @@ def ensure_flatlist(x):
     except TypeError:
         return x
 
+def is_singleton(x):
+    """Checks if x is list-like."""
+    try:
+        len(x)
+        return False
+    except TypeError:
+        return True
+
 def ensure_listlike(x, dups=1):
     """Wraps x in a list if it's not list-like."""
     try:
