@@ -407,21 +407,44 @@ class SplineObject(object):
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
         self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim][direction])
 
-    def refine(self, n):
-        """Enrich the spline space by inserting *n* knots into each existing
-        knot span.
+    def refine(self, *ns, **kwargs):
+        """refine(nu, [nv, ...,] [direction=None])
 
-        :param int n: The number of new knots to insert into each span
+        Enrich the spline space by inserting knots into each existing knot
+        span.
+
+        This method supports three different usage patterns:
+
+        .. code:: python
+
+           # Refine each direction by a factor n
+           obj.refine(n)
+
+           # Refine a single direction by a factor n
+           obj.refine(n, direction='v')
+
+           # Refine all directions by given factors
+           obj.refine(nu, nv, ...)
+
+        :param int nu,nv,...: Number of new knots to insert into each span
+        :param int direction: Direction to refine in
         """
-        (knots1, knots2, knots3) = self.knots()  # excluding multiple knots
-        pardir = 0
-        for knot in self.knots():
+        direction = kwargs.get('direction', None)
+
+        if len(ns) == 1 and direction is not None:
+            directions = [check_direction(direction, self.pardim)]
+        else:
+            directions = range(self.pardim)
+
+        if len(ns) == 1:
+            ns = [ns[0]] * self.pardim
+
+        for n, d in zip(ns, directions):
+            knots = self.knots(direction=d)  # excluding multiple knots
             new_knots = []
-            for (k0, k1) in zip(knot[:-1], knot[1:]):
-                element_knots = np.linspace(k0, k1, n + 2)
-                new_knots += list(element_knots[1:-1])
-            self.insert_knot(new_knots, pardir)
-            pardir += 1
+            for (k0, k1) in zip(knots[:-1], knots[1:]):
+                new_knots.extend(np.linspace(k0, k1, n+2)[1:-1])
+            self.insert_knot(new_knots, d)
 
     def reparam(self, *args, **kwargs):
         """reparam([u, v, ...], [direction=None])
