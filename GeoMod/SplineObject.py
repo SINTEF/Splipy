@@ -662,14 +662,7 @@ class SplineObject(object):
 
         :param string plane: Any combination of 'x', 'y' and 'z'
         """
-        keep = [False] * 3
-        for s in plane:
-            if s == 'x' or s == 'X':
-                keep[0] = True
-            if s == 'y' or s == 'Y':
-                keep[1] = True
-            if s == 'z' or s == 'Z':
-                keep[2] = True
+        keep = [c in plane.lower() for c in 'xyz']
 
         dim = self.dimension
         for i in range(dim):
