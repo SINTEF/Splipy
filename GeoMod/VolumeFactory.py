@@ -161,3 +161,64 @@ def edge_surfaces(*surfaces):
         return result
     else:
         raise ValueError('Requires two or six input surfaces')
+
+def loft(surfaces):
+    # clone input, so we don't change those references
+    # make sure everything has the same dimension since we need to compute length
+    surfaces = [s.clone().set_dimension(3) for s in surfaces]
+    if len(surfaces)==2:
+        return SurfaceFactory.edge_curves(surfaces)
+    elif len(surfaces)==3:
+        # can't do cubic spline interpolation, so we'll do quadratic
+        basis3 = BSplineBasis(3)
+        dist  = basis3.greville()
+    else:
+        x = [s.center() for s in surfaces]
+
+        # create knot vector from the euclidian length between the surfaces
+        dist = [0]
+        for (x1,x0) in zip(x[1:],x[:-1]):
+            # disregard weight (coordinate 4), if it appears
+            dist.append(dist[-1] + np.linalg.norm(x1[:3]-x0[:3]))
+
+        # using "free" boundary condition by setting N'''(u) continuous at second to last and second knot
+        knot = [dist[0]]*4 + dist[2:-2] + [dist[-1]]*4
+        basis3 = BSplineBasis(4, knot)
+
+    n = len(surfaces)
+    for i in range(n):
+        for j in range(i+1,n):
+            Surface.make_splines_identical(surfaces[i], surfaces[j])
+
+    basis1 = surfaces[0].bases[0]
+    basis2 = surfaces[0].bases[1]
+    m1     = basis1.num_functions()
+    m2     = basis2.num_functions()
+    dim    = len(surfaces[0][0])
+    u      = basis1.greville() # parametric interpolation points
+    v      = basis2.greville()
+    w      = dist
+
+    # compute matrices
+    Nu     = basis1(u)
+    Nv     = basis2(v)
+    Nw     = basis3(w)
+    Nu_inv = np.linalg.inv(Nu)
+    Nv_inv = np.linalg.inv(Nv)
+    Nw_inv = np.linalg.inv(Nw)
+
+    # compute interpolation points in physical space
+    x      = np.zeros((m1,m2,n, dim))
+    for i in range(n):
+        tmp        = np.tensordot(Nv, surfaces[i].controlpoints, axes=(1,1))
+        x[:,:,i,:] = np.tensordot(Nu, tmp                      , axes=(1,1))
+
+    # solve interpolation problem
+    cp = np.tensordot(Nw_inv, x,  axes=(1,2))
+    cp = np.tensordot(Nv_inv, cp, axes=(1,2))
+    cp = np.tensordot(Nu_inv, cp, axes=(1,2))
+
+    # re-order controlpoints so they match up with Surface constructor
+    cp = np.reshape(cp.transpose((2, 1, 0, 3)), (m1*m2*n, dim))
+
+    return Volume(basis1, basis2, basis3, cp, surfaces[0].rational)

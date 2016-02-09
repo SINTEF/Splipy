@@ -629,8 +629,27 @@ class SplineObject(object):
         result = self.controlpoints
         for N in Ns[::-1]:
             result = np.tensordot(N, result, axes=(0, idx))
+            idx -= 1
 
         return result / par_size
+
+    def lower_periodic(self, periodic, direction=0):
+        """Sets the periodicity of the spline object in the given direction,
+        keeping the geometry unchanged.
+
+        :param int direction: new periodicity, i.e. the basis is C^k over the start/end
+        """
+        direction = check_direction(direction, self.pardim)
+
+        b  = self.bases[direction]
+        while periodic < b.periodic:
+            self.insert_knot(self.start(direction), direction)
+            self.controlpoints = np.roll(self.controlpoints, -1, direction)
+            b.roll(1)
+            b.periodic -= 1
+            b.knots = b.knots[:-1]
+        if periodic > b.periodic:
+            raise ValueError('Cannot raise periodicity')
 
     def set_dimension(self, new_dim):
         """Sets the physical dimension of the object. If increased, the new
@@ -845,16 +864,12 @@ class SplineObject(object):
         spline1.reparam()
         spline2.reparam()
 
-        # cut periodic splines up if paired with non-periodic
+        # settle on the lowest periodicity if different appear
         for i in range(spline1.pardim):
-            if spline1.periodic(i) == True and spline2.periodic(i) == False:
-                new_spline = spline1.split(spline1.start(i), i)
-                spline1.controlpoints = new_spline.controlpoints
-                spline1.bases[i] = new_spline.bases[i]
-            elif spline1.periodic(i) == False and spline2.periodic(i) == True:
-                new_spline = spline2.split(spline2.start(i), i)
-                spline2.controlpoints = new_spline.controlpoints
-                spline2.bases[i] = new_spline.bases[i]
+            if spline1.bases[i].periodic < spline2.bases[i].periodic:
+                spline2.lower_periodic(spline1.bases[i].periodic, i)
+            elif spline2.bases[i].periodic < spline1.bases[i].periodic:
+                spline1.lower_periodic(spline2.bases[i].periodic, i)
 
         # make sure both have the same order
         p1 = spline1.order()
@@ -868,18 +883,20 @@ class SplineObject(object):
 
         # make sure both have the same knot vectors
         for i in range(spline1.pardim):
-            knot1 = spline1.knots(direction=i, with_multiplicities=True)
-            knot2 = spline2.knots(direction=i, with_multiplicities=True)
-            i1 = 0
-            i2 = 0
-            while i1 < len(knot1) and i2 < len(knot2):
-                if abs(knot1[i1] - knot2[i2]) < spline1.bases[i].tol:
-                    i1 += 1
-                    i2 += 1
-                elif knot1[i1] < knot2[i2]:
-                    spline2.insert_knot(knot1[i1], direction=i)
-                    i1 += 1
-                else:
-                    spline1.insert_knot(knot2[i2], direction=i)
-                    i2 += 1
+            knot1 = spline1.knots(direction=i)
+            knot2 = spline2.knots(direction=i)
+            b1    = spline1.bases[i]
+            b2    = spline2.bases[i]
+            for k in knot1:
+                c1 = b1.continuity(k)
+                c2 = b2.continuity(k)
+                if c2 > c1:
+                    m = min(c2-c1, p[i]-1-c1) # c2=np.inf if knot does not exist
+                    spline2.insert_knot([k]*m, direction=i)
+            for k in knot2:
+                c1 = b1.continuity(k)
+                c2 = b2.continuity(k)
+                if c1 > c2:
+                    m = min(c1-c2, p[i]-1-c2) # c1=np.inf if knot does not exist
+                    spline1.insert_knot([k]*m, direction=i)
 

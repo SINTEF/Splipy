@@ -125,6 +125,10 @@ class Surface(SplineObject):
         :param int raise_u: Number of degrees to increase in the first direction
         :param int raise_v: Number of degrees to increase in the second direction
         """
+        if raise_u < 0 or raise_v < 0:
+            raise ValueError('Raise order requires a non-negative parameter')
+        elif raise_u + raise_v == 0:
+            return
         # create the new basis
         newBasis1 = self.bases[0].raise_order(raise_u)
         newBasis2 = self.bases[1].raise_order(raise_v)

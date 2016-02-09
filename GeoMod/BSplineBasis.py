@@ -241,6 +241,12 @@ class BSplineBasis:
             between knots.
         :rtype: int or float
         """
+        if self.periodic >= 0:
+            if knot < self.start() or knot > self.end():
+                knot = (knot - self.start()) % (self.end() - self.start()) + self.start()
+        elif knot < self.start() or self.end() < knot:
+            raise ValueError('out of range')
+
         p = self.order
         mu = bisect_left(self.knots, knot)
         if abs(self.knots[mu] - knot) > self.tol:
@@ -302,7 +308,10 @@ class BSplineBasis:
         :rtype: numpy.array
         :raises ValueError: If the new knot is outside the domain
         """
-        if new_knot < self.start() or self.end() < new_knot:
+        if self.periodic >= 0:
+            if new_knot < self.start() or new_knot > self.end():
+                new_knot = (new_knot - self.start()) % (self.end() - self.start()) + self.start()
+        elif new_knot < self.start() or self.end() < new_knot:
             raise ValueError('new_knot out of range')
         # mu is the index of last non-zero (old) basis function
         mu = bisect_right(self.knots, new_knot)
