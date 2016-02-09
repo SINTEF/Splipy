@@ -615,7 +615,8 @@ class SplineObject(object):
 
         and :math:`A=(u_1-u_0)(v_1-v_0)` is the area of the parametric domain :math:`[u_0,u_1]\\times[v_0,v_1]`.
 
-        .. warning:: For rational splines, this will return center in projective coordinates (including weight)
+        .. warning:: For rational splines, this will integrate in projective coordinates, then project the centerpoint.
+        This is as opposed to integrate the rational functions :math:`\\frac{N_i(t)w_i}{\sum_j N_j(t)w_j}`
         """
 
         # compute integration of basis functions
@@ -631,7 +632,14 @@ class SplineObject(object):
             result = np.tensordot(N, result, axes=(0, idx))
             idx -= 1
 
-        return result / par_size
+        result /= par_size
+
+        # project to physical space
+        if self.rational:
+            result[:-1] /= result[-1]
+            result = np.delete(result, self.dimension)
+
+        return result
 
     def lower_periodic(self, periodic, direction=0):
         """Sets the periodicity of the spline object in the given direction,

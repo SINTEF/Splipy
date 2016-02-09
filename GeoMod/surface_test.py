@@ -442,6 +442,63 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(np.max(pt-pt3), 0.0)
         self.assertAlmostEqual(np.max(pt-pt4), 0.0)
 
+    def test_make_identical(self):
+        basis1 = BSplineBasis(4, [-1,-1,0,0,1,2,9,9,10,10,11,12], periodic=1)
+        basis2 = BSplineBasis(2, [0,0,.25,1,1])
+        cp    = [[0,0,0,1], [1,0,0,1.1], [2,0,0,1], [0,1,0,.7], [1,1,0,.8], [2,1,0,1], [0,2,0,1], [1,2,0,1.2], [2,2,0,1]]
+        surf1 = Surface(BSplineBasis(3), BSplineBasis(3), cp, True) # rational 3D
+        surf2 = Surface(basis1, basis2)                             # periodic 2D
+        surf1.insert_knot([0.25, .5, .75], direction='v')
+
+        Surface.make_splines_identical(surf1,surf2)
+
+        for s in (surf1, surf2):
+            self.assertEqual(s.periodic(0), False)
+            self.assertEqual(s.periodic(1), False)
+            self.assertEqual(s.dimension,   3)
+            self.assertEqual(s.rational, True)
+            self.assertEqual(s.order(), (4,3))
+
+            self.assertAlmostEqual(len(s.knots(0, True)), 12)
+            self.assertAlmostEqual(len(s.knots(1, True)), 10)
+
+            self.assertEqual(s.bases[1].continuity(.25), 0)
+            self.assertEqual(s.bases[1].continuity(.75), 1)
+            self.assertEqual(s.bases[0].continuity(.2), 2)
+            self.assertEqual(s.bases[0].continuity(.9), 1)
+
+    def test_center(self):
+        # make an ellipse at (2,1)
+        surf = SurfaceFactory.disc(3)
+        surf.scale((3,1)) 
+        surf += (2,1)
+        center = surf.center()
+        self.assertEqual(len(center), 2)
+        self.assertAlmostEqual(center[0], 2.0)
+        self.assertAlmostEqual(center[1], 1.0)
+
+    def test_reverse(self):
+        basis1 = BSplineBasis(4, [2,2,2,2,3,6,7,7,7,7])
+        basis2 = BSplineBasis(3, [-3,-3,-3,20,30,31,31,31])
+        surf  = Surface(basis1, basis2)
+        surf2 = Surface(basis1, basis2)
+        surf3 = Surface(basis1, basis2)
+
+        surf2.reverse('v')
+        surf3.reverse('u')
+
+        for i in range(6):
+            # loop over surf forward, and surf2 backward (in 'v'-direction)
+            for (cp1, cp2) in zip(surf[i,:,:], surf2[i,::-1,:]):
+                self.assertAlmostEqual(cp1[0], cp2[0])
+                self.assertAlmostEqual(cp1[1], cp2[1])
+
+        for j in range(5):
+            # loop over surf forward, and surf3 backward (in 'u'-direction)
+            for (cp1, cp2) in zip(surf[:,j,:], surf3[::-1,j,:]):
+                self.assertAlmostEqual(cp1[0], cp2[0])
+                self.assertAlmostEqual(cp1[1], cp2[1])
+
 
 
 if __name__ == '__main__':

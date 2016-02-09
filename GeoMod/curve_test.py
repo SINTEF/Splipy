@@ -365,6 +365,18 @@ class TestCurve(unittest.TestCase):
                          '-1.000000 0.000000 \n'
                          '1.000000 0.000000')
 
+    def test_center(self):
+        # create the geometric mapping x(t) = t, y(t) = t^3,  t=[0,1]
+        cp = [[0, 0], [1.0/3, 0], [2.0/3, 0], [1.0, 1]]
+        basis = BSplineBasis(4)
+        crv = Curve(basis, cp)
+        center = crv.center()
+
+        self.assertAlmostEqual(center[0], .5)
+        self.assertAlmostEqual(center[1], .25)
+
+
+
 
 
 if __name__ == '__main__':

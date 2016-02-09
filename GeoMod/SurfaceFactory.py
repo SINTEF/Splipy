@@ -322,8 +322,7 @@ def loft(curves):
         # create knot vector from the euclidian length between the curves
         dist = [0]
         for (x1,x0) in zip(x[1:],x[:-1]):
-            # disregard weight (coordinate 4), if it appears
-            dist.append(dist[-1] + np.linalg.norm(x1[:3]-x0[:3]))
+            dist.append(dist[-1] + np.linalg.norm(x1-x0))
 
         # using "free" boundary condition by setting N'''(u) continuous at second to last and second knot
         knot = [dist[0]]*4 + dist[2:-2] + [dist[-1]]*4

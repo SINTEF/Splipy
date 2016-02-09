@@ -436,7 +436,6 @@ class TestVolume(unittest.TestCase):
             self.assertEqual(v.periodic(2), False)
 
             self.assertEqual(v.order(), (4,3,2))
-            self.assertEqual(v.order(), (4,3,2))
             self.assertAlmostEqual(len(v.knots(0, True)), 11)
             self.assertAlmostEqual(len(v.knots(1, True)), 8)
             self.assertAlmostEqual(len(v.knots(2, True)), 5)
