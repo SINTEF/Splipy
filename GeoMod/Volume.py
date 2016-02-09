@@ -2,7 +2,7 @@
 
 from GeoMod import BSplineBasis, Surface
 from GeoMod.SplineObject import SplineObject
-from GeoMod.Utils import ensure_listlike
+from GeoMod.Utils import ensure_listlike, check_direction
 from bisect import bisect_left
 import numpy as np
 
@@ -34,8 +34,7 @@ class Volume(SplineObject):
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
     def faces(self):
-        """Return the six faces of this volume (with outward normal vectors) in
-        order: umin, umax, vmin, vmax, wmin, wmax.
+        """Return the six faces of this volume in order: umin, umax, vmin, vmax, wmin, wmax.
 
         :return: Boundary faces
         :rtype: (Surface)
@@ -43,22 +42,26 @@ class Volume(SplineObject):
         (p1, p2, p3) = self.order()
         (n1, n2, n3, dim) = self.controlpoints.shape
         rat = self.rational
-        umin = Surface(p3, p2, self.bases[2], self.bases[1], np.reshape(self.controlpoints[0, :, :, :],
-                                                                    (n2 * n3, dim), rat))
-        umax = Surface(p3, p2, self.bases[2], self.bases[1], np.reshape(self.controlpoints[-1, :, :, :],
-                                                                    (n2 * n3, dim), rat))
-        vmin = Surface(p3, p1, self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, 0, :, :],
-                                                                    (n1 * n3, dim), rat))
-        vmax = Surface(p3, p1, self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, -1, :, :],
-                                                                    (n1 * n3, dim), rat))
-        wmin = Surface(p2, p1, self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, 0, :],
-                                                                    (n1 * n2, dim), rat))
-        wmax = Surface(p2, p1, self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, -1, :],
-                                                                    (n1 * n2, dim), rat))
-        umax.swap()
-        vmax.swap()
-        wmax.swap()
-        return [umin, umax, vmin, vmax, wmin, wmax]
+        umin = Surface(self.bases[2], self.bases[1], np.reshape(self.controlpoints[0, :, :, :],  (n2 * n3, dim), rat))
+        umax = Surface(self.bases[2], self.bases[1], np.reshape(self.controlpoints[-1, :, :, :], (n2 * n3, dim), rat))
+        vmin = Surface(self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, 0, :, :],  (n1 * n3, dim), rat))
+        vmax = Surface(self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, -1, :, :], (n1 * n3, dim), rat))
+        wmin = Surface(self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, 0, :],  (n1 * n2, dim), rat))
+        wmax = Surface(self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, -1, :], (n1 * n2, dim), rat))
+        result = [umin, umax, vmin, vmax, wmin, wmax]
+        for s in result:
+            s.swap()
+        return result
+
+    def corners(self):
+        """Return the eight corner control points in (parametric) in order (0,0,0), (1,0,0), (0,1,0), (1,1,0), (0,0,1),...
+
+        :return: Corners
+        :rtype: (np.ndarray)
+        .. warning:: For rational splines, this will return the corners in projective coordinates, including weights.
+        """
+        (n1, n2, n3, dim) = self.controlpoints.shape
+        return self.controlpoints[::n1-1, ::n2-1, ::n3-1, :].reshape((8,dim))
 
     def raise_order(self, raise_u, raise_v, raise_w):
         """Raise the order of the surface.
@@ -67,6 +70,8 @@ class Volume(SplineObject):
         :param int raise_v: Number of degrees to increase in the second direction
         :param int raise_w: Number of degrees to increase in the third direction
         """
+        if raise_u + raise_v + raise_w == 0:
+            return
         # create the new basis
         newBasis1 = self.bases[0].raise_order(raise_u)
         newBasis2 = self.bases[1].raise_order(raise_v)
@@ -87,12 +92,12 @@ class Volume(SplineObject):
         tmp = np.tensordot(N_u_old, tmp, axes=(1, 2))  # projective interpolation points (x,y,z,w)
         interpolation_pts_x = tmp
 
-        # solve the interpolation problem
+        ### solve the interpolation problem
+        # these are inverses of the 1D problems, and small compared to the total number of unknowns
         N_u_inv = np.linalg.inv(N_u_new)
         N_v_inv = np.linalg.inv(N_v_new)
-        N_w_inv = np.linalg.inv(
-            N_w_new
-        )  # these are inverses of the 1D problems, and small compared to the total number of unknowns
+        N_w_inv = np.linalg.inv(N_w_new)
+        
         tmp = np.tensordot(N_w_inv, interpolation_pts_x, axes=(1, 2))
         tmp = np.tensordot(N_v_inv, tmp, axes=(1, 2))
         tmp = np.tensordot(N_u_inv, tmp, axes=(1, 2))
@@ -101,7 +106,7 @@ class Volume(SplineObject):
         self.controlpoints = tmp
         self.bases = [newBasis1, newBasis2, newBasis3]
 
-    def split(self, direction, knots):
+    def split(self, knots, direction):
         """Split a volume into two or more separate representations with C0
         continuity between them.
 
@@ -114,8 +119,7 @@ class Volume(SplineObject):
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
         # error test input
-        if direction != 0 and direction != 1 and direction != 2:
-            raise ValueError('direction must be 0, 1 or 2')
+        direction = check_direction(direction, self.pardim)
 
         p = self.order()
         results = []
@@ -126,7 +130,19 @@ class Volume(SplineObject):
             continuity = basis[direction].continuity(k)
             if continuity == np.inf:
                 continuity = p[direction] - 1
-            splitting_vol.insert_knot(direction, [k] * (continuity + 1))
+            splitting_vol.insert_knot([k] * (continuity + 1), direction)
+
+        b = splitting_vol.bases[direction]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_vol.controlpoints = np.roll(splitting_vol.controlpoints, -mu, direction)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_vol.split(knots[1:], direction)
+            else:
+                return splitting_vol
 
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
@@ -241,18 +257,22 @@ class Volume(SplineObject):
 
         :param file-like outfile: The file to write to
         """
+        vol = self
+        for i in range(self.pardim):
+            if self.periodic(i):
+                vol = vol.split(vol.start(i), i)
         outfile.write('700 1 0 0\n')  # volume header, gotools version 1.0.0
-        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
-        self.bases[0].write_g2(outfile)
-        self.bases[1].write_g2(outfile)
-        self.bases[2].write_g2(outfile)
+        outfile.write('%i %i\n' % (vol.dimension, int(vol.rational)))
+        vol.bases[0].write_g2(outfile)
+        vol.bases[1].write_g2(outfile)
+        vol.bases[2].write_g2(outfile)
 
-        (n1, n2, n3, n4) = self.controlpoints.shape
-        for k in range(n3) + range(self.bases[2].periodic + 1):
-            for j in range(n2) + range(self.bases[1].periodic + 1):
-                for i in range(n1) + range(self.bases[0].periodic + 1):
+        (n1, n2, n3, n4) = vol.controlpoints.shape
+        for k in range(n3) + range(vol.bases[2].periodic + 1):
+            for j in range(n2) + range(vol.bases[1].periodic + 1):
+                for i in range(n1) + range(vol.bases[0].periodic + 1):
                     for d in range(n4):
-                        outfile.write('%f ' % self.controlpoints[i, j, k, d])
+                        outfile.write('%f ' % vol.controlpoints[i, j, k, d])
                     outfile.write('\n')
 
     def __repr__(self):

@@ -86,7 +86,7 @@ class Surface(SplineObject):
                 self.evaluate_derivative(u, v, d=(0, 1)))
 
     def edges(self):
-        """Return the four edge curves in (parametric) order: bottom, right, top, left.
+        """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
 
         :return: Edge curves
         :rtype: (Curve)
@@ -95,14 +95,27 @@ class Surface(SplineObject):
         (p1, p2) = self.order()
         (n1, n2, dim) = self.controlpoints.shape
         rat = self.rational
-        umin = Curve(self.bases[1], np.reshape(self.controlpoints[0, :, :], (n2, dim)), rat)
+        umin = Curve(self.bases[1], np.reshape(self.controlpoints[ 0, :, :], (n2, dim)), rat)
         umax = Curve(self.bases[1], np.reshape(self.controlpoints[-1, :, :], (n2, dim)), rat)
-        vmin = Curve(self.bases[0], np.reshape(self.controlpoints[:, 0, :], (n1, dim)), rat)
+        vmin = Curve(self.bases[0], np.reshape(self.controlpoints[:,  0, :], (n1, dim)), rat)
         vmax = Curve(self.bases[0], np.reshape(self.controlpoints[:, -1, :], (n1, dim)), rat)
-        # make the curves form a clockwise oriented closed loop around surface
-        umax.reverse()
-        vmax.reverse()
-        return (vmin, umax, vmax, umin)
+        return (umin, umax, vmin, vmax)
+
+    def corners(self):
+        """Return the four corner control points in parametric row first ordering, i.e. (0,0), (0,1), (1,0), (1,1)
+
+        :return: Corners
+        :rtype: (np.ndarray)
+        .. warning:: For rational splines, this will return the corners in projective coordinates, including weights.
+        """
+        # ASSUMPTION: open knot vectors
+        (n1, n2, dim) = self.controlpoints.shape
+        result = np.array(4,dim)
+        result[0,:] = self.controlpoints[ 0, 0,:]
+        result[1,:] = self.controlpoints[ 0,-1,:]
+        result[2,:] = self.controlpoints[-1, 0,:]
+        result[3,:] = self.controlpoints[-1,-1,:]
+        return result
 
     def raise_order(self, raise_u, raise_v):
         """Raise the order of the surface.
@@ -110,6 +123,10 @@ class Surface(SplineObject):
         :param int raise_u: Number of degrees to increase in the first direction
         :param int raise_v: Number of degrees to increase in the second direction
         """
+        if raise_u < 0 or raise_v < 0:
+            raise ValueError('Raise order requires a non-negative parameter')
+        elif raise_u + raise_v == 0:
+            return
         # create the new basis
         newBasis1 = self.bases[0].raise_order(raise_u)
         newBasis2 = self.bases[1].raise_order(raise_v)
@@ -137,7 +154,7 @@ class Surface(SplineObject):
         self.controlpoints = tmp
         self.bases = [newBasis1, newBasis2]
 
-    def split(self, direction, knots):
+    def split(self, knots, direction):
         """Split a surface into two or more separate representations with C0
         continuity between them.
 
@@ -162,7 +179,20 @@ class Surface(SplineObject):
             continuity = basis[direction].continuity(k)
             if continuity == np.inf:
                 continuity = p[direction] - 1
-            splitting_surf.insert_knot(direction, [k] * (continuity + 1))
+            splitting_surf.insert_knot([k] * (continuity + 1), direction)
+
+        b = splitting_surf.bases[direction]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_surf.controlpoints = np.roll(splitting_surf.controlpoints, -mu, direction)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_surf.split(knots[1:], direction)
+            else:
+                return splitting_surf
+
 
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
@@ -259,16 +289,20 @@ class Surface(SplineObject):
 
         :param file-like outfile: The file to write to
         """
+        surf = self
+        for i in range(self.pardim):
+            if self.periodic(i):
+                surf = surf.split(surf.start(i), i)
         outfile.write('200 1 0 0\n')  # surface header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
-        self.bases[0].write_g2(outfile)
-        self.bases[1].write_g2(outfile)
+        surf.bases[0].write_g2(outfile)
+        surf.bases[1].write_g2(outfile)
 
-        (n1, n2, n3) = self.controlpoints.shape
-        for j in range(n2) + range(self.bases[1].periodic + 1):
-            for i in range(n1) + range(self.bases[0].periodic + 1):
+        (n1, n2, n3) = surf.controlpoints.shape
+        for j in range(n2) + range(surf.bases[1].periodic + 1):
+            for i in range(n1) + range(surf.bases[0].periodic + 1):
                 for k in range(n3):
-                    outfile.write('%f ' % self.controlpoints[i, j, k])
+                    outfile.write('%f ' % surf.controlpoints[i, j, k])
                 outfile.write('\n')
 
     def __repr__(self):
@@ -280,79 +314,3 @@ class Surface(SplineObject):
                 result += str(self.controlpoints[i, j, :]) + '\n'
         return result
 
-    @classmethod
-    def make_surfaces_compatible(cls, surf1, surf2):
-        """Ensure that two surfaces are compatible.
-
-        This will manipulate one or both to ensure that they are both rational
-        or nonrational, and that they lie in the same physical space.
-
-        :param Surface surf1: The first surface
-        :param Surface surf2: The second surface
-        """
-        # make both rational (if needed)
-        if surf1.rational:
-            surf2.force_rational()
-        if surf2.rational:
-            surf1.force_rational()
-
-        # make both in the same geometric space
-        if surf1.dimension > surf2.dimension:
-            surf2.set_dimension(surf1.dimension)
-        else:
-            surf1.set_dimension(surf2.dimension)
-
-    @classmethod
-    def make_surfaces_identical(cls, surf1, surf2):
-        """Ensure that two curves have identical discretization.
-
-        This will first make them compatible (see
-        :func:`GeoMod.Surface.make_curves_compatible`), reparametrize them, and
-        possibly raise the order and insert knots as required.
-
-        :param Surface surf1: The first surface
-        :param Surface surf2: The second surface
-        """
-        # make sure that rational/dimension is the same
-        Surface.make_surfaces_compatible(surf1, surf2)
-
-        # make both have knot vectors in domain (0,1)
-        surf1.reparam()
-        surf2.reparam()
-
-        # make sure both have the same order
-        p1 = surf1.order()
-        p2 = surf2.order()
-        p = (max(p1[0], p2[0]), max(p1[1], p2[1]))
-        surf1.raise_order(p[0] - p1[0], p[1] - p1[1])
-        surf2.raise_order(p[0] - p2[0], p[1] - p2[1])
-
-        # make sure both have the same knot vector in u-direction
-        knot1 = surf1.knots(with_multiplicities=True)
-        knot2 = surf2.knots(with_multiplicities=True)
-        i1 = 0
-        i2 = 0
-        while i1 < len(knot1[0]) and i2 < len(knot2[0]):
-            if abs(knot1[0][i1] - knot2[0][i2]) < surf1.bases[0].tol:
-                i1 += 1
-                i2 += 1
-            elif knot1[0][i1] < knot2[0][i2]:
-                surf2.insert_knot(0, knot1[0][i1])
-                i1 += 1
-            else:
-                surf1.insert_knot(0, knot2[0][i2])
-                i2 += 1
-
-        # make sure both have the same knot vector in v-direction
-        i1 = 0
-        i2 = 0
-        while i1 < len(knot1[1]) and i2 < len(knot2[1]):
-            if abs(knot1[1][i1] - knot2[1][i2]) < surf1.bases[1].tol:
-                i1 += 1
-                i2 += 1
-            elif knot1[1][i1] < knot2[1][i2]:
-                surf2.insert_knot(1, knot1[1][i1])
-                i1 += 1
-            else:
-                surf1.insert_knot(1, knot2[1][i2])
-                i2 += 1

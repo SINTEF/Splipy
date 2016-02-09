@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from GeoMod import Surface, BSplineBasis
+import GeoMod.SurfaceFactory as SurfaceFactory
+from math import pi
+import numpy as np
 import unittest
 
 
@@ -206,11 +209,11 @@ class TestSurface(unittest.TestCase):
         # pick some evaluation point (could be anything)
         evaluation_point1 = surf(0.23, 0.37)
 
-        surf.insert_knot(0, .22)
-        surf.insert_knot(0, .5)
-        surf.insert_knot(0, .7)
-        surf.insert_knot(1, .1)
-        surf.insert_knot(1, 1.0 / 3)
+        surf.insert_knot(.22,     0)
+        surf.insert_knot(.5,      0)
+        surf.insert_knot(.7,      0)
+        surf.insert_knot(.1,      1)
+        surf.insert_knot(1.0 / 3, 1)
         knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 11)  # 8 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -230,11 +233,11 @@ class TestSurface(unittest.TestCase):
 
         evaluation_point1 = surf(0.23, 0.37)
 
-        surf.insert_knot(0, .22)
-        surf.insert_knot(0, .5)
-        surf.insert_knot(0, .7)
-        surf.insert_knot(1, .1)
-        surf.insert_knot(1, 1.0 / 3)
+        surf.insert_knot(.22,     0)
+        surf.insert_knot(.5,      0)
+        surf.insert_knot(.7,      0)
+        surf.insert_knot(.1,      1)
+        surf.insert_knot(1.0 / 3, 1)
         knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -248,8 +251,6 @@ class TestSurface(unittest.TestCase):
         # test errors and exceptions
         with self.assertRaises(TypeError):
             surf.insert_knot(1, 2, 3)  # too many arguments
-        with self.assertRaises(TypeError):
-            surf.insert_knot(1)  # too few arguments
         with self.assertRaises(ValueError):
             surf.insert_knot("tree-fiddy", .5)  # wrong argument type
         with self.assertRaises(ValueError):
@@ -312,8 +313,8 @@ class TestSurface(unittest.TestCase):
         basis2 = BSplineBasis(3, [2, 2, 2, 7, 7, 7])
         surf = Surface(basis1, basis2, controlpoints, True)
 
-        split_u_surf = surf.split(0, [1.1, 1.6, 4])
-        split_v_surf = surf.split(1, 3.1)
+        split_u_surf = surf.split([1.1, 1.6, 4], 0)
+        split_v_surf = surf.split(3.1, 1)
 
         self.assertEqual(len(split_u_surf), 4)
         self.assertEqual(len(split_v_surf), 2)
@@ -395,6 +396,109 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(surf.end(0),   10)
         self.assertAlmostEqual(surf.start(1),  0)
         self.assertAlmostEqual(surf.end(1),    1)
+
+    def test_periodic_split(self):
+        # create a double-periodic spline on the knot vector [-1,0,0,1,1,2,2,3,3,4,4,5]*pi/2
+        surf = SurfaceFactory.torus()
+
+        surf2 = surf.split( pi/2, 0) # split on existing knot
+        surf3 = surf.split( 1.23, 1) # split between knots
+        surf4 = surf2.split(pi,   1) # split both periodicities
+
+        # check periodicity tags
+        self.assertEqual(surf.periodic(0), True)
+        self.assertEqual(surf.periodic(1), True)
+        self.assertEqual(surf2.periodic(0), False)
+        self.assertEqual(surf2.periodic(1), True)
+        self.assertEqual(surf3.periodic(0), True)
+        self.assertEqual(surf3.periodic(1), False)
+        self.assertEqual(surf4.periodic(0), False)
+        self.assertEqual(surf4.periodic(1), False)
+
+        # check parametric domain boundaries
+        self.assertAlmostEqual(surf2.start(0),   pi/2)
+        self.assertAlmostEqual(surf2.end(0),   5*pi/2)
+        self.assertAlmostEqual(surf3.start(0),      0)
+        self.assertAlmostEqual(surf3.end(0),     2*pi)
+        self.assertAlmostEqual(surf3.start(1),   1.23)
+        self.assertAlmostEqual(surf3.end(1),   1.23+2*pi)
+
+        # check knot vector lengths
+        self.assertEqual(len(surf2.knots(0, True)), 12)
+        self.assertEqual(len(surf2.knots(1, True)), 12)
+        self.assertEqual(len(surf3.knots(0, True)), 12)
+        self.assertEqual(len(surf3.knots(1, True)), 14)
+        self.assertEqual(len(surf4.knots(0, True)), 12)
+        self.assertEqual(len(surf4.knots(1, True)), 12)
+
+        # check that evaluation is unchanged over a 9x9 grid of shared parametric coordinates
+        u   = np.linspace(pi/2, 2*pi, 9)
+        v   = np.linspace(pi,   2*pi, 9)
+        pt  = surf( u,v)
+        pt2 = surf2(u,v)
+        pt3 = surf3(u,v)
+        pt4 = surf4(u,v)
+        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.max(pt-pt3), 0.0)
+        self.assertAlmostEqual(np.max(pt-pt4), 0.0)
+
+    def test_make_identical(self):
+        basis1 = BSplineBasis(4, [-1,-1,0,0,1,2,9,9,10,10,11,12], periodic=1)
+        basis2 = BSplineBasis(2, [0,0,.25,1,1])
+        cp    = [[0,0,0,1], [1,0,0,1.1], [2,0,0,1], [0,1,0,.7], [1,1,0,.8], [2,1,0,1], [0,2,0,1], [1,2,0,1.2], [2,2,0,1]]
+        surf1 = Surface(BSplineBasis(3), BSplineBasis(3), cp, True) # rational 3D
+        surf2 = Surface(basis1, basis2)                             # periodic 2D
+        surf1.insert_knot([0.25, .5, .75], direction='v')
+
+        Surface.make_splines_identical(surf1,surf2)
+
+        for s in (surf1, surf2):
+            self.assertEqual(s.periodic(0), False)
+            self.assertEqual(s.periodic(1), False)
+            self.assertEqual(s.dimension,   3)
+            self.assertEqual(s.rational, True)
+            self.assertEqual(s.order(), (4,3))
+
+            self.assertAlmostEqual(len(s.knots(0, True)), 12)
+            self.assertAlmostEqual(len(s.knots(1, True)), 10)
+
+            self.assertEqual(s.bases[1].continuity(.25), 0)
+            self.assertEqual(s.bases[1].continuity(.75), 1)
+            self.assertEqual(s.bases[0].continuity(.2), 2)
+            self.assertEqual(s.bases[0].continuity(.9), 1)
+
+    def test_center(self):
+        # make an ellipse at (2,1)
+        surf = SurfaceFactory.disc(3)
+        surf.scale((3,1)) 
+        surf += (2,1)
+        center = surf.center()
+        self.assertEqual(len(center), 2)
+        self.assertAlmostEqual(center[0], 2.0)
+        self.assertAlmostEqual(center[1], 1.0)
+
+    def test_reverse(self):
+        basis1 = BSplineBasis(4, [2,2,2,2,3,6,7,7,7,7])
+        basis2 = BSplineBasis(3, [-3,-3,-3,20,30,31,31,31])
+        surf  = Surface(basis1, basis2)
+        surf2 = Surface(basis1, basis2)
+        surf3 = Surface(basis1, basis2)
+
+        surf2.reverse('v')
+        surf3.reverse('u')
+
+        for i in range(6):
+            # loop over surf forward, and surf2 backward (in 'v'-direction)
+            for (cp1, cp2) in zip(surf[i,:,:], surf2[i,::-1,:]):
+                self.assertAlmostEqual(cp1[0], cp2[0])
+                self.assertAlmostEqual(cp1[1], cp2[1])
+
+        for j in range(5):
+            # loop over surf forward, and surf3 backward (in 'u'-direction)
+            for (cp1, cp2) in zip(surf[:,j,:], surf3[::-1,j,:]):
+                self.assertAlmostEqual(cp1[0], cp2[0])
+                self.assertAlmostEqual(cp1[1], cp2[1])
+
 
 
 if __name__ == '__main__':

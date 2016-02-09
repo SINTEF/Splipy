@@ -312,7 +312,7 @@ class SplineObject(object):
         # Swap knot vectors
         self.bases[dir1], self.bases[dir2] = self.bases[dir2], self.bases[dir1]
 
-    def insert_knot(self, direction, knot):
+    def insert_knot(self, knot, direction=0):
         """Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
@@ -347,7 +347,7 @@ class SplineObject(object):
             for (k0, k1) in zip(knot[:-1], knot[1:]):
                 element_knots = np.linspace(k0, k1, n + 2)
                 new_knots += list(element_knots[1:-1])
-            self.insert_knot(pardir, new_knots)
+            self.insert_knot(new_knots, pardir)
             pardir += 1
 
     def reparam(self, *args, **kwargs):
@@ -600,6 +600,65 @@ class SplineObject(object):
             result.append(np.max(self.controlpoints[..., i]))
         return result
 
+    def center(self):
+        """Gets the center of the domain
+        
+        For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
+
+        .. math:: \\tilde{x} = \\frac{1}{L} \int_{t_0}^{t_1} x(t) \; dt 
+
+        and :math:`L=t_1-t_0` is the length of the parametric domain :math:`[t_0,t_1]`.
+
+        For surfaces this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
+
+        .. math:: \\tilde{x} = \\frac{1}{A} \int_{v_0}^{v_1} \int_{u_0}^{u_1} x(u,v) \; du \; dv
+
+        and :math:`A=(u_1-u_0)(v_1-v_0)` is the area of the parametric domain :math:`[u_0,u_1]\\times[v_0,v_1]`.
+
+        .. warning:: For rational splines, this will integrate in projective coordinates, then project the centerpoint.
+        This is as opposed to integrate the rational functions :math:`\\frac{N_i(t)w_i}{\sum_j N_j(t)w_j}`
+        """
+
+        # compute integration of basis functions
+        Ns = [b.integrate(b.start(), b.end()) for b in self.bases]
+
+        # compute parametric size
+        par_size = np.prod([t1-t0 for (t0,t1) in zip(self.start(), self.end())])
+
+        # multiply basis functions with control points
+        idx = self.pardim - 1
+        result = self.controlpoints
+        for N in Ns[::-1]:
+            result = np.tensordot(N, result, axes=(0, idx))
+            idx -= 1
+
+        result /= par_size
+
+        # project to physical space
+        if self.rational:
+            result[:-1] /= result[-1]
+            result = np.delete(result, self.dimension)
+
+        return result
+
+    def lower_periodic(self, periodic, direction=0):
+        """Sets the periodicity of the spline object in the given direction,
+        keeping the geometry unchanged.
+
+        :param int direction: new periodicity, i.e. the basis is C^k over the start/end
+        """
+        direction = check_direction(direction, self.pardim)
+
+        b  = self.bases[direction]
+        while periodic < b.periodic:
+            self.insert_knot(self.start(direction), direction)
+            self.controlpoints = np.roll(self.controlpoints, -1, direction)
+            b.roll(1)
+            b.periodic -= 1
+            b.knots = b.knots[:-1]
+        if periodic > b.periodic:
+            raise ValueError('Cannot raise periodicity')
+
     def set_dimension(self, new_dim):
         """Sets the physical dimension of the object. If increased, the new
         components are set to zero.
@@ -617,6 +676,12 @@ class SplineObject(object):
         self.dimension = new_dim
 
         return self
+
+    def periodic(self, direction=0):
+        """Returns true if the spline object is periodic in the given parametric direction"""
+        direction = check_direction(direction, self.pardim)
+
+        return self.bases[direction].periodic > -1
 
     def force_rational(self):
         """Force a rational representation of the object.
@@ -766,3 +831,80 @@ class SplineObject(object):
         new_obj = copy.deepcopy(self)
         new_obj /= x
         return new_obj
+
+    @classmethod
+    def make_splines_compatible(cls, spline1, spline2):
+        """Ensure that two splines are compatible.
+
+        This will manipulate one or both to ensure that they are both rational
+        or nonrational, and that they lie in the same physical space.
+
+        :param SplineObject spline1: The first spline
+        :param SplineObject spline2: The second spline
+        """
+        # make both rational (if needed)
+        if spline1.rational:
+            spline2.force_rational()
+        elif spline2.rational:
+            spline1.force_rational()
+
+        # make both in the same geometric space
+        if spline1.dimension > spline2.dimension:
+            spline2.set_dimension(spline1.dimension)
+        else:
+            spline1.set_dimension(spline2.dimension)
+
+    @classmethod
+    def make_splines_identical(cls, spline1, spline2):
+        """Ensure that two splines have identical discretization.
+
+        This will first make them compatible (see
+        :func:`GeoMod.SplineObject.make_curves_compatible`), reparametrize them, and
+        possibly raise the order and insert knots as required.
+
+        :param SplineObject spline1: The first spline
+        :param SplineObject spline2: The second spline
+        """
+        # make sure that rational/dimension is the same
+        SplineObject.make_splines_compatible(spline1, spline2)
+
+        # make both have knot vectors in domain (0,1)
+        spline1.reparam()
+        spline2.reparam()
+
+        # settle on the lowest periodicity if different appear
+        for i in range(spline1.pardim):
+            if spline1.bases[i].periodic < spline2.bases[i].periodic:
+                spline2.lower_periodic(spline1.bases[i].periodic, i)
+            elif spline2.bases[i].periodic < spline1.bases[i].periodic:
+                spline1.lower_periodic(spline2.bases[i].periodic, i)
+
+        # make sure both have the same order
+        p1 = spline1.order()
+        p2 = spline2.order()
+        p  = tuple(max(q,r) for (q,r) in zip(p1,p2))
+        raise1 = tuple(max(q-r,0) for (q,r) in zip(p,p1))
+        raise2 = tuple(max(q-r,0) for (q,r) in zip(p,p2))
+
+        spline1.raise_order( *raise1 )
+        spline2.raise_order( *raise2 )
+
+        # make sure both have the same knot vectors
+        for i in range(spline1.pardim):
+            knot1 = spline1.knots(direction=i)
+            knot2 = spline2.knots(direction=i)
+            b1    = spline1.bases[i]
+            b2    = spline2.bases[i]
+            for k in knot1:
+                c1 = b1.continuity(k)
+                c2 = b2.continuity(k)
+                if c2 > c1:
+                    m = min(c2-c1, p[i]-1-c1) # c2=np.inf if knot does not exist
+                    spline2.insert_knot([k]*m, direction=i)
+            for k in knot2:
+                c1 = b1.continuity(k)
+                c2 = b2.continuity(k)
+                if c1 > c2:
+                    m = min(c1-c2, p[i]-1-c2) # c1=np.inf if knot does not exist
+                    spline1.insert_knot([k]*m, direction=i)
+

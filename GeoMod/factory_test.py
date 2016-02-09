@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import BSplineBasis, Curve, Surface
+from GeoMod import BSplineBasis, Curve, Surface, Volume
 import GeoMod.CurveFactory as CurveFactory
 import GeoMod.SurfaceFactory as SurfaceFactory
 import GeoMod.VolumeFactory as VolumeFactory
@@ -365,6 +365,37 @@ class TestFactory(unittest.TestCase):
                         (1 - w) + top(u, v)[1] * w)  # y-coordinate
                     self.assertAlmostEqual(
                         vol(u, v, w)[2], 0 * (1 - w) + top(u, v)[2] * w)  # z-coordinate
+
+
+    def test_edge_surfaces_six_sides(self):
+        # create the unit cube
+        vol = Volume()
+        vol.raise_order(2,2,2)
+        vol.refine(3)
+
+        edges = vol.faces()
+
+        # edge_surface should give back the same unit cube
+        vol2 = VolumeFactory.edge_surfaces(edges)
+
+        # check discretization
+        self.assertEqual(vol2.order(0), 4)
+        self.assertEqual(vol2.order(1), 4)
+        self.assertEqual(vol2.order(2), 4)
+
+        self.assertEqual(len(vol2.knots(0)), 5) # [0,.25,.5,.75,1]
+        self.assertEqual(len(vol2.knots(1)), 5)
+        self.assertEqual(len(vol2.knots(2)), 5)
+
+        # check a 5x5x5 evaluation grid
+        u = np.linspace(0,1,5)
+        v = np.linspace(0,1,5)
+        w = np.linspace(0,1,5)
+        pt  = vol( u,v,w)
+        pt2 = vol2(u,v,w)
+        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+
+
 
 
 if __name__ == '__main__':

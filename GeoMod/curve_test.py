@@ -2,8 +2,14 @@
 
 from GeoMod import Curve, BSplineBasis
 from math import sqrt
+import numpy as np
 import unittest
+import matplotlib.pyplot as plt
 
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 class TestCurve(unittest.TestCase):
     def test_constructor(self):
@@ -198,7 +204,9 @@ class TestCurve(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(TypeError):
-            crv.insert_knot(1, 2)  # too many arguments
+            crv.insert_knot(1, 2, 3)  # too many arguments
+        with self.assertRaises(ValueError):
+            crv.insert_knot(1, 2)  # direction=2 is illegal for curves
         with self.assertRaises(TypeError):
             crv.insert_knot()  # too few arguments
         with self.assertRaises(ValueError):
@@ -315,6 +323,60 @@ class TestCurve(unittest.TestCase):
             crv.split(-0.2)  # GoTools returns error on outside-domain errors
         with self.assertRaises(Exception):
             crv.split(1.4)  # GoTools returns error on outside-domain errors
+
+    def test_periodic_split(self):
+        # non-uniform rational knot vector of a periodic cubic n=7 curve
+        controlpoints = [[1, 0, 1], [1, 1, .7], [0, 1, .89], [-1, 1, 0.5], [-1, 0, 1], [-1,-.5,1], [1, -.5, 1]]
+        basis = BSplineBasis(4, [-3, -2, -1, 0, 1, 2, 2.5, 4, 5, 6, 7, 8, 9, 9.5], 2)
+        crv = Curve(basis, controlpoints, rational=True)
+        crv2 = crv.split(1)   # split at knot value
+        crv3 = crv.split(6.5) # split outside existing knot
+
+        self.assertEqual(len(crv),   7)
+        self.assertEqual(len(crv2), 10)
+        self.assertEqual(len(crv3), 11)
+
+        self.assertEqual(crv.periodic(),  True)
+        self.assertEqual(crv2.periodic(), False)
+        self.assertEqual(crv3.periodic(), False)
+
+        t = np.linspace(6.5, 8, 13) # domain where all parameter values are the same
+        pt  = crv( t)
+        pt2 = crv2(t)
+        pt3 = crv3(t)
+
+        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.max(pt-pt3), 0.0)
+
+    def test_write_g2(self):
+        buf = StringIO()
+        # test that periodic knot vectors are properly cut up before written
+        controlpoints = [[1,0], [0,1], [-1,0]]
+        basis = BSplineBasis(3, [-1,0,0,1,2,2,3], periodic=0)
+        crv = Curve(basis, controlpoints)
+        crv.write_g2(buf)
+        self.assertEqual(buf.getvalue().strip(),
+                         '100 1 0 0\n'
+                         '2 0\n'
+                         '4 3\n'
+                         '0.000000 0.000000 0.000000 1.000000 2.000000 2.000000 2.000000 \n'
+                         '1.000000 0.000000 \n'
+                         '0.000000 1.000000 \n'
+                         '-1.000000 0.000000 \n'
+                         '1.000000 0.000000')
+
+    def test_center(self):
+        # create the geometric mapping x(t) = t, y(t) = t^3,  t=[0,1]
+        cp = [[0, 0], [1.0/3, 0], [2.0/3, 0], [1.0, 1]]
+        basis = BSplineBasis(4)
+        crv = Curve(basis, cp)
+        center = crv.center()
+
+        self.assertAlmostEqual(center[0], .5)
+        self.assertAlmostEqual(center[1], .25)
+
+
+
 
 
 if __name__ == '__main__':

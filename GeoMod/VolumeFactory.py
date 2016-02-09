@@ -116,7 +116,7 @@ def edge_surfaces(*surfaces):
     if len(surfaces) == 2:
         surf1 = surfaces[0].clone()
         surf2 = surfaces[1].clone()
-        Surface.make_surfaces_identical(surf1, surf2)
+        Surface.make_splines_identical(surf1, surf2)
         (n1, n2, d) = surf1.controlpoints.shape  # d = dimension + rational
 
         controlpoints = np.zeros((n1, n2, 2, d))
@@ -133,6 +133,91 @@ def edge_surfaces(*surfaces):
 
         return result
     elif len(surfaces) == 6:
-        raise NotImplementedError('Should have been coons patch algorithm here. Come back later')
+        # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
+        umin = surfaces[0]
+        umax = surfaces[1]
+        vmin = surfaces[2]
+        vmax = surfaces[3]
+        wmin = surfaces[4]
+        wmax = surfaces[5]
+        vol1 = edge_surfaces(umin,umax)
+        vol2 = edge_surfaces(vmin,vmax)
+        vol3 = edge_surfaces(wmin,wmax)
+        vol4 = Volume(controlpoints=vol1.corners(), rational=vol1.rational)
+        vol1.swap(0, 2)
+        vol1.swap(1, 2)
+        vol2.swap(1, 2)
+        vol4.swap(1, 2)
+        Volume.make_splines_identical(vol1, vol2)
+        Volume.make_splines_identical(vol1, vol3)
+        Volume.make_splines_identical(vol1, vol4)
+        Volume.make_splines_identical(vol2, vol3)
+        Volume.make_splines_identical(vol2, vol4)
+        Volume.make_splines_identical(vol3, vol4)
+        result  = vol1.clone()
+        result.controlpoints +=   vol2.controlpoints
+        result.controlpoints +=   vol3.controlpoints
+        result.controlpoints -= 2*vol4.controlpoints
+        return result
     else:
         raise ValueError('Requires two or six input surfaces')
+
+def loft(surfaces):
+    # clone input, so we don't change those references
+    # make sure everything has the same dimension since we need to compute length
+    surfaces = [s.clone().set_dimension(3) for s in surfaces]
+    if len(surfaces)==2:
+        return SurfaceFactory.edge_curves(surfaces)
+    elif len(surfaces)==3:
+        # can't do cubic spline interpolation, so we'll do quadratic
+        basis3 = BSplineBasis(3)
+        dist  = basis3.greville()
+    else:
+        x = [s.center() for s in surfaces]
+
+        # create knot vector from the euclidian length between the surfaces
+        dist = [0]
+        for (x1,x0) in zip(x[1:],x[:-1]):
+            dist.append(dist[-1] + np.linalg.norm(x1-x0))
+
+        # using "free" boundary condition by setting N'''(u) continuous at second to last and second knot
+        knot = [dist[0]]*4 + dist[2:-2] + [dist[-1]]*4
+        basis3 = BSplineBasis(4, knot)
+
+    n = len(surfaces)
+    for i in range(n):
+        for j in range(i+1,n):
+            Surface.make_splines_identical(surfaces[i], surfaces[j])
+
+    basis1 = surfaces[0].bases[0]
+    basis2 = surfaces[0].bases[1]
+    m1     = basis1.num_functions()
+    m2     = basis2.num_functions()
+    dim    = len(surfaces[0][0])
+    u      = basis1.greville() # parametric interpolation points
+    v      = basis2.greville()
+    w      = dist
+
+    # compute matrices
+    Nu     = basis1(u)
+    Nv     = basis2(v)
+    Nw     = basis3(w)
+    Nu_inv = np.linalg.inv(Nu)
+    Nv_inv = np.linalg.inv(Nv)
+    Nw_inv = np.linalg.inv(Nw)
+
+    # compute interpolation points in physical space
+    x      = np.zeros((m1,m2,n, dim))
+    for i in range(n):
+        tmp        = np.tensordot(Nv, surfaces[i].controlpoints, axes=(1,1))
+        x[:,:,i,:] = np.tensordot(Nu, tmp                      , axes=(1,1))
+
+    # solve interpolation problem
+    cp = np.tensordot(Nw_inv, x,  axes=(1,2))
+    cp = np.tensordot(Nv_inv, cp, axes=(1,2))
+    cp = np.tensordot(Nu_inv, cp, axes=(1,2))
+
+    # re-order controlpoints so they match up with Surface constructor
+    cp = np.reshape(cp.transpose((2, 1, 0, 3)), (m1*m2*n, dim))
+
+    return Volume(basis1, basis2, basis3, cp, surfaces[0].rational)

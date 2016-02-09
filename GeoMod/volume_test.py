@@ -138,13 +138,13 @@ class TestVolume(unittest.TestCase):
 
         evaluation_point1 = vol(0.23, 0.37, 0.44)  # pick some evaluation point (could be anything)
 
-        vol.insert_knot(0,  .20)
-        vol.insert_knot('u', .5)
-        vol.insert_knot(0,   .7)
-        vol.insert_knot(1,   .1)
-        vol.insert_knot(1,   1.0 / 3)
-        vol.insert_knot(2,   .8)
-        vol.insert_knot('W', .9)
+        vol.insert_knot(.20,        0)
+        vol.insert_knot( .5,       'u')
+        vol.insert_knot( .7,        0)
+        vol.insert_knot( .1,        1)
+        vol.insert_knot( 1.0 / 3,   1)
+        vol.insert_knot( .8,        2)
+        vol.insert_knot( .9,       'W')
         knot1, knot2, knot3 = vol.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -171,9 +171,9 @@ class TestVolume(unittest.TestCase):
 
         evaluation_point1 = vol(0.23, 0.37, 0.44)
 
-        vol.insert_knot(0, [.20, .5, .7])
-        vol.insert_knot(1, [.1, 1.0 / 3])
-        vol.insert_knot(2, [.8, .9])
+        vol.insert_knot([.20, .5, .7], 0)
+        vol.insert_knot([.1, 1.0 / 3], 1)
+        vol.insert_knot([.8, .9], 2)
         knot1, knot2, knot3 = vol.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
         self.assertEqual(len(knot2), 8)  # 6 to start with, 2 new ones
@@ -267,9 +267,9 @@ class TestVolume(unittest.TestCase):
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         basis3 = BSplineBasis(2, [0, 0, 1, 1])
         vol = Volume(basis1, basis2, basis3, controlpoints)
-        split_u_vol = vol.split(0, [.1, .2, .3, .4, .5, .6])
-        split_v_vol = vol.split(1, .1)
-        split_w_vol = vol.split(2, [.4, .5, .6])
+        split_u_vol = vol.split([.1, .2, .3, .4, .5, .6], 0)
+        split_v_vol = vol.split(.1, 1)
+        split_w_vol = vol.split([.4, .5, .6], 2)
 
         self.assertEqual(len(split_u_vol), 7)
         self.assertEqual(len(split_v_vol), 2)
@@ -420,6 +420,26 @@ class TestVolume(unittest.TestCase):
         self.assertAlmostEqual(np.max(pt-pt2), 0.0)
         self.assertAlmostEqual(vol.start('w'),   0)
         self.assertAlmostEqual(vol.end('w'),     8)
+
+    def test_make_identical(self):
+        basis1 = BSplineBasis(4, [-1,-1,0,0,1,1,2,2], periodic=1)
+        basis2 = BSplineBasis(3, [-1,0,0,1,1,2],      periodic=0)
+        basis3 = BSplineBasis(2)
+        vol1 = Volume()
+        vol2 = Volume(basis1, basis2, basis3)
+        vol1.refine(1)
+        Volume.make_splines_identical(vol1,vol2)
+
+        for v in (vol1, vol2):
+            self.assertEqual(v.periodic(0), False)
+            self.assertEqual(v.periodic(1), False)
+            self.assertEqual(v.periodic(2), False)
+
+            self.assertEqual(v.order(), (4,3,2))
+            self.assertAlmostEqual(len(v.knots(0, True)), 11)
+            self.assertAlmostEqual(len(v.knots(1, True)), 8)
+            self.assertAlmostEqual(len(v.knots(2, True)), 5)
+
 
 
 if __name__ == '__main__':

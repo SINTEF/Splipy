@@ -176,7 +176,7 @@ def edge_curves(*curves):
     if len(curves) == 2:
         crv1 = curves[0].clone()
         crv2 = curves[1].clone()
-        Curve.make_curves_identical(crv1, crv2)
+        Curve.make_splines_identical(crv1, crv2)
         (n, d) = crv1.controlpoints.shape  # d = dimension + rational
 
         controlpoints = np.zeros((2 * n, d))
@@ -188,14 +188,14 @@ def edge_curves(*curves):
     elif len(curves) == 4:
         # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
         bottom = curves[0]
-        right = curves[1]
-        top = curves[2].clone()
-        left = curves[3].clone()  # gonna change these two, so make copies
+        right  = curves[1]
+        top    = curves[2].clone()
+        left   = curves[3].clone()  # gonna change these two, so make copies
         top.reverse()
         left.reverse()
         # create linear interpolation between opposing sides
-        s1 = edge_curves([bottom, top])
-        s2 = edge_curves([left, right])
+        s1 = edge_curves(bottom, top)
+        s2 = edge_curves(left, right)
         s2.swap()
         # create (linear,linear) corner parametrization
         linear = BSplineBasis(2)
@@ -203,9 +203,9 @@ def edge_curves(*curves):
         s3 = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]], rat)
 
         # in order to add spline surfaces, they need identical parametrization
-        Surface.make_surfaces_identical(s1, s2)
-        Surface.make_surfaces_identical(s1, s3)
-        Surface.make_surfaces_identical(s2, s3)
+        Surface.make_splines_identical(s1, s2)
+        Surface.make_splines_identical(s1, s3)
+        Surface.make_splines_identical(s2, s3)
 
         result = s1
         result.controlpoints += s2.controlpoints
@@ -305,3 +305,56 @@ def thicken(curve, amount):
 
     else:  # dimension=3, we will create a surrounding tube
         raise NotImplementedError('Currently only 2D supported. See comments in source code')
+
+def loft(curves):
+    # clone input, so we don't change those references
+    # make sure everything has the same dimension since we need to compute length
+    curves = [c.clone().set_dimension(3) for c in curves]
+    if len(curves)==2:
+        return SurfaceFactory.edge_curves(curves)
+    elif len(curves)==3:
+        # can't do cubic spline interpolation, so we'll do quadratic
+        basis2 = BSplineBasis(3)
+        dist  = basis2.greville()
+    else:
+        x = [c.center() for c in curves]
+
+        # create knot vector from the euclidian length between the curves
+        dist = [0]
+        for (x1,x0) in zip(x[1:],x[:-1]):
+            dist.append(dist[-1] + np.linalg.norm(x1-x0))
+
+        # using "free" boundary condition by setting N'''(u) continuous at second to last and second knot
+        knot = [dist[0]]*4 + dist[2:-2] + [dist[-1]]*4
+        basis2 = BSplineBasis(4, knot)
+
+    n = len(curves)
+    for i in range(n):
+        for j in range(i+1,n):
+            Curve.make_splines_identical(curves[i], curves[j])
+    
+    basis1 = curves[0].bases[0]
+    m      = basis1.num_functions()
+    u      = basis1.greville() # parametric interpolation points
+    v      = dist              # parametric interpolation points
+    
+    # compute matrices
+    Nu     = basis1(u)
+    Nv     = basis2(v)
+    Nu_inv = np.linalg.inv(Nu)
+    Nv_inv = np.linalg.inv(Nv)
+
+    # compute interpolation points in physical space
+    x      = np.zeros((m,n, len(curves[0][0])))
+    for i in range(n):
+        x[:,i,:] = Nu * curves[i].controlpoints
+
+    # solve interpolation problem
+    cp = np.tensordot(Nv_inv, x,  axes=(1,1))
+    cp = np.tensordot(Nu_inv, cp, axes=(1,1))
+
+    # re-order controlpoints so they match up with Surface constructor
+    cp = cp.transpose((1, 0, 2))
+    cp = cp.reshape(n*m, cp.shape[2])
+
+    return Surface(basis1, basis2, cp)

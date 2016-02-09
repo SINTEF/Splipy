@@ -106,14 +106,6 @@ class Curve(SplineObject):
         self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
         self.bases = [newBasis]
 
-    def insert_knot(self, knot):
-        """Insert a new knot into the curve.
-
-        :param knot: The new knot(s) to insert
-        :type knot: float or [float]
-        """
-        return super(Curve, self).insert_knot(direction=0, knot=knot)
-
     def append(self, curve):
         """Extend the curve by merging another curve to the end of it.
 
@@ -134,7 +126,7 @@ class Curve(SplineObject):
         extending_curve = curve.clone()
 
         # make sure both are in the same space, and (if needed) have rational weights
-        Curve.make_curves_compatible(self, extending_curve)
+        Curve.make_splines_compatible(self, extending_curve)
 
         # make sure both have the same discretization order
         p1 = self.order(0)
@@ -173,7 +165,7 @@ class Curve(SplineObject):
         return p-1-m, where m is the knot multiplicity and inf between knots"""
         return self.bases[0].continuity(knot)
 
-    def split(self, knots):
+    def split(self, knots, direction=0):
         """Split a curve into two or more separate representations with C0
         continuity between them.
 
@@ -194,6 +186,19 @@ class Curve(SplineObject):
             if continuity == np.inf:
                 continuity = p - 1
             splitting_curve.insert_knot([k] * (continuity + 1))
+
+        b = splitting_curve.bases[0]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_curve.controlpoints = np.roll(splitting_curve.controlpoints, -mu, 0)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_curve.split(knots[1:])
+            else:
+                return splitting_curve
+
 
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
@@ -247,6 +252,10 @@ class Curve(SplineObject):
 
         :param file-like outfile: The file to write to
         """
+        if self.periodic():
+            crv = self.split(self.start())
+            crv.write_g2(outfile)
+            return
         outfile.write('100 1 0 0\n')  # surface header, gotools version 1.0.0
         outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
         self.bases[0].write_g2(outfile)
@@ -259,67 +268,3 @@ class Curve(SplineObject):
 
     def __repr__(self):
         return str(self.bases[0]) + '\n' + str(self.controlpoints)
-
-    @classmethod
-    def make_curves_compatible(cls, crv1, crv2):
-        """Ensure that two curves are compatible.
-
-        This will manipulate one or both to ensure that they are both rational
-        or nonrational, and that they lie in the same physical space.
-
-        :param Curve crv1: The first curve
-        :param Curve crv2: The second curve
-        """
-        # make both rational
-        if crv1.rational:
-            crv2.force_rational()
-        if crv2.rational:
-            crv1.force_rational()
-
-        # make both in the same geometric space
-        if crv1.dimension > crv2.dimension:
-            crv2.set_dimension(crv1.dimension)
-        else:
-            crv1.set_dimension(crv2.dimension)
-
-    @classmethod
-    def make_curves_identical(cls, crv1, crv2):
-        """Ensure that two curves have identical discretization.
-
-        This will first make them compatible (see
-        :func:`GeoMod.Curve.make_curves_compatible`), reparametrize them,
-        and possibly raise the order and insert knots as required.
-
-        :param Curve crv1: The first curve
-        :param Curve crv2: The second curve
-        """
-        # make sure that rational/dimension is the same
-        Curve.make_curves_compatible(crv1, crv2)
-
-        # make both have knot vectors in domain (0,1)
-        crv1.reparam()
-        crv2.reparam()
-
-        # make sure both have the same order
-        p1 = crv1.order(0)
-        p2 = crv2.order(0)
-        if p1 < p2:
-            crv1.raise_order(p2 - p1)
-        else:
-            crv2.raise_order(p1 - p2)
-
-        # make sure both have the same knot vector
-        knot1 = crv1.knots(0, with_multiplicities=True)
-        knot2 = crv2.knots(0, with_multiplicities=True)
-        i1 = 0
-        i2 = 0
-        while i1 < len(knot1) and i2 < len(knot2):
-            if abs(knot1[i1] - knot2[i2]) < crv1.bases[0].tol:
-                i1 += 1
-                i2 += 1
-            elif knot1[i1] < knot2[i2]:
-                crv2.insert_knot(knot1[i1])
-                i1 += 1
-            else:
-                crv1.insert_knot(knot2[i2])
-                i2 += 1

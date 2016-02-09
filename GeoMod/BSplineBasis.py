@@ -42,17 +42,19 @@ class BSplineBasis:
         self.knots = np.array(knots)
         self.knots = self.knots.astype(float)
         self.order = order
-        p          = order
         self.periodic = periodic
 
         # error test input
-        if len(knots) < order:
-            raise ValueError('knot vector has too few elements')
-        if len(knots) < 2*(order+periodic):
+        p          = order
+        k          = periodic
+        n          = len(knots)
+        if p < 1:
+            raise ValueError('invalid spline order')
+        if n < 2*p:
             raise ValueError('knot vector has too few elements')
         if periodic >= 0:
-            for i in range(periodic + 1):
-                if abs((knots[i + 1] - knots[i]) - (knots[-p - periodic + i ] - knots[-p - periodic - 1 + i])) > self.tol:
+            for i in range(p + k - 1):
+                if abs((knots[i + 1] - knots[i]) - (knots[-p - k + i ] - knots[-p - k - 1 + i])) > self.tol:
                     raise ValueError('periodic knot vector is mis-matching at the start/end')
         for i in range(len(knots) - 1):
             if knots[i + 1] - knots[i] < -self.tol:
@@ -178,6 +180,37 @@ class BSplineBasis:
 
         return N
 
+    def integrate(self, t0, t1):
+        """integrate(t0, t1)
+
+        Integrate all basis functions over a given domain
+
+        :param float t0: The parametric starting point
+        :param float t1: The parametric end point
+        :return: The integration of all functions over the input domain
+        :rtype: list
+        """
+        if self.periodic > -1 and (t0<self.start() or t1>self.end()):
+            raise NotImplemented('Periodic functions integrated across sem')
+
+        t0 = max(t0, self.start())
+        t1 = min(t1, self.end()  )
+        p  = self.order
+        knot = [self.knots[0]] + list(self.knots) + [self.knots[-1]]
+        integration_basis = BSplineBasis(p + 1, knot)
+        N0 = np.array(integration_basis.evaluate(t0)).flatten()
+        N1 = np.array(integration_basis.evaluate(t1)).flatten()
+        N  = [(knot[i+p]-knot[i])*1.0/p * np.sum(N1[i:]-N0[i:]) for i in range(N0.size)]
+        N  = N[1:]
+
+        # collapse periodic functions onto themselves
+        if self.periodic > -1:
+            for j in range(self.periodic + 1):
+                N[j] += N[-self.periodic - 1 + j]
+            N = N[:-self.periodic-1]
+
+        return N
+
     def normalize(self):
         """Set the parametric domain to be (0,1)."""
         self -= self.start()  # set start-point to 0
@@ -208,6 +241,12 @@ class BSplineBasis:
             between knots.
         :rtype: int or float
         """
+        if self.periodic >= 0:
+            if knot < self.start() or knot > self.end():
+                knot = (knot - self.start()) % (self.end() - self.start()) + self.start()
+        elif knot < self.start() or self.end() < knot:
+            raise ValueError('out of range')
+
         p = self.order
         mu = bisect_left(self.knots, knot)
         if abs(self.knots[mu] - knot) > self.tol:
@@ -269,7 +308,10 @@ class BSplineBasis:
         :rtype: numpy.array
         :raises ValueError: If the new knot is outside the domain
         """
-        if new_knot < self.start() or self.end() < new_knot:
+        if self.periodic >= 0:
+            if new_knot < self.start() or new_knot > self.end():
+                new_knot = (new_knot - self.start()) % (self.end() - self.start()) + self.start()
+        elif new_knot < self.start() or self.end() < new_knot:
             raise ValueError('new_knot out of range')
         # mu is the index of last non-zero (old) basis function
         mu = bisect_right(self.knots, new_knot)
@@ -310,6 +352,23 @@ class BSplineBasis:
                 for i in range(p+r+1):
                     self.knots[i] = k0 - (k1-self.knots[m-p-r-1+i])
         return C
+
+    def roll(self, new_start):
+        """rotate a periodic knot vector by setting a new starting index.
+
+        :param int new_start: The index of to the new first knot
+        """
+        if self.periodic < 0:
+            raise  RuntimeError("roll only applicable for periodic knot vectors")
+
+        p = self.order
+        k = self.periodic
+        n = len(self.knots)
+        t1 = self.knots[0] - self.knots[-p - k - 1]
+        left  = slice(new_start, n-p-k-1, None)
+        len_left = left.stop - left.start
+        right = slice(0, n-len_left, None)
+        (self.knots[:len_left], self.knots[len_left:]) = (self.knots[left], self.knots[right] - t1)
 
     def write_g2(self, outfile):
         """Write the basis in GoTools format.
