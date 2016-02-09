@@ -53,16 +53,6 @@ class Volume(SplineObject):
             s.swap()
         return result
 
-    def corners(self):
-        """Return the eight corner control points in (parametric) in order (0,0,0), (1,0,0), (0,1,0), (1,1,0), (0,0,1),...
-
-        :return: Corners
-        :rtype: (np.ndarray)
-        .. warning:: For rational splines, this will return the corners in projective coordinates, including weights.
-        """
-        (n1, n2, n3, dim) = self.controlpoints.shape
-        return self.controlpoints[::n1-1, ::n2-1, ::n3-1, :].reshape((8,dim))
-
     def split(self, knots, direction):
         """Split a volume into two or more separate representations with C0
         continuity between them.

@@ -85,22 +85,6 @@ class Surface(SplineObject):
         vmax = Curve(self.bases[0], np.reshape(self.controlpoints[:, -1, :], (n1, dim)), rat)
         return (umin, umax, vmin, vmax)
 
-    def corners(self):
-        """Return the four corner control points in parametric row first ordering, i.e. (0,0), (0,1), (1,0), (1,1)
-
-        :return: Corners
-        :rtype: (np.ndarray)
-        .. warning:: For rational splines, this will return the corners in projective coordinates, including weights.
-        """
-        # ASSUMPTION: open knot vectors
-        (n1, n2, dim) = self.controlpoints.shape
-        result = np.array(4,dim)
-        result[0,:] = self.controlpoints[ 0, 0,:]
-        result[1,:] = self.controlpoints[ 0,-1,:]
-        result[2,:] = self.controlpoints[-1, 0,:]
-        result[3,:] = self.controlpoints[-1,-1,:]
-        return result
-
     def split(self, knots, direction):
         """Split a surface into two or more separate representations with C0
         continuity between them.

@@ -730,6 +730,27 @@ class SplineObject(object):
 
         return result
 
+    def corners(self, order='F'):
+        """Return the corner control points.
+
+        The `order` parameter determines which order to use, either ``'F'`` or
+        ``'C'``, for row-major or column-major ordering. E.g. for a volume, in
+        parametric coordinates,
+
+        - ``'C'`` gives (0,0,0), (1,0,0), (0,1,0), (1,1,0), (0,0,1), etc.
+        - ``'F'`` gives (0,0,0), (0,0,1), (0,1,0), (0,1,1), (1,0,0), etc.
+
+        :param str order: The ordering to use
+        :return: Corners
+        :rtype: np.array
+        .. warning:: For rational splines, this will return the corners in
+            projective coordinates, including weights.
+        """
+        result = np.zeros((2**self.pardim, self.dimension))
+        for i, p in enumerate(product((0,-1), repeat=self.pardim)):
+            result[i,:] = self.controlpoints[p[::-1] if order == 'C' else p]
+        return result
+
     def lower_periodic(self, periodic, direction=0):
         """Sets the periodicity of the spline object in the given direction,
         keeping the geometry unchanged.
