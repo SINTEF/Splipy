@@ -34,8 +34,7 @@ class Volume(SplineObject):
         super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
 
     def faces(self):
-        """Return the six faces of this volume (with outward normal vectors) in
-        order: umin, umax, vmin, vmax, wmin, wmax.
+        """Return the six faces of this volume in order: umin, umax, vmin, vmax, wmin, wmax.
 
         :return: Boundary faces
         :rtype: (Surface)
@@ -49,10 +48,10 @@ class Volume(SplineObject):
         vmax = Surface(self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, -1, :, :], (n1 * n3, dim), rat))
         wmin = Surface(self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, 0, :],  (n1 * n2, dim), rat))
         wmax = Surface(self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, -1, :], (n1 * n2, dim), rat))
-        umax.swap()
-        vmax.swap()
-        wmax.swap()
-        return [umin, umax, vmin, vmax, wmin, wmax]
+        result = [umin, umax, vmin, vmax, wmin, wmax]
+        for s in result:
+            s.swap()
+        return result
 
     def corners(self):
         """Return the eight corner control points in (parametric) in order (0,0,0), (1,0,0), (0,1,0), (1,1,0), (0,0,1),...

@@ -86,7 +86,7 @@ class Surface(SplineObject):
                 self.evaluate_derivative(u, v, d=(0, 1)))
 
     def edges(self):
-        """Return the four edge curves in (parametric) order: bottom, right, top, left.
+        """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
 
         :return: Edge curves
         :rtype: (Curve)
@@ -95,28 +95,26 @@ class Surface(SplineObject):
         (p1, p2) = self.order()
         (n1, n2, dim) = self.controlpoints.shape
         rat = self.rational
-        umin = Curve(self.bases[1], np.reshape(self.controlpoints[0, :, :], (n2, dim)), rat)
+        umin = Curve(self.bases[1], np.reshape(self.controlpoints[ 0, :, :], (n2, dim)), rat)
         umax = Curve(self.bases[1], np.reshape(self.controlpoints[-1, :, :], (n2, dim)), rat)
-        vmin = Curve(self.bases[0], np.reshape(self.controlpoints[:, 0, :], (n1, dim)), rat)
+        vmin = Curve(self.bases[0], np.reshape(self.controlpoints[:,  0, :], (n1, dim)), rat)
         vmax = Curve(self.bases[0], np.reshape(self.controlpoints[:, -1, :], (n1, dim)), rat)
-        # make the curves form a clockwise oriented closed loop around surface
-        umax.reverse()
-        vmax.reverse()
-        return (vmin, umax, vmax, umin)
+        return (umin, umax, vmin, vmax)
 
     def corners(self):
-        """Return the four corner control points in (parametric) counter-clockwise order starting from (umin,vmin)
+        """Return the four corner control points in parametric row first ordering, i.e. (0,0), (0,1), (1,0), (1,1)
 
         :return: Corners
         :rtype: (np.ndarray)
         .. warning:: For rational splines, this will return the corners in projective coordinates, including weights.
         """
+        # ASSUMPTION: open knot vectors
         (n1, n2, dim) = self.controlpoints.shape
         result = np.array(4,dim)
         result[0,:] = self.controlpoints[ 0, 0,:]
-        result[1,:] = self.controlpoints[-1, 0,:]
-        result[2,:] = self.controlpoints[-1,-1,:]
-        result[3,:] = self.controlpoints[ 0,-1,:]
+        result[1,:] = self.controlpoints[ 0,-1,:]
+        result[2,:] = self.controlpoints[-1, 0,:]
+        result[3,:] = self.controlpoints[-1,-1,:]
         return result
 
     def raise_order(self, raise_u, raise_v):

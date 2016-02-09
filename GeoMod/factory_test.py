@@ -374,9 +374,6 @@ class TestFactory(unittest.TestCase):
         vol.refine(3)
 
         edges = vol.faces()
-        edges[0].swap() # returns outward-pointing normal
-        edges[2].swap() # and we don't want that
-        edges[4].swap()
 
         # edge_surface should give back the same unit cube
         vol2 = VolumeFactory.edge_surfaces(edges)
