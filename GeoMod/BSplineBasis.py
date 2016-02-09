@@ -48,6 +48,8 @@ class BSplineBasis:
         p          = order
         k          = periodic
         n          = len(knots)
+        if p < 1:
+            raise ValueError('invalid spline order')
         if n < 2*p:
             raise ValueError('knot vector has too few elements')
         if periodic >= 0:

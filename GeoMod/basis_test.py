@@ -27,6 +27,43 @@ class TestBasis(unittest.TestCase):
             BSplineBasis(4, [1, 2, 4, 8], periodic=1)
         with self.assertRaises(ValueError):
             BSplineBasis(4, [1, 2, 3, 7, 8], periodic=2)
+        with self.assertRaises(ValueError):
+            BSplineBasis(3, [0,0,0,3,2,2,2])
+        with self.assertRaises(ValueError):
+            BSplineBasis(3, [0,1,2,3,5,6], periodic=1)
+        with self.assertRaises(ValueError):
+            BSplineBasis(-1, [0,0,1,1])
+
+    def test_num_functions(self):
+        b = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
+        self.assertEqual(b.num_functions(), 6)
+        b = BSplineBasis(4, [-2, -1, 0, 0, 1, 2, 3, 3, 4, 5], periodic=1)
+        self.assertEqual(b.num_functions(), 4)
+
+    def test_start_end(self):
+        b = BSplineBasis(4, [-2, -1, 0, 0, 1, 2, 3, 3, 4, 5], periodic=1)
+        self.assertAlmostEqual(b.start(), 0)
+        self.assertAlmostEqual(b.end(),   3)
+        b = BSplineBasis(3, [0, 1, 1, 2, 3, 4, 4, 6])
+        self.assertAlmostEqual(b.start(), 1)
+        self.assertAlmostEqual(b.end(),   4)
+
+    def test_reverse(self):
+        b = BSplineBasis(3, [0,0,0,1,3,3,6,10,15,21,21,21])
+        b.reverse()
+        expect = [0,0,0,6,11,15,18,18,20,21,21,21]
+        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+
+    def test_reparam(self):
+        b = BSplineBasis(5, [-1, 0, 1, 1, 1, 3, 9, 10, 11, 11, 11, 13, 19], periodic=1)
+        b.reparam(11, 21)
+        expect = [9, 10, 11, 11, 11, 13, 19, 20, 21, 21, 21, 23, 29]
+        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+        b.reparam()
+        expect = [-.2, -.1, 0, 0, 0, .2, .8, .9, 1.0, 1.0, 1.0, 1.2, 1.8]
+        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+
+        
 
     def test_greville(self):
         b = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
@@ -36,8 +73,35 @@ class TestBasis(unittest.TestCase):
         self.assertAlmostEqual(b.greville(), [0.0, 1.0/3.0, 1.0, 2.0, 8.0/3.0, 3.0])
 
     def test_raise_order(self):
+        # test normal knot vector
+        b  = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
+        b2 = b.raise_order(2)
+        expect =  [0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
+        self.assertAlmostEqual(np.max(np.abs(b2.knots - expect)), 0)
+        self.assertEqual(b2.order, 6)
+
+        # test periodic knot vector
+        b = BSplineBasis(5, [-1, 0, 1, 1, 1, 3, 9, 10, 11, 11, 11, 13, 19], periodic=1)
+        b2 = b.raise_order(1)
+        expect =  [0, 0, 1, 1, 1, 1, 3, 3, 9, 9, 10, 10, 11, 11, 11, 11, 13, 13]
+        self.assertAlmostEqual(np.max(np.abs(b2.knots - expect)), 0)
+        self.assertEqual(b2.order,    6)
+        self.assertEqual(b2.periodic, 1)
+
         with self.assertRaises(ValueError):
             BSplineBasis().raise_order(-1)
+
+    def test_roll(self):
+        b = BSplineBasis(3, [-1, 0, 0, 2, 3, 4, 4, 6], periodic=0)
+        b.roll(3)
+        expect = [0, 2, 3, 4, 4, 6, 7, 8]
+        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+        b.roll(2)
+        expect = [2, 3, 4, 4, 6, 7, 8, 8]
+        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+
+        with self.assertRaises(IndexError):
+            b.roll(19)
 
     def test_write_g2(self):
         buf = StringIO()
