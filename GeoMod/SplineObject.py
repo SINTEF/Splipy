@@ -123,8 +123,8 @@ class SplineObject(object):
 
         return result
 
-    def evaluate_derivative(self, *params, **kwargs):
-        """evaluate_derivative(u, v, ..., [d=(1,1,...)])
+    def derivative(self, *params, **kwargs):
+        """derivative(u, v, ..., [d=(1,1,...)])
 
         Evaluate the derivative of the object at the given parametric values.
 
@@ -140,20 +140,20 @@ class SplineObject(object):
         .. code:: python
 
            # Tangent of curve at single point
-           curve.evaluate_derivative(1.0)
+           curve.derivative(1.0)
 
            # Double derivative of curve at single point:
-           curve.evaluate_derivative(1.0, d=2)
+           curve.derivative(1.0, d=2)
 
            # Third derivative of curve at several points:
-           curve.evaluate_derivative([0.0, 1.0, 2.0], d=3)
+           curve.derivative([0.0, 1.0, 2.0], d=3)
 
            # Tangents of surface:
-           surface.evaluate_derivative(0.5, 0.7, d=(1,0))
-           surface.evaluate_derivative(0.5, 0.7, d=(0,1))
+           surface.derivative(0.5, 0.7, d=(1,0))
+           surface.derivative(0.5, 0.7, d=(0,1))
 
            # Cross-derivative of surface:
-           surface.evaluate_derivative(0.5, 0.7, d=(1,1))
+           surface.derivative(0.5, 0.7, d=(1,1))
 
         :param u,v,...: Parametric coordinates in which to evaluate
         :type u,v,...: float or [float]
@@ -201,14 +201,14 @@ class SplineObject(object):
 
         return result
 
-    def evaluate_tangent(self, *params, **kwargs):
-        """evaluate_tangent(u, v, ..., [direction=None])
+    def tangent(self, *params, **kwargs):
+        """tangent(u, v, ..., [direction=None])
 
         Evaluate the tangents of the object at the given parametric values.
 
         If `direction` is given, only the derivatives in that direction are
         evaluated. This is equivalent to calling
-        :func:`GeoMod.SplineObject.evaluate_derivative` with
+        :func:`GeoMod.SplineObject.derivative` with
         `d=(0,...,0,1,0,...,0)`, the unit vector corresponding to the given
         direction.
 
@@ -228,13 +228,13 @@ class SplineObject(object):
             result = ()
             for i in range(self.pardim):
                 derivative[i] = 1
-                result += (self.evaluate_derivative(*params, d=derivative),)
+                result += (self.derivative(*params, d=derivative),)
                 derivative[i] = 0
             return result
 
         i = check_direction(direction, self.pardim)
         derivative[i] = 1
-        return self.evaluate_derivative(*params, d=derivative)
+        return self.derivative(*params, d=derivative)
 
     def raise_order(self, *raises):
         """raise_order(u, v, ...)

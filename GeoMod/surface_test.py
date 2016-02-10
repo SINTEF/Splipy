@@ -130,30 +130,30 @@ class TestSurface(unittest.TestCase):
         surf = Surface(basis1, basis2, controlpoints)
 
         # call evaluation at a 5x4 grid of points
-        val = surf.evaluate_derivative([0, .2, .5, .6, 1], [0, .2, .4, 1], d=(1, 0))
+        val = surf.derivative([0, .2, .5, .6, 1], [0, .2, .4, 1], d=(1, 0))
         self.assertEqual(len(val.shape), 3)  # result should be wrapped in 3-index tensor
         self.assertEqual(val.shape[0], 5)  # 5 evaluation points in u-direction
         self.assertEqual(val.shape[1], 4)  # 4 evaluation points in v-direction
         self.assertEqual(val.shape[2], 2)  # 2 coordinates (x,y)
 
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(1, 0))[0], .88)  # dx/du=2uv+(1-v)
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(1, 0))[1], 0)  # dy/du=0
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(0, 1))[0], -.16)  # dx/dv=u^2-u
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(0, 1))[1], 1)  # dy/dv=1
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(1, 1))[0], -.60)  # d2x/dudv=2u-1
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(2, 0))[0], 0.40)  # d2x/dudu=2v
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(3, 0))[0], 0.00)  # d3x/du3=0
-        self.assertAlmostEqual(surf.evaluate_derivative(.2, .2, d=(0, 2))[0], 0.00)  # d2y/dv2=0
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(1, 0))[0], .88)  # dx/du=2uv+(1-v)
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(1, 0))[1], 0)  # dy/du=0
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(0, 1))[0], -.16)  # dx/dv=u^2-u
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(0, 1))[1], 1)  # dy/dv=1
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(1, 1))[0], -.60)  # d2x/dudv=2u-1
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(2, 0))[0], 0.40)  # d2x/dudu=2v
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(3, 0))[0], 0.00)  # d3x/du3=0
+        self.assertAlmostEqual(surf.derivative(.2, .2, d=(0, 2))[0], 0.00)  # d2y/dv2=0
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            val = surf.evaluate_derivative(-10, .5)  # evalaute outside parametric domain
+            val = surf.derivative(-10, .5)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.evaluate_derivative(+10, .3)  # evalaute outside parametric domain
+            val = surf.derivative(+10, .3)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.evaluate_derivative(.5, -10)  # evalaute outside parametric domain
+            val = surf.derivative(.5, -10)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.evaluate_derivative(.5, +10)  # evalaute outside parametric domain
+            val = surf.derivative(.5, +10)  # evalaute outside parametric domain
 
     def test_raise_order(self):
         # more or less random 2D surface with p=[2,2] and n=[4,3]

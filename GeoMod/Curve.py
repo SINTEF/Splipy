@@ -31,8 +31,8 @@ class Curve(SplineObject):
         """
         super(Curve, self).__init__([basis], controlpoints, rational)
 
-    def evaluate_derivative(self, t, d=1):
-        """evaluate_derivative(u, [d=1])
+    def derivative(self, t, d=1):
+        """derivative(u, [d=1])
 
         Evaluate the derivative of the curve at the given parametric values.
 
@@ -49,7 +49,7 @@ class Curve(SplineObject):
         :rtype: numpy.array
         """
         if not self.rational or d != 2:
-            return super(Curve, self).evaluate_derivative(t, d=d)
+            return super(Curve, self).derivative(t, d=d)
 
         t = ensure_listlike(t)
         dN = self.bases[0].evaluate(t, d)
