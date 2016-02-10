@@ -69,23 +69,6 @@ class Surface(SplineObject):
         else:
             raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
 
-    def evaluate_tangent(self, u, v):
-        """Evaluate the tangents of the surface at given parametric values.
-
-        This is equivalent to :func:`GeoMod.Surface.evaluate_derivative` with
-        ``d=(1,0)`` and ``d=(0,1)``.
-
-        :param u: Parametric coordinate(s) in the first direction
-        :type u: float or [float]
-        :param v: Parametric coordinate(s) in the second direction
-        :type v: float or [float]
-        :return: Two arrays *dX/du[i,j,k]* and *dX/dv[i,j,k]* of the tangent
-            component *xk* evaluated at *(u[i], v[j])*
-        :rtype: (numpy.array)
-        """
-        return (self.evaluate_derivative(u, v, d=(1, 0)),
-                self.evaluate_derivative(u, v, d=(0, 1)))
-
     def edges(self):
         """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
 
@@ -101,59 +84,6 @@ class Surface(SplineObject):
         vmin = Curve(self.bases[0], np.reshape(self.controlpoints[:,  0, :], (n1, dim)), rat)
         vmax = Curve(self.bases[0], np.reshape(self.controlpoints[:, -1, :], (n1, dim)), rat)
         return (umin, umax, vmin, vmax)
-
-    def corners(self):
-        """Return the four corner control points in parametric row first ordering, i.e. (0,0), (0,1), (1,0), (1,1)
-
-        :return: Corners
-        :rtype: (np.ndarray)
-        .. warning:: For rational splines, this will return the corners in projective coordinates, including weights.
-        """
-        # ASSUMPTION: open knot vectors
-        (n1, n2, dim) = self.controlpoints.shape
-        result = np.array(4,dim)
-        result[0,:] = self.controlpoints[ 0, 0,:]
-        result[1,:] = self.controlpoints[ 0,-1,:]
-        result[2,:] = self.controlpoints[-1, 0,:]
-        result[3,:] = self.controlpoints[-1,-1,:]
-        return result
-
-    def raise_order(self, raise_u, raise_v):
-        """Raise the order of the surface.
-
-        :param int raise_u: Number of degrees to increase in the first direction
-        :param int raise_v: Number of degrees to increase in the second direction
-        """
-        if raise_u < 0 or raise_v < 0:
-            raise ValueError('Raise order requires a non-negative parameter')
-        elif raise_u + raise_v == 0:
-            return
-        # create the new basis
-        newBasis1 = self.bases[0].raise_order(raise_u)
-        newBasis2 = self.bases[1].raise_order(raise_v)
-
-        # set up an interpolation problem. This is in projective space, so no problems for rational cases
-        interpolation_pts_u = newBasis1.greville()  # parametric interpolation points u
-        interpolation_pts_v = newBasis2.greville()  # parametric interpolation points v
-        N_u_old = self.bases[0].evaluate(interpolation_pts_u)
-        N_u_new = newBasis1.evaluate(interpolation_pts_u)
-        N_v_old = self.bases[1].evaluate(interpolation_pts_v)
-        N_v_new = newBasis2.evaluate(interpolation_pts_v)
-        tmp = np.tensordot(N_v_old, self.controlpoints, axes=(1, 1))
-        tmp = np.tensordot(N_u_old, tmp, axes=(1, 1))  # projective interpolation points (x,y,z,w)
-        interpolation_pts_x = tmp  # 3D-tensor with elements (i,j,k) of component x[k] evaluated at u[i] v[j]
-
-        # solve the interpolation problem
-        N_u_inv = np.linalg.inv(N_u_new)
-        N_v_inv = np.linalg.inv(
-            N_v_new
-        )  # these are inverses of the 1D problems, and small compared to the total number of unknowns
-        tmp = np.tensordot(N_v_inv, interpolation_pts_x, axes=(1, 1))
-        tmp = np.tensordot(N_u_inv, tmp, axes=(1, 1))
-
-        # update the basis and controlpoints of the surface
-        self.controlpoints = tmp
-        self.bases = [newBasis1, newBasis2]
 
     def split(self, knots, direction):
         """Split a surface into two or more separate representations with C0

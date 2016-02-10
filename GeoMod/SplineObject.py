@@ -97,6 +97,7 @@ class SplineObject(object):
         :return: Geometry coordinates
         :rtype: numpy.array
         """
+        squeeze = all(is_singleton(p) for p in params)
         params = [ensure_listlike(p) for p in params]
 
         self._validate_domain(*params)
@@ -117,7 +118,7 @@ class SplineObject(object):
             result = np.delete(result, self.dimension, -1)
 
         # Squeeze the singleton dimensions if we only have one point
-        if all(s == 1 for s in result.shape[:-1]):
+        if squeeze:
             result = result.reshape(self.dimension)
 
         return result
@@ -160,6 +161,7 @@ class SplineObject(object):
         :return: Derivatives
         :rtype: numpy.array
         """
+        squeeze = all(is_singleton(p) for p in params)
         params = [ensure_listlike(p) for p in params]
 
         derivs = kwargs.get('d', [1] * len(self.bases))
@@ -194,10 +196,81 @@ class SplineObject(object):
             result = np.delete(result, self.dimension, 1)
 
         # Squeeze the singleton dimensions if we only have one point
-        if all(s == 1 for s in result.shape[:-1]):
+        if squeeze:
             result = result.reshape(self.dimension)
 
         return result
+
+    def evaluate_tangent(self, *params, **kwargs):
+        """evaluate_tangent(u, v, ..., [direction=None])
+
+        Evaluate the tangents of the object at the given parametric values.
+
+        If `direction` is given, only the derivatives in that direction are
+        evaluated. This is equivalent to calling
+        :func:`GeoMod.SplineObject.evaluate_derivative` with
+        `d=(0,...,0,1,0,...,0)`, the unit vector corresponding to the given
+        direction.
+
+        If `direction` is not given, this function returns a tuple of all
+        tangential derivatives at the given points.
+
+        :param u,v,...: Parametric coordinates in which to evaluate
+        :type u,v,...: float or [float]
+        :param int direction: The tangential direction
+        :return: Tangents
+        :rtype: numpy.array
+        """
+        direction = kwargs.get('direction', None)
+        derivative = [0] * self.pardim
+
+        if direction is None:
+            result = ()
+            for i in range(self.pardim):
+                derivative[i] = 1
+                result += (self.evaluate_derivative(*params, d=derivative),)
+                derivative[i] = 0
+            return result
+
+        i = check_direction(direction, self.pardim)
+        derivative[i] = 1
+        return self.evaluate_derivative(*params, d=derivative)
+
+    def raise_order(self, *raises):
+        """raise_order(u, v, ...)
+
+        Raise the polynomial order of the object. If only one argument is
+        given, the order is raised equally over all directions.
+
+        :param int u,v,...: Number of times to raise the order in a given
+            direction.
+        """
+        if len(raises) == 1:
+            raises = [raises[0]] * self.pardim
+        if not all(r >= 0 for r in raises):
+            raise ValueError("Cannot lower order using raise_order")
+        if all(r == 0 for r in raises):
+            return
+
+        new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
+
+        # Set up an interpolation problem
+        # This works in projective space, so no special handling for rational objects
+        interpolation_pts = [b.greville() for b in new_bases]
+        N_old = [b(pts) for b, pts in zip(self.bases, interpolation_pts)]
+        N_new = [b(pts) for b, pts in zip(new_bases, interpolation_pts)]
+
+        # Calculate the projective interpolation points
+        result = self.controlpoints
+        for n in N_old[::-1]:
+            result = np.tensordot(n, result, axes=(1, self.pardim-1))
+
+        # Solve the interpolation problem
+        for n in N_new[::-1]:
+            result = np.tensordot(np.linalg.inv(n), result, axes=(1, self.pardim-1))
+
+        self.controlpoints = result
+        self.bases = new_bases
 
     def start(self, direction=None):
         """start([direction=None])
@@ -334,21 +407,44 @@ class SplineObject(object):
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
         self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim][direction])
 
-    def refine(self, n):
-        """Enrich the spline space by inserting *n* knots into each existing
-        knot span.
+    def refine(self, *ns, **kwargs):
+        """refine(nu, [nv, ...,] [direction=None])
 
-        :param int n: The number of new knots to insert into each span
+        Enrich the spline space by inserting knots into each existing knot
+        span.
+
+        This method supports three different usage patterns:
+
+        .. code:: python
+
+           # Refine each direction by a factor n
+           obj.refine(n)
+
+           # Refine a single direction by a factor n
+           obj.refine(n, direction='v')
+
+           # Refine all directions by given factors
+           obj.refine(nu, nv, ...)
+
+        :param int nu,nv,...: Number of new knots to insert into each span
+        :param int direction: Direction to refine in
         """
-        (knots1, knots2, knots3) = self.knots()  # excluding multiple knots
-        pardir = 0
-        for knot in self.knots():
+        direction = kwargs.get('direction', None)
+
+        if len(ns) == 1 and direction is not None:
+            directions = [check_direction(direction, self.pardim)]
+        else:
+            directions = range(self.pardim)
+
+        if len(ns) == 1:
+            ns = [ns[0]] * self.pardim
+
+        for n, d in zip(ns, directions):
+            knots = self.knots(direction=d)  # excluding multiple knots
             new_knots = []
-            for (k0, k1) in zip(knot[:-1], knot[1:]):
-                element_knots = np.linspace(k0, k1, n + 2)
-                new_knots += list(element_knots[1:-1])
-            self.insert_knot(new_knots, pardir)
-            pardir += 1
+            for (k0, k1) in zip(knots[:-1], knots[1:]):
+                new_knots.extend(np.linspace(k0, k1, n+2)[1:-1])
+            self.insert_knot(new_knots, d)
 
     def reparam(self, *args, **kwargs):
         """reparam([u, v, ...], [direction=None])
@@ -566,14 +662,7 @@ class SplineObject(object):
 
         :param string plane: Any combination of 'x', 'y' and 'z'
         """
-        keep = [False] * 3
-        for s in plane:
-            if s == 'x' or s == 'X':
-                keep[0] = True
-            if s == 'y' or s == 'Y':
-                keep[1] = True
-            if s == 'z' or s == 'Z':
-                keep[2] = True
+        keep = [c in plane.lower() for c in 'xyz']
 
         dim = self.dimension
         for i in range(dim):
@@ -587,17 +676,17 @@ class SplineObject(object):
         control-point values. Could be inaccurate for rational splines.
 
         Returns the minima and maxima for each direction:
-        [xmin, xmax, ymin, ymax, ...]
+        [(xmin, xmax), (ymin, ymax), ...]
 
         :return: Bounding box
-        :rtype: [float]
+        :rtype: [(float)]
         """
         dim = self.dimension
 
         result = []
         for i in range(dim):
-            result.append(np.min(self.controlpoints[..., i]))
-            result.append(np.max(self.controlpoints[..., i]))
+            result.append((np.min(self.controlpoints[..., i]),
+                           np.max(self.controlpoints[..., i])))
         return result
 
     def center(self):
@@ -639,6 +728,27 @@ class SplineObject(object):
             result[:-1] /= result[-1]
             result = np.delete(result, self.dimension)
 
+        return result
+
+    def corners(self, order='F'):
+        """Return the corner control points.
+
+        The `order` parameter determines which order to use, either ``'F'`` or
+        ``'C'``, for row-major or column-major ordering. E.g. for a volume, in
+        parametric coordinates,
+
+        - ``'C'`` gives (0,0,0), (1,0,0), (0,1,0), (1,1,0), (0,0,1), etc.
+        - ``'F'`` gives (0,0,0), (0,0,1), (0,1,0), (0,1,1), (1,0,0), etc.
+
+        :param str order: The ordering to use
+        :return: Corners
+        :rtype: np.array
+        .. warning:: For rational splines, this will return the corners in
+            projective coordinates, including weights.
+        """
+        result = np.zeros((2**self.pardim, self.dimension))
+        for i, p in enumerate(product((0,-1), repeat=self.pardim)):
+            result[i,:] = self.controlpoints[p[::-1] if order == 'C' else p]
         return result
 
     def lower_periodic(self, periodic, direction=0):

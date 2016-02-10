@@ -31,19 +31,6 @@ class Curve(SplineObject):
         """
         super(Curve, self).__init__([basis], controlpoints, rational)
 
-    def evaluate_tangent(self, t):
-        """Evaluate the tangent of the curve at given parametric values.
-
-        This is equivalent to :func:`GeoMod.Curve.evaluate_derivative` with the
-        default value of *d* = 1.
-
-        :param t: Parametric coordinate(s) in which to evaluate
-        :type t: float or [float]
-        :return: Tangent matrix *X[i,j]* of component *xj'(t)* evaluated at *t(i)*
-        :rtype: numpy.array
-        """
-        return self.evaluate_derivative(t, d=1)
-
     def evaluate_derivative(self, t, d=1):
         """evaluate_derivative(u, [d=1])
 
@@ -86,14 +73,15 @@ class Curve(SplineObject):
         return result
 
     def raise_order(self, amount):
-        """Raise the order of the curve.
+        """Raise the polynomial order of the curve.
 
-        :param int amount: Number of degrees to increase
+        :param int amount: Number of times to raise the order
         """
         if amount < 0:
             raise ValueError('Raise order requires a non-negative parameter')
         elif amount == 0:
             return
+
         # create the new basis
         newBasis = self.bases[0].raise_order(amount)
 
