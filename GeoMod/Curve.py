@@ -220,7 +220,7 @@ class Curve(SplineObject):
         :rtype: Curve
         """
         # establish uniform open knot vector
-        knot = [0] * p + range(1, n - p + 1) + [n - p + 1] * p
+        knot = [0] * p + list(range(1, n - p + 1)) + [n - p + 1] * p
         basis = BSplineBasis(p, knot)
         # set parametric range of the new basis to be the same as the old one
         basis.normalize()

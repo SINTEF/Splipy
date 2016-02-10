@@ -186,7 +186,7 @@ class Surface(SplineObject):
         N = []
         # establish uniform open knot vectors
         for i in range(2):
-            knot = [0] * p[i] + range(1, n[i] - p[i] + 1) + [n[i] - p[i] + 1] * p[i]
+            knot = [0] * p[i] + list(range(1, n[i] - p[i] + 1)) + [n[i] - p[i] + 1] * p[i]
             basis.append(BSplineBasis(p[i], knot))
 
             # make these span the same parametric domain as the old ones

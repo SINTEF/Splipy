@@ -500,7 +500,6 @@ class TestVolume(unittest.TestCase):
         # v[0,2,0]         = [9,8,7]
         v[0,2,1::-1]   = [9,8,7]
         v[1,2,1::-1,:] = [[6,5,4],[3,2,1]]
-        print v[0,2,1::-1]
         self.assertAlmostEqual(v[1,0,0,0], 13)
         self.assertAlmostEqual(v[1,0,0,1], 13)
         self.assertAlmostEqual(v[2,0,0,2], 13)
