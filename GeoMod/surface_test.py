@@ -6,6 +6,11 @@ from math import pi
 import numpy as np
 import unittest
 
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 
 class TestSurface(unittest.TestCase):
     def test_constructor(self):
@@ -438,9 +443,9 @@ class TestSurface(unittest.TestCase):
         pt2 = surf2(u,v)
         pt3 = surf3(u,v)
         pt4 = surf4(u,v)
-        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
-        self.assertAlmostEqual(np.max(pt-pt3), 0.0)
-        self.assertAlmostEqual(np.max(pt-pt4), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt3), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt4), 0.0)
 
     def test_make_identical(self):
         basis1 = BSplineBasis(4, [-1,-1,0,0,1,2,9,9,10,10,11,12], periodic=1)
@@ -499,6 +504,115 @@ class TestSurface(unittest.TestCase):
                 self.assertAlmostEqual(cp1[0], cp2[0])
                 self.assertAlmostEqual(cp1[1], cp2[1])
 
+
+    def test_repr(self):
+        self.assertEqual(repr(Surface()), 'p=2, [ 0.  0.  1.  1.]\n'
+                                          'p=2, [ 0.  0.  1.  1.]\n'
+                                          '[ 0.  0.]\n'
+                                          '[ 1.  0.]\n'
+                                          '[ 0.  1.]\n'
+                                          '[ 1.  1.]\n')
+
+    def test_write_g2(self):
+        buf = StringIO()
+        Surface().write_g2(buf)
+        self.assertEqual(buf.getvalue().strip(),
+                         '200 1 0 0\n'
+                         '2 0\n'
+                         '2 2\n'
+                         '0.000000 0.000000 1.000000 1.000000 \n'
+                         '2 2\n'
+                         '0.000000 0.000000 1.000000 1.000000 \n'
+                         '0.000000 0.000000 \n'
+                         '1.000000 0.000000 \n'
+                         '0.000000 1.000000 \n'
+                         '1.000000 1.000000')
+
+
+    def test_edges(self):
+        (umin, umax, vmin, vmax) = Surface().edges()
+        # check controlpoints
+        self.assertAlmostEqual(umin[0,0], 0)
+        self.assertAlmostEqual(umin[0,1], 0)
+        self.assertAlmostEqual(umin[1,0], 0)
+        self.assertAlmostEqual(umin[1,1], 1)
+        
+        self.assertAlmostEqual(umax[0,0], 1)
+        self.assertAlmostEqual(umax[0,1], 0)
+        self.assertAlmostEqual(umax[1,0], 1)
+        self.assertAlmostEqual(umax[1,1], 1)
+
+        self.assertAlmostEqual(vmin[0,0], 0)
+        self.assertAlmostEqual(vmin[0,1], 0)
+        self.assertAlmostEqual(vmin[1,0], 1)
+        self.assertAlmostEqual(vmin[1,1], 0)
+
+        # check a slightly more general surface
+        cp = [[0,0], [.5, -.5], [1, 0], 
+              [-.6,1], [1, 1], [2, 1.4], 
+              [0,2], [.8, 3], [2, 2.4]]
+        surf = Surface(BSplineBasis(3), BSplineBasis(3), cp)
+        edg  = surf.edges()
+        u   = np.linspace(0,1, 9)
+        v   = np.linspace(0,1, 9)
+
+        pt  = surf(0,v)
+        pt2 = edg[0](v)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        pt  = surf(1,v)
+        pt2 = edg[1](v)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        pt  = surf(u,0).reshape(9,2)
+        pt2 = edg[2](u)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        pt  = surf(u,1).reshape(9,2)
+        pt2 = edg[3](u)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+    def test_normal(self):
+        surf = SurfaceFactory.sphere(1)
+        surf.swap()
+        u    = np.linspace(surf.start(0),surf.end(0), 9)
+        v    = np.linspace(surf.start(1),surf.end(1), 9)
+        xpts = surf(u,v)
+        npts = surf.normal(u,v)
+
+        # check that the normal is pointing out of the unit ball on a 9x9 evaluation grid
+        for (i,j) in zip(xpts, npts):
+            for (x,n) in zip(i,j):
+                n = n / np.linalg.norm(n)
+                self.assertAlmostEqual(n[0], x[0])
+                self.assertAlmostEqual(n[1], x[1])
+                self.assertAlmostEqual(n[2], x[2])
+
+        # check single value input
+        n = surf.normal(0,0)
+        self.assertEqual(len(n), 3)
+
+        # test 2D surface
+        s = Surface()
+        n = s.normal(.5,.5)
+        self.assertEqual(len(n), 3)
+        self.assertAlmostEqual(n[0], 0.0)
+        self.assertAlmostEqual(n[1], 0.0)
+        self.assertAlmostEqual(n[2], 1.0)
+        n = s.normal([.25, .5], [.1,.2,.3,.4,.5,.6,.7,.8,.9])
+        self.assertEqual(n.shape[0], 2)
+        self.assertEqual(n.shape[1], 9)
+        self.assertEqual(n.shape[2], 3)
+        self.assertAlmostEqual(n[1,4,0], 0.0)
+        self.assertAlmostEqual(n[1,4,1], 0.0)
+        self.assertAlmostEqual(n[1,4,2], 1.0)
+        
+        # test errors
+        s = Surface(BSplineBasis(3), BSplineBasis(3), [[0]]*9) # 1D-surface
+        with self.assertRaises(RuntimeError):
+            s.normal(.5, .5)
+
+        
 
 
 if __name__ == '__main__':

@@ -48,6 +48,23 @@ class TestFactory(unittest.TestCase):
         self.assertAlmostEqual(c.evaluate(c.end(0) / 7.0)[0], 3 * cos(2 * pi / 7))
         self.assertAlmostEqual(c.evaluate(c.end(0) / 7.0)[1], 3 * sin(2 * pi / 7))
 
+        # test errors
+        with self.assertRaises(ValueError):
+            c = CurveFactory.n_gon(r=-2.5)
+        with self.assertRaises(ValueError):
+            c = CurveFactory.n_gon(n=1)
+
+    def test_polygon(self):
+        pts = [[1,0], [1,1], [0,1], [0,2], [6,2]]
+        c = CurveFactory.polygon(pts)
+        expected_knots = [0,0,1,2,3,9,9]
+        actual_knots   = c.knots(0,True)
+
+        self.assertEqual(len(c),      5)
+        self.assertEqual(c.order(0),  2)
+        self.assertEqual(c.dimension, 2)
+        self.assertAlmostEqual(np.linalg.norm(expected_knots - actual_knots), 0.0)
+
     def test_circle(self):
 
         # unit circle of radius 1
@@ -393,7 +410,80 @@ class TestFactory(unittest.TestCase):
         w = np.linspace(0,1,5)
         pt  = vol( u,v,w)
         pt2 = vol2(u,v,w)
-        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+    
+    def test_surface_loft(self):
+        crv1 = Curve(BSplineBasis(3, range(11), 1), [[1,-1], [1,0], [1,1], [-1,1], [-1,0], [-1,-1]])
+        crv2 = CurveFactory.circle(2) + (0,0,1)
+        crv3 = Curve(BSplineBasis(4, range(11), 2), [[1,-1,2], [1,1,2], [-1,1,2], [-1,-1,2]])
+        crv4 = CurveFactory.circle(2) + (0,0,3)
+        surf = SurfaceFactory.loft(crv1, crv2, crv3, crv4)
+
+        crv1.set_dimension(3) # for convenience when evaluating
+        t = np.linspace( 0, 1, 13)
+
+        u = np.linspace(crv1.start(0), crv1.end(0), 13)
+        pt  = crv1(u)
+        pt2 = surf(t,0).reshape(13,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        u = np.linspace(crv2.start(0), crv2.end(0), 13)
+        pt  = crv2(u)
+        pt2 = surf(t,1).reshape(13,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        u = np.linspace(crv3.start(0), crv3.end(0), 13)
+        pt  = crv3(u)
+        pt2 = surf(t,2).reshape(13,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        u = np.linspace(crv4.start(0), crv4.end(0), 13)
+        pt  = crv4(u)
+        pt2 = surf(t,3).reshape(13,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+    def test_volume_loft(self):
+        crv1 = Curve(BSplineBasis(3, range(11), 1), [[1,-1], [1,0], [1,1], [-1,1], [-1,0], [-1,-1]])
+        crv2 = CurveFactory.circle(2) + (0,0,1)
+        crv3 = Curve(BSplineBasis(4, range(11), 2), [[1,-1,2], [1,1,2], [-1,1,2], [-1,-1,2]])
+        crv4 = CurveFactory.circle(2) + (0,0,3)
+        
+        surf = []
+        for c in [crv1, crv2, crv3, crv4]:
+            c2 = c.clone()
+            c2.project('z')
+            surf.append(SurfaceFactory.edge_curves(c, c2))
+
+        vol = VolumeFactory.loft(surf)
+
+        surf[0].set_dimension(3) # for convenience when evaluating
+        t = np.linspace( 0, 1, 9)
+        s = np.linspace( 0, 1, 9)
+
+        u = np.linspace(surf[0].start(0), surf[0].end(0), 9)
+        v = np.linspace(surf[0].start(1), surf[0].end(1), 9)
+        pt  = surf[0](u,v)
+        pt2 = vol(s,t,0).reshape(9,9,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        u = np.linspace(surf[1].start(0), surf[1].end(0), 9)
+        u = np.linspace(surf[1].start(1), surf[1].end(1), 9)
+        pt  = surf[1](u,v)
+        pt2 = vol(s,t,1).reshape(9,9,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        u = np.linspace(surf[2].start(0), surf[2].end(0), 9)
+        v = np.linspace(surf[2].start(1), surf[2].end(1), 9)
+        pt  = surf[2](u,v)
+        pt2 = vol(s,t,2).reshape(9,9,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+        u = np.linspace(surf[3].start(0), surf[3].end(0), 9)
+        v = np.linspace(surf[3].start(1), surf[3].end(1), 9)
+        pt  = surf[3](u,v)
+        pt2 = vol(s,t,3).reshape(9,9,3)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
 
 
 

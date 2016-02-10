@@ -193,7 +193,7 @@ class SplineObject(object):
             Wd = result[..., -1]         # W'
             for i in range(self.dimension):
                 result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W;
-            result = np.delete(result, self.dimension, 1)
+            result = np.delete(result, self.dimension, self.pardim)
 
         # Squeeze the singleton dimensions if we only have one point
         if squeeze:
@@ -223,6 +223,8 @@ class SplineObject(object):
         """
         direction = kwargs.get('direction', None)
         derivative = [0] * self.pardim
+        if self.pardim == 1:
+            direction = 0
 
         if direction is None:
             result = ()

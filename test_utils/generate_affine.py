@@ -30,7 +30,16 @@ def expect_scale(amount):
         result += '        pt2[...,%d] /= %f\n' % (i,amount[i])
     return result
 
+def do_mirror(f, dim, pardim):
+    obj_name   = ['', 'crv', 'surf', 'vol']
+    amount = np.random.randint(0,3)
+    axis = [0,0,0]
+    axis[amount] = np.random.randint(1,4)
+    f.write('        %s2.mirror('%(obj_name[pardim]) + repr(axis) + ')\n')
+    return amount
 
+def expect_mirror(amount):
+    return '        pt2[...,%d] = -pt2[...,%d]\n' % (amount,amount)
 
 
 # dump large sets of control points
@@ -54,9 +63,9 @@ class TestAffine(unittest.TestCase):
 """)
 
 evaluate  = [None, evaluate_curve, evaluate_surface, evaluate_volume]
-do        = [do_translate,     do_scale    ]
-expect    = [expect_translate, expect_scale]
-name      = ['translate',      'scale'     ]
+do        = [do_translate,     do_scale    , do_mirror]
+expect    = [expect_translate, expect_scale, expect_mirror]
+name      = ['translate',      'scale'     , 'mirror']
 for baseP in [2,5]:
     for dim in [2,3]:
         for rational in [True, False]:
@@ -67,6 +76,8 @@ for baseP in [2,5]:
                         if periodic >= p[0]-1:
                             continue
                         if dim < 3 and pardim > 2:
+                            continue
+                        if dim < 3 and name[j] == 'mirror':
                             continue
                         n  = p + 3
                         n += np.random.randint(-2,3, pardim)
@@ -90,9 +101,9 @@ for baseP in [2,5]:
                         if new_dim != dim:
                             f.write('        allZero           = pt2\n')
                             f.write('        allZero[...,:-1] -= pt \n')
-                            f.write('        self.assertAlmostEqual(np.max(allZero), 0.0)\n\n')
+                            f.write('        self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)\n\n')
                         else:
-                            f.write('        self.assertAlmostEqual(np.max(pt-pt2), 0.0)\n\n')
+                            f.write('        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)\n\n')
 
 f.write("""
 if __name__ == '__main__':

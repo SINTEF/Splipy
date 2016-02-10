@@ -2,7 +2,7 @@
 
 from GeoMod import Curve, BSplineBasis
 from GeoMod.SplineObject import SplineObject
-from GeoMod.Utils import ensure_listlike
+from GeoMod.Utils import ensure_listlike, check_direction
 from bisect import bisect_left
 from itertools import chain
 import numpy as np
@@ -98,8 +98,7 @@ class Surface(SplineObject):
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
         # error test input
-        if direction != 0 and direction != 1:
-            raise ValueError('direction must be 0 or 1')
+        direction = check_direction(direction, 2)
 
         p = self.order()
         results = []

@@ -69,7 +69,7 @@ for baseP in [2,5]:
                     write_object_creation(f, rational, pardim)
                     f.write(insert_knot(p,knot))
                     f.write(evaluate[pardim]())
-                    f.write('        self.assertAlmostEqual(np.max(pt-pt2), 0.0)\n\n')
+                    f.write('        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)\n\n')
 
 f.write("""
 if __name__ == '__main__':

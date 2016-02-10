@@ -127,8 +127,8 @@ class Curve(SplineObject):
         p = max(p1, p2)
 
         # build new knot vector by merging the two existing ones
-        old_knot = self.knots(with_multiplicities=True)
-        add_knot = extending_curve.knots(with_multiplicities=True)
+        old_knot = self.knots(direction=0, with_multiplicities=True)
+        add_knot = extending_curve.knots(direction=0, with_multiplicities=True)
         # make sure that the new one starts where the old one stops
         add_knot -= add_knot[0]
         add_knot += old_knot[-1]
@@ -144,7 +144,7 @@ class Curve(SplineObject):
         new_controlpoints[n1:, :] = extending_curve.controlpoints[1:, :]
 
         # update basis and controlpoints
-        self.basis = [BSplineBasis(p, new_knot)]
+        self.bases = [BSplineBasis(p, new_knot)]
         self.controlpoints = new_controlpoints
 
         return self

@@ -52,16 +52,16 @@ class TestBasis(unittest.TestCase):
         b = BSplineBasis(3, [0,0,0,1,3,3,6,10,15,21,21,21])
         b.reverse()
         expect = [0,0,0,6,11,15,18,18,20,21,21,21]
-        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+        self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
 
     def test_reparam(self):
         b = BSplineBasis(5, [-1, 0, 1, 1, 1, 3, 9, 10, 11, 11, 11, 13, 19], periodic=1)
         b.reparam(11, 21)
         expect = [9, 10, 11, 11, 11, 13, 19, 20, 21, 21, 21, 23, 29]
-        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+        self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
         b.reparam()
         expect = [-.2, -.1, 0, 0, 0, .2, .8, .9, 1.0, 1.0, 1.0, 1.2, 1.8]
-        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+        self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
 
         
 
@@ -77,14 +77,14 @@ class TestBasis(unittest.TestCase):
         b  = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
         b2 = b.raise_order(2)
         expect =  [0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
-        self.assertAlmostEqual(np.max(np.abs(b2.knots - expect)), 0)
+        self.assertAlmostEqual(np.linalg.norm(b2.knots - expect), 0)
         self.assertEqual(b2.order, 6)
 
         # test periodic knot vector
         b = BSplineBasis(5, [-1, 0, 1, 1, 1, 3, 9, 10, 11, 11, 11, 13, 19], periodic=1)
         b2 = b.raise_order(1)
         expect =  [0, 0, 1, 1, 1, 1, 3, 3, 9, 9, 10, 10, 11, 11, 11, 11, 13, 13]
-        self.assertAlmostEqual(np.max(np.abs(b2.knots - expect)), 0)
+        self.assertAlmostEqual(np.linalg.norm(b2.knots - expect), 0)
         self.assertEqual(b2.order,    6)
         self.assertEqual(b2.periodic, 1)
 
@@ -95,10 +95,10 @@ class TestBasis(unittest.TestCase):
         b = BSplineBasis(3, [-1, 0, 0, 2, 3, 4, 4, 6], periodic=0)
         b.roll(3)
         expect = [0, 2, 3, 4, 4, 6, 7, 8]
-        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+        self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
         b.roll(2)
         expect = [2, 3, 4, 4, 6, 7, 8, 8]
-        self.assertAlmostEqual(np.max(np.abs(b.knots - expect)), 0)
+        self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
 
         with self.assertRaises(IndexError):
             b.roll(19)

@@ -9,7 +9,7 @@ import inspect
 import numpy as np
 
 __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus', 'edge_curves',
-           'thicken']
+           'thicken', 'loft']
 
 
 def square(size=1):
@@ -253,7 +253,7 @@ def thicken(curve, amount):
     #     circle in the plane defined by these two vectors
 
     curve = curve.clone()  # clone input curve, throw away input reference
-    t = curve.basis.greville()
+    t = curve.bases[0].greville()
     if curve.dimension == 2:
         # linear parametrization across domain
         n = len(curve)
@@ -262,7 +262,7 @@ def thicken(curve, amount):
         linear = BSplineBasis(2)
 
         x = curve.evaluate(t)  # curve at interpolation points
-        v = curve.evaluate_tangent(t)  # velocity at interpolation points
+        v = curve.tangent(t)  # velocity at interpolation points
         l = np.sqrt(v[:, 0]**2 + v[:, 1]**2)  # normalizing factor for velocity
         v[:, 0] = v[:, 0] / l
         v[:, 1] = v[:, 1] / l
@@ -286,27 +286,30 @@ def thicken(curve, amount):
                 # store interpolation points
                 right_points[i, 0] = x[i, 0] - v[i, 1] * dist  # x at bottom
                 right_points[i, 1] = x[i, 1] + v[i, 0] * dist  # y at bottom
-                left_points[i, 0] = x[i, 0] + v[i, 1] * dist  # x at top
-                left_points[i, 1] = x[i, 1] - v[i, 0] * dist  # y at top
+                left_points[ i, 0] = x[i, 0] + v[i, 1] * dist  # x at top
+                left_points[ i, 1] = x[i, 1] - v[i, 0] * dist  # y at top
         else:
             right_points[:, 0] = x[:, 0] - v[:, 1] * amount  # x at bottom
             right_points[:, 1] = x[:, 1] + v[:, 0] * amount  # y at bottom
-            left_points[:, 0] = x[:, 0] + v[:, 1] * amount  # x at top
-            left_points[:, 1] = x[:, 1] - v[:, 0] * amount  # y at top
+            left_points[ :, 0] = x[:, 0] + v[:, 1] * amount  # x at top
+            left_points[ :, 1] = x[:, 1] - v[:, 0] * amount  # y at top
         # perform interpolation on each side
-        right = CurveFactory.interpolate(right_points, curve.basis)
-        left = CurveFactory.interpolate(left_points, curve.basis)
+        right = CurveFactory.interpolate(right_points, curve.bases[0])
+        left  = CurveFactory.interpolate(left_points, curve.bases[0])
 
         # draw the linear surface in between
         controlpoints = np.zeros((2 * n, 2))
         controlpoints[:n, :] = right.controlpoints
         controlpoints[n:, :] = left.controlpoints
-        return Surface(curve.basis, linear, controlpoints)
+        return Surface(curve.bases[0], linear, controlpoints)
 
     else:  # dimension=3, we will create a surrounding tube
         raise NotImplementedError('Currently only 2D supported. See comments in source code')
 
-def loft(curves):
+def loft(*curves):
+    if len(curves) == 1:
+        curves = curves[0]
+
     # clone input, so we don't change those references
     # make sure everything has the same dimension since we need to compute length
     curves = [c.clone().set_dimension(3) for c in curves]
@@ -345,7 +348,7 @@ def loft(curves):
     Nv_inv = np.linalg.inv(Nv)
 
     # compute interpolation points in physical space
-    x      = np.zeros((m,n, len(curves[0][0])))
+    x      = np.zeros((m,n, curves[0][0].size))
     for i in range(n):
         x[:,i,:] = Nu * curves[i].controlpoints
 
@@ -357,4 +360,4 @@ def loft(curves):
     cp = cp.transpose((1, 0, 2))
     cp = cp.reshape(n*m, cp.shape[2])
 
-    return Surface(basis1, basis2, cp)
+    return Surface(basis1, basis2, cp, curves[0].rational)

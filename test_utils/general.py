@@ -110,16 +110,19 @@ def raise_order(p):
     return result
 
 
-def write_object_creation(f, rational, pardim):
+def write_object_creation(f, rational, pardim, clone=True):
     if pardim == 1:
-        f.write('        crv  = Curve(basis0, controlpoints,' + str(rational) + ')\n')
-        f.write('        crv2 = crv.clone()\n')
+        f.write(    '        crv  = Curve(basis0, controlpoints,' + str(rational) + ')\n')
+        if clone:
+            f.write('        crv2 = crv.clone()\n')
     elif pardim == 2:
-        f.write('        surf  = Surface(basis0, basis1, controlpoints,' + str(rational) + ')\n')
-        f.write('        surf2 = surf.clone()\n')
+        f.write(    '        surf  = Surface(basis0, basis1, controlpoints,' + str(rational) + ')\n')
+        if clone:
+            f.write('        surf2 = surf.clone()\n')
     elif pardim == 3:
-        f.write('        vol  = Volume(basis0, basis1, basis2, controlpoints,' + str(rational) + ')\n')
-        f.write('        vol2 = vol.clone()\n')
+        f.write(    '        vol  = Volume(basis0, basis1, basis2, controlpoints,' + str(rational) + ')\n')
+        if clone:
+            f.write('        vol2 = vol.clone()\n')
 
 def evaluate_curve():
     result = """

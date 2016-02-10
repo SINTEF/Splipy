@@ -35,11 +35,11 @@ def polygon(*points):
     # establish knot vector based on eucledian length between points
     knot = [0, 0]
     prevPt = points[0]
-    dist = 0
     for pt in points[1:]:
+        dist = 0
         for (x0, x1) in zip(prevPt, pt):  # loop over (x,y) and maybe z-coordinate
             dist += (x1 - x0)**2
-        knot.append(sqrt(dist))
+        knot.append(knot[-1] + sqrt(dist))
         prevPt = pt
     knot.append(knot[-1])
 

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from GeoMod import Curve, BSplineBasis
-from math import sqrt
+from math import sqrt, pi
 import numpy as np
 import unittest
-import matplotlib.pyplot as plt
 
 try:
     from StringIO import StringIO
@@ -345,8 +344,8 @@ class TestCurve(unittest.TestCase):
         pt2 = crv2(t)
         pt3 = crv3(t)
 
-        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
-        self.assertAlmostEqual(np.max(pt-pt3), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt3), 0.0)
 
     def test_write_g2(self):
         buf = StringIO()
@@ -374,6 +373,52 @@ class TestCurve(unittest.TestCase):
 
         self.assertAlmostEqual(center[0], .5)
         self.assertAlmostEqual(center[1], .25)
+
+    def test_derivative(self):
+        # testing the parametrization x(t) = [.5*x^3 / ((1-x)^3+.5*x^3), 0]
+        cp = [[0,0,1], [0,0,0], [0,0,0], [.5,0,.5]]
+        crv = Curve(BSplineBasis(4), cp, rational=True)
+        def expect_derivative(x):
+            return 6*(1-x)**2*x**2/(x**3 - 6*x**2 + 6*x - 2)**2
+        def expect_derivative_2(x):
+            return -12*x*(x**5 - 3*x**4 + 2*x**3 + 4*x**2 - 6*x + 2)/(x**3 - 6*x**2 + 6*x - 2)**3
+
+        # insert a few more knots to spice things up
+        crv.insert_knot([.2, .71])
+
+        self.assertAlmostEqual(crv.tangent(0.32)[0], expect_derivative(0.32))
+        self.assertAlmostEqual(crv.tangent(0.32)[1], 0)
+        self.assertAlmostEqual(crv.tangent(0.71)[0], expect_derivative(0.71))
+
+        self.assertAlmostEqual(crv.derivative(0.22, 2)[0], expect_derivative_2(0.22))
+        self.assertAlmostEqual(crv.derivative(0.22, 2)[1], 0)
+        self.assertAlmostEqual(crv.derivative(0.86, 2)[0], expect_derivative_2(0.86))
+    
+    def test_append(self):
+        crv  = Curve(BSplineBasis(3), [[0,0], [1,0], [0,1]])
+        crv2 = Curve(BSplineBasis(4), [[0,1,0], [0,1,1], [0,2,1], [0,2,2]])
+        crv2.insert_knot(0.5)
+
+        crv3 = crv.clone()
+        crv3.append(crv2)
+ 
+        expected_knot = [0,0,0,0,1,1,1,1.5,2,2,2,2]
+        self.assertEqual(crv3.order(direction=0),  4)
+        self.assertEqual(crv3.rational, False)
+        self.assertEqual(np.linalg.norm(crv3.knots(0, True)-expected_knot), 0.0)
+ 
+        t = np.linspace(0,1,11)
+        pt        = np.zeros((11,3))
+        pt[:,:-1] = crv(t)
+        pt2       = crv3(t)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+        pt  = crv2(t)
+        pt2 = crv3(t+1.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+
+
+        
 
 
 

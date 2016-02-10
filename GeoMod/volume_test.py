@@ -3,6 +3,7 @@
 from GeoMod import BSplineBasis, Volume
 import unittest
 import numpy as np
+from math import pi, sqrt
 
 
 class TestVolume(unittest.TestCase):
@@ -411,13 +412,13 @@ class TestVolume(unittest.TestCase):
 
         vol.reverse('v')
         pt2 = vol(u,v[::-1],w)
-        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
         self.assertAlmostEqual(vol.start('v'),  -3)
         self.assertAlmostEqual(vol.end('v'),    33)
 
         vol.reverse(2)
         pt2 = vol(u,v[::-1],w[::-1])
-        self.assertAlmostEqual(np.max(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
         self.assertAlmostEqual(vol.start('w'),   0)
         self.assertAlmostEqual(vol.end('w'),     8)
 
@@ -439,6 +440,85 @@ class TestVolume(unittest.TestCase):
             self.assertAlmostEqual(len(v.knots(0, True)), 11)
             self.assertAlmostEqual(len(v.knots(1, True)), 8)
             self.assertAlmostEqual(len(v.knots(2, True)), 5)
+    
+    def test_bounding_box(self):
+        vol = Volume()
+        bb = vol.bounding_box()
+        self.assertAlmostEqual(bb[0][0], 0 )
+        self.assertAlmostEqual(bb[0][1], 1 )
+        self.assertAlmostEqual(bb[1][0], 0 )
+        self.assertAlmostEqual(bb[1][1], 1 )
+        self.assertAlmostEqual(bb[2][0], 0 )
+        self.assertAlmostEqual(bb[2][1], 1 )
+
+        vol.refine(2)
+        vol.rotate(pi/4, [1,0,0])
+        vol += (1,0,1)
+        bb = vol.bounding_box()
+        self.assertAlmostEqual(bb[0][0], 1 )
+        self.assertAlmostEqual(bb[0][1], 2 )
+        self.assertAlmostEqual(bb[1][0], -sqrt(2)/2 )
+        self.assertAlmostEqual(bb[1][1],  sqrt(2)/2 )
+        self.assertAlmostEqual(bb[2][0], 1 )
+        self.assertAlmostEqual(bb[2][1], 1+sqrt(2) )
+
+    def test_controlpoint_access(self):
+        v = Volume()
+        v.refine(1)
+        self.assertAlmostEqual(v[0,0,0, 0] ,  0)
+        self.assertAlmostEqual(v[0,0,0][0] ,  0)
+        self.assertAlmostEqual(v[0,1,0][0] ,  0)
+        self.assertAlmostEqual(v[0,1,0][1] , .5)
+        self.assertAlmostEqual(v[0,1,0, 1] , .5)
+        self.assertAlmostEqual(v[0,0,2][2] ,  1)
+        self.assertAlmostEqual(v[4][0]     , .5)
+        self.assertAlmostEqual(v[4][1]     , .5)
+        self.assertAlmostEqual(v[4][2]     ,  0)
+        self.assertAlmostEqual(v[13][0]    , .5)
+        self.assertAlmostEqual(v[13][1]    , .5)
+        self.assertAlmostEqual(v[13][2]    , .5)
+        self.assertAlmostEqual(v[14][0]    ,  1)
+        self.assertAlmostEqual(v[14][1]    , .5)
+        self.assertAlmostEqual(v[14][2]    , .5)
+
+        v[0]        = [.1, .1, .1]
+        v[1,1,1]    = [.6, .6, .6]
+        v[1,0,0][0] = .4
+        self.assertAlmostEqual(v[0,0,0][0], .1)
+        self.assertAlmostEqual(v[0,0,0][1], .1)
+        self.assertAlmostEqual(v[0,0,0][2], .1)
+        self.assertAlmostEqual(v[13][0]   , .6)
+        self.assertAlmostEqual(v[13][1]   , .6)
+        self.assertAlmostEqual(v[13][2]   , .6)
+        self.assertAlmostEqual(v[1][0]    , .4)
+        self.assertAlmostEqual(v[1][1]    ,  0)
+        self.assertAlmostEqual(v[1][2]    ,  0)
+
+        v[:,0,0]         = 13
+        v[0,1,0][:]      = 12
+        # v[0,2,1]         = [9,8,7]
+        # v[0,2,0]         = [9,8,7]
+        v[0,2,1::-1]   = [9,8,7]
+        v[1,2,1::-1,:] = [[6,5,4],[3,2,1]]
+        print v[0,2,1::-1]
+        self.assertAlmostEqual(v[1,0,0,0], 13)
+        self.assertAlmostEqual(v[1,0,0,1], 13)
+        self.assertAlmostEqual(v[2,0,0,2], 13)
+        self.assertAlmostEqual(v[0,1,0,0], 12)
+        self.assertAlmostEqual(v[0,1,0,2], 12)
+        self.assertAlmostEqual(v[0,2,2,1],  1)
+        self.assertAlmostEqual(v[0,2,1,0],  9)
+        self.assertAlmostEqual(v[0,2,1,1],  8)
+        self.assertAlmostEqual(v[0,2,0,2],  7)
+        self.assertAlmostEqual(v[1,2,1,0],  6)
+        self.assertAlmostEqual(v[1,2,1,1],  5)
+        self.assertAlmostEqual(v[1,2,1,2],  4)
+        self.assertAlmostEqual(v[1,2,0,0],  3)
+        self.assertAlmostEqual(v[1,2,0,1],  2)
+        self.assertAlmostEqual(v[1,2,0,2],  1)
+
+
+            
 
 
 

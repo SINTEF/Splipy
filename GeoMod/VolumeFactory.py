@@ -7,7 +7,7 @@ import numpy as np
 from GeoMod import Surface, Volume, BSplineBasis
 import GeoMod.SurfaceFactory as SurfaceFactory
 
-__all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces']
+__all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces', 'loft']
 
 
 def cube(size=1):
@@ -162,7 +162,10 @@ def edge_surfaces(*surfaces):
     else:
         raise ValueError('Requires two or six input surfaces')
 
-def loft(surfaces):
+def loft(*surfaces):
+    if len(surfaces) == 1:
+        surfaces = surfaces[0]
+
     # clone input, so we don't change those references
     # make sure everything has the same dimension since we need to compute length
     surfaces = [s.clone().set_dimension(3) for s in surfaces]
