@@ -143,7 +143,7 @@ def edge_surfaces(*surfaces):
         vol1 = edge_surfaces(umin,umax)
         vol2 = edge_surfaces(vmin,vmax)
         vol3 = edge_surfaces(wmin,wmax)
-        vol4 = Volume(controlpoints=vol1.corners(), rational=vol1.rational)
+        vol4 = Volume(controlpoints=vol1.corners(order='F'), rational=vol1.rational)
         vol1.swap(0, 2)
         vol1.swap(1, 2)
         vol2.swap(1, 2)

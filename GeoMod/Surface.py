@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import Curve, BSplineBasis
+from GeoMod import BSplineBasis
 from GeoMod.SplineObject import SplineObject
-from GeoMod.Utils import ensure_listlike, check_direction
+from GeoMod.Utils import ensure_listlike, check_direction, sections
 from bisect import bisect_left
 from itertools import chain
 import numpy as np
@@ -15,7 +15,9 @@ class Surface(SplineObject):
 
     Represents a surface: an object with a two-dimensional parameter space."""
 
-    def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False):
+    _intended_pardim = 2
+
+    def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis1=None], [basis2=None], [controlpoints=None], [rational=False])
 
         Construct a surface with the given basis and control points.
@@ -30,7 +32,7 @@ class Surface(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Surface, self).__init__([basis1, basis2], controlpoints, rational)
+        super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
 
     def normal(self, u, v):
         """Evaluate the normal of the surface at given parametric values.
@@ -75,15 +77,7 @@ class Surface(SplineObject):
         :return: Edge curves
         :rtype: (Curve)
         """
-        # ASSUMPTION: open knot vectors
-        (p1, p2) = self.order()
-        (n1, n2, dim) = self.controlpoints.shape
-        rat = self.rational
-        umin = Curve(self.bases[1], np.reshape(self.controlpoints[ 0, :, :], (n2, dim)), rat)
-        umax = Curve(self.bases[1], np.reshape(self.controlpoints[-1, :, :], (n2, dim)), rat)
-        vmin = Curve(self.bases[0], np.reshape(self.controlpoints[:,  0, :], (n1, dim)), rat)
-        vmax = Curve(self.bases[0], np.reshape(self.controlpoints[:, -1, :], (n1, dim)), rat)
-        return (umin, umax, vmin, vmax)
+        return tuple(self.section(*args) for args in sections(2, 1))
 
     def split(self, knots, direction):
         """Split a surface into two or more separate representations with C0

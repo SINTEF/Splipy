@@ -31,7 +31,7 @@ class SplineObject(object):
     object, while infix operators (e.g. ``+``) create new objects.
     """
 
-    def __init__(self, bases=None, controlpoints=None, rational=False):
+    def __init__(self, bases=None, controlpoints=None, rational=False, raw=False):
         """__init__([bases=None], [controlpoints=None], [rational=False])
 
         Construct a spline object with the given bases and control points.
@@ -45,6 +45,8 @@ class SplineObject(object):
         :param bool rational: Whether the object is rational (in which case the
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
+        :param bool raw: If True, skip any control point reordering.
+            (For internal use.)
         """
         bases = [(b if b else BSplineBasis()) for b in bases]
         self.bases = bases
@@ -58,23 +60,25 @@ class SplineObject(object):
             if len(controlpoints[0]) == 1:
                 controlpoints = [tuple(list(c) + [0.0]) for c in controlpoints]
 
-        controlpoints = np.array(controlpoints)
-        self.dimension = controlpoints.shape[-1] - rational
+        self.controlpoints = np.array(controlpoints)
+        self.dimension = self.controlpoints.shape[-1] - rational
         self.rational = rational
 
-        # Reshape the array so that it's not just flat
-        cp_shape = tuple([b.num_functions() for b in bases[::-1]] + [self.dimension + rational])
-        controlpoints = np.reshape(controlpoints, cp_shape)
+        if not raw:
+            # Reshape the array so that it's not just flat
+            cp_shape = tuple([b.num_functions() for b in bases[::-1]] + [self.dimension + rational])
+            self.controlpoints = np.reshape(self.controlpoints, cp_shape)
 
-        # Compensate for numpy's row-major ordering
-        # cps = cps.transpose((n-1,n-2,...,0,n))
-        spec = tuple(list(range(len(bases)))[::-1] + [len(bases)])
-        self.controlpoints = controlpoints.transpose(spec)
+            # Compensate for numpy's row-major ordering
+            # cps = cps.transpose((n-1,n-2,...,0,n))
+            spec = tuple(list(range(len(bases)))[::-1] + [len(bases)])
+            self.controlpoints = self.controlpoints.transpose(spec)
 
     def _validate_domain(self, *params):
         """Check whether the given evaluation parameters are valid.
 
-        :raises ValueError: If the parameters are outside the domain"""
+        :raises ValueError: If the parameters are outside the domain
+        """
         for b, p in zip(self.bases, params):
             if b.periodic < 0:
                 if min(p) < b.start() or b.end() < max(p):
@@ -237,6 +241,58 @@ class SplineObject(object):
         i = check_direction(direction, self.pardim)
         derivative[i] = 1
         return self.derivative(*params, d=derivative)
+
+    def section(self, *args, **kwargs):
+        """section(u, v, ..., [unwrap_points=False])
+
+        Returns a section from the object. A section can be any sub-object of
+        parametric dimension not exceeding that of the object. E.g. for a
+        volume, sections include vertices, edges, faces, etc.
+
+        The arguments are control point indices for each direction. `None`
+        means that direction should be variable in the returned object.
+
+        .. code:: python
+
+           # Get the face with u=max
+           vol.section(-1, None, None)
+
+           # Keyword arguments are supported for u, v and w
+           # This is the same as the above
+           vol.section(u=-1)
+
+           # Get the edge with u=min, v=max
+           vol.section(0, -1, None)
+
+           # This is equivalent to vol.clone()
+           vol.section()
+
+        If a specific subclass of `SplineObject` is found that handles the
+        requested number of variable directions (parametric dimension), then
+        the return value is of that type. If not, it will be a generic `SplineObject`.
+
+        If the section has no variable directions (it is a point), then the
+        return value will be an array, unless the keyword argument
+        `unwrap_points` is true, in which case it will return a
+        zero-dimensional `SplineObject`.
+
+        :param u,v,...: Control point indices
+        :type u,v,...: int or None
+        :return: Section
+        :rtype: SplineObject or np.array
+        """
+        section = check_section(*args, pardim=self.pardim, **kwargs)
+        unwrap_points = kwargs.get('unwrap_points', True)
+
+        slices = tuple(slice(None) if p is None else p for p in section)
+        bases = [b for b, p in zip(self.bases, section) if p is None]
+        if bases or not unwrap_points:
+            classes = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(bases)]
+            if classes:
+                args = bases + [self.controlpoints[slices], self.rational]
+                return classes[0](*args, raw=True)
+            return SplineObject(bases, self.controlpoints[slices], self.rational, raw=True)
+        return self.controlpoints[slices]
 
     def raise_order(self, *raises):
         """raise_order(u, v, ...)
@@ -732,7 +788,7 @@ class SplineObject(object):
 
         return result
 
-    def corners(self, order='F'):
+    def corners(self, order='C'):
         """Return the corner control points.
 
         The `order` parameter determines which order to use, either ``'F'`` or
@@ -749,8 +805,8 @@ class SplineObject(object):
             projective coordinates, including weights.
         """
         result = np.zeros((2**self.pardim, self.dimension))
-        for i, p in enumerate(product((0,-1), repeat=self.pardim)):
-            result[i,:] = self.controlpoints[p[::-1] if order == 'C' else p]
+        for i, args in enumerate(sections(self.pardim, 0)):
+            result[i,:] = self.section(*(args[::-1] if order == 'F' else args))
         return result
 
     def lower_periodic(self, periodic, direction=0):
@@ -1019,4 +1075,3 @@ class SplineObject(object):
                 if c1 > c2:
                     m = min(c1-c2, p[i]-1-c2) # c1=np.inf if knot does not exist
                     spline1.insert_knot([k]*m, direction=i)
-
