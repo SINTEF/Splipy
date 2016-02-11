@@ -70,11 +70,12 @@ for baseP in [2,4,5]:
                     write_object_creation(f, rational, pardim, False)
                     f.write(rebuild(p,knot))
                     f.write(evaluate[pardim]())
-                    precision = 3-pardim
+                    precision = 4-pardim
                     if periodic > -1:
                         precision -= 2
                     if rational:
                         precision -= 1
+                    precision = max(1, precision)
                     f.write('        self.assertAlmostEqual(np.max(np.abs(pt-pt2)), 0.0, places=%d)\n\n' % (precision))
 
 f.write("""
