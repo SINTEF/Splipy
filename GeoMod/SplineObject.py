@@ -706,8 +706,10 @@ class SplineObject(object):
 
         and :math:`A=(u_1-u_0)(v_1-v_0)` is the area of the parametric domain :math:`[u_0,u_1]\\times[v_0,v_1]`.
 
-        .. warning:: For rational splines, this will integrate in projective coordinates, then project the centerpoint.
-        This is as opposed to integrate the rational functions :math:`\\frac{N_i(t)w_i}{\sum_j N_j(t)w_j}`
+        .. warning:: For rational splines, this will integrate in projective
+            coordinates, then project the centerpoint. This is as opposed to
+            integrating the rational functions :math:`\\frac{N_i(t)w_i}{\sum_j
+            N_j(t)w_j}`.
         """
 
         # compute integration of basis functions
@@ -745,6 +747,7 @@ class SplineObject(object):
         :param str order: The ordering to use
         :return: Corners
         :rtype: np.array
+
         .. warning:: For rational splines, this will return the corners in
             projective coordinates, including weights.
         """
