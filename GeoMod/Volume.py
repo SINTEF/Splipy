@@ -4,6 +4,7 @@ from GeoMod import BSplineBasis, Surface
 from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike, check_direction
 from bisect import bisect_left
+from itertools import chain
 import numpy as np
 
 __all__ = ['Volume']
