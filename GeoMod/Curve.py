@@ -15,7 +15,9 @@ class Curve(SplineObject):
 
     Represents a curve: an object with a one-dimensional parameter space."""
 
-    def __init__(self, basis=None, controlpoints=None, rational=False):
+    _intended_pardim = 1
+
+    def __init__(self, basis=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis=None], [controlpoints=None], [rational=False])
 
         Construct a curve with the given basis and control points.
@@ -29,7 +31,7 @@ class Curve(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Curve, self).__init__([basis], controlpoints, rational)
+        super(Curve, self).__init__([basis], controlpoints, rational, **kwargs)
 
     def derivative(self, t, d=1):
         """derivative(u, [d=1])

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import BSplineBasis, Surface
+from GeoMod import BSplineBasis
 from GeoMod.SplineObject import SplineObject
-from GeoMod.Utils import ensure_listlike, check_direction
+from GeoMod.Utils import ensure_listlike, check_direction, sections
 from bisect import bisect_left
 from itertools import chain
 import numpy as np
@@ -15,7 +15,9 @@ class Volume(SplineObject):
 
     Represents a volume: an object with a three-dimensional parameter space."""
 
-    def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False):
+    _intended_pardim = 3
+
+    def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis1=None], [basis2=None], [basis3=None], [controlpoints=None], [rational=False])
 
         Construct a volume with the given basis and control points.
@@ -32,7 +34,28 @@ class Volume(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational)
+        super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational, **kwargs)
+
+    def edges(self):
+        """Return the twelve edges of this volume in order:
+
+        - umin, vmin
+        - umax, vmin
+        - umin, vmax
+        - umax, vmax
+        - umin, wmin
+        - umax, wmin
+        - umin, wmax
+        - umax, wmax
+        - vmin, wmin
+        - vmax, wmin
+        - vmin, wmax
+        - vmax, wmax
+
+        :return: Edges
+        :rtype: (Curve)
+        """
+        return tuple(self.section(*args) for args in sections(3, 1))
 
     def faces(self):
         """Return the six faces of this volume in order: umin, umax, vmin, vmax, wmin, wmax.
@@ -40,19 +63,7 @@ class Volume(SplineObject):
         :return: Boundary faces
         :rtype: (Surface)
         """
-        (p1, p2, p3) = self.order()
-        (n1, n2, n3, dim) = self.controlpoints.shape
-        rat = self.rational
-        umin = Surface(self.bases[2], self.bases[1], np.reshape(self.controlpoints[0, :, :, :],  (n2 * n3, dim), rat))
-        umax = Surface(self.bases[2], self.bases[1], np.reshape(self.controlpoints[-1, :, :, :], (n2 * n3, dim), rat))
-        vmin = Surface(self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, 0, :, :],  (n1 * n3, dim), rat))
-        vmax = Surface(self.bases[2], self.bases[0], np.reshape(self.controlpoints[:, -1, :, :], (n1 * n3, dim), rat))
-        wmin = Surface(self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, 0, :],  (n1 * n2, dim), rat))
-        wmax = Surface(self.bases[1], self.bases[0], np.reshape(self.controlpoints[:, :, -1, :], (n1 * n2, dim), rat))
-        result = [umin, umax, vmin, vmax, wmin, wmax]
-        for s in result:
-            s.swap()
-        return result
+        return tuple(self.section(*args) for args in sections(3, 2))
 
     def split(self, knots, direction):
         """Split a volume into two or more separate representations with C0
