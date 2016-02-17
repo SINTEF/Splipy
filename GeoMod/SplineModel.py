@@ -2,6 +2,7 @@
 
 from GeoMod import *
 from GeoMod.Utils import *
+import GeoMod.ModState as state
 import numpy as np
 from collections import Counter
 from itertools import chain, product, permutations
@@ -19,15 +20,7 @@ class VertexDict(MutableMapping):
     All keys must have the same dimensions.
     """
 
-    def __init__(self, rtol=0, atol=1e-8):
-        """Initialize a vertex dictionary.
-
-        :param float rtol: Relative tolerance to use for equality check
-        :param float atol: Absolute tolerance to use for equality check
-        """
-        self.rtol = rtol
-        self.atol = atol
-
+    def __init__(self):
         # List of (key, value) pairs
         self.internal = []
 
@@ -35,7 +28,9 @@ class VertexDict(MutableMapping):
         """Check whether two numpy arrays are almost equal, according to the given
         tolerances.
         """
-        return np.allclose(a, b, rtol=self.rtol, atol=self.atol)
+        return np.allclose(a, b,
+                           rtol=state.controlpoint_relative_tolerance,
+                           atol=state.controlpoint_absolute_tolerance)
 
     def _candidate(self, key):
         """Return the internal index for the first stored mapping that matches the
@@ -169,7 +164,9 @@ class Orientation(object):
                 slices = tuple(slice(None, None, -1) if f else slice(None) for f in flip)
                 test_b = transposed[slices + (slice(None),)]
                 # FIXME: Hardcoded tolerances
-                if np.allclose(cpa, test_b, rtol=0, atol=1e-8):
+                if np.allclose(cpa, test_b,
+                               rtol=state.controlpoint_relative_tolerance,
+                               atol=state.controlpoint_absolute_tolerance):
                     return cls(perm, flip)
 
         raise OrientationError("Non-matching objects")
