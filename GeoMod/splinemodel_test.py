@@ -3,8 +3,10 @@
 from GeoMod import *
 from GeoMod.SplineModel import *
 from GeoMod.ModState import state
+import GeoMod.VolumeFactory as VolumeFactory
+import GeoMod.CurveFactory as CurveFactory
 import unittest
-from math import pi
+from math import pi, sqrt
 import numpy as np
 
 
@@ -141,6 +143,17 @@ class TestOrientation(unittest.TestCase):
                Orientation((4, 1, 3, 0, 2), (True, False, True, False, False)))
         self.assertTupleEqual(tmp.perm, (4, 2, 1, 0, 3))
         self.assertTupleEqual(tmp.flip, (True, False, False, False, False))
+
+        o1 = Orientation((0, 1), (False, True))
+        o2 = Orientation((1, 0), (False, True))
+
+        tmp = o1*o2
+        self.assertTupleEqual(tmp.perm, (1, 0))
+        self.assertTupleEqual(tmp.flip, (False, False))
+
+        tmp = o2*o1
+        self.assertTupleEqual(tmp.perm, (1, 0))
+        self.assertTupleEqual(tmp.flip, (True, True))
 
     def test_map(self):
         va = Volume()
@@ -347,3 +360,65 @@ class TestObjectCatalogue(unittest.TestCase):
         self.assertTupleEqual(cat(v3).section(v=0, w=0).orientation.flip, (True,))
         self.assertTupleEqual(cat(v3).section(u=0, v=0).orientation.flip, (False,))
         self.assertTupleEqual(cat(v4).section(u=0, v=0).orientation.flip, (False,))
+
+    def test_six_boxes(self):
+        v1 = Volume() - [.5, .5, .5]
+        v2 = v1.clone().rotate(pi/2, [1,0,0]) + (1,0,0)
+        v3 = v1.clone().rotate(pi/2, [0,1,0]) + (0,1,0)
+        v4 = v1.clone().rotate(pi/2, [0,0,1]) + (2,0,0)
+        v5 = v1.clone()                       + (0,0,1)
+        v6 = v1.clone()                       + (1,0,1)
+
+        cat = ObjectCatalogue(3)
+
+        for v in [v1,v2,v3,v4,v5,v6]:
+            v.raise_order(1,1,1)
+            v.refine(1)
+            cat(v)
+
+        self.assertEqual(len(cat.nodes(3)),  6)
+        self.assertEqual(len(cat.nodes(2)), 30)
+        self.assertEqual(len(cat.nodes(1)), 49)
+        self.assertEqual(len(cat.nodes(0)), 26)
+
+    def test_cylinder(self):
+        cat = ObjectCatalogue(3)
+        vol = VolumeFactory.cylinder()
+        vol = vol.split(0.0, 'u')  # break periodicicy
+        cat(vol)
+
+        self.assertEqual(len(cat.nodes(3)), 1)
+        self.assertEqual(len(cat.nodes(2)), 5)
+        self.assertEqual(len(cat.nodes(1)), 8)
+        self.assertEqual(len(cat.nodes(0)), 4)
+
+    def test_icosahedron(self):
+        phi= (1.0+sqrt(5))/2
+        pt = []
+        lines = []
+        for d in range(3):
+            for i in [-1,1]:
+                for j in [-1,1]:
+                    p = [0,0,0]
+                    p[(d+1)%3] = i
+                    p[(d+2)%3] = j*phi
+                    pt.append(p)
+            lines.append(CurveFactory.line(pt[-1], pt[-3]))
+            lines.append(CurveFactory.line(pt[-2], pt[-4]))
+        for d in range(3):
+            for k in range(2):
+                for i in range(2):
+                    for j in range(2):
+                        lines.append(CurveFactory.line(pt[4*d + 2*i + k], pt[4*((d+1)%3) + 2*k + j]))
+
+        cat = ObjectCatalogue(1)
+        # f = open('icosahedron.g2', 'w')
+        for c in lines:
+            cat(c)
+            # c.write_g2(f)
+
+        self.assertEqual(len(cat.nodes(1)), 30)
+        self.assertEqual(len(cat.nodes(0)), 12)
+
+
+
