@@ -4,7 +4,8 @@ from contextlib import contextmanager
 import sys
 
 states = ['controlpoint_relative_tolerance',
-          'controlpoint_absolute_tolerance']
+          'controlpoint_absolute_tolerance',
+          'knot_tolerance']
 __all__ = states + ['state']
 
 
@@ -13,6 +14,9 @@ controlpoint_relative_tolerance = 0.0
 
 controlpoint_absolute_tolerance = 1e-8
 """Absolute tolerance used for matching control points."""
+
+knot_tolerance = 1e-10
+"""Absolute tolerance used for matching parametric values (knot vectors)."""
 
 
 @contextmanager

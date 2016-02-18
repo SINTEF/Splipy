@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from GeoMod.Utils import ensure_listlike
+import GeoMod.ModState as state
 from bisect import bisect_right, bisect_left
 import numpy as np
 
@@ -18,7 +19,6 @@ class BSplineBasis:
     knots = [0, 0, 1, 1]
     order = 2
     periodic = -1
-    tol = 1e-10
 
     def __init__(self, order=2, knots=None, periodic=-1):
         """__init__([order=2], [knots=None], [periodic=-1])
@@ -54,10 +54,10 @@ class BSplineBasis:
             raise ValueError('knot vector has too few elements')
         if periodic >= 0:
             for i in range(p + k - 1):
-                if abs((knots[i + 1] - knots[i]) - (knots[-p - k + i ] - knots[-p - k - 1 + i])) > self.tol:
+                if abs((knots[i + 1] - knots[i]) - (knots[-p - k + i ] - knots[-p - k - 1 + i])) > state.knot_tolerance:
                     raise ValueError('periodic knot vector is mis-matching at the start/end')
         for i in range(len(knots) - 1):
-            if knots[i + 1] - knots[i] < -self.tol:
+            if knots[i + 1] - knots[i] < -state.knot_tolerance:
                 raise ValueError('knot vector needs to be non-decreasing')
 
     def num_functions(self):
@@ -137,7 +137,7 @@ class BSplineBasis:
                     evalT = (t[i] - self.start()) % (self.end() - self.start()) + self.start()
             else:
                 # Special-case the endpoint, so the user doesn't need to
-                if abs(t[i] - self.end()) < self.tol:
+                if abs(t[i] - self.end()) < state.knot_tolerance:
                     right = False
                 # Skip non-periodic evaluation points outside the domain
                 if t[i] < self.start() or t[i] > self.end():
@@ -155,7 +155,7 @@ class BSplineBasis:
             for q in range(1, p):
                 for j in range(p - q - 1, p):
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
-                    if abs(self.knots[k + q] - self.knots[k]) > self.tol:
+                    if abs(self.knots[k + q] - self.knots[k]) > state.knot_tolerance:
                         if q < p - d:  # in case of normal evaluation
                             M[j] = M[j] * float(evalT - self.knots[k]) / (
                                 self.knots[k + q] - self.knots[k])
@@ -164,7 +164,7 @@ class BSplineBasis:
                     else:  # in case of multiplicative knot
                         M[j] = 0
                     if abs(self.knots[k + q + 1] - self.knots[
-                            k + 1]) > self.tol:  # and the same for the second term in the sum
+                            k + 1]) > state.knot_tolerance:  # and the same for the second term in the sum
                         if q < p - d:
                             M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (
                                 self.knots[k + q + 1] - self.knots[k + 1])
@@ -249,10 +249,10 @@ class BSplineBasis:
 
         p = self.order
         mu = bisect_left(self.knots, knot)
-        if abs(self.knots[mu] - knot) > self.tol:
+        if abs(self.knots[mu] - knot) > state.knot_tolerance:
             return np.inf
         continuity = p - 1
-        while mu < len(self.knots) and abs(self.knots[mu] - knot) < self.tol:
+        while mu < len(self.knots) and abs(self.knots[mu] - knot) < state.knot_tolerance:
             continuity -= 1
             mu += 1
         return continuity
@@ -264,7 +264,7 @@ class BSplineBasis:
         :rtype: [float]"""
         result = [self.knots[0]]
         for k in self.knots:
-            if abs(k - result[-1]) > self.tol:
+            if abs(k - result[-1]) > state.knot_tolerance:
                 result.append(k)
         return result
 
