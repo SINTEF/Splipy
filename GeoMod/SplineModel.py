@@ -163,7 +163,6 @@ class Orientation(object):
             for flip in product([False, True], repeat=pardim):
                 slices = tuple(slice(None, None, -1) if f else slice(None) for f in flip)
                 test_b = transposed[slices + (slice(None),)]
-                # FIXME: Hardcoded tolerances
                 if np.allclose(cpa, test_b,
                                rtol=state.controlpoint_relative_tolerance,
                                atol=state.controlpoint_absolute_tolerance):
@@ -487,31 +486,37 @@ class ObjectCatalogue(object):
 # FIXME: This class is unfinished, and right now it doesn't do much other than
 # wrap ObjectCatalogue
 
-# class SplineModel(object):
+class SplineModel(object):
 
-#     def __init__(self, pardim, dimension, objs=[]):
-#         self.pardim = pardim
-#         self.dimension = dimension
+    def __init__(self, pardim=3, dimension=3, objs=[]):
+        self.pardim = pardim
+        self.dimension = dimension
 
-#         self.catalogue = ObjectCatalogue(pardim)
-#         self.add_patches(objs)
+        self.catalogue = ObjectCatalogue(pardim)
+        self.add_patches(objs)
 
-#     def add_patches(self, objs):
-#         self._validate(objs)
-#         self._generate(objs)
+    def add_patch(self, obj):
+        self.add_patches([obj])
 
-#     def _validate(self, objs):
-#         if any(p.dimension != self.dimension for p in objs):
-#             raise ValueError("Patches with different dimension added")
-#         if any(p.pardim != self.pardim for p in objs):
-#             raise ValueError("Patches with different parametric dimension added")
+    def add_patches(self, objs):
+        self._validate(objs)
+        self._generate(objs)
 
-#     def _generate(self, objs):
-#         for p in objs:
-#             self.catalogue(p)
+    def boundary(self):
+        return [node for node in self.catalogue.nodes(self.pardim-1) if len(node.higher_nodes[self.pardim])==1]
 
-#     def summary(self):
-#         c = self.catalogue
-#         while isinstance(c, ObjectCatalogue):
-#             print('Dim {}: {}'.format(c.pardim, len(c.top_nodes())))
-#             c = c.lower
+    def _validate(self, objs):
+        if any(p.dimension != self.dimension for p in objs):
+            raise ValueError("Patches with different dimension added")
+        if any(p.pardim != self.pardim for p in objs):
+            raise ValueError("Patches with different parametric dimension added")
+
+    def _generate(self, objs):
+        for p in objs:
+            self.catalogue(p)
+
+    def summary(self):
+        c = self.catalogue
+        while isinstance(c, ObjectCatalogue):
+            print('Dim {}: {}'.format(c.pardim, len(c.top_nodes())))
+            c = c.lower
