@@ -1100,3 +1100,44 @@ class SplineObject(object):
             for k in range(obj.dimension):
                 outfile.write('%f ' % obj.controlpoints[c[::-1] + (k,)])
             outfile.write('\n')
+
+    @staticmethod
+    def read_g2(infile):
+        """Read objects in GoTools format.
+
+        :param file-like infile: The file to read from
+        :return: The objects in the file
+        :rtype: [SplineObject]
+        """
+        ret = []
+
+        for line in infile:
+            line = line.strip()
+            if not line:
+                continue
+
+            objtype, major, minor, patch = map(int, line.split(' '))
+            if (major, minor, patch) != (1, 0, 0):
+                raise IOError('Unknown G2 format')
+
+            classes = [c for c in SplineObject.__subclasses__() if c._g2_type == objtype]
+            if not classes:
+                raise IOError('Unknown G2 object type {}'.format(objtype))
+            cls = classes[0]
+            pardim = cls._intended_pardim
+
+            _, rational = next(infile).strip().split(' ')
+            rational = bool(int(rational))
+
+            bases = [BSplineBasis.read_g2(infile) for _ in range(pardim)]
+            ncps = 1
+            for b in bases:
+                ncps *= b.num_functions()
+
+            cps = [tuple(map(float, next(infile).split(' ')))
+                   for _ in range(ncps)]
+
+            args = bases + [cps, rational]
+            ret.append(cls(*args))
+
+        return ret

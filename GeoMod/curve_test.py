@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import Curve, BSplineBasis
+from GeoMod import SplineObject, Curve, BSplineBasis
 from math import sqrt, pi
 import numpy as np
 import unittest
@@ -363,6 +363,33 @@ class TestCurve(unittest.TestCase):
                          '0.000000 1.000000 \n'
                          '-1.000000 0.000000 \n'
                          '1.000000 0.000000')
+
+    def test_read_g2(self):
+        buf = StringIO('100 1 0 0\n'
+                       '2 0\n'
+                       '4 3\n'
+                       '0.000000 0.000000 0.000000 1.000000 2.000000 2.000000 2.000000\n'
+                       '1.000000 0.000000\n'
+                       '0.000000 1.000000\n'
+                       '-1.000000 0.000000\n'
+                       '1.000000 0.000000')
+        curve = SplineObject.read_g2(buf)[0]
+
+        self.assertIs(type(curve), Curve)
+
+        self.assertEqual(curve.controlpoints[0,0], 1.0)
+        self.assertEqual(curve.controlpoints[0,1], 0.0)
+        self.assertEqual(curve.controlpoints[1,0], 0.0)
+        self.assertEqual(curve.controlpoints[1,1], 1.0)
+        self.assertEqual(curve.controlpoints[2,0], -1.0)
+        self.assertEqual(curve.controlpoints[2,1], 0.0)
+        self.assertEqual(curve.controlpoints[3,0], 1.0)
+        self.assertEqual(curve.controlpoints[3,1], 0.0)
+        self.assertEqual(curve.dimension, 2)
+        self.assertEqual(curve.rational, False)
+
+        self.assertListEqual(list(curve.bases[0].knots), [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0])
+        self.assertEqual(curve.bases[0].order, 3)
 
     def test_center(self):
         # create the geometric mapping x(t) = t, y(t) = t^3,  t=[0,1]

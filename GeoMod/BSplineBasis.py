@@ -380,6 +380,16 @@ class BSplineBasis:
             outfile.write('%f ' % k)
         outfile.write('\n')
 
+    @staticmethod
+    def read_g2(infile):
+        """Read a basis in GoTools format.
+
+        :param file-like infile: The file to read from.
+        """
+        ncps, order = map(int, next(infile).split(' '))
+        kts = list(map(float, next(infile).split(' ')))
+        return BSplineBasis(order, kts, -1)
+
     __call__ = evaluate
 
     def __len__(self):
