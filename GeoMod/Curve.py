@@ -16,6 +16,7 @@ class Curve(SplineObject):
     Represents a curve: an object with a one-dimensional parameter space."""
 
     _intended_pardim = 1
+    _g2_type = 100
 
     def __init__(self, basis=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis=None], [controlpoints=None], [rational=False])
@@ -237,25 +238,6 @@ class Curve(SplineObject):
 
         # return new resampled curve
         return Curve(basis, controlpoints)
-
-    def write_g2(self, outfile):
-        """Write the curve in GoTools format.
-
-        :param file-like outfile: The file to write to
-        """
-        if self.periodic():
-            crv = self.split(self.start())
-            crv.write_g2(outfile)
-            return
-        outfile.write('100 1 0 0\n')  # surface header, gotools version 1.0.0
-        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
-        self.bases[0].write_g2(outfile)
-
-        (n1, n2) = self.controlpoints.shape
-        for i in chain(range(n1), range(self.bases[0].periodic + 1)):
-            for j in range(n2):
-                outfile.write('%f ' % self.controlpoints[i, j])
-            outfile.write('\n')
 
     def __repr__(self):
         return str(self.bases[0]) + '\n' + str(self.controlpoints)

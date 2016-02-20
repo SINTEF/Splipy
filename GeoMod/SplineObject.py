@@ -3,7 +3,7 @@
 import numpy as np
 import copy
 from operator import attrgetter, methodcaller
-from itertools import product
+from itertools import chain, product
 from GeoMod import BSplineBasis
 from GeoMod.Utils import *
 
@@ -1078,3 +1078,25 @@ class SplineObject(object):
                 if c1 > c2:
                     m = min(c1-c2, p[i]-1-c2) # c1=np.inf if knot does not exist
                     spline1.insert_knot([k]*m, direction=i)
+
+    def write_g2(self, outfile):
+        """Write the object in GoTools format.
+
+        :param file-like outfile: The file to write to
+        """
+        obj = self
+        for i in range(self.pardim):
+            if self.periodic(i):
+                obj = obj.split(obj.start(i), i)
+
+        outfile.write('{} 1 0 0\n'.format(self._g2_type))
+        outfile.write('{} {}\n'.format(self.dimension, int(self.rational)))
+        for b in obj.bases:
+            b.write_g2(outfile)
+
+        coefs = [chain(range(n), range(b.periodic + 1))
+                 for n, b in zip(obj.controlpoints.shape[:-1], obj.bases)][::-1]
+        for c in product(*coefs):
+            for k in range(obj.dimension):
+                outfile.write('%f ' % obj.controlpoints[c[::-1] + (k,)])
+            outfile.write('\n')

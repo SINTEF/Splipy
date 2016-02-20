@@ -16,6 +16,7 @@ class Volume(SplineObject):
     Represents a volume: an object with a three-dimensional parameter space."""
 
     _intended_pardim = 3
+    _g2_type = 700
 
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis1=None], [basis2=None], [basis3=None], [controlpoints=None], [rational=False])
@@ -210,29 +211,6 @@ class Volume(SplineObject):
 
         # return new resampled curve
         return Volume(basis[0], basis[1], basis[2], cp)
-
-    def write_g2(self, outfile):
-        """Write the volume in GoTools format.
-
-        :param file-like outfile: The file to write to
-        """
-        vol = self
-        for i in range(self.pardim):
-            if self.periodic(i):
-                vol = vol.split(vol.start(i), i)
-        outfile.write('700 1 0 0\n')  # volume header, gotools version 1.0.0
-        outfile.write('%i %i\n' % (vol.dimension, int(vol.rational)))
-        vol.bases[0].write_g2(outfile)
-        vol.bases[1].write_g2(outfile)
-        vol.bases[2].write_g2(outfile)
-
-        (n1, n2, n3, n4) = vol.controlpoints.shape
-        for k in chain(range(n3), range(vol.bases[2].periodic + 1)):
-            for j in chain(range(n2), range(vol.bases[1].periodic + 1)):
-                for i in chain(range(n1), range(vol.bases[0].periodic + 1)):
-                    for d in range(n4):
-                        outfile.write('%f ' % vol.controlpoints[i, j, k, d])
-                    outfile.write('\n')
 
     def __repr__(self):
         result = str(self.bases[0]) + '\n'
