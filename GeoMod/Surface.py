@@ -16,6 +16,7 @@ class Surface(SplineObject):
     Represents a surface: an object with a two-dimensional parameter space."""
 
     _intended_pardim = 2
+    _g2_type = 200
 
     def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis1=None], [basis2=None], [controlpoints=None], [rational=False])
@@ -207,27 +208,6 @@ class Surface(SplineObject):
 
         # return new resampled curve
         return Surface(basis[0], basis[1], cp)
-
-    def write_g2(self, outfile):
-        """Write the surface in GoTools format.
-
-        :param file-like outfile: The file to write to
-        """
-        surf = self
-        for i in range(self.pardim):
-            if self.periodic(i):
-                surf = surf.split(surf.start(i), i)
-        outfile.write('200 1 0 0\n')  # surface header, gotools version 1.0.0
-        outfile.write('%i %i\n' % (self.dimension, int(self.rational)))
-        surf.bases[0].write_g2(outfile)
-        surf.bases[1].write_g2(outfile)
-
-        (n1, n2, n3) = surf.controlpoints.shape
-        for j in chain(range(n2), range(surf.bases[1].periodic + 1)):
-            for i in chain(range(n1), range(surf.bases[0].periodic + 1)):
-                for k in range(n3):
-                    outfile.write('%f ' % surf.controlpoints[i, j, k])
-                outfile.write('\n')
 
     def __repr__(self):
         result = str(self.bases[0]) + '\n' + str(self.bases[1]) + '\n'
