@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from itertools import combinations, product
+from math import atan2, sqrt
 
 def sections(src_dim, tgt_dim):
     """Generate all boundary sections from a source dimension to a target
@@ -90,3 +91,18 @@ def ensure_listlike(x, dups=1):
         return [x] * dups
     except IndexError:
         return []
+
+def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
+    """re-orients a planar geometry by moving it to a different location and
+    tilting it"""
+    # don't touch it if not needed. translate or scale operations may force
+    # object into 3D space
+    if normal != (0,0,1):
+        theta = atan2(normal[1], normal[0])
+        phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
+        obj.rotate(phi,   (0,1,0))
+        obj.rotate(theta, (0,0,1))
+    if center != (0,0,0):
+        obj.translate(center)
+    return obj
+    

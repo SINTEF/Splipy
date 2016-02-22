@@ -10,7 +10,7 @@ import GeoMod.SurfaceFactory as SurfaceFactory
 __all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces', 'loft']
 
 
-def cube(size=1):
+def cube(size=1, lower_left=(0,0,0)):
     """cube([size=1])
 
     Create a cube with parmetric origin at *(0,0,0)*.
@@ -22,6 +22,7 @@ def cube(size=1):
     """
     result = Volume()
     result.scale(size)
+    result += lower_left
     return result
 
 
@@ -58,31 +59,27 @@ def revolve(surf, theta=2 * pi):
     return Volume(surf.bases[0], surf.bases[1], basis, cp, True)
 
 
-def cylinder(r=1, h=1):
-    """cylinder([r=1], [h=1])
+def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
+    """cylinder([r=1], [h=1], [center=(0,0,0)], [axis=(0,0,1)])
 
-    Create a solid cylinder with the *z* axis as central axis.
+    Create a solid cylinder 
 
     :param float r: Radius
     :param float h: Height
+    :param point-like center: The center of the bottom circle
+    :param vector-like axis: Cylinder axis
     :return: The cylinder
     :rtype: Volume
     """
-    shell = SurfaceFactory.cylinder(r, h)
-    cp = []
-    for controlpoint in shell:
-        cp.append([0, 0, controlpoint[2], controlpoint[3]])  # project to z-axis
-    for controlpoint in shell:
-        cp.append(list(controlpoint))
-
-    return Volume(shell.bases[0], shell.bases[1], BSplineBasis(), cp, True)
+    return extrude(SurfaceFactory.disc(r, center, axis), h*axis)
 
 
-def extrude(surf, h):
-    """Extrude a surface by sweeping it in the *z* direction to a given height.
+def extrude(surf, amount):
+    """Extrude a surface by sweeping it to a given height.
 
     :param Surface surf: Surface to extrude
-    :param float h: Height in the *z* direction
+    :param vector-like amount: 3-component vector of sweeping amount and
+                               direction
     :return: The extruded surface
     :rtype: Volume
     """
@@ -90,10 +87,10 @@ def extrude(surf, h):
     cp = []
     for controlpoint in surf:
         cp.append(list(controlpoint))
-    surf += (0, 0, h)
+    surf += amount
     for controlpoint in surf:
         cp.append(list(controlpoint))
-    surf -= (0, 0, h)
+    surf -= amount
     return Volume(surf.bases[0], surf.bases[1], BSplineBasis(2), cp, surf.rational)
 
 

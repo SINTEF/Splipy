@@ -4,6 +4,7 @@
 
 from math import pi, cos, sin, sqrt, ceil
 from GeoMod import Curve, BSplineBasis
+from Utils import flip_and_move_plane_geometry
 import numpy as np
 
 __all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate']
@@ -46,13 +47,15 @@ def polygon(*points):
     return Curve(BSplineBasis(2, knot), points)
 
 
-def n_gon(n=5, r=1):
+def n_gon(n=5, r=1, center=(0,0,0), normal=(0,0,1)):
     """n_gon([n=5], [r=1])
 
     Create a regular polygon of *n* equal sides centered at the origin.
 
     :param int n: Number of sides and vertices
     :param float r: Radius
+    :param point-like center: local origin
+    :param vector-like normal: local normal
     :return: A linear, periodic, 2D curve
     :rtype: Curve
     :raises ValueError: If radius is not positive
@@ -71,15 +74,18 @@ def n_gon(n=5, r=1):
         knot.append(i)
     knot += [n, n+1]
     basis = BSplineBasis(2, knot, 0)
-    return Curve(basis, cp)
 
+    result =  Curve(basis, cp)
+    return flip_and_move_plane_geometry(result, center, normal)
 
-def circle(r=1):
+def circle(r=1, center=(0,0,0), normal=(0,0,1)):
     """circle([r=1])
 
-    Create a circle at the origin.
+    Create a circle.
 
     :param float r: Radius
+    :param point-like center: local origin
+    :param vector-like normal: local normal
     :return: A periodic, quadratic rational curve
     :rtype: Curve
     :raises ValueError: If radius is not positive
@@ -97,13 +103,14 @@ def circle(r=1):
                      [0, -r, 1],
                      [r*w, -r*w, w]]
     knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]) / 4.0 * 2 * pi
-    return Curve(BSplineBasis(3, knot, 0), controlpoints, True)
 
+    result = Curve(BSplineBasis(3, knot, 0), controlpoints, True)
+    return flip_and_move_plane_geometry(result, center, normal)
 
-def circle_segment(theta, r=1):
+def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
     """circle_segment(theta, [r=1])
 
-    Create a circle segment centered at the origin, starting at *(r,0)*.
+    Create a circle segment starting paralell to the rotated x-axis.
 
     :param float theta: Angle in radians
     :param float r: Radius
@@ -139,8 +146,8 @@ def circle_segment(theta, r=1):
         cp += [[x, y, w]]
         t += dt
 
-    return Curve(BSplineBasis(3, knot), cp, True)
-
+    result = Curve(BSplineBasis(3, knot), cp, True)
+    return flip_and_move_plane_geometry(result, center, normal)
 
 def interpolate(x_pts, basis):
     """Perform general spline interpolation at the Greville points of a basis.

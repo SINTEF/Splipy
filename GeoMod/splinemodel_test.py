@@ -384,7 +384,7 @@ class TestObjectCatalogue(unittest.TestCase):
     def test_cylinder(self):
         cat = ObjectCatalogue(3)
         vol = VolumeFactory.cylinder()
-        vol = vol.split(0.0, 'u')  # break periodicicy
+        vol = vol.split(0.0, 'v')  # break periodicicy
         cat(vol)
 
         self.assertEqual(len(cat.nodes(3)), 1)

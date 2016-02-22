@@ -98,6 +98,15 @@ class TestFactory(unittest.TestCase):
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 3.0)  # check radius=3
 
+        # circle not at origin
+        c = CurveFactory.circle(1, center=(1,0,0), normal=(1,1,1))
+        # test evaluation at 25 points 
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        for pt in np.array(x):
+            self.assertAlmostEqual(np.linalg.norm(pt-[1,0,0], 2), 1.0)  # check radius=1
+            self.assertAlmostEqual(pt[0]+pt[1]+pt[2] - 1, 0.0) # in plane x+y+z=1
+
         # test errors and exceptions
         with self.assertRaises(ValueError):
             c = CurveFactory.circle(-2.5)  # negative radius
@@ -200,7 +209,7 @@ class TestFactory(unittest.TestCase):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 4.0)  # check radius
 
         # square disc
-        surf = SurfaceFactory.disc(3, 'square')
+        surf = SurfaceFactory.disc(3, type='square')
         # evaluate on all 4 edges, 5 pts on each edge
         u = np.linspace(0, 1, 5)
         v = np.linspace(0, 1, 5)
@@ -322,8 +331,8 @@ class TestFactory(unittest.TestCase):
                 for w in np.linspace(vol.start()[2], vol.end()[2], 5):
                     x = vol(u, v, w)
                     self.assertAlmostEqual(
-                        np.linalg.norm(x[:2], 2), w)  # (x,y) coordinates to z-axis
-                    self.assertAlmostEqual(x[2], v)  # z coordinate should be linear
+                        np.linalg.norm(x[:2], 2), u)  # (x,y) coordinates to z-axis
+                    self.assertAlmostEqual(x[2], w)  # z coordinate should be linear
 
     def test_edge_surfaces(self):
         # test 3D surface vs 2D rational surface

@@ -4,6 +4,7 @@
 
 from GeoMod import BSplineBasis, Curve, Surface
 from math import pi, sqrt
+from Utils import flip_and_move_plane_geometry
 import GeoMod.CurveFactory as CurveFactory
 import inspect
 import numpy as np
@@ -12,7 +13,7 @@ __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus'
            'thicken', 'loft']
 
 
-def square(size=1):
+def square(size=1, lower_left=(0,0)):
     """square([size=1])
 
     Create a square with parametric origin at *(0,0)*.
@@ -24,10 +25,11 @@ def square(size=1):
     """
     result = Surface()  # unit square
     result.scale(size)
+    result += lower_left
     return result
 
 
-def disc(r=1, type='radial'):
+def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     """disc([r=1], [type='radial'])
 
     Create a circular disc with center at (0,0). The *type* parameter
@@ -43,7 +45,7 @@ def disc(r=1, type='radial'):
         cp = np.zeros((16, 3))
         cp[:, -1] = 1
         cp[1::2, :] = c.controlpoints
-        return Surface(BSplineBasis(), c.bases[0], cp, True)
+        result = Surface(BSplineBasis(), c.bases[0], cp, True)
     elif type == 'square':
         w = 1 / sqrt(2)
         cp = [[-r * w, -r * w, 1],
@@ -57,31 +59,35 @@ def disc(r=1, type='radial'):
               [r * w, r * w, 1]]
         basis1 = BSplineBasis(3)
         basis2 = BSplineBasis(3)
-        return Surface(basis1, basis2, cp, True)
+        result = Surface(basis1, basis2, cp, True)
     else:
         raise ValueError('invalid type argument')
 
+    return flip_and_move_plane_geometry(result, center, normal)
 
-def sphere(r=1):
+
+def sphere(r=1, center=(0,0,0)):
     """sphere([r=1])
 
     Create a spherical shell.
 
     :param float r: Radius
+    :param point-like center: Local origin of the sphere
     :return: The spherical shell
     :rtype: Surface
     """
     circle = CurveFactory.circle_segment(pi, r)
     circle.rotate(-pi / 2)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
-    return revolve(circle)
+    return revolve(circle) + center
 
 
-def extrude(curve, h):
-    """Extrude a curve by sweeping it in the *z* direction to a given height.
+def extrude(curve, amount):
+    """Extrude a curve by sweeping it to a given height.
 
     :param Curve curve: Curve to extrude
-    :param float h: Height in the *z* direction
+    :param vector-like amount: 3-component vector of sweeping amount and
+                               direction
     :return: The extruded curve
     :rtype: Surface
     """
@@ -90,7 +96,7 @@ def extrude(curve, h):
     n = len(curve)  # number of control points of the curve
     cp = np.zeros((2 * n, 4))
     cp[:n, :] = curve.controlpoints  # the first control points form the bottom
-    curve += (0, 0, h)
+    curve += amount
     cp[n:, :] = curve.controlpoints  # the last control points form the top
     return Surface(curve.bases[0], BSplineBasis(2), cp, curve.rational)
 
@@ -128,20 +134,22 @@ def revolve(curve, theta=2 * pi):
     return Surface(curve.bases[0], basis, cp, True)
 
 
-def cylinder(r=1, h=1):
-    """cylinder([r=1], [h=1])
+def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
+    """cylinder([r=1], [h=1], [center=(0,0,0)], [axis=(0,0,1)])
 
-    Create a cylinder shell with no top or bottom with the *z* axis as central axis.
+    Create a cylinder shell with no top or bottom 
 
     :param float r: Radius
     :param float h: Height
+    :param point-like center: The center of the bottom circle
+    :param vector-like axis: Cylinder axis
     :return: The cylinder shell
     :rtype: Surface
     """
-    return extrude(CurveFactory.circle(r), h)
+    return extrude(CurveFactory.circle(r, center, axis), h*axis)
 
 
-def torus(minor_r=1, major_r=3):
+def torus(minor_r=1, major_r=3, center=(0,0,0)):
     """torus([minor_r=1], [major_r=3])
 
     Create a torus (doughnut) by revolving a circle of size *minor_r* around
@@ -149,13 +157,14 @@ def torus(minor_r=1, major_r=3):
 
     :param float minor_r: The thickness of the torus (radius in the *xz* plane)
     :param float major_r: The size of the torus (radius in the *xy* plane)
+    :param point-like center: Local origin of the torus
     :return: A periodic torus
     :rtype: Surface
     """
     circle = CurveFactory.circle(minor_r)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
     circle.translate((major_r, 0, 0))  # move into position to spin around z-axis
-    return revolve(circle)
+    return revolve(circle) + center
 
 
 def edge_curves(*curves):
