@@ -4,7 +4,7 @@
 
 from math import pi, cos, sin, sqrt, ceil
 from GeoMod import Curve, BSplineBasis
-from Utils import flip_and_move_plane_geometry
+from GeoMod.Utils import flip_and_move_plane_geometry
 import numpy as np
 
 __all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate']

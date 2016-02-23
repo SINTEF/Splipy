@@ -4,7 +4,7 @@
 
 from GeoMod import BSplineBasis, Curve, Surface
 from math import pi, sqrt
-from Utils import flip_and_move_plane_geometry
+from GeoMod.Utils import flip_and_move_plane_geometry
 import GeoMod.CurveFactory as CurveFactory
 import inspect
 import numpy as np
