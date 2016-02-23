@@ -172,6 +172,27 @@ class TestBasis(unittest.TestCase):
         self.assertAlmostEqual(b.integrate(0,2)[0], 2.0/6)
         self.assertAlmostEqual(b.integrate(0,2)[1], 5.0/6)
         self.assertAlmostEqual(b.integrate(0,2)[2], 5.0/6)
+    
+    def test_matches(self):
+        b1 = BSplineBasis(3, [0,0,0,1,2,3,4,4,4])
+        b2 = BSplineBasis(3, [1,1,1,2,3,4,5,5,5])
+        b3 = BSplineBasis(4, [1,1,1,2,3,4,5,5,5])
+        b4 = BSplineBasis(4, [2,2,2,4,6,8,10,10,10])
+        b5 = BSplineBasis(3, [-1,0,0,1,2,3,4,4,5], periodic=0)
+        b6 = BSplineBasis(3, [-1,0,0,1,2,3,4,4,5])
+        b7 = BSplineBasis(3, [0,0,0,2,3,3,3])
+        b8 = BSplineBasis(3, [5,5,5,7,11,11,11])
+
+        self.assertEqual(b1.matches(b2), True)
+        self.assertEqual(b1.matches(b2, reverse=True), True)
+        self.assertEqual(b2.matches(b1), True)
+        self.assertEqual(b1.matches(b3), False)
+        self.assertEqual(b2.matches(b3), False)
+        self.assertEqual(b1.matches(b4), False)
+        self.assertEqual(b4.matches(b4), True)
+        self.assertEqual(b5.matches(b6), False)
+        self.assertEqual(b7.matches(b8, reverse=True), True)
+        self.assertEqual(b8.matches(b7, reverse=True), True)
 
 if __name__ == '__main__':
     unittest.main()

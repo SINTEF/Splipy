@@ -118,21 +118,15 @@ class Orientation(object):
         """Compute and return a new orientation object representing the mapping between
         `cpa` (the reference system) and `cpb` (the mapped system).
 
-        Each argument can be either a `SplineObject` or a numpy array
-        representing the control points.
-
         If `cpb` is not given, the identity orientation is returned.
 
-        :param cpa: The reference system
-        :param cpb: The mapped system
+        :param SplineObject cpa: The reference system
+        :param SplineObject cpb: The mapped system
         :return: The orientation relating the two systems
         :rtype: Orientation
         :raises OrientationError: If the two objects do not match
         """
-        if not isinstance(cpa, np.ndarray):
-            cpa = cpa.controlpoints
-
-        shape_a = cpa.shape
+        shape_a = cpa.controlpoints.shape
         pardim = len(shape_a) - 1
 
         # Return the identity orientation if no cpb
@@ -140,10 +134,7 @@ class Orientation(object):
             return cls(tuple(range(pardim)),
                        tuple(False for _ in range(pardim)))
 
-        if not isinstance(cpb, np.ndarray):
-            cpb = cpb.controlpoints
-
-        shape_b = cpb.shape
+        shape_b = cpb.controlpoints.shape
 
         # Deal with the easy cases: dimension mismatch, and
         # comparing the shapes as multisets
@@ -156,17 +147,18 @@ class Orientation(object):
 
         # Enumerate all permutations of directions
         for perm in permutations(range(pardim)):
-            transposed = cpb.transpose(perm + (pardim,))
+            transposed = cpb.controlpoints.transpose(perm + (pardim,))
             if transposed.shape != shape_a:
                 continue
             # Enumerate all possible direction reversals
             for flip in product([False, True], repeat=pardim):
                 slices = tuple(slice(None, None, -1) if f else slice(None) for f in flip)
                 test_b = transposed[slices + (slice(None),)]
-                if np.allclose(cpa, test_b,
+                if np.allclose(cpa.controlpoints, test_b,
                                rtol=state.controlpoint_relative_tolerance,
                                atol=state.controlpoint_absolute_tolerance):
-                    return cls(perm, flip)
+                    if all([cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i]) for i in range(pardim)]):
+                        return cls(perm, flip)
 
         raise OrientationError("Non-matching objects")
 
@@ -342,7 +334,7 @@ class NodeView(object):
 
         # The underlying lower-order node may not have an orientation that
         # matches the higher-order node, so we need to compose two orientations
-        ref_ori = Orientation.compute(node.obj, self.node.obj.section(*section))
+        ref_ori = Orientation.compute(node.obj, self.node.obj.section(*section, unwrap_points=False))
         my_ori = self.orientation.view_section(section)
 
         return NodeView(node, ref_ori * my_ori)

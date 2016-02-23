@@ -369,6 +369,24 @@ class BSplineBasis:
         len_left = left.stop - left.start
         right = slice(0, n-len_left, None)
         (self.knots[:len_left], self.knots[len_left:]) = (self.knots[left], self.knots[right] - t1)
+    
+    def matches(self, bspline, reverse=False):
+        """ Checks if this basis equals another basis, when disregarding
+        scaling and translation of the knots vector. I.e. will this basis and 
+        *bspline* yield the same spline object if paired with identical
+        controlpoints """
+        if self.order != bspline.order or self.periodic != bspline.periodic:
+            return False
+        dt  = self.knots[-1]    - self.knots[0]
+        dt2 = bspline.knots[-1] - bspline.knots[0]
+        if reverse:
+            return np.allclose( (self.knots[-1]-self.knots[::-1]) / dt,
+                                (bspline.knots-bspline.knots[0]) / dt2,
+                                atol=state.knot_tolerance)
+        else:
+            return np.allclose( (self.knots-self.knots[0]) / dt,
+                                (bspline.knots-bspline.knots[0]) / dt2,
+                                atol=state.knot_tolerance)
 
     def write_g2(self, outfile):
         """Write the basis in GoTools format.

@@ -74,7 +74,7 @@ class TestOrientation(unittest.TestCase):
             Orientation.compute(c1, c2)
 
         c2.refine(2)
-        tmp = Orientation.compute(c1.controlpoints, c2.controlpoints)
+        tmp = Orientation.compute(c1, c2)
         self.assertEqual(tmp.perm, (0,))
         self.assertEqual(tmp.flip, (True,))
 
@@ -89,6 +89,8 @@ class TestOrientation(unittest.TestCase):
 
         s1.refine(1, 0)
         s2.refine(1, 0)
+        s1.insert_knot(0.3, 'v')
+        s2.insert_knot(0.3, 'v')
 
         with self.assertRaises(OrientationError):
             Orientation.compute(c, s1)
@@ -132,6 +134,37 @@ class TestOrientation(unittest.TestCase):
         tmp = Orientation.compute(s1, s2)
         self.assertTupleEqual(tmp.perm, (1, 0))
         self.assertTupleEqual(tmp.flip, (False, True))
+
+    def test_knots(self):
+        mySurf = Surface(BSplineBasis(3), BSplineBasis(3))
+        mySurf.refine(1,1)
+        cp = mySurf.controlpoints # grid of 4x4 2D controlpoints
+
+        b1 = BSplineBasis(3, [0,0,0,.3,1,1,1])
+        b2 = BSplineBasis(3, [0,0,0,.7,1,1,1])
+
+        # matching controlpoints, non-matching knot vectors
+        with self.assertRaises(OrientationError):
+            s1 = Surface(b1, b1, np.reshape(cp, (16,2)))
+            s2 = Surface(b2, b2, np.reshape(cp, (16,2)))
+            Orientation.compute(s1, s2)
+        with self.assertRaises(OrientationError):
+            s1 = Surface(b2, b1, np.reshape(cp, (16,2)))
+            s2 = Surface(b1, b2, np.reshape(cp, (16,2)))
+            Orientation.compute(s1, s2)
+
+        s1 = Surface(b2, b1, np.reshape(cp, (16,2)))
+        s2 = Surface(b1, b2, np.reshape(cp.transpose(1,0,2), (16,2)))
+        tmp = Orientation.compute(s1, s2)
+        self.assertTupleEqual(tmp.perm, (1,0))
+        self.assertTupleEqual(tmp.flip, (False, False))
+
+        s1 = Surface(b2, b2, np.reshape(cp[::-1,:,:], (16,2)))
+        s2 = Surface(b1, b2, np.reshape(cp.transpose(1,0,2), (16,2)))
+        tmp = Orientation.compute(s1, s2)
+        self.assertTupleEqual(tmp.perm, (1,0))
+        self.assertTupleEqual(tmp.flip, (False, True))
+        
 
     def test_compose(self):
         tmp = (Orientation((0, 1), (False, True)) *
