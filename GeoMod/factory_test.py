@@ -9,7 +9,7 @@ import numpy as np
 import unittest
 
 
-class TestFactory(unittest.TestCase):
+class TestCurveFactory(unittest.TestCase):
     def test_line(self):
 
         # 2D line
@@ -163,6 +163,7 @@ class TestFactory(unittest.TestCase):
         with self.assertRaises(ValueError):
             c = CurveFactory.circle_segment(pi, -2)  # negative radius
 
+class TestSurfaceFactory(unittest.TestCase):
     def test_square(self):
         surf = SurfaceFactory.square((4, 5))
         self.assertEqual(surf.dimension, 2)
@@ -321,6 +322,39 @@ class TestFactory(unittest.TestCase):
         for v in np.linspace(0, 1, 7):
             self.assertAlmostEqual(surf(1, v)[0], c2(v)[0])  # x-coord, right crv
             self.assertAlmostEqual(surf(1, v)[1], c2(v)[1])  # y-coord, right crv
+
+    def test_thicken(self):
+        c = Curve()                       # 2D curve from (0,0) to (1,0)
+        s = SurfaceFactory.thicken(c, .5) # extend to y=[-.5, .5]
+        self.assertTupleEqual(s.order(), (2,2))
+        self.assertTupleEqual(s.start(), (0,0))
+        self.assertTupleEqual(s.end(),   (1,1))
+        self.assertTupleEqual(s.bounding_box()[0], (0.0,1.0))
+        self.assertTupleEqual(s.bounding_box()[1], (-.5, .5))
+
+        # test a case with vanishing velocity. x'(t)=0, y'(t)=0 for t=0
+        c = Curve(BSplineBasis(3), [[0,0],[0,0],[1,0]]) # x(t)=t^2, y(t)=0
+        s = SurfaceFactory.thicken(c, .5) 
+        self.assertTupleEqual(s.order(), (3,2))
+        self.assertTupleEqual(s.start(), (0,0))
+        self.assertTupleEqual(s.end(),   (1,1))
+        self.assertTupleEqual(s.bounding_box()[0], (0.0,1.0))
+        self.assertTupleEqual(s.bounding_box()[1], (-.5, .5))
+
+        def myThickness(t):
+            return t**2
+        c = Curve(BSplineBasis(3))
+        s = SurfaceFactory.thicken(c, myThickness) 
+        self.assertTupleEqual(s.order(), (3,2))
+        self.assertTupleEqual(s.start(), (0,0))
+        self.assertTupleEqual(s.end(),   (1,1))
+        self.assertTupleEqual(s.bounding_box()[0], ( 0.0, 1.0))
+        self.assertTupleEqual(s.bounding_box()[1], (-1.0, 1.0))
+
+
+        
+
+class TestVolumeFactory(unittest.TestCase):
 
     def test_cylinder_volume(self):
         # unit cylinder
@@ -492,6 +526,24 @@ class TestFactory(unittest.TestCase):
         pt  = surf[3](u,v)
         pt2 = vol(s,t,3).reshape(9,9,3)
         self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+
+    def test_revolve(self):
+        # square torus
+        square = Surface() + (1,0)
+        square.rotate(pi / 2, (1, 0, 0)) # in xz-plane with corners at (1,0),(2,0),(2,1),(1,1)
+        
+        vol = VolumeFactory.revolve(square)
+        vol.reparam()  # set parametric space to (0,1)^3
+        u = np.linspace(0, 1, 7)
+        v = np.linspace(0, 1, 7)
+        w = np.linspace(0, 1, 7)
+        x = vol.evaluate(u,v,w)
+        V,U,W = np.meshgrid(v,u,w)
+        R = np.sqrt(x[:,:,:,0]**2 + x[:,:,:,1]**2)
+
+        self.assertEqual(np.allclose(R, U+1), True)
+        self.assertEqual(np.allclose(x[:,:,:,2], V), True)
+    
 
 
 

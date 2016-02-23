@@ -21,7 +21,7 @@ def camber(M, P, order=5):
     @return : Exact centerline representation
     @rtype  : Curve
     """
-    # parametrized by x=t
+    # parametrized by x=t or x="t^2" if order>4
     M = M / 100.0
     P = P / 10.0
     basis = BSplineBasis(order)

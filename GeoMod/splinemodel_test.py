@@ -454,4 +454,19 @@ class TestObjectCatalogue(unittest.TestCase):
         self.assertEqual(len(cat.nodes(0)), 12)
 
 
+class TestSplineModel(unittest.TestCase):
+    def test_boundary(self):
+        v1 = Volume() - [.5, .5, .5]
+        v2 = v1.clone().rotate(pi/2, [1,0,0]) + (1,0,0)
+        v3 = v1.clone().rotate(pi/2, [0,1,0]) + (0,1,0)
+        v4 = v1.clone().rotate(pi/2, [0,0,1]) + (2,0,0)
+        v5 = v1.clone()                       + (0,0,1)
+        v6 = v1.clone()                       + (1,0,1)
+
+        model = SplineModel()
+        model.add_patch(v1)
+        model.add_patches([v2,v3,v4,v5])
+        model.add_patch(v6)
+        
+        self.assertEqual(len(model.boundary()), 24)
 
