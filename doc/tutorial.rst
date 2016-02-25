@@ -2,13 +2,13 @@
 Tutorial
 ========
 
-Typically, in GeoModeler, you make geometries by building curves from points,
+Typically, in Splipy, you make geometries by building curves from points,
 surfaces from curves, and volumes from surfaces. Let us look at some easy
 examples.
 
 
-Hello, GeoModeler
-=================
+Hello, Splipy
+=============
 
 .. code:: python
 

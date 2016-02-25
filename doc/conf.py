@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# GeoModeler documentation build configuration file, created by
+# Splipy documentation build configuration file, created by
 # sphinx-quickstart on Sun Jan 24 12:47:58 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'GeoModeler'
+project = 'Splip '
 copyright = '2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn'
 author = 'Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn'
 
@@ -205,7 +205,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'GeoModelerdoc'
+htmlhelp_basename = 'Splipydoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -227,7 +227,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'GeoModeler.tex', 'GeoModeler Documentation',
+    (master_doc, 'Splipy.tex', 'Splipy Documentation',
      'Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn', 'manual'),
 ]
 
@@ -257,7 +257,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'geomodeler', 'GeoModeler Documentation',
+    (master_doc, 'splipy', 'Splipy',
      [author], 1)
 ]
 
@@ -271,8 +271,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'GeoModeler', 'GeoModeler Documentation',
-     author, 'GeoModeler', 'One line description of project.',
+    (master_doc, 'Splipy', 'Splipy',
+     author, 'Splipy', 'One line description of project.',
      'Miscellaneous'),
 ]
 

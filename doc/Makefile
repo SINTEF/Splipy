@@ -94,9 +94,9 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/GeoModeler.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/Splipy.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/GeoModeler.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/Splipy.qhc"
 
 .PHONY: applehelp
 applehelp:
@@ -113,8 +113,8 @@ devhelp:
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/GeoModeler"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/GeoModeler"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/Splipy"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/Splipy"
 	@echo "# devhelp"
 
 .PHONY: epub

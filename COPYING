@@ -1,9 +1,9 @@
-IFEM is free software. You can use, modify and distribute it under the terms
-of the GNU public license v3, which is given below for convenience.
-Note that this license only applies to the IFEM code, the libraries used
-by IFEM is covered by their own licenses.
+Splipy is free software. You can use, modify and distribute it under the terms
+of the GNU public license v3, which is given below for convenience. Note that
+this license only applies to the IFEM code, the libraries used by Splipy are
+covered by their own licenses.
 
-The principal copyright owner for IFEM is SINTEF ICT.
+The principal copyright owner for Splipy is SINTEF ICT.
 
 -----------------------                    
                     

@@ -1,4 +1,4 @@
-"""This module handles the global GeoModeler state."""
+"""This module handles the global Splipy state."""
 
 from contextlib import contextmanager
 import sys
