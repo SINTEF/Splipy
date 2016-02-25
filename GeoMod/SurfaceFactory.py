@@ -10,7 +10,7 @@ import inspect
 import numpy as np
 
 __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus', 'edge_curves',
-           'thicken', 'loft']
+           'thicken', 'loft', 'interpolate']
 
 
 def square(size=1, lower_left=(0,0)):
@@ -374,3 +374,59 @@ def loft(*curves):
     cp = cp.reshape(n*m, cp.shape[2])
 
     return Surface(basis1, basis2, cp, curves[0].rational)
+
+def interpolate(x, bases, u=None):
+    """Interpolate a surface on a set of regular gridded interpolation points
+
+    :param x: Grid of interpolation points. Component *x[i,j,k]* denotes
+        component *x[k]* at index *(i,j)* in the surface. For matrix input *x[i,j]*
+        then index *i* is interpreted as a flat row-first indexing of the 
+        interpolation grid with components *x[j]*
+    :type x: matrix-like or 3D-tensor-like
+    :param [BSplineBasis] bases: The basis to interpolate on
+    :param [array-like]   u    : Parametric interpolation points, defaults to
+                                 greville points of the basis
+    :return: Interpolated surface
+    :rtype: Surface
+    """
+    surf_shape = [b.num_functions() for b in bases]
+    dim = x.shape[-1]
+    if len(x.shape) == 2:
+        x = x.reshape(surf_shape + [dim])
+    if u is None:
+        u = [b.greville() for b in bases]
+    N_all = [b(t) for b,t in zip(bases, u)]
+    N_all.reverse()
+    cp = x
+    for N in N_all:
+        cp = np.tensordot(np.linalg.inv(N), cp, axes=(1,1))
+
+    return Surface(bases[0], bases[1], cp.transpose(1,0,2).reshape((np.prod(surf_shape),dim)))
+
+def least_square_fit(x, bases, u):
+    """Perform a least-square fit of a point cloud onto a spline basis
+
+    :param x: Grid of evaluation points. Component *x[i,j,k]* denotes
+        component *x[k]* at index *(i,j)* in the surface. For matrix input *x[i,j]*
+        then index *i* is interpreted as a flat row-first indexing of the 
+        interpolation grid with components *x[j]*. The number of points must be
+        equal to or larger than the number of basis functions
+    :type x: matrix-like or 3D-tensor-like
+    :param [BSplineBasis] bases: Basis on which to interpolate
+    :param [array-like]   t    : parametric values at evaluation points
+    :return: Approximated surface
+    :rtype: Surface
+    """
+    surf_shape = [b.num_functions() for b in bases]
+    dim = x.shape[-1]
+    if len(x.shape) == 2:
+        x = x.reshape(surf_shape + [dim])
+    N_all = [b(t) for b,t in zip(bases, u)]
+    N_all.reverse()
+    cp = x
+    for N in N_all:
+        cp = np.tensordot(N.T, cp, axes=(1,1))
+    for N in N_all:
+        cp = np.tensordot(np.linalg.inv(N.T*N), cp, axes=(1,1))
+
+    return Surface(bases[0], bases[1], cp.transpose(1,0,2).reshape((np.prod(surf_shape),dim)))

@@ -7,7 +7,8 @@ import numpy as np
 from GeoMod import Surface, Volume, BSplineBasis
 import GeoMod.SurfaceFactory as SurfaceFactory
 
-__all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces', 'loft']
+__all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces', 'loft',
+           'interpolate', 'least_square_fit']
 
 
 def cube(size=1, lower_left=(0,0,0)):
@@ -221,3 +222,59 @@ def loft(*surfaces):
     cp = np.reshape(cp.transpose((2, 1, 0, 3)), (m1*m2*n, dim))
 
     return Volume(basis1, basis2, basis3, cp, surfaces[0].rational)
+
+def interpolate(x, bases, u=None):
+    """Interpolate a volume on a set of regular gridded interpolation points
+
+    :param x: Grid of interpolation points. Component *x[i,j,k,l]* denotes
+        component *x[l]* at index *(i,j)* in the volume. For matrix input *x[i,j]*
+        then index *i* is interpreted as a flat row-first indexing of the 
+        interpolation grid with components *x[j]*
+    :type x: matrix-like or 4D-tensor-like
+    :param [BSplineBasis] bases: The basis to interpolate on
+    :param [array-like]   u    : Parametric interpolation points, defaults to
+                                 greville points of the basis
+    :return: Interpolated volume
+    :rtype: Volume
+    """
+    vol_shape = [b.num_functions() for b in bases]
+    dim = x.shape[-1]
+    if len(x.shape) == 2:
+        x = x.reshape(vol_shape + [dim])
+    if u is None:
+        u = [b.greville() for b in bases]
+    N_all = [b(t) for b,t in zip(bases, u)]
+    N_all.reverse()
+    cp = x
+    for N in N_all:
+        cp = np.tensordot(np.linalg.inv(N), cp, axes=(1,2))
+
+    return Volume(bases[0], bases[1], bases[2], cp.transpose(2,1,0,3).reshape((np.prod(vol_shape),dim)))
+
+def least_square_fit(x, bases, u):
+    """Perform a least-square fit of a point cloud onto a spline basis
+
+    :param x: Grid of evaluation points. Component *x[i,j,k]* denotes
+        component *x[k]* at index *(i,j)* in the volume. For matrix input *x[i,j]*
+        then index *i* is interpreted as a flat row-first indexing of the 
+        interpolation grid with components *x[j]*. The number of points must be
+        equal to or larger than the number of bases functions
+    :type x: matrix-like or 3D-tensor-like
+    :param [BSplineBasis] bases: Basis on which to interpolate
+    :param [array-like]   t    : parametric values at evaluation points
+    :return: Approximated volume
+    :rtype: Volume
+    """
+    vol_shape = [b.num_functions() for b in bases]
+    dim = x.shape[-1]
+    if len(x.shape) == 2:
+        x = x.reshape(vol_shape + [dim])
+    N_all = [b(t) for b,t in zip(bases, u)]
+    N_all.reverse()
+    cp = x
+    for N in N_all:
+        cp = np.tensordot(N.T, cp, axes=(1,2))
+    for N in N_all:
+        cp = np.tensordot(np.linalg.inv(N.T*N), cp, axes=(1,2))
+
+    return Volume(bases[0], bases[1], bases[2], cp.transpose(2,1,0,3).reshape((np.prod(vol_shape),dim)))

@@ -7,8 +7,16 @@ from GeoMod import Curve, BSplineBasis
 from GeoMod.Utils import flip_and_move_plane_geometry
 import numpy as np
 
-__all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate']
+__all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate',
+           'least_square_fit', 'cubic_curve']
 
+FREE=1
+NATURAL=2
+HERMITE=3
+PERIODIC=4
+TANGENT=5
+TANGENTNATURAL=6
+UNIFORM=8
 
 def line(a, b):
     """Create a line between two points.
@@ -149,23 +157,128 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
     result = Curve(BSplineBasis(3, knot), cp, True)
     return flip_and_move_plane_geometry(result, center, normal)
 
-def interpolate(x_pts, basis):
-    """Perform general spline interpolation at the Greville points of a basis.
+def interpolate(x, basis, t=None):
+    """Perform general spline interpolation on a provided basis.
 
-    :param array-like x_pts: Matrix *X[i,j]* of interpolation points *xj* with
+    :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with
         components *j*
     :param BSplineBasis basis: Basis on which to interpolate
+    :param array-like   t    : parametric values at interpolation points, defaults
+                               to greville points if not provided
     :return: Interpolated curve
     :rtype: Curve
     """
-    # wrap x_pts into a numpy matrix
-    x_pts = np.matrix(x_pts)
+    # wrap x into a numpy matrix
+    x = np.matrix(x)
 
     # evaluate all basis functions in the interpolation points
-    grev_pts = basis.greville()
-    N = basis.evaluate(grev_pts)
+    if t is None:
+        t = basis.greville()
+    N = basis.evaluate(t)
 
     # solve interpolation problem
-    controlpoints = np.linalg.solve(N, x_pts)
+    controlpoints = np.linalg.solve(N, x)
 
     return Curve(basis, controlpoints)
+
+def least_square_fit(x, basis, t):
+    """Perform a least-square fit of a point cloud onto a spline basis
+
+    :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with
+        components *j*. The number of points must be equal to or larger than
+        the number of basis functions in *basis*
+    :param BSplineBasis basis: Basis on which to interpolate
+    :param array-like   t    : parametric values at evaluation points
+    :return: Approximated curve
+    :rtype: Curve
+    """
+    # wrap x into a numpy matrix
+    x = np.matrix(x)
+
+    # evaluate all basis functions at evaluation points
+    N = basis.evaluate(t)
+
+    # solve interpolation problem
+    controlpoints = np.linalg.lstsq(N, x)
+
+    return Curve(basis, controlpoints)
+
+
+def cubic_curve(x, boundary=FREE, t=None, tangents=None):
+    """Perform cubic spline interpolation on a provided basis.
+
+    :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with
+        components *j*
+    :param int boundary: FREE, NATURAL, HERMITE, PERIODIC, TANGENT or TANGENTNATURAL
+    :param array-like t: parametric values at interpolation points, defaults
+        to euclidian distance between evaluation points
+    :param matrix-like tangents: In case of HERMITE or TANGENT boundary
+        condtions, one must supply tangent information (two points for TANGENT,
+        n points for HERMITE)
+    :return: Interpolated curve
+    :rtype: Curve
+    """
+    n = len(x)
+    if t is None:
+        t = [0]
+        for (x0,x1) in zip(x[:-1,:], x[1:,:]):
+            # eucledian distance between two consecutive points 
+            dist = np.linalg.norm(np.array(x1)-np.array(x0))
+            t.append(t[i-1]+dist)
+
+    # modify knot vector for chosen boundary conditions
+    knot = [t[0]]*3 + list(t) + [t[-1]]*3
+    if boundary == FREE:
+        del knot[-5]
+        del knot[4]
+    elif boundary == HERMITE:
+        knot = sorted(knot + t[1:-1])
+
+    # create the interpolation basis and interpolation matrix on this
+    if boundary == PERIODIC:
+        knot[0]  = t[-3] - t[-1]
+        knot[1]  = t[-2] - t[-1]
+        knot[-2] = t[-1] + t[1]
+        knot[-1] = t[-1] + t[2]
+        basis = BSplineBasis(4, knot, 1)
+    else:
+        basis = BSplineBasis(4, knot)
+    N = basis(t)  # left-hand-side matrix
+
+    # add derivative boundary conditions if applicable
+    if boundary==TANGENT or boundary==HERMITE or boundary==TANGENTNATURAL:
+        if boundary == TANGENT:
+            dn = basis([t[0], t[-1]], d=1)
+            N  = np.resize(N, (N.shape[0]+2, N.shape[1]))
+            x  = np.resize(x, (x.shape[0]+2, x.shape[1]))
+            x[n:,:] = tangents 
+        elif boundary == TANGENTNATURAL:
+            dn = basis(t[0], d=1)
+            N  = np.resize(N, (N.shape[0]+1, N.shape[1]))
+            x  = np.resize(x, (x.shape[0]+1, x.shape[1]))
+        elif boundary == HERMITE:
+            dn = getBasis(t, d=1)
+            N  = np.resize(N, (N.shape[0]+n, N.shape[1]))
+            x  = np.resize(x, (x.shape[0]+n, x.shape[1]))
+            x[n:,:] = tangents 
+        N[n:,:] = dn
+
+    # add double derivative boundary conditions if applicable
+    if boundary == NATURAL or boundary == TANGENTNATURAL:
+        if boundary == NATURAL:
+            ddn  = basis([t[0], t[-1]], d=2)
+            new  = 2
+        elif boundary == TANGENTNATURAL:
+            ddn  = basis(t[-1], d=2)
+            new  = 1
+        N  = np.resize(N, (N.shape[0]+new, N.shape[1]))
+        x  = np.resize(x, (x.shape[0]+new, x.shape[1]))
+        N[-new:,:] = ddn
+        x[-new:,:] = 0
+
+    # solve system to get controlpoints
+    cp = np.linalg.solve(N,x)
+
+    # wrap it all into a curve and return
+    return Curve(basis, cp)
+

@@ -163,6 +163,21 @@ class TestCurveFactory(unittest.TestCase):
         with self.assertRaises(ValueError):
             c = CurveFactory.circle_segment(pi, -2)  # negative radius
 
+    def test_cubic_curve(self):
+        t = np.linspace(0,1,80)
+        x = np.zeros((80,2))
+        x[:,0] = 16*t*t*(1-t)*(1-t)
+        x[:,1] = 1-x[:,0]
+        crv = CurveFactory.cubic_curve(x, CurveFactory.PERIODIC, t)
+
+        t = np.linspace(0,1,150)
+        x = crv(t)
+        # exact solution is t^4, cubic approximation gives t^3, needs atol
+        self.assertTrue(np.allclose(x[:,0],   16*t*t*(1-t)*(1-t), atol=1e-2))
+        self.assertTrue(np.allclose(x[:,1], 1-16*t*t*(1-t)*(1-t), atol=1e-2))
+
+        
+
 class TestSurfaceFactory(unittest.TestCase):
     def test_square(self):
         surf = SurfaceFactory.square((4, 5))
@@ -350,6 +365,44 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertTupleEqual(s.end(),   (1,1))
         self.assertTupleEqual(s.bounding_box()[0], ( 0.0, 1.0))
         self.assertTupleEqual(s.bounding_box()[1], (-1.0, 1.0))
+
+    def test_interpolate(self):
+        t = np.linspace(0, 1, 7)
+        V,U = np.meshgrid(t,t)
+        x = np.zeros((7,7,3))
+        x[:,:,0] = U*U + V*V
+        x[:,:,1] = U - V
+        x[:,:,2] = U*U*V*V*V - U*V + 3
+        b1 = BSplineBasis(3, [0,0,0,.33,.66,.7, .8,1,1,1])
+        b2 = BSplineBasis(4, [0,0,0,0,.1, .2, .5,1,1,1,1])
+
+        surf = SurfaceFactory.interpolate(x, [b1,b2], [t,t])
+        t = np.linspace(0, 1, 13)
+        V,U = np.meshgrid(t,t)
+        x = surf(t,t)
+
+        self.assertTrue(np.allclose(x[:,:,0], U*U + V*V))
+        self.assertTrue(np.allclose(x[:,:,1], U   - V))
+        self.assertTrue(np.allclose(x[:,:,2], U*U*V*V*V - U*V + 3))
+
+    def test_l2(self):
+        t = np.linspace(0, 1, 110)
+        V,U = np.meshgrid(t,t)
+        x = np.zeros((110,110,3))
+        x[:,:,0] = U*U + V*V
+        x[:,:,1] = U - V
+        x[:,:,2] = U*U*V*V*V - U*V + 3
+        b1 = BSplineBasis(3, [0,0,0,.33,.66,.7, .8,1,1,1])
+        b2 = BSplineBasis(4, [0,0,0,0,.1, .2, .5,1,1,1,1])
+
+        surf = SurfaceFactory.least_square_fit(x, [b1,b2], [t,t])
+        t = np.linspace(0, 1, 13)
+        V,U = np.meshgrid(t,t)
+        x = surf(t,t)
+
+        self.assertTrue(np.allclose(x[:,:,0], U*U + V*V))
+        self.assertTrue(np.allclose(x[:,:,1], U   - V))
+        self.assertTrue(np.allclose(x[:,:,2], U*U*V*V*V - U*V + 3))
 
 
         
@@ -544,10 +597,45 @@ class TestVolumeFactory(unittest.TestCase):
         self.assertEqual(np.allclose(R, U+1), True)
         self.assertEqual(np.allclose(x[:,:,:,2], V), True)
     
+    def test_interpolate(self):
+        t = np.linspace(0, 1, 5)
+        V,U,W = np.meshgrid(t,t,t)
+        x = np.zeros((5,5,5,3))
+        x[:,:,:,0] = U*U + V*V
+        x[:,:,:,1] = U*U*W
+        x[:,:,:,2] = W*W*W + U*V
+        b1 = BSplineBasis(3, [0,0,0,.33,.66,1,1,1])
+        b2 = BSplineBasis(4, [0,0,0,0,.5,1,1,1,1])
+        b3 = BSplineBasis(4, [0,0,0,0,.2,1,1,1,1])
 
+        vol = VolumeFactory.interpolate(x, [b1,b2,b3], [t,t,t])
+        t = np.linspace(0, 1, 7)
+        V,U,W = np.meshgrid(t,t,t)
+        x = vol(t,t,t)
 
+        self.assertTrue(np.allclose(x[:,:,:,0], U*U + V*V))
+        self.assertTrue(np.allclose(x[:,:,:,1], U*U*W))
+        self.assertTrue(np.allclose(x[:,:,:,2], W*W*W + U*V))
 
+    def test_l2(self):
+        t = np.linspace(0, 1, 80)
+        V,U,W = np.meshgrid(t,t,t)
+        x = np.zeros((80,80,80,3))
+        x[:,:,:,0] = U*U + V*V
+        x[:,:,:,1] = U*U*W
+        x[:,:,:,2] = W*W*W + U*V
+        b1 = BSplineBasis(3, [0,0,0,.33,.66,1,1,1])
+        b2 = BSplineBasis(4, [0,0,0,0,.5,1,1,1,1])
+        b3 = BSplineBasis(4, [0,0,0,0,.2,1,1,1,1])
 
+        vol = VolumeFactory.least_square_fit(x, [b1,b2,b3], [t,t,t])
+        t = np.linspace(0, 1, 7)
+        V,U,W = np.meshgrid(t,t,t)
+        x = vol(t,t,t)
+
+        self.assertTrue(np.allclose(x[:,:,:,0], U*U + V*V))
+        self.assertTrue(np.allclose(x[:,:,:,1], U*U*W))
+        self.assertTrue(np.allclose(x[:,:,:,2], W*W*W + U*V))
 
 if __name__ == '__main__':
     unittest.main()
