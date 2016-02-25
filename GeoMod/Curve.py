@@ -161,8 +161,11 @@ class Curve(SplineObject):
         """Split a curve into two or more separate representations with C0
         continuity between them.
 
-        :param knots: The splitting points
-        :type knots: float or [float]
+        :param knots    : The splitting points
+        :type  knots    : float or [float]
+        :param direction: Parametric direction, ignored for curves. Used for
+                          Surfaces and Volumes and allows signatures to match
+        :type  direction: int
         :return: The new curves
         :rtype: [Curve]
         """
