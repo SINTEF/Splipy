@@ -1,6 +1,6 @@
 __doc__ = 'Implementation of various curve utilities'
 
-def CurveLengthParametrization(pts,normalize=False):
+def curve_length_parametrization(pts,normalize=False):
     """Get knots corresponding to a curvelength parametrization of a spline'
     @param pts      : The nodes of the control polygon
     @type  pts      : List of float
@@ -31,17 +31,17 @@ def CurveLengthParametrization(pts,normalize=False):
     
     return knots
 
-def GetCurvePoints(curve):
+def get_curve_points(curve):
     """Get value of a given curve in all its knots
     @param curve: The curve
     @type  curve: Curve
     @return     : Value of curve in parameters
     @rtype      : List of points
     """
-    knots = curve.GetKnots()
+    knots = curve.knots()
     
     pts = []
     for xi in knots:
-        pts.append(curve.Evaluate(xi))
+        pts.append(curve(xi))
     
     return pts
