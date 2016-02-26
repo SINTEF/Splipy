@@ -1,6 +1,6 @@
-from GoTools import *
 import numpy as np
 import math, sys
+from GeoMod import Surface, Volume
 from scipy.optimize import minimize_scalar
 from scipy.optimize import minimize
 
@@ -143,7 +143,7 @@ def _distanceFunction2D(surfaces, wallset, patches=[], display=True):
     walledges = []
     for idx, info in wallset.iteritems():
       for edge in info.edge:
-        walledges.append( surfaces[idx-1].GetEdges()[edge-1] )
+        walledges.append( surfaces[idx-1].edges()[edge-1] )
 
     D = _calcDistScipy(walledges, worksurfaces, display=display)
     return D
@@ -176,7 +176,7 @@ def _calcDistScipy(wallcurves, worksurfaces, display=True):
         for knot_xi in knots_xi:
             j = 0
             for knot_eta in knots_eta:
-                pt = surface.Evaluate(knot_xi, knot_eta)
+                pt = surface.evaluate(knot_xi, knot_eta)
 
                 mindist = np.infty
 
@@ -187,7 +187,7 @@ def _calcDistScipy(wallcurves, worksurfaces, display=True):
                     lb = crv_knots_xi[0]
                     ub = crv_knots_xi[-1]
                     res = minimize_scalar(_calcPtsDistanceCurve, s0, args=(curve, pt), bounds=(lb,ub), method='bounded', options={'xtol': 1e-10, 'xatol': 1e-10, 'disp': False})
-                    tmp = _calcPtsDistance(curve.Evaluate(res.x), pt)
+                    tmp = _calcPtsDistance(curve.evaluate(res.x), pt)
                     if tmp < mindist:
                         mindist = tmp
                 wdist[i,j] = mindist
@@ -202,11 +202,11 @@ def _calcDistScipy(wallcurves, worksurfaces, display=True):
 
 
 def _getWallCurve(surface, idx):
-    edges = surface.GetEdges()
+    edges = surface.edges()
     return edges[idx]
 
 def _getWallFace(volume, idx):
-    faces = volume.GetFaces()
+    faces = volume.faces()
     return faces[idx]
 
 def _calcPtsDistance(pt1, pt2):
@@ -219,7 +219,7 @@ def _calcPtsDistanceCurve(s, curve, pt2):
     """
     Calculate shortest distance between two points
     """
-    pt1 = curve.Evaluate(s)
+    pt1 = curve.evaluate(s)
     return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2)
 
 def _calcPtsDistance3D(pt1, pt2):
@@ -232,7 +232,7 @@ def _calcPtsDistanceSurface(s, surface, pt2):
     """
     Calculate shortest distance between two points
     """
-    pt1 = surface.Evaluate(s[0], s[1])
+    pt1 = surface.evaluate(s[0], s[1])
     return np.sqrt((pt2[0]-pt1[0])**2 + (pt2[1]-pt1[1])**2 + (pt2[2]-pt1[2])**2)
 
 def _distanceFunction3D(volumes, wallset, patches=[], display=True):
@@ -286,7 +286,7 @@ def _calcDistScipy3D(wallfaces, workvolumes, display=True):
     for volID, volume in pariter( enumerate(workvolumes),GetProcessorCount()):
         if display:
             progress('Computing wall distance', volID+1, len(D))
-        (knots_xi, knots_eta, knots_gamma) = volume.GetGreville()
+        (knots_xi, knots_eta, knots_gamma) = [knot.greville for knot in volume.knots()]
         wdist = np.zeros((len(knots_xi), len(knots_eta), len(knots_gamma)))
 
         i = 0
@@ -295,7 +295,7 @@ def _calcDistScipy3D(wallfaces, workvolumes, display=True):
             for knot_eta in knots_eta:
                 k = 0
                 for knot_gamma in knots_gamma:
-                    pt = volume.Evaluate(knot_xi, knot_eta, knot_gamma)
+                    pt = volume.evaluate(knot_xi, knot_eta, knot_gamma)
 
                     mindist = np.infty
 
@@ -306,7 +306,7 @@ def _calcDistScipy3D(wallfaces, workvolumes, display=True):
                         b1 = (crv_knots_xi[0], crv_knots_xi[-1])
                         b2 = (crv_knots_eta[0], crv_knots_eta[-1])
                         res = minimize(_calcPtsDistanceSurface, s0, args=(face, pt), method='L-BFGS-B', bounds=(b1,b2), jac=False)
-                        tmp = _calcPtsDistance3D(face.Evaluate(res.x[0], res.x[1]), pt)
+                        tmp = _calcPtsDistance3D(face.evaluate(res.x[0], res.x[1]), pt)
                         if not np.isfinite(tmp): print 'min dist @ vol_%i[%i,%i,%i] = '%(volID,i,j,k), tmp
                         if tmp < mindist:
                             mindist = tmp
