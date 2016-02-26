@@ -257,15 +257,24 @@ class BSplineBasis:
             mu += 1
         return continuity
 
-    def knot_spans(self):
+    def knot_spans(self, include_ghost_knots=False):
         """Return the set of unique knots in the knot vector.
 
+        :param bool include_ghost_knots: if knots outside start/end are to be
+            included. These knots are used by periodic basis.
         :return: List of unique knots
         :rtype: [float]"""
-        result = [self.knots[0]]
-        for k in self.knots:
-            if abs(k - result[-1]) > state.knot_tolerance:
-                result.append(k)
+        p = self.order
+        if include_ghost_knots:
+            result = [self.knots[0]]
+            for k in self.knots:
+                if abs(k - result[-1]) > state.knot_tolerance:
+                    result.append(k)
+        else:
+            result = [self.knots[p-1]]
+            for k in self.knots[p-1:-p+1]:
+                if abs(k - result[-1]) > state.knot_tolerance:
+                    result.append(k)
         return result
 
     def raise_order(self, amount):
@@ -283,7 +292,7 @@ class BSplineBasis:
             raise TypeError('amount needs to be a non-negative integer')
         if amount < 0:
             raise ValueError('amount needs to be a non-negative integer')
-        knot_spans = list(self.knot_spans())  # list of unique knots
+        knot_spans = list(self.knot_spans(True))  # list of unique knots
         # For every degree we raise, we need to increase the multiplicity by one
         knots = list(self.knots) + knot_spans * amount
         # make it a proper knot vector by ensuring that it is non-decreasing

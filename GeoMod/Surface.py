@@ -72,6 +72,35 @@ class Surface(SplineObject):
         else:
             raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
 
+    def area(self):
+        """ Computes the area of the surface in geometric space """
+        # fetch integration points
+        (x1,w1) = np.polynomial.legendre.leggauss(self.order(0)+1)
+        (x2,w2) = np.polynomial.legendre.leggauss(self.order(1)+1)
+        # map points to parametric coordinates (and update the weights)
+        (knots1,knots2) = self.knots()
+        u  = np.array([ (x1+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots1[:-1], knots1[1:]) ])
+        w1 = np.array([     w1/2*(t1-t0)    for t0,t1 in zip(knots1[:-1], knots1[1:]) ])
+        v  = np.array([ (x2+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots2[:-1], knots2[1:]) ])
+        w2 = np.array([     w2/2*(t1-t0)    for t0,t1 in zip(knots2[:-1], knots2[1:]) ])
+
+        # wrap everything to vectors
+        u = np.ndarray.flatten(u)
+        v = np.ndarray.flatten(v)
+        w1 = np.ndarray.flatten(w1)
+        w2 = np.ndarray.flatten(w2)
+
+        # compute all quantities of interest (i.e. the jacobian)
+        du = self.derivative(u,v, d=(1,0))
+        dv = self.derivative(u,v, d=(0,1))
+        J  = np.cross(du,dv)
+
+        if self.dimension == 3:
+            J = np.sqrt(np.sum(J**2, axis=2))
+        else:
+            J = np.abs(J)
+        return w1.dot(J).dot(w2)
+
     def edges(self):
         """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
 

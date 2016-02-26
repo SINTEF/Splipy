@@ -443,12 +443,11 @@ class TestCurve(unittest.TestCase):
         pt2 = crv3(t+1.0)
         self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
 
-
-
-        
-
-
-
+    def test_length(self):
+        crv = Curve()
+        self.assertAlmostEqual(crv.length(), 1.0)
+        crv = Curve(BSplineBasis(2, [-1,-1,1,2,3,3]), [[0,0,0], [1,0,0], [1,0,3],[1,10,3]])
+        self.assertAlmostEqual(crv.length(), 14.0)
 
 
 if __name__ == '__main__':

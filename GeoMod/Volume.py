@@ -66,6 +66,40 @@ class Volume(SplineObject):
         """
         return tuple(self.section(*args) for args in sections(3, 2))
 
+    def volume(self):
+        """ Computes the volume of the object in geometric space """
+        # fetch integration points
+        (x1,w1) = np.polynomial.legendre.leggauss(self.order(0)+1)
+        (x2,w2) = np.polynomial.legendre.leggauss(self.order(1)+1)
+        (x3,w3) = np.polynomial.legendre.leggauss(self.order(2)+1)
+        # map points to parametric coordinates (and update the weights)
+        (knots1,knots2,knots3) = self.knots()
+        u  = np.array([ (x1+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots1[:-1], knots1[1:]) ])
+        w1 = np.array([     w1/2*(t1-t0)    for t0,t1 in zip(knots1[:-1], knots1[1:]) ])
+        v  = np.array([ (x2+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots2[:-1], knots2[1:]) ])
+        w2 = np.array([     w2/2*(t1-t0)    for t0,t1 in zip(knots2[:-1], knots2[1:]) ])
+        w  = np.array([ (x3+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots3[:-1], knots3[1:]) ])
+        w3 = np.array([     w3/2*(t1-t0)    for t0,t1 in zip(knots3[:-1], knots3[1:]) ])
+
+        # wrap everything to vectors
+        u = np.ndarray.flatten(u)
+        v = np.ndarray.flatten(v)
+        w = np.ndarray.flatten(w)
+        w1 = np.ndarray.flatten(w1)
+        w2 = np.ndarray.flatten(w2)
+        w3 = np.ndarray.flatten(w3)
+
+        # compute all quantities of interest (i.e. the jacobian)
+        du = self.derivative(u,v,w, d=(1,0,0))
+        dv = self.derivative(u,v,w, d=(0,1,0))
+        dw = self.derivative(u,v,w, d=(0,0,1))
+
+        J  = du[:,:,:,0] * np.cross(dv[:,:,:,1:],   dw[:,:,:,1:]  ) -  \
+             du[:,:,:,1] * np.cross(dv[:,:,:,0::2], dw[:,:,:,0::2]) +  \
+             du[:,:,:,2] * np.cross(dv[:,:,:,:-1],  dw[:,:,:,:-1] )
+
+        return np.abs(J).dot(w3).dot(w2).dot(w1)
+
     def split(self, knots, direction):
         """Split a volume into two or more separate representations with C0
         continuity between them.

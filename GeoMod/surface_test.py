@@ -611,6 +611,12 @@ class TestSurface(unittest.TestCase):
         s = Surface(BSplineBasis(3), BSplineBasis(3), [[0]]*9) # 1D-surface
         with self.assertRaises(RuntimeError):
             s.normal(.5, .5)
+    
+    def test_area(self):
+        s = Surface()
+        self.assertAlmostEqual(s.area(), 1.0)
+        s = Surface(controlpoints=[[-2,0,1], [2,0,1], [-1,1,1], [1,1,1]])
+        self.assertAlmostEqual(s.area(), 3.0)
 
         
 

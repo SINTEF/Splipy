@@ -516,10 +516,12 @@ class TestVolume(unittest.TestCase):
         self.assertAlmostEqual(v[1,2,0,1],  2)
         self.assertAlmostEqual(v[1,2,0,2],  1)
 
-
-            
-
-
+    def test_volume(self):
+        v = Volume()
+        self.assertAlmostEqual(v.volume(), 1.0)
+        v -= (.5, .5, 0)
+        v[:,:,1,0:2] = 0.0 # squeeze top together, creating a pyramid
+        self.assertAlmostEqual(v.volume(), 1.0/3)
 
 if __name__ == '__main__':
     unittest.main()

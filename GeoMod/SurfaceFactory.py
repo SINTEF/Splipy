@@ -10,7 +10,7 @@ import inspect
 import numpy as np
 
 __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus', 'edge_curves',
-           'thicken', 'loft', 'interpolate']
+           'thicken', 'loft', 'interpolate', 'least_square_fit']
 
 
 def square(size=1, lower_left=(0,0)):

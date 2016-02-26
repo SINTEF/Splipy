@@ -216,6 +216,18 @@ class Curve(SplineObject):
 
         return results
 
+    def length(self):
+        """ Computes the euclidian length of the curve in geometric space """
+        (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
+        knots = self.knots(0)
+        t = np.array([ (x+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots[:-1], knots[1:]) ])
+        w = np.array([     w/2*(t1-t0)    for t0,t1 in zip(knots[:-1], knots[1:]) ])
+        t = np.ndarray.flatten(t)
+        w = np.ndarray.flatten(w)
+        dx = self.derivative(t)
+        detJ = np.sqrt(np.sum(dx**2, axis=1))
+        return np.dot(detJ, w)
+
     def rebuild(self, p, n):
         """Creates an approximation to this curve by resampling it using a
         uniform knot vector of order *p* with *n* control points.
