@@ -3,6 +3,11 @@
 from itertools import combinations, product
 from math import atan2, sqrt
 
+try:
+    from collections.abc import Sized
+except ImportError:
+    from collections import Sized
+
 def sections(src_dim, tgt_dim):
     """Generate all boundary sections from a source dimension to a target
     dimension. For example, `sections(3,1)` generates all edges on a volume.
@@ -66,19 +71,13 @@ def check_direction(direction, pardim):
 
 def ensure_flatlist(x):
     """Flattens a multi-list x to a single index list."""
-    try:
-        len(x[0])
+    if isinstance(x[0], Sized):
         return x[0]
-    except TypeError:
-        return x
+    return x
 
 def is_singleton(x):
     """Checks if x is list-like."""
-    try:
-        len(x)
-        return False
-    except TypeError:
-        return True
+    return not isinstance(x, Sized)
 
 def ensure_listlike(x, dups=1):
     """Wraps x in a list if it's not list-like."""
