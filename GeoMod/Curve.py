@@ -157,6 +157,11 @@ class Curve(SplineObject):
         return p-1-m, where m is the knot multiplicity and inf between knots"""
         return self.bases[0].continuity(knot)
 
+    def get_kinks(self):
+        """Get the parametric coordinates at all points which have C0-
+        continuity"""
+        return [k for k in self.knots(0) if self.continuity(k)<1]
+
     def split(self, knots, direction=0):
         """Split a curve into two or more separate representations with C0
         continuity between them.
