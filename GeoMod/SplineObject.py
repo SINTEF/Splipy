@@ -842,7 +842,7 @@ class SplineObject(object):
             self.controlpoints = np.insert(self.controlpoints, dim, np.zeros(shape[:-1]), self.pardim)
             dim += 1
         while new_dim < dim:
-            self.controlpoints = self.controlpoints[..., :-1]
+            self.controlpoints = np.delete(self.controlpoints, -2 if self.rational else -1, -1)
             dim -= 1
         self.dimension = new_dim
 
