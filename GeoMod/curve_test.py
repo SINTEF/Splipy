@@ -5,11 +5,6 @@ from math import sqrt, pi
 import numpy as np
 import unittest
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
 class TestCurve(unittest.TestCase):
     def test_constructor(self):
         # test 3D constructor
@@ -346,50 +341,6 @@ class TestCurve(unittest.TestCase):
 
         self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
         self.assertAlmostEqual(np.linalg.norm(pt-pt3), 0.0)
-
-    def test_write_g2(self):
-        buf = StringIO()
-        # test that periodic knot vectors are properly cut up before written
-        controlpoints = [[1,0], [0,1], [-1,0]]
-        basis = BSplineBasis(3, [-1,0,0,1,2,2,3], periodic=0)
-        crv = Curve(basis, controlpoints)
-        crv.write_g2(buf)
-        self.assertEqual(buf.getvalue().strip(),
-                         '100 1 0 0\n'
-                         '2 0\n'
-                         '4 3\n'
-                         '0.000000 0.000000 0.000000 1.000000 2.000000 2.000000 2.000000 \n'
-                         '1.000000 0.000000 \n'
-                         '0.000000 1.000000 \n'
-                         '-1.000000 0.000000 \n'
-                         '1.000000 0.000000')
-
-    def test_read_g2(self):
-        buf = StringIO('100 1 0 0\n'
-                       '2 0\n'
-                       '4 3\n'
-                       '0.000000 0.000000 0.000000 1.000000 2.000000 2.000000 2.000000\n'
-                       '1.000000 0.000000\n'
-                       '0.000000 1.000000\n'
-                       '-1.000000 0.000000\n'
-                       '1.000000 0.000000')
-        curve = SplineObject.read_g2(buf)[0]
-
-        self.assertIs(type(curve), Curve)
-
-        self.assertEqual(curve.controlpoints[0,0], 1.0)
-        self.assertEqual(curve.controlpoints[0,1], 0.0)
-        self.assertEqual(curve.controlpoints[1,0], 0.0)
-        self.assertEqual(curve.controlpoints[1,1], 1.0)
-        self.assertEqual(curve.controlpoints[2,0], -1.0)
-        self.assertEqual(curve.controlpoints[2,1], 0.0)
-        self.assertEqual(curve.controlpoints[3,0], 1.0)
-        self.assertEqual(curve.controlpoints[3,1], 0.0)
-        self.assertEqual(curve.dimension, 2)
-        self.assertEqual(curve.rational, False)
-
-        self.assertListEqual(list(curve.bases[0].knots), [0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0])
-        self.assertEqual(curve.bases[0].order, 3)
 
     def test_center(self):
         # create the geometric mapping x(t) = t, y(t) = t^3,  t=[0,1]

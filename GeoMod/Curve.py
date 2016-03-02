@@ -16,7 +16,6 @@ class Curve(SplineObject):
     Represents a curve: an object with a one-dimensional parameter space."""
 
     _intended_pardim = 1
-    _g2_type = 100
 
     def __init__(self, basis=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis=None], [controlpoints=None], [rational=False])

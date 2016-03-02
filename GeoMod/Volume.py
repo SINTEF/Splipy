@@ -16,7 +16,6 @@ class Volume(SplineObject):
     Represents a volume: an object with a three-dimensional parameter space."""
 
     _intended_pardim = 3
-    _g2_type = 700
 
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis1=None], [basis2=None], [basis3=None], [controlpoints=None], [rational=False])

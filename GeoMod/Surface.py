@@ -16,7 +16,6 @@ class Surface(SplineObject):
     Represents a surface: an object with a two-dimensional parameter space."""
 
     _intended_pardim = 2
-    _g2_type = 200
 
     def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False, **kwargs):
         """__init__([basis1=None], [basis2=None], [controlpoints=None], [rational=False])

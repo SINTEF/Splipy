@@ -4,11 +4,6 @@ from GeoMod import BSplineBasis
 import numpy as np
 import unittest
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
 
 class TestBasis(unittest.TestCase):
     def test_get_continuity(self):
@@ -102,13 +97,6 @@ class TestBasis(unittest.TestCase):
 
         with self.assertRaises(IndexError):
             b.roll(19)
-
-    def test_write_g2(self):
-        buf = StringIO()
-        BSplineBasis(3, [0,0,0,1,2,3,3,3]).write_g2(buf)
-        self.assertEqual(buf.getvalue().strip(),
-                         '5 3\n0.000000 0.000000 0.000000 1.000000 2.000000 '
-                         '3.000000 3.000000 3.000000')
 
     def test_getitem(self):
         b = BSplineBasis(3, [0,0,0,1,2,2,2])

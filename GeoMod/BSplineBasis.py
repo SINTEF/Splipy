@@ -398,26 +398,6 @@ class BSplineBasis:
                                 (bspline.knots-bspline.knots[0]) / dt2,
                                 atol=state.knot_tolerance)
 
-    def write_g2(self, outfile):
-        """Write the basis in GoTools format.
-
-        :param file-like outfile: The file to write to.
-        """
-        outfile.write('%i %i\n' % (len(self.knots) - self.order, self.order))
-        for k in self.knots:
-            outfile.write('%f ' % k)
-        outfile.write('\n')
-
-    @staticmethod
-    def read_g2(infile):
-        """Read a basis in GoTools format.
-
-        :param file-like infile: The file to read from.
-        """
-        ncps, order = map(int, next(infile).split(' '))
-        kts = list(map(float, next(infile).split(' ')))
-        return BSplineBasis(order, kts, -1)
-
     def clone(self):
         """Clone the object."""
         return copy.deepcopy(self)

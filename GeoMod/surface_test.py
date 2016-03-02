@@ -6,12 +6,6 @@ from math import pi
 import numpy as np
 import unittest
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
-
 class TestSurface(unittest.TestCase):
     def test_constructor(self):
         # test 3D constructor
@@ -512,22 +506,6 @@ class TestSurface(unittest.TestCase):
                                           '[ 1.  0.]\n'
                                           '[ 0.  1.]\n'
                                           '[ 1.  1.]\n')
-
-    def test_write_g2(self):
-        buf = StringIO()
-        Surface().write_g2(buf)
-        self.assertEqual(buf.getvalue().strip(),
-                         '200 1 0 0\n'
-                         '2 0\n'
-                         '2 2\n'
-                         '0.000000 0.000000 1.000000 1.000000 \n'
-                         '2 2\n'
-                         '0.000000 0.000000 1.000000 1.000000 \n'
-                         '0.000000 0.000000 \n'
-                         '1.000000 0.000000 \n'
-                         '0.000000 1.000000 \n'
-                         '1.000000 1.000000')
-
 
     def test_edges(self):
         (umin, umax, vmin, vmax) = Surface().edges()
