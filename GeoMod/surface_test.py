@@ -618,6 +618,40 @@ class TestSurface(unittest.TestCase):
         s = Surface(controlpoints=[[-2,0,1], [2,0,1], [-1,1,1], [1,1,1]])
         self.assertAlmostEqual(s.area(), 3.0)
 
+    def test_const_par_crv(self):
+        # more or less random 2D surface with p=[2,2] and n=[4,3]
+        controlpoints = [[0, 0], [-1, 1], [0, 2], [1, -1], [1, 0], [1, 1], [2, 1], [2, 2], [2, 3],
+                         [3, 0], [4, 1], [3, 2]]
+        basis1 = BSplineBasis(3, [0, 0, 0, .4, 1, 1, 1])
+        basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
+        surf = Surface(basis1, basis2, controlpoints)
+        surf.refine(1)
+
+        # try general knot in u-direction
+        crv = surf.const_par_curve(0.3, 'u')
+        v = np.linspace(0,1,13)
+        self.assertTrue(np.allclose(surf(0.3, v), crv(v)))
+
+        # try existing knot in u-direction
+        crv = surf.const_par_curve(0.4, 'u')
+        v = np.linspace(0,1,13)
+        self.assertTrue(np.allclose(surf(0.4, v), crv(v)))
+
+        # try general knot in v-direction
+        crv = surf.const_par_curve(0.3, 'v')
+        u = np.linspace(0,1,13)
+        self.assertTrue(np.allclose(surf(u, 0.3).reshape(13,2), crv(u)))
+
+        # try start-point
+        crv = surf.const_par_curve(0.0, 'v')
+        u = np.linspace(0,1,13)
+        self.assertTrue(np.allclose(surf(u, 0.0).reshape(13,2), crv(u)))
+        
+        # try end-point
+        crv = surf.const_par_curve(1.0, 'v')
+        u = np.linspace(0,1,13)
+        self.assertTrue(np.allclose(surf(u, 1.0).reshape(13,2), crv(u)))
+
         
 
 

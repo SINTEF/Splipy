@@ -4,6 +4,7 @@ from GeoMod.Utils import ensure_listlike
 import GeoMod.ModState as state
 from bisect import bisect_right, bisect_left
 import numpy as np
+import copy
 
 __all__ = ['BSplineBasis']
 
@@ -416,6 +417,10 @@ class BSplineBasis:
         ncps, order = map(int, next(infile).split(' '))
         kts = list(map(float, next(infile).split(' ')))
         return BSplineBasis(order, kts, -1)
+
+    def clone(self):
+        """Clone the object."""
+        return copy.deepcopy(self)
 
     __call__ = evaluate
 

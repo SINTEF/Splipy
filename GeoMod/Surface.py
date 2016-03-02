@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import BSplineBasis
+from GeoMod import BSplineBasis, Curve
 from GeoMod.SplineObject import SplineObject
 from GeoMod.Utils import ensure_listlike, check_direction, sections
 from bisect import bisect_left
@@ -108,6 +108,27 @@ class Surface(SplineObject):
         :rtype: (Curve)
         """
         return tuple(self.section(*args) for args in sections(2, 1))
+
+    def const_par_curve(self, knot, direction):
+        """Get a Curve representation of the parametric line of some constant 
+        knot value."""
+        direction = check_direction(direction, 2)
+        
+        # clone basis since we need to augment this by knot insertion
+        b    = self.bases[direction].clone()
+
+        # compute mapping matrix C which is the knotinsertion operator
+        mult = min(b.continuity(knot), b.order-1)
+        C    = np.matrix(np.identity(self.shape[direction]))
+        for i in range(mult):
+            C = b.insert_knot(knot) * C
+
+        # at this point we have a C0 basis, find the right interpolating index
+        i  = max(bisect_left(b.knots, knot) - 1,0) 
+
+        # compute the controlpoints and return Curve
+        cp = np.tensordot(C[i,:], self.controlpoints, axes=(1, direction))
+        return Curve(self.bases[1-direction], cp, self.rational)
 
     def split(self, knots, direction):
         """Split a surface into two or more separate representations with C0
