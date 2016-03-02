@@ -5,3 +5,4 @@
 # from Utilities import *
 # from VTUFile import *
 from SVG import *
+from STL import *
