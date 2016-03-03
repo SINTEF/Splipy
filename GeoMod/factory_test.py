@@ -216,7 +216,6 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertAlmostEqual(x[1][1][1], 1 / sqrt(2))
         self.assertAlmostEqual(x[1][2][0], 0)
         self.assertAlmostEqual(x[1][2][1], 1)
-        print surf
         self.assertAlmostEqual(surf.area(), pi, places=3)
 
         # radial disc of size different from 1

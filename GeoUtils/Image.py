@@ -193,7 +193,6 @@ def image_height(filename, N=[30,30], p=[4,4]):
 
     width  = len(im)
     height = len(im[0])
-    print height,'x',width
 
     # initialize image holder
     imGrey = np.zeros((len(im),   len(im[0])),   np.uint8)

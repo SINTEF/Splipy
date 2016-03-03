@@ -15,7 +15,6 @@ class TestRefinement(unittest.TestCase):
 
         self.assertEqual(len(crv), 12)
         k = crv.knots(0)
-        print k
         for k0,k1,k2 in zip(k[:-2], k[1:-1], k[2:]):
             self.assertAlmostEqual((k2-k1)/(k1-k0), 0.8)
 

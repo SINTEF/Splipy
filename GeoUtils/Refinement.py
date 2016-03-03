@@ -1,3 +1,5 @@
+from __future__ import division
+
 __doc__ = 'Implementation of various refinement schemes.'
 
 from GeoMod.Utils import ensure_listlike
@@ -97,7 +99,7 @@ def edge_refine(obj, S, n, direction=1):
     obj.insert_knot(new_knots, direction-1)
 
 def _splitvector(len, parts):
-    delta = len/(parts)
+    delta = len // parts
     sizes = [delta for i in range(parts)]
     remainder = len-parts*delta
     for i in range(parts-remainder+1, parts):
