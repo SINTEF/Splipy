@@ -94,7 +94,7 @@ def extrude(curve, amount):
     curve = curve.clone()  # clone input curve, throw away input reference
     curve.set_dimension(3)  # add z-components (if not already present)
     n = len(curve)  # number of control points of the curve
-    cp = np.zeros((2 * n, 4))
+    cp = np.zeros((2 * n, curve.dimension + curve.rational))
     cp[:n, :] = curve.controlpoints  # the first control points form the bottom
     curve += amount
     cp[n:, :] = curve.controlpoints  # the last control points form the top
