@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from GeoMod import Curve, Surface, SplineObject, BSplineBasis
 import xml.etree.ElementTree as etree
 import numpy as np
@@ -68,7 +70,7 @@ class SVG:
     def __exit__(self, exc_type, exc_value, traceback):
         # in case something goes wrong, print error and abandon writing process
         if exc_type is not None:
-            print exc_type, exc_value, traceback
+            print(exc_type, exc_value, traceback)
             return False
 
         # compute the bounding box for all geometries 

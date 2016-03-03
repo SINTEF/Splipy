@@ -1,3 +1,3 @@
-from SVG import *
-from STL import *
-from G2 import *
+from GeoIO.SVG import *
+from GeoIO.STL import *
+from GeoIO.G2 import *
