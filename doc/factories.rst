@@ -6,19 +6,19 @@ Factories
 CurveFactory
 ============
 
-.. automodule:: GeoMod.CurveFactory
+.. automodule:: splipy.curve_factory
    :members:
 
 
 SurfaceFactory
 ==============
 
-.. automodule:: GeoMod.SurfaceFactory
+.. automodule:: splipy.surface_factory
    :members:
 
 
 VolumeFactory
 =============
 
-.. automodule:: GeoMod.VolumeFactory
+.. automodule:: splipy.volume_factory
    :members:

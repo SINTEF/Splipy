@@ -30,7 +30,7 @@ f.write('# Date         : ' + str(datetime.date.today()) + '\n')
 f.write('# Git revision : ' + subprocess.check_output(['git', 'rev-parse', 'HEAD']))
 f.write("""
 import numpy as np
-from GeoMod import Volume, Surface, Curve, BSplineBasis
+from splipy import Volume, Surface, Curve, BSplineBasis
 from math import sqrt
 import unittest
 
