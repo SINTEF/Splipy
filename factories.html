@@ -1,0 +1,755 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Factories &mdash; Splip  1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Splip  1.0.0 documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Splip  1.0.0 documentation</span></a></h1>
+        <h2 class="heading"><span>Factories</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="factories">
+<h1>Factories<a class="headerlink" href="#factories" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-splipy.curve_factory">
+<span id="curvefactory"></span><h2>CurveFactory<a class="headerlink" href="#module-splipy.curve_factory" title="Permalink to this headline">¶</a></h2>
+<p>Handy utilities for creating curves.</p>
+<dl class="function">
+<dt id="splipy.curve_factory.line">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">line</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a line between two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>a</strong> (<em>point-like</em>) &#8211; Start point</li>
+<li><strong>b</strong> (<em>point-like</em>) &#8211; End point</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Linear curve from <em>a</em> to <em>b</em></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.curve_factory.polygon">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">polygon</code><span class="sig-paren">(</span><em>points...</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#polygon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a linear interpolation between input points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>points</strong> (<em>[point-like]</em>) &#8211; The points to interpolate</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Linear curve through the input points</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.curve_factory.n_gon">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">n_gon</code><span class="sig-paren">(</span><span class="optional">[</span><em>n=5</em><span class="optional">]</span><span class="optional">[</span>, <em>r=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#n_gon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.n_gon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a regular polygon of <em>n</em> equal sides centered at the origin.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n</strong> (<em>int</em>) &#8211; Number of sides and vertices</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>point-like</em>) &#8211; local origin</li>
+<li><strong>normal</strong> (<em>vector-like</em>) &#8211; local normal</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A linear, periodic, 2D curve</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ValueError</strong> &#8211; If radius is not positive</li>
+<li><strong>ValueError</strong> &#8211; If <em>n</em> &lt; 3</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.curve_factory.circle">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">circle</code><span class="sig-paren">(</span><span class="optional">[</span><em>r=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#circle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.circle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a circle.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>point-like</em>) &#8211; local origin</li>
+<li><strong>normal</strong> (<em>vector-like</em>) &#8211; local normal</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A periodic, quadratic rational curve</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; If radius is not positive</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.curve_factory.circle_segment">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">circle_segment</code><span class="sig-paren">(</span><em>theta</em><span class="optional">[</span>, <em>r=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#circle_segment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.circle_segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a circle segment starting paralell to the rotated x-axis.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>theta</strong> (<em>float</em>) &#8211; Angle in radians</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A quadratic rational curve</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ValueError</strong> &#8211; If radiusis not positive</li>
+<li><strong>ValueError</strong> &#8211; If theta is not in the range <em>[-2pi, 2pi]</em></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.curve_factory.interpolate">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">interpolate</code><span class="sig-paren">(</span><em>x</em>, <em>basis</em>, <em>t=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.interpolate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform general spline interpolation on a provided basis.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>matrix-like</em>) &#8211; Matrix <em>X[i,j]</em> of interpolation points <em>xi</em> with
+components <em>j</em></li>
+<li><strong>basis</strong> (<a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a>) &#8211; Basis on which to interpolate</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>:param array-like   t <span class="classifier-delimiter">:</span> <span class="classifier">parametric values at interpolation points, defaults</span></dt>
+<dd>to greville points if not provided</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Interpolated curve</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.curve_factory.least_square_fit">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">least_square_fit</code><span class="sig-paren">(</span><em>x</em>, <em>basis</em>, <em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#least_square_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.least_square_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a least-square fit of a point cloud onto a spline basis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>matrix-like</em>) &#8211; Matrix <em>X[i,j]</em> of interpolation points <em>xi</em> with
+components <em>j</em>. The number of points must be equal to or larger than
+the number of basis functions in <em>basis</em></li>
+<li><strong>basis</strong> (<a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a>) &#8211; Basis on which to interpolate</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:param array-like   t    : parametric values at evaluation points
+:return: Approximated curve
+:rtype: Curve</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.curve_factory.cubic_curve">
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">cubic_curve</code><span class="sig-paren">(</span><em>x</em>, <em>boundary=1</em>, <em>t=None</em>, <em>tangents=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#cubic_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.cubic_curve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform cubic spline interpolation on a provided basis.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>matrix-like</em>) &#8211; Matrix <em>X[i,j]</em> of interpolation points <em>xi</em> with
+components <em>j</em></li>
+<li><strong>boundary</strong> (<em>int</em>) &#8211; FREE, NATURAL, HERMITE, PERIODIC, TANGENT or TANGENTNATURAL</li>
+<li><strong>t</strong> (<em>array-like</em>) &#8211; parametric values at interpolation points, defaults
+to euclidian distance between evaluation points</li>
+<li><strong>tangents</strong> (<em>matrix-like</em>) &#8211; In case of HERMITE or TANGENT boundary
+condtions, one must supply tangent information (two points for TANGENT,
+n points for HERMITE)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Interpolated curve</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-splipy.surface_factory">
+<span id="surfacefactory"></span><h2>SurfaceFactory<a class="headerlink" href="#module-splipy.surface_factory" title="Permalink to this headline">¶</a></h2>
+<p>Handy utilities for creating surfaces.</p>
+<dl class="function">
+<dt id="splipy.surface_factory.square">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">square</code><span class="sig-paren">(</span><span class="optional">[</span><em>size=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#square"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.square" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a square with parametric origin at <em>(0,0)</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> (<em>float or (float)</em>) &#8211; Size(s), either a single scalar or a tuple of scalars per axis</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A linear parametrized square</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.disc">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">disc</code><span class="sig-paren">(</span><span class="optional">[</span><em>r=1</em><span class="optional">]</span><span class="optional">[</span>, <em>type='radial'</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#disc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.disc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a circular disc with center at (0,0). The <em>type</em> parameter
+distinguishes between different parametrizations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>type</strong> (<em>string</em>) &#8211; The type of parametrization (&#8216;radial&#8217; or &#8216;square&#8217;)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The disc</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.sphere">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">sphere</code><span class="sig-paren">(</span><span class="optional">[</span><em>r=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#sphere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.sphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a spherical shell.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>point-like</em>) &#8211; Local origin of the sphere</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The spherical shell</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.extrude">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">extrude</code><span class="sig-paren">(</span><em>curve</em>, <em>amount</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#extrude"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.extrude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extrude a curve by sweeping it to a given height.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; Curve to extrude</li>
+<li><strong>amount</strong> (<em>vector-like</em>) &#8211; 3-component vector of sweeping amount and
+direction</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The extruded curve</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.revolve">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">revolve</code><span class="sig-paren">(</span><em>curve</em><span class="optional">[</span>, <em>theta=2pi</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#revolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.revolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Revolve a surface by sweeping a curve in a rotational fashion around the
+<em>z</em> axis.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; Curve to revolve</li>
+<li><strong>theta</strong> (<em>float</em>) &#8211; Angle to revolve, in radians</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The revolved curve</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.cylinder">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">cylinder</code><span class="sig-paren">(</span><span class="optional">[</span><em>r=1</em><span class="optional">]</span><span class="optional">[</span>, <em>h=1</em><span class="optional">]</span><span class="optional">[</span>, <em>center=(0</em>, <em>0</em>, <em>0)</em><span class="optional">]</span><span class="optional">[</span>, <em>axis=(0</em>, <em>0</em>, <em>1)</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#cylinder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.cylinder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a cylinder shell with no top or bottom</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>h</strong> (<em>float</em>) &#8211; Height</li>
+<li><strong>center</strong> (<em>point-like</em>) &#8211; The center of the bottom circle</li>
+<li><strong>axis</strong> (<em>vector-like</em>) &#8211; Cylinder axis</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The cylinder shell</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.torus">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">torus</code><span class="sig-paren">(</span><span class="optional">[</span><em>minor_r=1</em><span class="optional">]</span><span class="optional">[</span>, <em>major_r=3</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#torus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.torus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a torus (doughnut) by revolving a circle of size <em>minor_r</em> around
+the <em>z</em> axis with radius <em>major_r</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>minor_r</strong> (<em>float</em>) &#8211; The thickness of the torus (radius in the <em>xz</em> plane)</li>
+<li><strong>major_r</strong> (<em>float</em>) &#8211; The size of the torus (radius in the <em>xy</em> plane)</li>
+<li><strong>center</strong> (<em>point-like</em>) &#8211; Local origin of the torus</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A periodic torus</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.edge_curves">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">edge_curves</code><span class="sig-paren">(</span><em>curves...</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#edge_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.edge_curves" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the surface defined by the region between the input curves.</p>
+<p>In case of four input curves, these must be given in an ordered directional
+closed loop around the resulting surface.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>curves</strong> (<em>[Curve]</em>) &#8211; Two or four edge curves</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The enclosed surface</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; If the length of <em>curves</em> is not two or four</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.thicken">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">thicken</code><span class="sig-paren">(</span><em>curve</em>, <em>amount</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#thicken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.thicken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a surface by adding thickness to a curve.</p>
+<ul class="simple">
+<li>For 2D curves this will generate a 2D planar surface with the curve
+through the center.</li>
+<li>For 3D curves this will generate a surface &#8220;tube&#8221; which is open at both
+ends (that is, for a straight line it will generate a cylinder shell).</li>
+</ul>
+<p>The resulting surface is an approximation generated by interpolating at the
+Greville points. It will use the same discretization as the input curve.
+It does not check for self-intersecting geometries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; The generating curve</li>
+<li><strong>amount</strong> &#8211; The amount of thickness, either constant or variable (if
+variable, the function must accept parameters named <em>x</em>, <em>y</em>, <em>z</em> and/or <em>t</em>)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Surrounding surface</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.interpolate">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">interpolate</code><span class="sig-paren">(</span><em>x</em>, <em>bases</em>, <em>u=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.interpolate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate a surface on a set of regular gridded interpolation points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>matrix-like or 3D-tensor-like</em>) &#8211; Grid of interpolation points. Component <em>x[i,j,k]</em> denotes
+component <em>x[k]</em> at index <em>(i,j)</em> in the surface. For matrix input <em>x[i,j]</em>
+then index <em>i</em> is interpreted as a flat row-first indexing of the 
+interpolation grid with components <em>x[j]</em></li>
+<li><strong>bases</strong> (<em>[BSplineBasis]</em>) &#8211; The basis to interpolate on</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>:param [array-like]   u <span class="classifier-delimiter">:</span> <span class="classifier">Parametric interpolation points, defaults to</span></dt>
+<dd>greville points of the basis</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Interpolated surface</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.surface_factory.least_square_fit">
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">least_square_fit</code><span class="sig-paren">(</span><em>x</em>, <em>bases</em>, <em>u</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#least_square_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.least_square_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a least-square fit of a point cloud onto a spline basis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>matrix-like or 3D-tensor-like</em>) &#8211; Grid of evaluation points. Component <em>x[i,j,k]</em> denotes
+component <em>x[k]</em> at index <em>(i,j)</em> in the surface. For matrix input <em>x[i,j]</em>
+then index <em>i</em> is interpreted as a flat row-first indexing of the 
+interpolation grid with components <em>x[j]</em>. The number of points must be
+equal to or larger than the number of basis functions</li>
+<li><strong>bases</strong> (<em>[BSplineBasis]</em>) &#8211; Basis on which to interpolate</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:param [array-like]   t    : parametric values at evaluation points
+:return: Approximated surface
+:rtype: Surface</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-splipy.volume_factory">
+<span id="volumefactory"></span><h2>VolumeFactory<a class="headerlink" href="#module-splipy.volume_factory" title="Permalink to this headline">¶</a></h2>
+<p>Handy utilities for creating volumes.</p>
+<dl class="function">
+<dt id="splipy.volume_factory.cube">
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">cube</code><span class="sig-paren">(</span><span class="optional">[</span><em>size=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#cube"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a cube with parmetric origin at <em>(0,0,0)</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> (<em>float or (float)</em>) &#8211; Size(s), either a single scalar or a tuple of scalars per axis</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A linear parametrized box</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Volume" title="splipy.Volume">Volume</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.volume_factory.revolve">
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">revolve</code><span class="sig-paren">(</span><em>surf</em><span class="optional">[</span>, <em>theta=2pi</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#revolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.revolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Revolve a volume by sweeping a surface in a rotational fashion around the
+<em>z</em> axis.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>surf</strong> (<a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a>) &#8211; Surface to revolve</li>
+<li><strong>theta</strong> (<em>float</em>) &#8211; Angle to revolve, in radians</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The revolved surface</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Volume" title="splipy.Volume">Volume</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.volume_factory.cylinder">
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">cylinder</code><span class="sig-paren">(</span><span class="optional">[</span><em>r=1</em><span class="optional">]</span><span class="optional">[</span>, <em>h=1</em><span class="optional">]</span><span class="optional">[</span>, <em>center=(0</em>, <em>0</em>, <em>0)</em><span class="optional">]</span><span class="optional">[</span>, <em>axis=(0</em>, <em>0</em>, <em>1)</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#cylinder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.cylinder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a solid cylinder</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>h</strong> (<em>float</em>) &#8211; Height</li>
+<li><strong>center</strong> (<em>point-like</em>) &#8211; The center of the bottom circle</li>
+<li><strong>axis</strong> (<em>vector-like</em>) &#8211; Cylinder axis</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The cylinder</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Volume" title="splipy.Volume">Volume</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.volume_factory.extrude">
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">extrude</code><span class="sig-paren">(</span><em>surf</em>, <em>amount</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#extrude"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.extrude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extrude a surface by sweeping it to a given height.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>surf</strong> (<a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a>) &#8211; Surface to extrude</li>
+<li><strong>amount</strong> (<em>vector-like</em>) &#8211; 3-component vector of sweeping amount and
+direction</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The extruded surface</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Volume" title="splipy.Volume">Volume</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.volume_factory.edge_surfaces">
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">edge_surfaces</code><span class="sig-paren">(</span><em>surfaces...</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#edge_surfaces"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.edge_surfaces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the volume defined by the region between the input surfaces.</p>
+<p>In case of six input surfaces, these must be given in the order: bottom,
+top, left, right, back, front. Opposing sides must be parametrized in the
+same directions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>surfaces</strong> (<em>[Surface]</em>) &#8211; Two or six edge surfaces</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The enclosed volume</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Volume" title="splipy.Volume">Volume</a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; If the length of <em>surfaces</em> is not two or six</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.volume_factory.interpolate">
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">interpolate</code><span class="sig-paren">(</span><em>x</em>, <em>bases</em>, <em>u=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.interpolate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate a volume on a set of regular gridded interpolation points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>matrix-like or 4D-tensor-like</em>) &#8211; Grid of interpolation points. Component <em>x[i,j,k,l]</em> denotes
+component <em>x[l]</em> at index <em>(i,j)</em> in the volume. For matrix input <em>x[i,j]</em>
+then index <em>i</em> is interpreted as a flat row-first indexing of the 
+interpolation grid with components <em>x[j]</em></li>
+<li><strong>bases</strong> (<em>[BSplineBasis]</em>) &#8211; The basis to interpolate on</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>:param [array-like]   u <span class="classifier-delimiter">:</span> <span class="classifier">Parametric interpolation points, defaults to</span></dt>
+<dd>greville points of the basis</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Interpolated volume</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Volume" title="splipy.Volume">Volume</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.volume_factory.least_square_fit">
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">least_square_fit</code><span class="sig-paren">(</span><em>x</em>, <em>bases</em>, <em>u</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#least_square_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.least_square_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a least-square fit of a point cloud onto a spline basis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>matrix-like or 3D-tensor-like</em>) &#8211; Grid of evaluation points. Component <em>x[i,j,k]</em> denotes
+component <em>x[k]</em> at index <em>(i,j)</em> in the volume. For matrix input <em>x[i,j]</em>
+then index <em>i</em> is interpreted as a flat row-first indexing of the 
+interpolation grid with components <em>x[j]</em>. The number of points must be
+equal to or larger than the number of bases functions</li>
+<li><strong>bases</strong> (<em>[BSplineBasis]</em>) &#8211; Basis on which to interpolate</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:param [array-like]   t    : parametric values at evaluation points
+:return: Approximated volume
+:rtype: Volume</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>

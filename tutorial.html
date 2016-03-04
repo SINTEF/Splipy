@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tutorial &mdash; Splip  1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Splip  1.0.0 documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Splip  1.0.0 documentation</span></a></h1>
+        <h2 class="heading"><span>Tutorial</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="tutorial">
+<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<p>Typically, in Splipy, you make geometries by building curves from points,
+surfaces from curves, and volumes from surfaces. Let us look at some easy
+examples.</p>
+<div class="section" id="hello-splipy">
+<h2>Hello, Splipy<a class="headerlink" href="#hello-splipy" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">import</span> <span class="nn">splipy.curve_factory</span> <span class="kn">as</span> <span class="nn">cf</span>
+<span class="kn">from</span> <span class="nn">splipy.io</span> <span class="kn">import</span> <span class="n">G2</span>
+
+<span class="n">line</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">line</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">arc</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">circle_segment</span><span class="p">(</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">G2</span><span class="p">(</span><span class="s1">&#39;tutorial.g2&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">([</span><span class="n">line</span><span class="p">,</span> <span class="n">arc</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>This creates two <em>curves</em>, a straight line from the origin to the point (&#8211;3, 2)
+and a circle segment covering one eight of the unit circle. The straight line
+will be linear and non-rational, while the circle segment will be cubic and
+rational. The code then writes these objects to a file in G2 format. If you open
+this file in a G2-compatible viewer, you can see the geometry.</p>
+<a class="reference internal image-reference" href="_images/tutorial01.png"><img alt="_images/tutorial01.png" class="align-center" src="_images/tutorial01.png" style="height: 20em;" /></a>
+<p>Let us create a surface between these curves. For this, we will use the
+<code class="xref py py-func docutils literal"><span class="pre">SurfaceFactory.edge_curves()</span></code> function.</p>
+<p>From now on, we will omit the output code.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">splipy.surface_factory</span> <span class="kn">as</span> <span class="nn">sf</span>
+
+<span class="n">surface</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">edge_curves</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">arc</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial02.png"><img alt="_images/tutorial02.png" class="align-center" src="_images/tutorial02.png" style="height: 20em;" /></a>
+<p>We can refine this surface without changing the geometry. This introduces five
+new knots in each existing nontrivial knot interval.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">surface</span><span class="o">.</span><span class="n">refine</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial03.png"><img alt="_images/tutorial03.png" class="align-center" src="_images/tutorial03.png" style="height: 20em;" /></a>
+<p>Objects can be subjected to affine operations in both mutating and non-mutating
+ways.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">surface</span><span class="o">.</span><span class="n">translate</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>     <span class="c1"># sets dimension to 3, and mutates</span>
+<span class="n">surface</span> <span class="o">=</span> <span class="n">surface</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>    <span class="c1"># creates a new object</span>
+<span class="n">surface</span> <span class="o">+=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>             <span class="c1"># mutates</span>
+<span class="n">surface</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># mutates</span>
+</pre></div>
+</div>
+<p>Let us turn this surface into a volume by revolving it around the <em>z</em> axis.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">splipy.volume_factory</span> <span class="kn">as</span> <span class="nn">vf</span>
+
+<span class="n">volume</span> <span class="o">=</span> <span class="n">vf</span><span class="o">.</span><span class="n">revolve</span><span class="p">(</span><span class="n">surface</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial04.png"><img alt="_images/tutorial04.png" class="align-center" src="_images/tutorial04.png" style="height: 20em;" /></a>
+</div>
+<div class="section" id="the-ntnu-logo">
+<h2>The NTNU logo<a class="headerlink" href="#the-ntnu-logo" title="Permalink to this headline">¶</a></h2>
+<p>In this section we will try to recreate the logo of the <a class="reference external" href="https://www.ntnu.no/">Norwegian University of
+Technology and Natural Science</a>.</p>
+<p>We begin by creating two temporary lines to illustrate the origin and the axes,
+a circle segment and a straight line. We then append the latter two.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">line</span><span class="p">((</span><span class="o">-.</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">line</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="o">-.</span><span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">.</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">c1</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">circle_segment</span><span class="p">(</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">c2</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">line</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">c1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial05.png"><img alt="_images/tutorial05.png" class="align-center" src="_images/tutorial05.png" style="height: 15em;" /></a>
+<p>We now displace this curve, make a clone which is rotated by 90 degrees, and
+append these two curves.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">c1</span> <span class="o">+=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">c2</span> <span class="o">=</span> <span class="n">c1</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">c1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial06.png"><img alt="_images/tutorial06.png" class="align-center" src="_images/tutorial06.png" style="height: 20em;" /></a>
+<p>And finally we clone and rotate once more, to close off a rounded square.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">c2</span> <span class="o">=</span> <span class="n">c1</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span>
+<span class="n">c1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial07.png"><img alt="_images/tutorial07.png" class="align-center" src="_images/tutorial07.png" style="height: 23em;" /></a>
+<p>To turn this into a surface we can use <code class="xref py py-func docutils literal"><span class="pre">SurfaceFactory.thicken()</span></code>. We
+will thicken with a radius of 1, which is equal to the radius of the four corner
+segments, so that the interior of the square will get sharp corners.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s1</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">thicken</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial08.png"><img alt="_images/tutorial08.png" class="align-center" src="_images/tutorial08.png" style="height: 23em;" /></a>
+<p>Let us refine a bit, and add a disc in the middle.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s2</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">disc</span><span class="p">(</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="n">s1</span><span class="o">.</span><span class="n">refine</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">s2</span><span class="o">.</span><span class="n">refine</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial09.png"><img alt="_images/tutorial09.png" class="align-center" src="_images/tutorial09.png" style="height: 23em;" /></a>
+<p>The <code class="xref py py-func docutils literal"><span class="pre">SurfaceFactory.disc()</span></code> function supports two modes. Let us try
+the other one.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s2</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">disc</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;square&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial10.png"><img alt="_images/tutorial10.png" class="align-center" src="_images/tutorial10.png" style="height: 23em;" /></a>
+<p>Much better!</p>
+</div>
+<div class="section" id="flow-around-a-cylinder">
+<h2>Flow around a cylinder<a class="headerlink" href="#flow-around-a-cylinder" title="Permalink to this headline">¶</a></h2>
+<p>A typical problem in fluid dynamics involves flow around a cylinder. Let us try
+meshing this. We can use <code class="xref py py-func docutils literal"><span class="pre">CurveFactory.circle()</span></code> for the interior circle
+and <code class="xref py py-func docutils literal"><span class="pre">CurveFactory.n_gon()</span></code> for the surrounding square.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">circle</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">boundary</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">n_gon</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4</span>  <span class="c1"># scaling</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial11.png"><img alt="_images/tutorial11.png" class="align-center" src="_images/tutorial11.png" style="height: 25em;" /></a>
+<p>We can use <code class="xref py py-func docutils literal"><span class="pre">SurfaceFactory.edge_curves()</span></code> to mesh the enclosed space. Let
+us also rotate by 45 degrees to align the square with the axes.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">surface</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">edge_curves</span><span class="p">(</span><span class="n">circle</span><span class="p">,</span> <span class="n">boundary</span><span class="p">)</span>
+<span class="n">surface</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial12.png"><img alt="_images/tutorial12.png" class="align-center" src="_images/tutorial12.png" style="height: 23em;" /></a>
+<p>We are of course not restricted to squares. What about hexagons?</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">boundary</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">n_gon</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">*</span> <span class="mf">2.4</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial13.png"><img alt="_images/tutorial13.png" class="align-center" src="_images/tutorial13.png" style="height: 23em;" /></a>
+<p>Hm... this reminds me of something. If we continue as before, and extrude the
+resulting surface...</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">volume</span> <span class="o">=</span> <span class="n">vf</span><span class="o">.</span><span class="n">extrude</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/tutorial14.png"><img alt="_images/tutorial14.png" class="align-center" src="_images/tutorial14.png" style="height: 23em;" /></a>
+<p>We get a nut!</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>

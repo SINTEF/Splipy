@@ -1,0 +1,8 @@
+build/
+*.pyc
+.cache
+doc/_build
+doc/_static
+doc/_templates
+/doc/html/
+/doc/latex/

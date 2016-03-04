@@ -1,0 +1,346 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>splipy.curve_factory &mdash; Splip  1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Splip  1.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Splip  1.0.0 documentation</span></a></h1>
+        <h2 class="heading"><span>splipy.curve_factory</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for splipy.curve_factory</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;Handy utilities for creating curves.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">ceil</span>
+<span class="kn">from</span> <span class="nn">splipy</span> <span class="kn">import</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">BSplineBasis</span>
+<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="kn">import</span> <span class="n">flip_and_move_plane_geometry</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;line&#39;</span><span class="p">,</span> <span class="s1">&#39;polygon&#39;</span><span class="p">,</span> <span class="s1">&#39;n_gon&#39;</span><span class="p">,</span> <span class="s1">&#39;circle&#39;</span><span class="p">,</span> <span class="s1">&#39;circle_segment&#39;</span><span class="p">,</span> <span class="s1">&#39;interpolate&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;least_square_fit&#39;</span><span class="p">,</span> <span class="s1">&#39;cubic_curve&#39;</span><span class="p">]</span>
+
+<span class="n">FREE</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">NATURAL</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">HERMITE</span><span class="o">=</span><span class="mi">3</span>
+<span class="n">PERIODIC</span><span class="o">=</span><span class="mi">4</span>
+<span class="n">TANGENT</span><span class="o">=</span><span class="mi">5</span>
+<span class="n">TANGENTNATURAL</span><span class="o">=</span><span class="mi">6</span>
+<span class="n">UNIFORM</span><span class="o">=</span><span class="mi">8</span>
+
+<div class="viewcode-block" id="line"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.line">[docs]</a><span class="k">def</span> <span class="nf">line</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a line between two points.</span>
+
+<span class="sd">    :param point-like a: Start point</span>
+<span class="sd">    :param point-like b: End point</span>
+<span class="sd">    :return: Linear curve from *a* to *b*</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">controlpoints</span><span class="o">=</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="polygon"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.polygon">[docs]</a><span class="k">def</span> <span class="nf">polygon</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;polygon(points...)</span>
+
+<span class="sd">    Create a linear interpolation between input points.</span>
+
+<span class="sd">    :param [point-like] points: The points to interpolate</span>
+<span class="sd">    :return: Linear curve through the input points</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># establish knot vector based on eucledian length between points</span>
+    <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">prevPt</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">prevPt</span><span class="p">,</span> <span class="n">pt</span><span class="p">):</span>  <span class="c1"># loop over (x,y) and maybe z-coordinate</span>
+            <span class="n">dist</span> <span class="o">+=</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+        <span class="n">prevPt</span> <span class="o">=</span> <span class="n">pt</span>
+    <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">knot</span><span class="p">),</span> <span class="n">points</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="n_gon"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.n_gon">[docs]</a><span class="k">def</span> <span class="nf">n_gon</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot;n_gon([n=5], [r=1])</span>
+
+<span class="sd">    Create a regular polygon of *n* equal sides centered at the origin.</span>
+
+<span class="sd">    :param int n: Number of sides and vertices</span>
+<span class="sd">    :param float r: Radius</span>
+<span class="sd">    :param point-like center: local origin</span>
+<span class="sd">    :param vector-like normal: local normal</span>
+<span class="sd">    :return: A linear, periodic, 2D curve</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    :raises ValueError: If radius is not positive</span>
+<span class="sd">    :raises ValueError: If *n* &lt; 3</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;radius needs to be positive&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;regular polygons need at least 3 sides&#39;</span><span class="p">)</span>
+
+    <span class="n">cp</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="n">n</span>
+    <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">r</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">dt</span><span class="p">),</span> <span class="n">r</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">dt</span><span class="p">)])</span>
+        <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">knot</span> <span class="o">+=</span> <span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span>  <span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">flip_and_move_plane_geometry</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="circle"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.circle">[docs]</a><span class="k">def</span> <span class="nf">circle</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot;circle([r=1])</span>
+
+<span class="sd">    Create a circle.</span>
+
+<span class="sd">    :param float r: Radius</span>
+<span class="sd">    :param point-like center: local origin</span>
+<span class="sd">    :param vector-like normal: local normal</span>
+<span class="sd">    :return: A periodic, quadratic rational curve</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    :raises ValueError: If radius is not positive</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;radius needs to be positive&#39;</span><span class="p">)</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">controlpoints</span> <span class="o">=</span> <span class="p">[[</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                     <span class="p">[</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">w</span><span class="p">],</span>
+                     <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                     <span class="p">[</span><span class="o">-</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">w</span><span class="p">],</span>
+                     <span class="p">[</span><span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                     <span class="p">[</span><span class="o">-</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">w</span><span class="p">],</span>
+                     <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                     <span class="p">[</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">w</span><span class="p">]]</span>
+    <span class="n">knot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span> <span class="o">/</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">flip_and_move_plane_geometry</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="circle_segment"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.circle_segment">[docs]</a><span class="k">def</span> <span class="nf">circle_segment</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot;circle_segment(theta, [r=1])</span>
+
+<span class="sd">    Create a circle segment starting paralell to the rotated x-axis.</span>
+
+<span class="sd">    :param float theta: Angle in radians</span>
+<span class="sd">    :param float r: Radius</span>
+<span class="sd">    :return: A quadratic rational curve</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    :raises ValueError: If radiusis not positive</span>
+<span class="sd">    :raises ValueError: If theta is not in the range *[-2pi, 2pi]*</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># error test input</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;theta needs to be in range [-2pi,2pi]&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;radius needs to be positive&#39;</span><span class="p">)</span>
+
+    <span class="c1"># build knot vector</span>
+    <span class="n">knot_spans</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)))</span>
+    <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">knot_spans</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">knot</span> <span class="o">+=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">knot</span> <span class="o">+=</span> <span class="p">[</span><span class="n">knot_spans</span><span class="p">]</span>  <span class="c1"># knot vector [0,0,0,1,1,2,2,..,n,n,n]</span>
+    <span class="n">knot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">knot</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta</span>  <span class="c1"># set parametic space to [0,theta]</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="p">(</span><span class="n">knot_spans</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span>  <span class="c1"># number of control points needed</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># current angle</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="n">knot_spans</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># angle step</span>
+
+    <span class="c1"># build control points</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">cos</span><span class="p">(</span><span class="n">dt</span><span class="p">))</span>  <span class="c1"># weights = 1 and cos(dt) every other i</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">cp</span> <span class="o">+=</span> <span class="p">[[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">]]</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">dt</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">knot</span><span class="p">),</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">flip_and_move_plane_geometry</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="interpolate"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.interpolate">[docs]</a><span class="k">def</span> <span class="nf">interpolate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Perform general spline interpolation on a provided basis.</span>
+
+<span class="sd">    :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with</span>
+<span class="sd">        components *j*</span>
+<span class="sd">    :param BSplineBasis basis: Basis on which to interpolate</span>
+<span class="sd">    :param array-like   t    : parametric values at interpolation points, defaults</span>
+<span class="sd">                               to greville points if not provided</span>
+<span class="sd">    :return: Interpolated curve</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># wrap x into a numpy matrix</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># evaluate all basis functions in the interpolation points</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="c1"># solve interpolation problem</span>
+    <span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">controlpoints</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="least_square_fit"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.least_square_fit">[docs]</a><span class="k">def</span> <span class="nf">least_square_fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Perform a least-square fit of a point cloud onto a spline basis</span>
+
+<span class="sd">    :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with</span>
+<span class="sd">        components *j*. The number of points must be equal to or larger than</span>
+<span class="sd">        the number of basis functions in *basis*</span>
+<span class="sd">    :param BSplineBasis basis: Basis on which to interpolate</span>
+<span class="sd">    :param array-like   t    : parametric values at evaluation points</span>
+<span class="sd">    :return: Approximated curve</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># wrap x into a numpy matrix</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># evaluate all basis functions at evaluation points</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="c1"># solve interpolation problem</span>
+    <span class="n">controlpoints</span><span class="p">,</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">controlpoints</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cubic_curve"><a class="viewcode-back" href="../../factories.html#splipy.curve_factory.cubic_curve">[docs]</a><span class="k">def</span> <span class="nf">cubic_curve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">boundary</span><span class="o">=</span><span class="n">FREE</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tangents</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Perform cubic spline interpolation on a provided basis.</span>
+
+<span class="sd">    :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with</span>
+<span class="sd">        components *j*</span>
+<span class="sd">    :param int boundary: FREE, NATURAL, HERMITE, PERIODIC, TANGENT or TANGENTNATURAL</span>
+<span class="sd">    :param array-like t: parametric values at interpolation points, defaults</span>
+<span class="sd">        to euclidian distance between evaluation points</span>
+<span class="sd">    :param matrix-like tangents: In case of HERMITE or TANGENT boundary</span>
+<span class="sd">        condtions, one must supply tangent information (two points for TANGENT,</span>
+<span class="sd">        n points for HERMITE)</span>
+<span class="sd">    :return: Interpolated curve</span>
+<span class="sd">    :rtype: Curve</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span><span class="n">x1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:,:]):</span>
+            <span class="c1"># eucledian distance between two consecutive points </span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x0</span><span class="p">))</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">dist</span><span class="p">)</span>
+
+    <span class="c1"># modify knot vector for chosen boundary conditions</span>
+    <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">*</span><span class="mi">3</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">*</span><span class="mi">3</span>
+    <span class="k">if</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">FREE</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span>
+        <span class="k">del</span> <span class="n">knot</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">HERMITE</span><span class="p">:</span>
+        <span class="n">knot</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">knot</span> <span class="o">+</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># create the interpolation basis and interpolation matrix on this</span>
+    <span class="k">if</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">PERIODIC</span><span class="p">:</span>
+        <span class="n">knot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">knot</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">knot</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">basis</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># left-hand-side matrix</span>
+
+    <span class="c1"># add derivative boundary conditions if applicable</span>
+    <span class="k">if</span> <span class="n">boundary</span><span class="o">==</span><span class="n">TANGENT</span> <span class="ow">or</span> <span class="n">boundary</span><span class="o">==</span><span class="n">HERMITE</span> <span class="ow">or</span> <span class="n">boundary</span><span class="o">==</span><span class="n">TANGENTNATURAL</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">TANGENT</span><span class="p">:</span>
+            <span class="n">dn</span> <span class="o">=</span> <span class="n">basis</span><span class="p">([</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">N</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">x</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">n</span><span class="p">:,:]</span> <span class="o">=</span> <span class="n">tangents</span> 
+        <span class="k">elif</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">TANGENTNATURAL</span><span class="p">:</span>
+            <span class="n">dn</span> <span class="o">=</span> <span class="n">basis</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">N</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">x</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">elif</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">HERMITE</span><span class="p">:</span>
+            <span class="n">dn</span> <span class="o">=</span> <span class="n">getBasis</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">N</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">n</span><span class="p">,</span> <span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">x</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">n</span><span class="p">:,:]</span> <span class="o">=</span> <span class="n">tangents</span> 
+        <span class="n">N</span><span class="p">[</span><span class="n">n</span><span class="p">:,:]</span> <span class="o">=</span> <span class="n">dn</span>
+
+    <span class="c1"># add double derivative boundary conditions if applicable</span>
+    <span class="k">if</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">NATURAL</span> <span class="ow">or</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">TANGENTNATURAL</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">NATURAL</span><span class="p">:</span>
+            <span class="n">ddn</span>  <span class="o">=</span> <span class="n">basis</span><span class="p">([</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">new</span>  <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">boundary</span> <span class="o">==</span> <span class="n">TANGENTNATURAL</span><span class="p">:</span>
+            <span class="n">ddn</span>  <span class="o">=</span> <span class="n">basis</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">new</span>  <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">N</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">new</span><span class="p">,</span> <span class="n">N</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">x</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">new</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">N</span><span class="p">[</span><span class="o">-</span><span class="n">new</span><span class="p">:,:]</span> <span class="o">=</span> <span class="n">ddn</span>
+        <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="n">new</span><span class="p">:,:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># solve system to get controlpoints</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># wrap it all into a curve and return</span>
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">)</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>

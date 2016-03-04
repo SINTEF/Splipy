@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>GeoMod.VolumeFactory &mdash; SplineModeller 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="SplineModeller 1.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>SplineModeller 1.0.0 documentation</span></a></h1>
+        <h2 class="heading"><span>GeoMod.VolumeFactory</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for GeoMod.VolumeFactory</h1><div class="highlight"><pre>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;Handy utilities for creating volumes.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sqrt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">GeoMod</span> <span class="kn">import</span> <span class="n">Surface</span><span class="p">,</span> <span class="n">Volume</span><span class="p">,</span> <span class="n">BSplineBasis</span>
+<span class="kn">import</span> <span class="nn">GeoMod.SurfaceFactory</span> <span class="kn">as</span> <span class="nn">SurfaceFactory</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cube&#39;</span><span class="p">,</span> <span class="s1">&#39;revolve&#39;</span><span class="p">,</span> <span class="s1">&#39;cylinder&#39;</span><span class="p">,</span> <span class="s1">&#39;extrude&#39;</span><span class="p">,</span> <span class="s1">&#39;edge_surfaces&#39;</span><span class="p">,</span> <span class="s1">&#39;loft&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="cube"><a class="viewcode-back" href="../../factories.html#GeoMod.VolumeFactory.cube">[docs]</a><span class="k">def</span> <span class="nf">cube</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lower_left</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot;cube([size=1])</span>
+
+<span class="sd">    Create a cube with parmetric origin at *(0,0,0)*.</span>
+
+<span class="sd">    :param size: Size(s), either a single scalar or a tuple of scalars per axis</span>
+<span class="sd">    :type size: float or (float)</span>
+<span class="sd">    :return: A linear parametrized box</span>
+<span class="sd">    :rtype: Volume</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">Volume</span><span class="p">()</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">+=</span> <span class="n">lower_left</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="revolve"><a class="viewcode-back" href="../../factories.html#GeoMod.VolumeFactory.revolve">[docs]</a><span class="k">def</span> <span class="nf">revolve</span><span class="p">(</span><span class="n">surf</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;revolve(surf, [theta=2pi])</span>
+
+<span class="sd">    Revolve a volume by sweeping a surface in a rotational fashion around the</span>
+<span class="sd">    *z* axis.</span>
+
+<span class="sd">    :param Surface surf: Surface to revolve</span>
+<span class="sd">    :param float theta: Angle to revolve, in radians</span>
+<span class="sd">    :return: The revolved surface</span>
+<span class="sd">    :rtype: Volume</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">surf</span> <span class="o">=</span> <span class="n">surf</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># clone input surface, throw away old reference</span>
+    <span class="n">surf</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># add z-components (if not already present)</span>
+    <span class="n">surf</span><span class="o">.</span><span class="n">force_rational</span><span class="p">()</span>  <span class="c1"># add weight (if not already present)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">surf</span><span class="p">)</span>  <span class="c1"># number of control points of the surface</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">8</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">periodic</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">basis</span> <span class="o">*=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span>  <span class="c1"># set parametric domain to (0,2pi) in w-direction</span>
+
+    <span class="c1"># loop around the circle and set control points by the traditional 9-point</span>
+    <span class="c1"># circle curve with weights 1/sqrt(2), only here C0-periodic, so 8 points</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">surf</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="n">weight</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="n">weight</span>
+        <span class="n">surf</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Volume</span><span class="p">(</span><span class="n">surf</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">surf</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cylinder"><a class="viewcode-back" href="../../factories.html#GeoMod.VolumeFactory.cylinder">[docs]</a><span class="k">def</span> <span class="nf">cylinder</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot;cylinder([r=1], [h=1], [center=(0,0,0)], [axis=(0,0,1)])</span>
+
+<span class="sd">    Create a solid cylinder </span>
+
+<span class="sd">    :param float r: Radius</span>
+<span class="sd">    :param float h: Height</span>
+<span class="sd">    :param point-like center: The center of the bottom circle</span>
+<span class="sd">    :param vector-like axis: Cylinder axis</span>
+<span class="sd">    :return: The cylinder</span>
+<span class="sd">    :rtype: Volume</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">extrude</span><span class="p">(</span><span class="n">SurfaceFactory</span><span class="o">.</span><span class="n">disc</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span> <span class="n">h</span><span class="o">*</span><span class="n">axis</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="extrude"><a class="viewcode-back" href="../../factories.html#GeoMod.VolumeFactory.extrude">[docs]</a><span class="k">def</span> <span class="nf">extrude</span><span class="p">(</span><span class="n">surf</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Extrude a surface by sweeping it to a given height.</span>
+
+<span class="sd">    :param Surface surf: Surface to extrude</span>
+<span class="sd">    :param vector-like amount: 3-component vector of sweeping amount and</span>
+<span class="sd">                               direction</span>
+<span class="sd">    :return: The extruded surface</span>
+<span class="sd">    :rtype: Volume</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">surf</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># add z-components (if not already present)</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">controlpoint</span> <span class="ow">in</span> <span class="n">surf</span><span class="p">:</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">controlpoint</span><span class="p">))</span>
+    <span class="n">surf</span> <span class="o">+=</span> <span class="n">amount</span>
+    <span class="k">for</span> <span class="n">controlpoint</span> <span class="ow">in</span> <span class="n">surf</span><span class="p">:</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">controlpoint</span><span class="p">))</span>
+    <span class="n">surf</span> <span class="o">-=</span> <span class="n">amount</span>
+    <span class="k">return</span> <span class="n">Volume</span><span class="p">(</span><span class="n">surf</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">surf</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">cp</span><span class="p">,</span> <span class="n">surf</span><span class="o">.</span><span class="n">rational</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="edge_surfaces"><a class="viewcode-back" href="../../factories.html#GeoMod.VolumeFactory.edge_surfaces">[docs]</a><span class="k">def</span> <span class="nf">edge_surfaces</span><span class="p">(</span><span class="o">*</span><span class="n">surfaces</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;edge_surfaces(surfaces...)</span>
+
+<span class="sd">    Create the volume defined by the region between the input surfaces.</span>
+
+<span class="sd">    In case of six input surfaces, these must be given in the order: bottom,</span>
+<span class="sd">    top, left, right, back, front. Opposing sides must be parametrized in the</span>
+<span class="sd">    same directions.</span>
+
+<span class="sd">    :param [Surface] surfaces: Two or six edge surfaces</span>
+<span class="sd">    :return: The enclosed volume</span>
+<span class="sd">    :rtype: Volume</span>
+<span class="sd">    :raises ValueError: If the length of *surfaces* is not two or six</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># probably gives input as a list-like single variable</span>
+        <span class="n">surfaces</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">surf1</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">surf2</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">Surface</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">surf1</span><span class="p">,</span> <span class="n">surf2</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="o">=</span> <span class="n">surf1</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>  <span class="c1"># d = dimension + rational</span>
+
+        <span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+        <span class="n">controlpoints</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">surf1</span><span class="o">.</span><span class="n">controlpoints</span>
+        <span class="n">controlpoints</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">surf2</span><span class="o">.</span><span class="n">controlpoints</span>
+
+        <span class="c1"># Volume constructor orders control points in a different way, so we</span>
+        <span class="c1"># create it from scratch here</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">Volume</span><span class="p">()</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">surf1</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">surf1</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="n">surf1</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">rational</span> <span class="o">=</span> <span class="n">surf1</span><span class="o">.</span><span class="n">rational</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">controlpoints</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+        <span class="c1"># coons patch (https://en.wikipedia.org/wiki/Coons_patch)</span>
+        <span class="n">umin</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">umax</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">wmin</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="n">wmax</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+        <span class="n">vol1</span> <span class="o">=</span> <span class="n">edge_surfaces</span><span class="p">(</span><span class="n">umin</span><span class="p">,</span><span class="n">umax</span><span class="p">)</span>
+        <span class="n">vol2</span> <span class="o">=</span> <span class="n">edge_surfaces</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span><span class="n">vmax</span><span class="p">)</span>
+        <span class="n">vol3</span> <span class="o">=</span> <span class="n">edge_surfaces</span><span class="p">(</span><span class="n">wmin</span><span class="p">,</span><span class="n">wmax</span><span class="p">)</span>
+        <span class="n">vol4</span> <span class="o">=</span> <span class="n">Volume</span><span class="p">(</span><span class="n">controlpoints</span><span class="o">=</span><span class="n">vol1</span><span class="o">.</span><span class="n">corners</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">),</span> <span class="n">rational</span><span class="o">=</span><span class="n">vol1</span><span class="o">.</span><span class="n">rational</span><span class="p">)</span>
+        <span class="n">vol1</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">vol1</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">vol2</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">vol4</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">Volume</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">vol1</span><span class="p">,</span> <span class="n">vol2</span><span class="p">)</span>
+        <span class="n">Volume</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">vol1</span><span class="p">,</span> <span class="n">vol3</span><span class="p">)</span>
+        <span class="n">Volume</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">vol1</span><span class="p">,</span> <span class="n">vol4</span><span class="p">)</span>
+        <span class="n">Volume</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">vol2</span><span class="p">,</span> <span class="n">vol3</span><span class="p">)</span>
+        <span class="n">Volume</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">vol2</span><span class="p">,</span> <span class="n">vol4</span><span class="p">)</span>
+        <span class="n">Volume</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">vol3</span><span class="p">,</span> <span class="n">vol4</span><span class="p">)</span>
+        <span class="n">result</span>  <span class="o">=</span> <span class="n">vol1</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">+=</span>   <span class="n">vol2</span><span class="o">.</span><span class="n">controlpoints</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">+=</span>   <span class="n">vol3</span><span class="o">.</span><span class="n">controlpoints</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">-=</span> <span class="mi">2</span><span class="o">*</span><span class="n">vol4</span><span class="o">.</span><span class="n">controlpoints</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Requires two or six input surfaces&#39;</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">loft</span><span class="p">(</span><span class="o">*</span><span class="n">surfaces</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">surfaces</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># clone input, so we don&#39;t change those references</span>
+    <span class="c1"># make sure everything has the same dimension since we need to compute length</span>
+    <span class="n">surfaces</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">surfaces</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SurfaceFactory</span><span class="o">.</span><span class="n">edge_curves</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+        <span class="c1"># can&#39;t do cubic spline interpolation, so we&#39;ll do quadratic</span>
+        <span class="n">basis3</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">dist</span>  <span class="o">=</span> <span class="n">basis3</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">center</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">surfaces</span><span class="p">]</span>
+
+        <span class="c1"># create knot vector from the euclidian length between the surfaces</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span><span class="n">x0</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">dist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x1</span><span class="o">-</span><span class="n">x0</span><span class="p">))</span>
+
+        <span class="c1"># using &quot;free&quot; boundary condition by setting N&#39;&#39;&#39;(u) continuous at second to last and second knot</span>
+        <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="n">dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">*</span><span class="mi">4</span> <span class="o">+</span> <span class="n">dist</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">dist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">*</span><span class="mi">4</span>
+        <span class="n">basis3</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">knot</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">Surface</span><span class="o">.</span><span class="n">make_splines_identical</span><span class="p">(</span><span class="n">surfaces</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">surfaces</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+    <span class="n">basis1</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">basis2</span> <span class="o">=</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">m1</span>     <span class="o">=</span> <span class="n">basis1</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
+    <span class="n">m2</span>     <span class="o">=</span> <span class="n">basis2</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
+    <span class="n">dim</span>    <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">u</span>      <span class="o">=</span> <span class="n">basis1</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span> <span class="c1"># parametric interpolation points</span>
+    <span class="n">v</span>      <span class="o">=</span> <span class="n">basis2</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span>
+    <span class="n">w</span>      <span class="o">=</span> <span class="n">dist</span>
+
+    <span class="c1"># compute matrices</span>
+    <span class="n">Nu</span>     <span class="o">=</span> <span class="n">basis1</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">Nv</span>     <span class="o">=</span> <span class="n">basis2</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">Nw</span>     <span class="o">=</span> <span class="n">basis3</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">Nu_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Nu</span><span class="p">)</span>
+    <span class="n">Nv_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Nv</span><span class="p">)</span>
+    <span class="n">Nw_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Nw</span><span class="p">)</span>
+
+    <span class="c1"># compute interpolation points in physical space</span>
+    <span class="n">x</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m1</span><span class="p">,</span><span class="n">m2</span><span class="p">,</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">tmp</span>        <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">Nv</span><span class="p">,</span> <span class="n">surfaces</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">x</span><span class="p">[:,:,</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">Nu</span><span class="p">,</span> <span class="n">tmp</span>                      <span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># solve interpolation problem</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">Nw_inv</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span>  <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">Nv_inv</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">Nu_inv</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="c1"># re-order controlpoints so they match up with Surface constructor</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="o">*</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Volume</span><span class="p">(</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">,</span> <span class="n">basis3</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="n">surfaces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rational</span><span class="p">)</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>
