@@ -2,7 +2,12 @@
 Splipy
 ======
 
-This repository contains the Splipy packages.
+This repository contains the Splipy packages. Splipy is a python package for
+building spline geometries. It is designed primarily for analysis use, and
+therefore allows fine-grained control over many aspects which is not possible to
+achieve with conventional CAD tools.
+
+You can read the latest documentation `here <http://sintefmath.github.io/Splipy>`_.
 
 
 Dependencies
@@ -33,7 +38,6 @@ Installing
 To install, use::
 
     python setup.py install
-
 
 To generate a package, use::
 
