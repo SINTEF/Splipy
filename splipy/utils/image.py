@@ -1,6 +1,6 @@
 __doc__ = 'Implementation of image based mesh generation.'
 
-from splipy import BSplineBasis, CurveFactory, SurfaceFactory
+from splipy import BSplineBasis, curve_factory, surface_factory
 from math import sqrt
 import cv2
 import numpy as np
@@ -169,7 +169,7 @@ def image_curves(filename):
 
         basis = BSplineBasis(4, knot)
 
-        c = CurveFactory.least_square_fit(pts, basis, parpt)
+        c = curve_factory.least_square_fit(pts, basis, parpt)
 
         if len(contours) == 2:
             return c
@@ -220,7 +220,7 @@ def image_height(filename, N=[30,30], p=[4,4]):
     basis1 = BSplineBasis(4, knot1)
     basis2 = BSplineBasis(4, knot2)
 
-    return SurfaceFactory.least_square_fit(pts,[basis1, basis2], [u,v])
+    return surface_factory.least_square_fit(pts,[basis1, basis2], [u,v])
 
 def image_convex_surface(filename):
     """Generate a single B-spline surface corresponding to convex black domain
@@ -267,5 +267,5 @@ def image_convex_surface(filename):
             del kinks[max_span_i]
         corners = kinks[1:4]
 
-    return SurfaceFactory.edge_curves(crv.split(corners));
+    return surface_factory.edge_curves(crv.split(corners));
 

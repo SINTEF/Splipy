@@ -7,7 +7,7 @@ import unittest
 import sys
 
 if sys.version_info < (3,):
-    from splipy.utils.Image import *
+    from splipy.utils.image import *
 
 class TestImage(unittest.TestCase):
 
