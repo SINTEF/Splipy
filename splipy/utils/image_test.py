@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import Curve, Surface
+from splipy import Curve, Surface
 from math import pi
 import numpy as np
 import unittest
 import sys
 
 if sys.version_info < (3,):
-    from GeoUtils.Image import *
+    from splipy.utils.Image import *
 
 class TestImage(unittest.TestCase):
 
     @unittest.skipIf(sys.version_info >= (3,), "Image module not supported on Python 3")
     def test_curve(self):
-        crv = image_curves('GeoUtils/disc.png')
+        crv = image_curves('splipy/utils/disc.png')
         self.assertEqual(type(crv), Curve)
 
         bb = crv.bounding_box()
@@ -29,7 +29,7 @@ class TestImage(unittest.TestCase):
 
     @unittest.skipIf(sys.version_info >= (3,), "Image module not supported on Python 3")
     def test_surface(self):
-        disc = image_convex_surface('GeoUtils/disc.png')
+        disc = image_convex_surface('splipy/utils/disc.png')
         self.assertEqual(type(disc), Surface)
 
         bb = disc.bounding_box()

@@ -4,8 +4,8 @@
 
 from math import pi, sqrt
 import numpy as np
-from GeoMod import Surface, Volume, BSplineBasis
-import GeoMod.SurfaceFactory as SurfaceFactory
+from splipy import Surface, Volume, BSplineBasis
+import splipy.surface_factory as SurfaceFactory
 
 __all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces', 'loft',
            'interpolate', 'least_square_fit']

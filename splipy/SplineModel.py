@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import *
-from GeoMod.Utils import *
-import GeoMod.ModState as state
+from splipy import *
+from splipy.utils import *
+import splipy.state as state
 import numpy as np
 from collections import Counter
 from itertools import chain, product, permutations
@@ -85,7 +85,7 @@ class VertexDict(MutableMapping):
 
 class OrientationError(RuntimeError):
     """An `OrientationError` is raised by certain methods in
-    :class:`GeoMod.SplineModel.Orientation` indicating an inability to match
+    :class:`splipy.SplineModel.Orientation` indicating an inability to match
     two objects.
     """
     pass
@@ -106,7 +106,7 @@ class Orientation(object):
         """Initialize an Orientation object.
 
         .. warning:: This constructor is for internal use. Use
-            :func:`GeoMod.SplineModel.Orientation.compute` to generate new
+            :func:`splipy.SplineModel.Orientation.compute` to generate new
             orientation objects.
         """
         self.perm = perm
@@ -185,7 +185,7 @@ class Orientation(object):
         """Map a section in the mapped system to the reference system.
 
         The input is a section tuple as described in
-        :func:`GeoMod.Utils.section`. It should be described relative to the
+        :func:`splipy.Utils.section`. It should be described relative to the
         mapped coordinate system. The return value is the corresponding section
         relative to the reference system.
         """
@@ -205,7 +205,7 @@ class Orientation(object):
         """Reduce a mapping to a lower dimension.
 
         The input is a section tuple as described in
-        :func:`GeoMod.Utils.section`. It should be described relative to the
+        :func:`splipy.Utils.section`. It should be described relative to the
         mapped coordinate system. The return value is an `Orientation` object
         that describes the same orentation, relative to the section only.
 
@@ -247,7 +247,7 @@ class TopologicalNode(object):
       node objects with dimension `d`.
 
     .. note:: Connections to lower order nodes are `ordered` corresponding to
-        the natural ordering of sections (see :func:`GeoMod.Utils.sections`).
+        the natural ordering of sections (see :func:`splipy.Utils.sections`).
         Connections to higher order nodes are not ordered.
 
     .. warning:: This class is mostly for internal use. It performs no checks
@@ -296,8 +296,8 @@ class TopologicalNode(object):
 
 class NodeView(object):
     """A `NodeView` object refers to a *view* to a point in the topological graph.
-    It is composed of a node (:class:`GeoMod.SplineModel.TopologicalNode`) and
-    an orientation (:class:`GeoMod.SplineModel.Orienation`).
+    It is composed of a node (:class:`splipy.SplineModel.TopologicalNode`) and
+    an orientation (:class:`splipy.SplineModel.Orienation`).
 
     .. note:: Unlike `TopologicalNode` objects, `NodeView` objects are not
         persistent.
@@ -316,7 +316,7 @@ class NodeView(object):
         return self.node.pardim
 
     def section(self, *args, **kwargs):
-        """Return a section. See :func:`GeoMod.SplineObject.section` for more details
+        """Return a section. See :func:`splipy.SplineObject.section` for more details
         on the input arguments.
 
         The return value is another `NodeView` object with a different
@@ -449,7 +449,7 @@ class ObjectCatalogue(object):
         corresponding `NodeView` object.
 
         This is equivalent to calling
-        :func:`GeoMod.SplineModel.ObjectCatalogue.lookup` with `add` set to
+        :func:`splipy.SplineModel.ObjectCatalogue.lookup` with `add` set to
         true.
 
         :param SplineObject obj: The object to add

@@ -14,7 +14,7 @@ def sections(src_dim, tgt_dim):
 
     The return values are lists of length `src_dim` with each element either 0,
     --1 or `None`, which are suitable for passing to
-    :func:`GeoMod.SplineObject.section`.
+    :func:`splipy.SplineObject.section`.
     """
     # Enumerate all combinations of fixed directions
     nfixed = src_dim - tgt_dim
@@ -29,7 +29,7 @@ def sections(src_dim, tgt_dim):
 def section_from_index(src_dim, tgt_dim, i):
     """Return the i'th section from a source dimension to a target dimension.
 
-    See :func:`GeoMod.Utils.sections` for more information.
+    See :func:`splipy.Utils.sections` for more information.
     """
     for j, s in sections(src_dim, tgt_dim):
         if i == j:
@@ -49,7 +49,7 @@ def check_section(*args, **kwargs):
     Parse arguments and return a section spec.
 
     The keyword argument `pardim` *must* be provided. The return value is a
-    section as described in :func:`GeoMod.Utils.sections`.
+    section as described in :func:`splipy.Utils.sections`.
     """
     pardim = kwargs['pardim']
     args = list(args)
@@ -104,4 +104,3 @@ def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
     if center != (0,0,0):
         obj.translate(center)
     return obj
-    

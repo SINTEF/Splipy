@@ -3,8 +3,8 @@
 """Handy utilities for creating curves."""
 
 from math import pi, cos, sin, sqrt, ceil
-from GeoMod import Curve, BSplineBasis
-from GeoMod.Utils import flip_and_move_plane_geometry
+from splipy import Curve, BSplineBasis
+from splipy.utils import flip_and_move_plane_geometry
 import numpy as np
 
 __all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate',

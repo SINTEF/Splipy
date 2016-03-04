@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import SplineObject, Curve, BSplineBasis
+from splipy import SplineObject, Curve, BSplineBasis
 from math import sqrt, pi
 import numpy as np
 import unittest

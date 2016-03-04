@@ -1,6 +1,6 @@
 __doc__ = 'Implementation of image based mesh generation.'
 
-from GeoMod import BSplineBasis, CurveFactory, SurfaceFactory
+from splipy import BSplineBasis, CurveFactory, SurfaceFactory
 from math import sqrt
 import cv2
 import numpy as np

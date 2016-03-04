@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import BSplineBasis, Volume
+from splipy import BSplineBasis, Volume
 import unittest
 import numpy as np
 from math import pi, sqrt

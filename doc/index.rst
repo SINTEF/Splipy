@@ -17,10 +17,10 @@ For a quick start, please see the :doc:`tutorial`.
 Overview
 ========
 
-The *GeoMod* module exports a handful of convenient classes. Please see
+The *splipy* module exports a handful of convenient classes. Please see
 :doc:`basic_classes` for more information.
 
-.. currentmodule:: GeoMod
+.. currentmodule:: splipy
 .. autosummary::
    :nosignatures:
 
@@ -35,9 +35,9 @@ modules. Please see :doc:`factories` for more information.
 
 .. autosummary::
 
-   GeoMod.CurveFactory
-   GeoMod.SurfaceFactory
-   GeoMod.VolumeFactory
+   splipy.curve_factory
+   splipy.surface_factory
+   splipy.volume_factory
 
 
 Indices and tables

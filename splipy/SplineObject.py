@@ -4,8 +4,8 @@ import numpy as np
 import copy
 from operator import attrgetter, methodcaller
 from itertools import chain, product
-from GeoMod import BSplineBasis
-from GeoMod.Utils import *
+from splipy import BSplineBasis
+from splipy.utils import *
 
 __all__ = ['SplineObject']
 
@@ -212,7 +212,7 @@ class SplineObject(object):
 
         If `direction` is given, only the derivatives in that direction are
         evaluated. This is equivalent to calling
-        :func:`GeoMod.SplineObject.derivative` with
+        :func:`splipy.SplineObject.derivative` with
         `d=(0,...,0,1,0,...,0)`, the unit vector corresponding to the given
         direction.
 
@@ -1030,7 +1030,7 @@ class SplineObject(object):
         """Ensure that two splines have identical discretization.
 
         This will first make them compatible (see
-        :func:`GeoMod.SplineObject.make_curves_compatible`), reparametrize them, and
+        :func:`splipy.SplineObject.make_curves_compatible`), reparametrize them, and
         possibly raise the order and insert knots as required.
 
         :param SplineObject spline1: The first spline

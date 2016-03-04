@@ -4,7 +4,7 @@
 # Git revision : ce198333cbf3bf3a7d964b947e07c74c43df1cdd
 
 import numpy as np
-from GeoMod import Volume, Surface, Curve, BSplineBasis
+from splipy import Volume, Surface, Curve, BSplineBasis
 from math import sqrt
 import unittest
 

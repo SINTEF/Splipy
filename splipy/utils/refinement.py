@@ -2,13 +2,13 @@ from __future__ import division
 
 __doc__ = 'Implementation of various refinement schemes.'
 
-from GeoMod.Utils import ensure_listlike
+from splipy.utils import ensure_listlike
 from math import atan, pi
 import numpy as np
 
-# TODO: put control over these tolerances somewhere. Modstate in GeoMod seems
-#       to be the place for it, but we can't let GeoUtils influence the
-#       structure of GeoMod.
+# TODO: put control over these tolerances somewhere. Modstate in splipy seems
+#       to be the place for it, but we can't let splipy.utils influence the
+#       structure of splipy.
 def knot_exists(existing_knots, new_knot):
     return np.any(np.isclose(existing_knots, new_knot, atol=1e-7, rtol=1e-10))
 

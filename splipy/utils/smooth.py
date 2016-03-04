@@ -2,7 +2,7 @@ __doc__ = 'Implementation of various smoothing operations on a per-controlpoint 
 
 from scipy import ndimage
 import numpy as np
-import GeoMod.CurveFactory as cf
+import splipy.curve_factory as cf
 
 def smooth(obj):
     """Smooth a SplineObject by setting the interior control points to the

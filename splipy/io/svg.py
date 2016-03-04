@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from GeoMod import Curve, Surface, SplineObject, BSplineBasis
+from splipy import Curve, Surface, SplineObject, BSplineBasis
 import xml.etree.ElementTree as etree
 import numpy as np
 import re
@@ -34,7 +34,7 @@ def bezier_representation(curve):
     return bezier
 
 
-class SVG:
+class SVG(object):
     
     namespace = '{http://www.w3.org/2000/svg}'
 

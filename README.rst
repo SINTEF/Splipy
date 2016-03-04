@@ -44,4 +44,4 @@ Tests
 To run the tests, you can use your favourite test runner. For example, with
 pytest::
 
-    py.test GeoMod test_utils
+    py.test splipy test_utils

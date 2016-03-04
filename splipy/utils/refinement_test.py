@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod.Curve import *
-from GeoMod.Surface import *
-from GeoMod.Volume import *
-from GeoUtils.Refinement import *
+from splipy import *
+from splipy.utils.refinement import *
 import numpy as np
 import unittest
 

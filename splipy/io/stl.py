@@ -2,8 +2,8 @@
 
 import struct
 import numpy as np
-from GeoMod.Utils import ensure_listlike
-from GeoMod import SplineModel, Surface, Volume
+from splipy.Utils import ensure_listlike
+from splipy import SplineModel, Surface, Volume
 
 ASCII_FACET = """facet normal 0 0 0
 outer loop
@@ -17,7 +17,7 @@ endfacet
 BINARY_HEADER ="80sI"
 BINARY_FACET = "12fH"
 
-class ASCII_STL_Writer:
+class ASCII_STL_Writer(object):
     """ Export 3D objects build of 3 or 4 vertices as ASCII STL file.
     """
     def __init__(self, stream):
@@ -83,7 +83,7 @@ class BINARY_STL_Writer(ASCII_STL_Writer):
         self.fp.write(struct.pack(BINARY_FACET, *data))
 
 
-class STL:
+class STL(object):
     def __init__(self, filename, binary=True):
         if filename[-4:] != '.stl':
             filename += '.stl'

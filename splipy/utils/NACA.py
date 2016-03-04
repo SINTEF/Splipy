@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import Curve, BSplineBasis
-import GeoMod.SurfaceFactory as SurfaceFactory
+from splipy import Curve, BSplineBasis
+import splipy.SurfaceFactory as SurfaceFactory
 import numpy as np
 
 __all__ = ['camber', 'NACA']

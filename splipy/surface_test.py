@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import Surface, BSplineBasis
-import GeoMod.SurfaceFactory as SurfaceFactory
+from splipy import Surface, BSplineBasis
+import splipy.surface_factory as SurfaceFactory
 from math import pi
 import numpy as np
 import unittest

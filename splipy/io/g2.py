@@ -1,9 +1,9 @@
 import numpy as np
 from itertools import chain, product
-from GeoMod import BSplineBasis, Curve, Surface, Volume, SplineObject
+from splipy import BSplineBasis, Curve, Surface, Volume, SplineObject
 
 
-class G2:
+class G2(object):
 
     g2_type = [100, 200, 700] # curve, surface, volume identifiers
     classes = [Curve, Surface, Volume]

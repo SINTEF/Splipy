@@ -2,10 +2,10 @@
 
 """Handy utilities for creating surfaces."""
 
-from GeoMod import BSplineBasis, Curve, Surface
+from splipy import BSplineBasis, Curve, Surface
 from math import pi, sqrt
-from GeoMod.Utils import flip_and_move_plane_geometry
-import GeoMod.CurveFactory as CurveFactory
+from splipy.utils import flip_and_move_plane_geometry
+import splipy.curve_factory as CurveFactory
 import inspect
 import numpy as np
 

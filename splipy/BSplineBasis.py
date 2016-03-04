@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod.Utils import ensure_listlike
-import GeoMod.ModState as state
+from splipy.utils import ensure_listlike
+import splipy.state as state
 from bisect import bisect_right, bisect_left
 import numpy as np
 import copy
@@ -64,7 +64,7 @@ class BSplineBasis:
     def num_functions(self):
         """Returns the number of basis functions in the basis.
 
-        .. warning:: This is different from :func:`GeoMod.BSplineBasis.__len__`."""
+        .. warning:: This is different from :func:`splipy.BSplineBasis.__len__`."""
         return len(self.knots) - self.order - (self.periodic + 1)
 
     def start(self):

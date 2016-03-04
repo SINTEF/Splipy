@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod import BSplineBasis
-from GeoMod.SplineObject import SplineObject
-from GeoMod.Utils import ensure_listlike, check_direction, sections
+from splipy import BSplineBasis, SplineObject
+from splipy.utils import ensure_listlike, check_direction, sections
 from bisect import bisect_left
 from itertools import chain
 import numpy as np

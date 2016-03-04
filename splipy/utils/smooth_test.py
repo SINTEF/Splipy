@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from GeoMod.BSplineBasis import *
-from GeoMod.Curve import *
-from GeoMod.Surface import *
-from GeoMod.Volume import *
-from GeoUtils.Smooth import *
+from splipy import *
+from splipy.utils.smooth import *
 import numpy as np
 import unittest
 
