@@ -10,11 +10,21 @@ Dependencies
 
 This library depends on numpy and scipy. E.g. on Ubuntu::
 
-    sudo apt-get install python-numpy python-scipy
+    pip install numpy
+    pip install scipy
 
 If you use Python 2, you need OpenCV for the imaging tools to work::
 
     sudo apt-get install opencv
+
+To generate the documentation you will need Sphinx::
+
+    pip install sphinx
+
+And to run the tests you can use your favourite test runner, for example
+pytest::
+
+    pip install pytest
 
 
 Installing
@@ -30,10 +40,10 @@ To generate a package, use::
     python setup.py sdist --dist-dir .
 
 
-Documenation
-------------
+Documentation
+-------------
 
-To generate the documentation, first install sphinx. Then, in the doc folder::
+To generate the documentation, run in the `doc` folder::
 
     make html
 
