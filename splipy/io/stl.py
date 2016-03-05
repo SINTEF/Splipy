@@ -2,8 +2,9 @@
 
 import struct
 import numpy as np
-from splipy.Utils import ensure_listlike
+from splipy.utils import ensure_listlike
 from splipy import SplineModel, Surface, Volume
+from .master import MasterIO
 
 ASCII_FACET = """facet normal 0 0 0
 outer loop
@@ -83,7 +84,7 @@ class BINARY_STL_Writer(ASCII_STL_Writer):
         self.fp.write(struct.pack(BINARY_FACET, *data))
 
 
-class STL(object):
+class STL(MasterIO):
     def __init__(self, filename, binary=True):
         if filename[-4:] != '.stl':
             filename += '.stl'

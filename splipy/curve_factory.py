@@ -7,16 +7,31 @@ from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
 import numpy as np
 
-__all__ = ['line', 'polygon', 'n_gon', 'circle', 'circle_segment', 'interpolate',
-           'least_square_fit', 'cubic_curve']
+__all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment',
+           'interpolate', 'least_square_fit', 'cubic_curve']
 
-FREE=1
-NATURAL=2
-HERMITE=3
-PERIODIC=4
-TANGENT=5
-TANGENTNATURAL=6
-UNIFORM=8
+class Boundary:
+    """Enumeration representing different boundary conditions used in
+    :func:`interpolate`."""
+
+    FREE = 1
+    """The curve will be smooth at the second and second-to-last unique knot."""
+
+    NATURAL = 2
+    """The curve will have zero second derivatives at the endpoints."""
+
+    HERMITE = 3
+    """Specify the derivatives at the knots."""
+
+    PERIODIC = 4
+    """The curve will be periodic at the endpoints."""
+
+    TANGENT = 5
+    """Specify the tangents at the endpoints."""
+
+    TANGENTNATURAL = 6
+    """Use `TANGENT` for the start and `NATURAL` for the end."""
+
 
 def line(a, b):
     """Create a line between two points.
@@ -158,13 +173,15 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
     return flip_and_move_plane_geometry(result, center, normal)
 
 def interpolate(x, basis, t=None):
-    """Perform general spline interpolation on a provided basis.
+    """interpolate(x, basis, [t=None])
+
+    Perform general spline interpolation on a provided basis.
 
     :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with
         components *j*
     :param BSplineBasis basis: Basis on which to interpolate
-    :param array-like   t    : parametric values at interpolation points, defaults
-                               to greville points if not provided
+    :param array-like t: parametric values at interpolation points; defaults to
+        Greville points if not provided
     :return: Interpolated curve
     :rtype: Curve
     """
@@ -188,7 +205,7 @@ def least_square_fit(x, basis, t):
         components *j*. The number of points must be equal to or larger than
         the number of basis functions in *basis*
     :param BSplineBasis basis: Basis on which to interpolate
-    :param array-like   t    : parametric values at evaluation points
+    :param array-like t: parametric values at evaluation points
     :return: Approximated curve
     :rtype: Curve
     """
@@ -204,17 +221,26 @@ def least_square_fit(x, basis, t):
     return Curve(basis, controlpoints)
 
 
-def cubic_curve(x, boundary=FREE, t=None, tangents=None):
-    """Perform cubic spline interpolation on a provided basis.
+def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
+    """cubic_curve(x, [boundary=Boundary.FREE], [t=None], [tangents=None])
 
-    :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with
+    Perform cubic spline interpolation on a provided basis.
+
+    The valid boundary conditions are enumerated in :class:`Boundary`. The
+    meaning of the `tangents` parameter depends on the specified boundary
+    condition:
+
+    - `TANGENT`: two points,
+    - `TANGENTNATURAL`: one point,
+    - `HERMITE`: *n* points
+
+    :param matrix-like x: Matrix *X[i,j]* of interpolation points *x_i* with
         components *j*
-    :param int boundary: FREE, NATURAL, HERMITE, PERIODIC, TANGENT or TANGENTNATURAL
+    :param int boundary: Any value from :class:`Boundary`.
     :param array-like t: parametric values at interpolation points, defaults
-        to euclidian distance between evaluation points
-    :param matrix-like tangents: In case of HERMITE or TANGENT boundary
-        condtions, one must supply tangent information (two points for TANGENT,
-        n points for HERMITE)
+        to Euclidean distance between evaluation points
+    :param matrix-like tangents: Tangent information according to the boundary
+        conditions.
     :return: Interpolated curve
     :rtype: Curve
     """
@@ -228,14 +254,14 @@ def cubic_curve(x, boundary=FREE, t=None, tangents=None):
 
     # modify knot vector for chosen boundary conditions
     knot = [t[0]]*3 + list(t) + [t[-1]]*3
-    if boundary == FREE:
+    if boundary == Boundary.FREE:
         del knot[-5]
         del knot[4]
-    elif boundary == HERMITE:
+    elif boundary == Boundary.HERMITE:
         knot = sorted(knot + t[1:-1])
 
     # create the interpolation basis and interpolation matrix on this
-    if boundary == PERIODIC:
+    if boundary == Boundary.PERIODIC:
         knot[0]  = t[-3] - t[-1]
         knot[1]  = t[-2] - t[-1]
         knot[-2] = t[-1] + t[1]
@@ -246,17 +272,17 @@ def cubic_curve(x, boundary=FREE, t=None, tangents=None):
     N = basis(t)  # left-hand-side matrix
 
     # add derivative boundary conditions if applicable
-    if boundary==TANGENT or boundary==HERMITE or boundary==TANGENTNATURAL:
-        if boundary == TANGENT:
+    if boundary in [Boundary.TANGENT, Boundary.HERMITE, Boundary.TANGENTNATURAL]:
+        if boundary == Boundary.TANGENT:
             dn = basis([t[0], t[-1]], d=1)
             N  = np.resize(N, (N.shape[0]+2, N.shape[1]))
             x  = np.resize(x, (x.shape[0]+2, x.shape[1]))
             x[n:,:] = tangents 
-        elif boundary == TANGENTNATURAL:
+        elif boundary == Boundary.TANGENTNATURAL:
             dn = basis(t[0], d=1)
             N  = np.resize(N, (N.shape[0]+1, N.shape[1]))
             x  = np.resize(x, (x.shape[0]+1, x.shape[1]))
-        elif boundary == HERMITE:
+        elif boundary == Boundary.HERMITE:
             dn = getBasis(t, d=1)
             N  = np.resize(N, (N.shape[0]+n, N.shape[1]))
             x  = np.resize(x, (x.shape[0]+n, x.shape[1]))
@@ -264,11 +290,11 @@ def cubic_curve(x, boundary=FREE, t=None, tangents=None):
         N[n:,:] = dn
 
     # add double derivative boundary conditions if applicable
-    if boundary == NATURAL or boundary == TANGENTNATURAL:
-        if boundary == NATURAL:
+    if boundary in [Boundary.NATURAL, Boundary.TANGENTNATURAL]:
+        if boundary == Boundary.NATURAL:
             ddn  = basis([t[0], t[-1]], d=2)
             new  = 2
-        elif boundary == TANGENTNATURAL:
+        elif boundary == Boundary.TANGENTNATURAL:
             ddn  = basis(t[-1], d=2)
             new  = 1
         N  = np.resize(N, (N.shape[0]+new, N.shape[1]))

@@ -1,47 +1,34 @@
 __doc__ = 'Implementation of various curve utilities'
 
-def curve_length_parametrization(pts,normalize=False):
-    """Get knots corresponding to a curvelength parametrization of a spline'
-    @param pts      : The nodes of the control polygon
-    @type  pts      : List of float
-    @param normalize: Whether or not to normalize parametrization to 1.0
-    @type  normalize: Boolean
-    @return         : The parametrization
-    @rtype          : List of float
+import numpy as np
+
+
+def curve_length_parametrization(pts, normalize=False):
+    """Calculate knots corresponding to a curvelength parametrization of a set of
+    points.
+
+    :param numpy.array pts: A set of points
+    :param bool normalize: Whether to normalize the parametrization
+    :return: The parametrization
+    :rtype: [float]
     """
-    # Number of points
-    np = len(pts)
-    
-    # Curve length parametrization
-    s = 0.0
-    knots = []
-    knots.append(s)
-    for i in range(1,np):
-        ds = abs(pts[i]-pts[i-1])
-        s = s + ds
-        knots.append(s)
-    
-    # Curve length (approximation)
-    s = knots[-1]
-    
-    # Normalized curve length parametrization
-    if (normalize):
-        for i in range(0,np):
-            knots[i] = knots[i]/s
-    
+    knots = [0.0]
+    for i in range(1, pts.shape[0]):
+        knots.append(knots[-1] + np.linalg.norm(pts[i,:] - pts[i-1,:]))
+
+    if normalize:
+        length = knots[-1]
+        knots = [k/length for k in knots]
+
     return knots
 
+
 def get_curve_points(curve):
-    """Get value of a given curve in all its knots
-    @param curve: The curve
-    @type  curve: Curve
-    @return     : Value of curve in parameters
-    @rtype      : List of points
+    """Evaluate the curve in all its knots.
+
+    :param curve: The curve
+    :type curve: :class:`splipy.Curve`
+    :return: The curve points
+    :type: numpy.array
     """
-    knots = curve.knots()
-    
-    pts = []
-    for xi in knots:
-        pts.append(curve(xi))
-    
-    return pts
+    return curve(curve.knots(0))

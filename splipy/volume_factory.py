@@ -160,6 +160,7 @@ def edge_surfaces(*surfaces):
     else:
         raise ValueError('Requires two or six input surfaces')
 
+
 def loft(*surfaces):
     if len(surfaces) == 1:
         surfaces = surfaces[0]
@@ -223,17 +224,21 @@ def loft(*surfaces):
 
     return Volume(basis1, basis2, basis3, cp, surfaces[0].rational)
 
-def interpolate(x, bases, u=None):
-    """Interpolate a volume on a set of regular gridded interpolation points
 
-    :param x: Grid of interpolation points. Component *x[i,j,k,l]* denotes
-        component *x[l]* at index *(i,j)* in the volume. For matrix input *x[i,j]*
-        then index *i* is interpreted as a flat row-first indexing of the 
-        interpolation grid with components *x[j]*
+def interpolate(x, bases, u=None):
+    """interpolate(x, bases, [u=None])
+
+    Interpolate a volume on a set of regular gridded interpolation points `x`.
+
+    The points can be either a matrix (in which case the first index is
+    interpreted as a flat row-first index of the interpolation grid) or a 4D
+    tensor. In both cases the last index is the physical coordinates.
+
+    :param x: Grid of interpolation points
     :type x: matrix-like or 4D-tensor-like
     :param [BSplineBasis] bases: The basis to interpolate on
-    :param [array-like]   u    : Parametric interpolation points, defaults to
-                                 greville points of the basis
+    :param [array-like] u: Parametric interpolation points, defaults to
+        Greville points of the basis
     :return: Interpolated volume
     :rtype: Volume
     """
@@ -251,17 +256,20 @@ def interpolate(x, bases, u=None):
 
     return Volume(bases[0], bases[1], bases[2], cp.transpose(2,1,0,3).reshape((np.prod(vol_shape),dim)))
 
-def least_square_fit(x, bases, u):
-    """Perform a least-square fit of a point cloud onto a spline basis
 
-    :param x: Grid of evaluation points. Component *x[i,j,k]* denotes
-        component *x[k]* at index *(i,j)* in the volume. For matrix input *x[i,j]*
-        then index *i* is interpreted as a flat row-first indexing of the 
-        interpolation grid with components *x[j]*. The number of points must be
-        equal to or larger than the number of bases functions
-    :type x: matrix-like or 3D-tensor-like
+def least_square_fit(x, bases, u):
+    """Perform a least-square fit of a point cloud `x` onto a spline basis.
+
+    The points can be either a matrix (in which case the first index is
+    interpreted as a flat row-first index of the interpolation grid) or a 4D
+    tensor. In both cases the last index is the physical coordinates.
+
+    There must be at least as many points as basis functions.
+
+    :param x: Grid of evaluation points
+    :type x: matrix-like or 4D-tensor-like
     :param [BSplineBasis] bases: Basis on which to interpolate
-    :param [array-like]   t    : parametric values at evaluation points
+    :param [array-like] u: Parametric values at evaluation points
     :return: Approximated volume
     :rtype: Volume
     """

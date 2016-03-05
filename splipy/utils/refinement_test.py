@@ -19,8 +19,8 @@ class TestRefinement(unittest.TestCase):
     def test_geometric_surface(self):
         surf = Surface()
         surf.raise_order(2,2)
-        geometric_refine(surf, 0.7, 7, 1)
-        geometric_refine(surf, 0.9, 8, 2)
+        geometric_refine(surf, 0.7, 7, 0)
+        geometric_refine(surf, 0.9, 8, 1)
 
         (knot1,knot2) = surf.knots()
 
@@ -37,9 +37,9 @@ class TestRefinement(unittest.TestCase):
     def test_geometric_volume(self):
         vol = Volume()
         vol.raise_order(1,2,3)
-        geometric_refine(vol, 0.7, 4,  1)
-        geometric_refine(vol, 0.9, 4, -2)
-        geometric_refine(vol, 0.8, 2,  3)
+        geometric_refine(vol, 0.7, 4, 0)
+        geometric_refine(vol, 0.9, 4, 1, reverse=True)
+        geometric_refine(vol, 0.8, 2, 2)
 
         (knot1,knot2,knot3) = vol.knots()
 
@@ -57,7 +57,7 @@ class TestRefinement(unittest.TestCase):
     def test_edge_surface(self):
         surf = Surface()
         surf.raise_order(2,2)
-        edge_refine(surf, 10, 9, direction=1)
+        edge_refine(surf, 10, 9, direction=0)
 
         knots = surf.knots(direction='u')
         self.assertEqual(len(knots), 11)
@@ -69,7 +69,7 @@ class TestRefinement(unittest.TestCase):
     def test_edge_volume(self):
         vol = Volume()
         vol.raise_order(3,1,2)
-        edge_refine(vol, 7, 4, direction=1)
+        edge_refine(vol, 7, 4, direction=0)
 
         knots = vol.knots(direction='u')
         self.assertEqual(len(knots), 6)
