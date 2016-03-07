@@ -236,8 +236,10 @@ def image_convex_surface(filename):
     crv = image_curves(filename);
 
     # error test input
-    if type(crv) is list:
+    if len(crv) != 1:
         raise RuntimeError('Error: image_convex_surface expects a single closed curve. Multiple curves detected')
+
+    crv = crv[0]
 
     # parametric value of corner candidates. These are all in the range [0,1] and both 0 and 1 is present
     kinks = crv.get_kinks()
