@@ -2,7 +2,7 @@
 
 from splipy import BSplineBasis
 from splipy.SplineObject import SplineObject
-from splipy.utils import ensure_listlike
+from splipy.utils import ensure_listlike, is_singleton
 from bisect import bisect_left
 from itertools import chain
 import numpy as np
@@ -32,6 +32,46 @@ class Curve(SplineObject):
             which is the last coordinate)
         """
         super(Curve, self).__init__([basis], controlpoints, rational, **kwargs)
+
+    def evaluate(self, *params):
+        """evaluate(u, v, ...)
+
+        Evaluate the object at given parametric values.
+
+        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
+        the number of evaluation points in direction *i*, and *dim* is the
+        physical dimension of the object.
+
+        If there is only one evaluation point, a vector of length *dim* is
+        returned instead.
+
+        :param u,v,...: Parametric coordinates in which to evaluate
+        :type u,v,...: float or [float]
+        :return: Geometry coordinates
+        :rtype: numpy.array
+        """
+        squeeze = is_singleton(params[0])
+        params = [ensure_listlike(p) for p in params]
+
+        self._validate_domain(*params)
+
+        # Evaluate the derivatives of the corresponding bases at the corresponding points
+        # and build the result array
+        N = self.bases[0].evaluate(params[0], sparse=True)
+        result = N*self.controlpoints
+
+        # For rational objects, we divide out the weights, which are stored in the
+        # last coordinate
+        if self.rational:
+            for i in range(self.dimension):
+                result[..., i] /= result[..., -1]
+            result = np.delete(result, self.dimension, -1)
+
+        # Squeeze the singleton dimensions if we only have one point
+        if squeeze:
+            result = result.reshape(self.dimension)
+
+        return result
 
     def derivative(self, t, d=1):
         """derivative(u, [d=1])
