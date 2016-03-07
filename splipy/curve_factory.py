@@ -104,7 +104,7 @@ def n_gon(n=5, r=1, center=(0,0,0), normal=(0,0,1)):
     result =  Curve(basis, cp)
     return flip_and_move_plane_geometry(result, center, normal)
 
-def circle(r=1, center=(0,0,0), normal=(0,0,1)):
+def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
     """circle([r=1])
 
     Create a circle.
@@ -112,6 +112,7 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1)):
     :param float r: Radius
     :param point-like center: local origin
     :param vector-like normal: local normal
+    :param string type: The type of parametrization ('p2C0' or 'p4C1')
     :return: A periodic, quadratic rational curve
     :rtype: Curve
     :raises ValueError: If radius is not positive
@@ -119,18 +120,41 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1)):
     if r <= 0:
         raise ValueError('radius needs to be positive')
 
-    w = 1.0 / sqrt(2)
-    controlpoints = [[r, 0, 1],
-                     [r*w, r*w, w],
-                     [0, r, 1],
-                     [-r*w, r*w, w],
-                     [-r, 0, 1],
-                     [-r*w, -r*w, w],
-                     [0, -r, 1],
-                     [r*w, -r*w, w]]
-    knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]) / 4.0 * 2 * pi
+    if type == 'p2C0' or type == 'C0p2':
+        w = 1.0 / sqrt(2)
+        controlpoints = [[1, 0, 1],
+                         [w, w, w],
+                         [0, 1, 1],
+                         [-w, w, w],
+                         [-1, 0, 1],
+                         [-w, -w, w],
+                         [0, -1, 1],
+                         [w, -w, w]]
+        knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]) / 4.0 * 2 * pi
 
-    result = Curve(BSplineBasis(3, knot, 0), controlpoints, True)
+        result = Curve(BSplineBasis(3, knot, 0), controlpoints, True)
+    elif type == 'p4C1' or type == 'C1p4':
+        w = 2*sqrt(2)/3
+        a = 1.0/2/sqrt(2)
+        b = 1.0/6 * (4*sqrt(2)-1)
+        controlpoints = [[ 1,-a, 1],
+                         [ 1, a, 1],
+                         [ b, b, w],
+                         [ a, 1, 1],
+                         [-a, 1, 1],
+                         [-b, b, w],
+                         [-1, a, 1],
+                         [-1,-a, 1],
+                         [-b,-b, w],
+                         [-a,-1, 1],
+                         [ a,-1, 1],
+                         [ b,-b, w]]
+        knot = np.array([ -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5]) / 4.0 * 2 * pi
+        result = Curve(BSplineBasis(5, knot, 1), controlpoints, True)
+    else:
+        raise ValueError('Unkown type: %s' %(type))
+
+    result *= r
     return flip_and_move_plane_geometry(result, center, normal)
 
 def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
@@ -310,3 +334,25 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     # wrap it all into a curve and return
     return Curve(basis, cp)
 
+def bezier(pts, quadratic=False):
+    """Generate a cubic or quadratic bezier curve from a set of control points
+
+    :param [array-like] pts: list of control-points. In addition to a starting
+        point we need three points per bezier interval for cubic splines and
+        two points for quadratic splines
+    :param bool quadratic: True if a quadratic spline is to be returned, False
+        if a cubic spline is to be returned
+    :return: Bezier curve
+    :rtype: Curve
+    
+    """
+    if quadratic:
+        p = 3
+    else:
+        p = 4
+    # compute number of intervals
+    n = int((len(pts)-1)/(p-1))
+    # generate uniform knot vector of repeated integers
+    knot = range(n+1) * (p-1) + [0, n]
+    knot.sort()
+    return Curve(BSplineBasis(p, knot), pts)

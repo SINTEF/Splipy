@@ -6,6 +6,7 @@ import splipy.surface_factory as SurfaceFactory
 import splipy.volume_factory as VolumeFactory
 from math import pi, sqrt, cos, sin
 import numpy as np
+from numpy.linalg import norm
 import unittest
 
 
@@ -109,6 +110,15 @@ class TestCurveFactory(unittest.TestCase):
             self.assertAlmostEqual(pt[0]+pt[1]+pt[2] - 1, 0.0) # in plane x+y+z=1
         self.assertAlmostEqual(c.length(), 2*pi, places=3)
 
+        # test alt circle
+        c = CurveFactory.circle(r=3, type='p4C1')
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        self.assertTrue(np.allclose(x[:,0]**2 + x[:,1]**2, 3.0**2))
+        for k in c.knots(0):
+            self.assertEqual(c.continuity(k), 1)
+
+
         # test errors and exceptions
         with self.assertRaises(ValueError):
             c = CurveFactory.circle(-2.5)  # negative radius
@@ -178,6 +188,18 @@ class TestCurveFactory(unittest.TestCase):
         self.assertTrue(np.allclose(x[:,0],   16*t*t*(1-t)*(1-t), atol=1e-2))
         self.assertTrue(np.allclose(x[:,1], 1-16*t*t*(1-t)*(1-t), atol=1e-2))
 
+    def test_bezier(self):
+        crv = CurveFactory.bezier([[0,0], [0,1], [1,1], [1,0], [2,0], [2,1],[1,1]])
+        self.assertEqual(len(crv.knots(0)), 3)
+        self.assertTrue(np.allclose(crv(0), [0,0]))
+        t = crv.tangent(0)
+        self.assertTrue(np.allclose(t/norm(t), [0,1]))
+        t = crv.tangent(.9999999999999)
+        self.assertTrue(np.allclose(t/norm(t), [0,-1]))
+        t = crv.tangent(1.000000000001)
+        self.assertTrue(np.allclose(t/norm(t), [1,0]))
+        self.assertTrue(np.allclose(crv(1), [1,0]))
+        self.assertTrue(crv.order(0), 4)
         
 
 class TestSurfaceFactory(unittest.TestCase):
