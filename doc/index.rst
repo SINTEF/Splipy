@@ -39,6 +39,17 @@ modules. Please see :doc:`factories` for more information.
    splipy.surface_factory
    splipy.volume_factory
 
+Miscellaneous utilities can be found in the ``splipy.utils`` module.
+
+.. autosummary::
+
+   splipy.utils.curve
+   splipy.utils.image
+   splipy.utils.refinement
+   splipy.utils.smooth
+
+For input and output, please refer to :doc:`io`.
+
 
 Indices and tables
 ==================

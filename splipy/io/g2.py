@@ -1,9 +1,10 @@
 import numpy as np
 from itertools import chain, product
 from splipy import BSplineBasis, Curve, Surface, Volume, SplineObject
+from .master import MasterIO
 
 
-class G2(object):
+class G2(MasterIO):
 
     g2_type = [100, 200, 700] # curve, surface, volume identifiers
     classes = [Curve, Surface, Volume]
@@ -80,6 +81,7 @@ class G2(object):
 
             args = bases + [cps, rational]
             result.append(cls(*args))
+
         return result
 
     def read_basis(self):

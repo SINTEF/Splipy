@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Splip '
+project = 'Splipy'
 copyright = '2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn'
 author = 'Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn'
 

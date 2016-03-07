@@ -4,6 +4,7 @@ from splipy import Curve, Surface, SplineObject, BSplineBasis
 import xml.etree.ElementTree as etree
 import numpy as np
 import re
+from .master import MasterIO
 
 def bezier_representation(curve):
     """ Compute a Bezier representation of a given spline curve. The input
@@ -34,7 +35,7 @@ def bezier_representation(curve):
     return bezier
 
 
-class SVG(object):
+class SVG(MasterIO):
     
     namespace = '{http://www.w3.org/2000/svg}'
 
@@ -326,8 +327,3 @@ class SVG(object):
         # invert y-values since these are image coordinates
         result[:,1] = self.height - result[:,1]
         return result
-            
-
-
-
-

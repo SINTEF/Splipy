@@ -170,7 +170,7 @@ class TestCurveFactory(unittest.TestCase):
         x = np.zeros((80,2))
         x[:,0] = 16*t*t*(1-t)*(1-t)
         x[:,1] = 1-x[:,0]
-        crv = CurveFactory.cubic_curve(x, CurveFactory.PERIODIC, t)
+        crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.PERIODIC, t)
 
         t = np.linspace(0,1,150)
         x = crv(t)
