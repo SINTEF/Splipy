@@ -294,6 +294,23 @@ class SplineObject(object):
             return SplineObject(bases, self.controlpoints[slices], self.rational, raw=True)
         return self.controlpoints[slices]
 
+    def set_order(self, *order):
+        """set_order(u, v, ...)
+
+        Set the polynomial order of the object. If only one argument is given,
+        the order is set uniformly over all directions.
+
+        :param int u,v,...: The new order in a given direction.
+        :raises ValueError: If the order is reduced in any direction.
+        """
+        if len(order) == 1:
+            order = [order[0]] * self.pardim
+        if not all(new >= old for new, old in zip(order, self.order())):
+            raise ValueError("Cannot lower order using set_order")
+
+        diff = [new - old for new, old in zip(order, self.order())]
+        return self.raise_order(*diff)
+
     def raise_order(self, *raises):
         """raise_order(u, v, ...)
 
