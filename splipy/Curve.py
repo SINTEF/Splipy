@@ -97,6 +97,8 @@ class Curve(SplineObject):
         self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
         self.bases = [newBasis]
 
+        return self
+
     def append(self, curve):
         """Extend the curve by merging another curve to the end of it.
 
