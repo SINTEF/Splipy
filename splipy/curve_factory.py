@@ -277,7 +277,6 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
             dn = basis([t[0], t[-1]], d=1)
             N  = np.resize(N, (N.shape[0]+2, N.shape[1]))
             x  = np.resize(x, (x.shape[0]+2, x.shape[1]))
-            x[n:,:] = tangents 
         elif boundary == Boundary.TANGENTNATURAL:
             dn = basis(t[0], d=1)
             N  = np.resize(N, (N.shape[0]+1, N.shape[1]))
@@ -286,7 +285,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
             dn = getBasis(t, d=1)
             N  = np.resize(N, (N.shape[0]+n, N.shape[1]))
             x  = np.resize(x, (x.shape[0]+n, x.shape[1]))
-            x[n:,:] = tangents 
+        x[n:,:] = tangents
         N[n:,:] = dn
 
     # add double derivative boundary conditions if applicable
