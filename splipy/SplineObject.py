@@ -294,6 +294,23 @@ class SplineObject(object):
             return SplineObject(bases, self.controlpoints[slices], self.rational, raw=True)
         return self.controlpoints[slices]
 
+    def set_order(self, *order):
+        """set_order(u, v, ...)
+
+        Set the polynomial order of the object. If only one argument is given,
+        the order is set uniformly over all directions.
+
+        :param int u,v,...: The new order in a given direction.
+        :raises ValueError: If the order is reduced in any direction.
+        """
+        if len(order) == 1:
+            order = [order[0]] * self.pardim
+        if not all(new >= old for new, old in zip(order, self.order())):
+            raise ValueError("Cannot lower order using set_order")
+
+        diff = [new - old for new, old in zip(order, self.order())]
+        return self.raise_order(*diff)
+
     def raise_order(self, *raises):
         """raise_order(u, v, ...)
 
@@ -329,6 +346,8 @@ class SplineObject(object):
 
         self.controlpoints = result
         self.bases = new_bases
+
+        return self
 
     def start(self, direction=None):
         """start([direction=None])
@@ -420,6 +439,8 @@ class SplineObject(object):
         slices = [slice(None, None, None) for _ in range(direction)] + [slice(None, None, -1)]
         self.controlpoints = self.controlpoints[tuple(slices)]
 
+        return self
+
     def swap(self, dir1=0, dir2=1):
         """Swaps two parameter directions.
 
@@ -504,6 +525,8 @@ class SplineObject(object):
                 new_knots.extend(np.linspace(k0, k1, n+2)[1:-1])
             self.insert_knot(new_knots, d)
 
+        return self
+
     def reparam(self, *args, **kwargs):
         """reparam([u, v, ...], [direction=None])
 
@@ -535,6 +558,8 @@ class SplineObject(object):
             else:
                 start, end = args[0]
                 self.bases[direction].reparam(start, end)
+
+        return self
 
     def translate(self, x):
         """Translate (i.e. move) the object by a given distance.

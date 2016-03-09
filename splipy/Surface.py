@@ -135,6 +135,8 @@ class Surface(SplineObject):
         :param int direction: The parametric direction to split in
         :param knots: The splitting points
         :type knots: float or [float]
+        :param direction: Parametric direction
+        :type direction: int
         :return: The new surfaces
         :rtype: [Surface]
         """

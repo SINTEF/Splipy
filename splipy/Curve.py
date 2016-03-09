@@ -97,6 +97,8 @@ class Curve(SplineObject):
         self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
         self.bases = [newBasis]
 
+        return self
+
     def append(self, curve):
         """Extend the curve by merging another curve to the end of it.
 
@@ -168,7 +170,7 @@ class Curve(SplineObject):
         :param knots    : The splitting points
         :type  knots    : float or [float]
         :param direction: Parametric direction, ignored for curves. Used for
-                          Surfaces and Volumes and allows signatures to match
+            Surfaces and Volumes and allows signatures to match
         :type  direction: int
         :return: The new curves
         :rtype: [Curve]
