@@ -170,7 +170,7 @@ class Curve(SplineObject):
         :param knots    : The splitting points
         :type  knots    : float or [float]
         :param direction: Parametric direction, ignored for curves. Used for
-                          Surfaces and Volumes and allows signatures to match
+            Surfaces and Volumes and allows signatures to match
         :type  direction: int
         :return: The new curves
         :rtype: [Curve]
