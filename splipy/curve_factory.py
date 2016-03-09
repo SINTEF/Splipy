@@ -246,11 +246,11 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     """
     n = len(x)
     if t is None:
-        t = [0]
+        t = [0.0]
         for (x0,x1) in zip(x[:-1,:], x[1:,:]):
             # eucledian distance between two consecutive points 
             dist = np.linalg.norm(np.array(x1)-np.array(x0))
-            t.append(t[i-1]+dist)
+            t.append(t[-1]+dist)
 
     # modify knot vector for chosen boundary conditions
     knot = [t[0]]*3 + list(t) + [t[-1]]*3
