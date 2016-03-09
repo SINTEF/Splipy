@@ -17,7 +17,7 @@ class G2(MasterIO):
     def __enter__(self):
         try:
             self.onlywrite = False
-            self.fstream   = open(self.filename, 'r+w')
+            self.fstream   = open(self.filename, 'r+')
         except IOError:
             self.onlywrite = True
             self.fstream   = open(self.filename, 'w')
