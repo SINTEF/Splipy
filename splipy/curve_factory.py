@@ -33,14 +33,17 @@ class Boundary:
     """Use `TANGENT` for the start and `NATURAL` for the end."""
 
 
-def line(a, b):
+def line(a, b, relative=False):
     """Create a line between two points.
 
     :param point-like a: Start point
     :param point-like b: End point
+    :param bool relative: Whether *b* is relative to *a*
     :return: Linear curve from *a* to *b*
     :rtype: Curve
     """
+    if relative:
+        b = tuple(ai + bi for ai, bi in zip(a, b))
     return Curve(controlpoints=[a, b])
 
 
