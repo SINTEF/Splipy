@@ -250,6 +250,11 @@ class BSplineBasis:
 
         p = self.order
         mu = bisect_left(self.knots, knot)
+
+        # Pick the knot to the left if it exists and is closer
+        if mu > 0 and abs(self.knots[mu-1] - knot) < abs(self.knots[mu] - knot):
+            mu -= 1
+
         if abs(self.knots[mu] - knot) > state.knot_tolerance:
             return np.inf
         continuity = p - 1
