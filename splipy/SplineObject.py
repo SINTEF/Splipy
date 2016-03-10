@@ -48,7 +48,7 @@ class SplineObject(object):
         :param bool raw: If True, skip any control point reordering.
             (For internal use.)
         """
-        bases = [(b if b else BSplineBasis()) for b in bases]
+        bases = [(b.clone() if b else BSplineBasis()) for b in bases]
         self.bases = bases
         if controlpoints is None:
             # `product' produces tuples in row-major format (the last input varies quickest)
