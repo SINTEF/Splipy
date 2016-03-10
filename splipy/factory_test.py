@@ -243,11 +243,12 @@ class TestSurfaceFactory(unittest.TestCase):
         # radial disc of size different from 1
         surf = SurfaceFactory.disc(4)
         # test evaluation at 25 points for radius=4
-        v = np.linspace(0, 2 * pi, 25)
-        u = 1
+        v = np.linspace(surf.start('v'), surf.end('v'),25)
+        u = np.linspace(surf.start('u'), surf.end('u'), 5)
         x = surf.evaluate(u, v)
-        for pt in np.array(x[0, :, :]):
-            self.assertAlmostEqual(np.linalg.norm(pt, 2), 4.0)  # check radius
+        for circles, i in zip(x, range(5)):
+            for pt in circles:
+                self.assertAlmostEqual(norm(pt, 2), 4.0 * i / 4)  # check radius
         self.assertAlmostEqual(surf.area(), 4*4*pi, places=3)
 
         # square disc

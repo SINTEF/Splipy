@@ -32,8 +32,8 @@ def square(size=1, lower_left=(0,0)):
 def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     """disc([r=1], [type='radial'])
 
-    Create a circular disc with center at (0,0). The *type* parameter
-    distinguishes between different parametrizations.
+    Create a circular disc. The *type* parameter distinguishes between
+    different parametrizations.
 
     :param float r: Radius
     :param string type: The type of parametrization ('radial' or 'square')
@@ -41,11 +41,11 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     :rtype: Surface
     """
     if type == 'radial':
-        c = CurveFactory.circle(r)
-        cp = np.zeros((16, 3))
-        cp[:, -1] = 1
-        cp[1::2, :] = c.controlpoints
-        result = Surface(BSplineBasis(), c.bases[0], cp, True)
+        c1 = CurveFactory.circle(r)
+        c2 = c1*0
+        result = edge_curves(c2, c1)
+        result.swap()
+        result.reparam((0,r), (0,2*pi))
     elif type == 'square':
         w = 1 / sqrt(2)
         cp = [[-r * w, -r * w, 1],
