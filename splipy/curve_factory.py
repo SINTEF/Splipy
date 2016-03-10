@@ -6,6 +6,7 @@ from math import pi, cos, sin, sqrt, ceil
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
 import numpy as np
+import copy
 
 __all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment',
            'interpolate', 'least_square_fit', 'cubic_curve']
@@ -47,12 +48,14 @@ def line(a, b, relative=False):
     return Curve(controlpoints=[a, b])
 
 
-def polygon(*points):
+def polygon(*points, **keywords):
     """polygon(points...)
 
     Create a linear interpolation between input points.
 
     :param [point-like] points: The points to interpolate
+    :param bool relative: If controlpoints are interpreted as relative to the 
+        previous one
     :return: Linear curve through the input points
     :rtype: Curve
     """
@@ -69,6 +72,12 @@ def polygon(*points):
         knot.append(knot[-1] + sqrt(dist))
         prevPt = pt
     knot.append(knot[-1])
+
+    relative = keywords.get('relative', False)
+    if relative:
+        points = list(points)
+        for i in range(1, len(points)):
+            points[i] = [x0 + x1 for (x0,x1) in zip(points[i-1], points[i])]
 
     return Curve(BSplineBasis(2, knot), points)
 
@@ -334,7 +343,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     # wrap it all into a curve and return
     return Curve(basis, cp)
 
-def bezier(pts, quadratic=False):
+def bezier(pts, quadratic=False, relative=False):
     """Generate a cubic or quadratic bezier curve from a set of control points
 
     :param [array-like] pts: list of control-points. In addition to a starting
@@ -342,6 +351,8 @@ def bezier(pts, quadratic=False):
         two points for quadratic splines
     :param bool quadratic: True if a quadratic spline is to be returned, False
         if a cubic spline is to be returned
+    :param bool relative: If controlpoints are interpreted as relative to the 
+        previous one
     :return: Bezier curve
     :rtype: Curve
     
@@ -355,4 +366,8 @@ def bezier(pts, quadratic=False):
     # generate uniform knot vector of repeated integers
     knot = range(n+1) * (p-1) + [0, n]
     knot.sort()
+    if relative:
+        pts = copy.deepcopy(pts)
+        for i in range(1, len(pts)):
+            pts[i] = [x0 + x1 for (x0,x1) in zip(pts[i-1], pts[i])]
     return Curve(BSplineBasis(p, knot), pts)

@@ -66,6 +66,13 @@ class TestCurveFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertAlmostEqual(np.linalg.norm(expected_knots - actual_knots), 0.0)
 
+        c = CurveFactory.polygon([0,0], [1,0], [0,1], [-1,0], relative=True)
+        self.assertEqual(len(c), 4)
+        self.assertAlmostEqual(c[2][0], 1)
+        self.assertAlmostEqual(c[2][1], 1)
+        self.assertAlmostEqual(c[3][0], 0)
+        self.assertAlmostEqual(c[3][1], 1)
+
     def test_circle(self):
 
         # unit circle of radius 1
@@ -190,6 +197,19 @@ class TestCurveFactory(unittest.TestCase):
 
     def test_bezier(self):
         crv = CurveFactory.bezier([[0,0], [0,1], [1,1], [1,0], [2,0], [2,1],[1,1]])
+        self.assertEqual(len(crv.knots(0)), 3)
+        self.assertTrue(np.allclose(crv(0), [0,0]))
+        t = crv.tangent(0)
+        self.assertTrue(np.allclose(t/norm(t), [0,1]))
+        t = crv.tangent(.9999999999999)
+        self.assertTrue(np.allclose(t/norm(t), [0,-1]))
+        t = crv.tangent(1.000000000001)
+        self.assertTrue(np.allclose(t/norm(t), [1,0]))
+        self.assertTrue(np.allclose(crv(1), [1,0]))
+        self.assertTrue(crv.order(0), 4)
+
+        # test the exact same curve, only with relative keyword
+        crv = CurveFactory.bezier([[0,0], [0,1], [1,0], [0,-1], [1,0], [0,1],[1,0]], relative=True)
         self.assertEqual(len(crv.knots(0)), 3)
         self.assertTrue(np.allclose(crv(0), [0,0]))
         t = crv.tangent(0)
