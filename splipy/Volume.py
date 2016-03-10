@@ -146,15 +146,16 @@ class Volume(SplineObject):
         (n1, n2, n3, dim) = splitting_vol.controlpoints.shape
         if direction == 0:
             for k in knots:
-                mu = bisect_left(splitting_vol.bases[0].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[0], splitting_vol.bases[0].knots[last_knot_i:mu + p[0]])
-                cp = splitting_vol.controlpoints[last_cp_i:last_cp_i + n_cp, :, :, :]
-                cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n2 * n3, dim))
+                if self.start(direction) < k < self.end(direction): # skip start/end points
+                    mu = bisect_left(splitting_vol.bases[0].knots, k)
+                    n_cp = mu - last_knot_i
+                    basis = BSplineBasis(p[0], splitting_vol.bases[0].knots[last_knot_i:mu + p[0]])
+                    cp = splitting_vol.controlpoints[last_cp_i:last_cp_i + n_cp, :, :, :]
+                    cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n2 * n3, dim))
 
-                results.append(Volume(basis, self.bases[1], self.bases[2], cp, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
+                    results.append(Volume(basis, self.bases[1], self.bases[2], cp, self.rational))
+                    last_knot_i = mu
+                    last_cp_i += n_cp
 
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[0], splitting_vol.bases[0].knots[last_knot_i:])
@@ -164,15 +165,16 @@ class Volume(SplineObject):
             results.append(Volume(basis, self.bases[1], self.bases[2], cp, self.rational))
         elif direction == 1:
             for k in knots:
-                mu = bisect_left(splitting_vol.bases[1].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[1], splitting_vol.bases[1].knots[last_knot_i:mu + p[1]])
-                cp = splitting_vol.controlpoints[:, last_cp_i:last_cp_i + n_cp, :, :]
-                cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n3, dim))
+                if self.start(direction) < k < self.end(direction): # skip start/end points
+                    mu = bisect_left(splitting_vol.bases[1].knots, k)
+                    n_cp = mu - last_knot_i
+                    basis = BSplineBasis(p[1], splitting_vol.bases[1].knots[last_knot_i:mu + p[1]])
+                    cp = splitting_vol.controlpoints[:, last_cp_i:last_cp_i + n_cp, :, :]
+                    cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n3, dim))
 
-                results.append(Volume(self.bases[0], basis, self.bases[2], cp, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
+                    results.append(Volume(self.bases[0], basis, self.bases[2], cp, self.rational))
+                    last_knot_i = mu
+                    last_cp_i += n_cp
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[1], splitting_vol.bases[1].knots[last_knot_i:])
             n_cp = basis.num_functions()
@@ -181,15 +183,17 @@ class Volume(SplineObject):
             results.append(Volume(self.bases[0], basis, self.bases[2], cp, self.rational))
         else:
             for k in knots:
-                mu = bisect_left(splitting_vol.bases[2].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[2], splitting_vol.bases[2].knots[last_knot_i:mu + p[2]])
-                cp = splitting_vol.controlpoints[:, :, last_cp_i:last_cp_i + n_cp, :]
-                cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n2, dim))
+                if self.start(direction) < k < self.end(direction): # skip start/end points
+                    mu = bisect_left(splitting_vol.bases[2].knots, k)
+                    n_cp = mu - last_knot_i
+                    basis = BSplineBasis(p[2], splitting_vol.bases[2].knots[last_knot_i:mu + p[2]])
+                    cp = splitting_vol.controlpoints[:, :, last_cp_i:last_cp_i + n_cp, :]
+                    cp = np.reshape(cp.transpose((2, 1, 0, 3)), (n_cp * n1 * n2, dim))
 
-                results.append(Volume(self.bases[0], self.bases[1], basis, cp, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
+                    results.append(Volume(self.bases[0], self.bases[1], basis, cp, self.rational))
+                    last_knot_i = mu
+                    last_cp_i += n_cp
+
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[2], splitting_vol.bases[2].knots[last_knot_i:])
             n_cp = basis.num_functions()

@@ -247,14 +247,15 @@ class Curve(SplineObject):
         last_cp_i = 0
         last_knot_i = 0
         for k in knots:
-            mu = bisect_left(splitting_curve.bases[0].knots, k)
-            n_cp = mu - last_knot_i
-            basis = BSplineBasis(p, splitting_curve.bases[0].knots[last_knot_i:mu + p])
-            controlpoints = splitting_curve.controlpoints[last_cp_i:last_cp_i + n_cp, :]
+            if self.start(0) < k < self.end(0): # skip start/end points
+                mu = bisect_left(splitting_curve.bases[0].knots, k)
+                n_cp = mu - last_knot_i
+                basis = BSplineBasis(p, splitting_curve.bases[0].knots[last_knot_i:mu + p])
+                controlpoints = splitting_curve.controlpoints[last_cp_i:last_cp_i + n_cp, :]
 
-            results.append(Curve(basis, controlpoints, self.rational))
-            last_knot_i = mu
-            last_cp_i += n_cp
+                results.append(Curve(basis, controlpoints, self.rational))
+                last_knot_i = mu
+                last_cp_i += n_cp
         # with n splitting points, we're getting n+1 pieces. Add the final one:
         basis = BSplineBasis(p, splitting_curve.bases[0].knots[last_knot_i:])
         controlpoints = splitting_curve.controlpoints[last_cp_i:, :]

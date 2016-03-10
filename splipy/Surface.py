@@ -177,15 +177,16 @@ class Surface(SplineObject):
         (n1, n2, dim) = splitting_surf.controlpoints.shape
         if direction == 0:
             for k in knots:
-                mu = bisect_left(splitting_surf.bases[0].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[0], splitting_surf.bases[0].knots[last_knot_i:mu + p[0]])
-                cp = splitting_surf.controlpoints[last_cp_i:last_cp_i + n_cp, :, :]
-                cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n2, dim))
+                if self.start(direction) < k < self.end(direction): # skip start/end points
+                    mu = bisect_left(splitting_surf.bases[0].knots, k)
+                    n_cp = mu - last_knot_i
+                    basis = BSplineBasis(p[0], splitting_surf.bases[0].knots[last_knot_i:mu + p[0]])
+                    cp = splitting_surf.controlpoints[last_cp_i:last_cp_i + n_cp, :, :]
+                    cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n2, dim))
 
-                results.append(Surface(basis, self.bases[1], cp, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
+                    results.append(Surface(basis, self.bases[1], cp, self.rational))
+                    last_knot_i = mu
+                    last_cp_i += n_cp
 
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[0], splitting_surf.bases[0].knots[last_knot_i:])
@@ -195,15 +196,17 @@ class Surface(SplineObject):
             results.append(Surface(basis, self.bases[1], cp, self.rational))
         else:
             for k in knots:
-                mu = bisect_left(splitting_surf.bases[1].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[1], splitting_surf.bases[1].knots[last_knot_i:mu + p[1]])
-                cp = splitting_surf.controlpoints[:, last_cp_i:last_cp_i + n_cp, :]
-                cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n1, dim))
+                if self.start(direction) < k < self.end(direction): # skip start/end points
+                    mu = bisect_left(splitting_surf.bases[1].knots, k)
+                    n_cp = mu - last_knot_i
+                    basis = BSplineBasis(p[1], splitting_surf.bases[1].knots[last_knot_i:mu + p[1]])
+                    cp = splitting_surf.controlpoints[:, last_cp_i:last_cp_i + n_cp, :]
+                    cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n1, dim))
 
-                results.append(Surface(self.bases[0], basis, cp, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
+                    results.append(Surface(self.bases[0], basis, cp, self.rational))
+                    last_knot_i = mu
+                    last_cp_i += n_cp
+
             # with n splitting points, we're getting n+1 pieces. Add the final one:
             basis = BSplineBasis(p[1], splitting_surf.bases[1].knots[last_knot_i:])
             n_cp = basis.num_functions()
