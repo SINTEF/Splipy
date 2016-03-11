@@ -183,6 +183,8 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
         raise ValueError('theta needs to be in range [-2pi,2pi]')
     if r <= 0:
         raise ValueError('radius needs to be positive')
+    if theta == 2*pi:
+        return circle(r, center, normal)
 
     # build knot vector
     knot_spans = int(ceil(theta / (2 * pi / 3)))

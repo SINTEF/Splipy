@@ -157,6 +157,7 @@ class TestCurveFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
         self.assertEqual(len(c.knots(0)), 2)
+        self.assertFalse(c.periodic(0))
         # test evaluation at 25 points for radius=1
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
@@ -167,7 +168,8 @@ class TestCurveFactory(unittest.TestCase):
         c = CurveFactory.circle_segment(2 * pi)
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
-        self.assertEqual(len(c.knots(0)), 4)
+        self.assertEqual(len(c.knots(0)), 5)
+        self.assertTrue(c.periodic(0))
         # test evaluation at 25 points for radius=1
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
@@ -306,6 +308,18 @@ class TestSurfaceFactory(unittest.TestCase):
         for pt in np.array(x[0, :, :]):
             self.assertAlmostEqual(pt[0] * pt[0] + pt[1] * pt[1], 1.5 * 1.5)  # check radius=1.5
             self.assertAlmostEqual(pt[2], .5)  # check height=0.5
+
+        # incomplete revolve
+        c    = CurveFactory.line([1,0], [0,1], relative=True)
+        surf = SurfaceFactory.revolve(c, theta=4.2222, axis=[0,1,0])
+        surf.reparam()
+        u = np.linspace(0,1,7)
+        v = np.linspace(0,1,7)
+        x = surf(u,v)
+        for uPt in x:
+            for pt in uPt:
+                self.assertAlmostEqual(pt[0]**2 + pt[2]**2, 1.0) # radius 1 from y-axis
+
 
     def test_surface_torus(self):
         # default torus
