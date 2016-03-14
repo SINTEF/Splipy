@@ -1013,6 +1013,9 @@ class SplineObject(object):
         new_obj += x
         return new_obj
 
+    def __radd__(self, x):
+        return self + x
+
     def __sub__(self, x):
         new_obj = copy.deepcopy(self)
         new_obj -= x
@@ -1022,6 +1025,9 @@ class SplineObject(object):
         new_obj = copy.deepcopy(self)
         new_obj *= x
         return new_obj
+
+    def __rmul__(self, x):
+        return self * x
 
     def __div__(self, x):
         new_obj = copy.deepcopy(self)

@@ -523,5 +523,24 @@ class TestVolume(unittest.TestCase):
         v[:,:,1,0:2] = 0.0 # squeeze top together, creating a pyramid
         self.assertAlmostEqual(v.volume(), 1.0/3)
 
+    def test_operators(self):
+        v = Volume()
+        v.raise_order(1,1,2)
+        v.refine(3,2,1)
+
+        # test translation operator
+        v2 = v + [1,0,0]
+        v3 = [1,0,0] + v
+        v += [1,0,0]
+        self.assertTrue(np.allclose(v2.controlpoints, v3.controlpoints))
+        self.assertTrue(np.allclose(v.controlpoints,  v3.controlpoints))
+
+        # test scaling operator
+        v2 = v * 3
+        v3 = 3 * v
+        v *= 3
+        self.assertTrue(np.allclose(v2.controlpoints, v3.controlpoints))
+        self.assertTrue(np.allclose(v.controlpoints,  v3.controlpoints))
+
 if __name__ == '__main__':
     unittest.main()
