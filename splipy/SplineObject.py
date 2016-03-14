@@ -4,6 +4,7 @@ import numpy as np
 import copy
 from operator import attrgetter, methodcaller
 from itertools import chain, product
+from bisect import bisect_left
 from splipy import BSplineBasis
 from splipy.utils import *
 
@@ -891,6 +892,87 @@ class SplineObject(object):
             self.rational = 1
 
         return self
+
+    def split(self, knots, direction=0):
+        """Split an object into two or more separate representations with C0
+        continuity between them.
+
+        :param int direction: The parametric direction to split in
+        :param knots: The splitting points
+        :type knots: float or [float]
+        :param direction: Parametric direction
+        :type direction: int
+        :return: The new volumes
+        :rtype: [Volume]
+        """
+        # for single-value input, wrap it into a list
+        knots = ensure_listlike(knots)
+
+        # error test input
+        direction = check_direction(direction, self.pardim)
+
+        p = self.order(direction)
+        results = []
+        splitting_obj = self.clone()
+        bases = self.bases
+        # insert knots to produce C{-1} at all splitting points
+        for k in knots:
+            continuity = bases[direction].continuity(k)
+            if continuity == np.inf:
+                continuity = p - 1
+            splitting_obj.insert_knot([k] * (continuity + 1), direction)
+
+        b = splitting_obj.bases[direction]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_obj.controlpoints = np.roll(splitting_obj.controlpoints, -mu, direction)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_obj.split(knots[1:], direction)
+            else:
+                return splitting_obj
+
+        # search for the right subclass constructor, i.e. Volume, Surface or Curve
+        spline_object = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(bases)]
+        spline_object = spline_object[0]
+
+        # everything is available now, just have to find the right index range
+        # in the knot vector and controlpoints to store in each separate curve
+        # piece
+        last_cp_i = 0
+        last_knot_i = 0
+
+        bases = splitting_obj.bases
+        b     = bases[direction]
+        cp_slice = [slice(None, None, None)] * len(self.controlpoints.shape)
+        for k in knots:
+            if self.start(direction) < k < self.end(direction): # skip start/end points
+                mu = bisect_left(b.knots, k)
+                n_cp = mu - last_knot_i
+                print last_knot_i, mu
+                knot_slice          = slice(last_knot_i, mu+p, None)
+                cp_slice[direction] = slice(last_cp_i,   last_cp_i+n_cp,  None)
+
+                cp = splitting_obj.controlpoints[ cp_slice ]
+                bases[direction] = BSplineBasis(p, b.knots[knot_slice])
+
+                args = bases + [cp, splitting_obj.rational]
+                results.append(spline_object(*args, raw=True))
+
+                last_knot_i = mu
+                last_cp_i += n_cp
+
+        # with n splitting points, we're getting n+1 pieces. Add the final one:
+        knot_slice          = slice(last_knot_i, None, None)
+        cp_slice[direction] = slice(last_cp_i,   None, None)
+        bases[direction] = BSplineBasis(p, b.knots[knot_slice])
+        cp = splitting_obj.controlpoints[ cp_slice ]
+        args = bases + [cp, splitting_obj.rational]
+        results.append(spline_object(*args, raw=True))
+
+        return results
 
     @property
     def pardim(self):

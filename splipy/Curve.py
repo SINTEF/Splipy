@@ -3,7 +3,6 @@
 from splipy import BSplineBasis
 from splipy.SplineObject import SplineObject
 from splipy.utils import ensure_listlike, is_singleton
-from bisect import bisect_left
 from itertools import chain
 import numpy as np
 
@@ -202,66 +201,6 @@ class Curve(SplineObject):
         """Get the parametric coordinates at all points which have C0-
         continuity"""
         return [k for k in self.knots(0) if self.continuity(k)<1]
-
-    def split(self, knots, direction=0):
-        """Split a curve into two or more separate representations with C0
-        continuity between them.
-
-        :param knots    : The splitting points
-        :type  knots    : float or [float]
-        :param direction: Parametric direction, ignored for curves. Used for
-            Surfaces and Volumes and allows signatures to match
-        :type  direction: int
-        :return: The new curves
-        :rtype: [Curve]
-        """
-        # for single-value input, wrap it into a list
-        knots = ensure_listlike(knots)
-
-        p = self.order(0)
-        results = []
-        splitting_curve = self.clone()
-        # insert knots to produce C{-1} at all splitting points
-        for k in knots:
-            continuity = splitting_curve.continuity(k)
-            if continuity == np.inf:
-                continuity = p - 1
-            splitting_curve.insert_knot([k] * (continuity + 1))
-
-        b = splitting_curve.bases[0]
-        if b.periodic > -1:
-            mu = bisect_left(b.knots, knots[0])
-            b.roll(mu)
-            splitting_curve.controlpoints = np.roll(splitting_curve.controlpoints, -mu, 0)
-            b.knots = b.knots[:-b.periodic-1]
-            b.periodic = -1
-            if len(knots) > 1:
-                return splitting_curve.split(knots[1:])
-            else:
-                return splitting_curve
-
-
-        # everything is available now, just have to find the right index range
-        # in the knot vector and controlpoints to store in each separate curve
-        # piece
-        last_cp_i = 0
-        last_knot_i = 0
-        for k in knots:
-            if self.start(0) < k < self.end(0): # skip start/end points
-                mu = bisect_left(splitting_curve.bases[0].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p, splitting_curve.bases[0].knots[last_knot_i:mu + p])
-                controlpoints = splitting_curve.controlpoints[last_cp_i:last_cp_i + n_cp, :]
-
-                results.append(Curve(basis, controlpoints, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
-        # with n splitting points, we're getting n+1 pieces. Add the final one:
-        basis = BSplineBasis(p, splitting_curve.bases[0].knots[last_knot_i:])
-        controlpoints = splitting_curve.controlpoints[last_cp_i:, :]
-        results.append(Curve(basis, controlpoints, self.rational))
-
-        return results
 
     def length(self):
         """ Computes the euclidian length of the curve in geometric space """
