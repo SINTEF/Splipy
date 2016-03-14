@@ -316,6 +316,36 @@ class BSplineBasis:
 
         return BSplineBasis(self.order + amount, knots, self.periodic)
 
+    def lower_order(self, amount):
+        """Create a knot vector with lower order.
+
+        The continuity at the knots are kept unchanged by decreasing their
+        multiplicities.
+
+        :return: New knot vector
+        :rtype: [float]
+        :raises TypeError: If `amount` is not an int
+        :raises ValueError: If `amount` is negative
+        """
+        if type(amount) is not int:
+            raise TypeError('amount needs to be a non-negative integer')
+        if amount < 0:
+            raise ValueError('amount needs to be a non-negative integer')
+        if self.order - amount < 2:
+            raise ValueError('cannot lower order to less than linears')
+
+        p = self.order - amount
+        knots = [ [k] * max(p-1-self.continuity(k), 1) for k in self.knot_spans(True)]
+        knots = [ k for sublist in knots for k in sublist]
+
+        if self.periodic > -1:
+            # remove excessive ghost knots which appear at both ends of the knot vector
+            n0 =                   bisect_left(knot_spans, self.start())
+            n1 = len(knot_spans) - bisect_left(knot_spans, self.end())   - 1
+            knots = knots[n0*amount : -n1*amount]
+
+        return BSplineBasis(p, knots, self.periodic)
+
     def insert_knot(self, new_knot):
         """Inserts a knot in the knot vector.
 

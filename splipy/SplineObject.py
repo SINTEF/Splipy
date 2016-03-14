@@ -350,6 +350,47 @@ class SplineObject(object):
 
         return self
 
+    def lower_order(self, *lowers):
+        """lower_order(u, v, ...)
+
+        Lower the polynomial order of the object. If only one argument is
+        given, the order is lowered equally over all directions.
+
+        :param int u,v,...: Number of times to lower the order in a given
+            direction.
+        :return SplineObject: Approximation of the current object on a lower
+            order basis
+        """
+        if len(lowers) == 1:
+            lowers = [lowers[0]] * self.pardim
+        if all(l == 0 for l in lowers):
+            return self.clone()
+
+        new_bases = [b.lower_order(l) for b, l in zip(self.bases, lowers)]
+
+        # Set up an interpolation problem
+        # This works in projective space, so no special handling for rational objects
+        interpolation_pts = [b.greville() for b in new_bases]
+        N_old = [b(pts) for b, pts in zip(self.bases, interpolation_pts)]
+        N_new = [b(pts) for b, pts in zip(new_bases, interpolation_pts)]
+
+        # Calculate the projective interpolation points
+        new_controlpts = self.controlpoints
+        for n in N_old[::-1]:
+            new_controlpts = np.tensordot(n, new_controlpts, axes=(1, self.pardim-1))
+
+        # Solve the interpolation problem
+        for n in N_new[::-1]:
+            new_controlpts = np.tensordot(np.linalg.inv(n), new_controlpts, axes=(1, self.pardim-1))
+
+        # search for the right subclass constructor, i.e. Volume, Surface or Curve
+        constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
+        constructor = constructor[0]
+
+        # return approximated object
+        args = new_bases + [new_controlpts] + [self.rational]
+        return constructor(*args, raw=True)
+
     def start(self, direction=None):
         """start([direction=None])
 

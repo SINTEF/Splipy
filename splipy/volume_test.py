@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from splipy import BSplineBasis, Volume
+import splipy.volume_factory as VolumeFactory
 import unittest
 import numpy as np
 from math import pi, sqrt
@@ -125,6 +126,25 @@ class TestVolume(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
         self.assertAlmostEqual(evaluation_point1[2], evaluation_point2[2])
+
+    def test_lower_order(self):
+        b = BSplineBasis(4, [0,0,0,0,.2, .3, .3, .6, .9, 1,1,1,1])
+        t = b.greville()
+        Y, X, Z = np.meshgrid(t,t,t)
+        cp = np.zeros((len(t), len(t), len(t), 3))
+        cp[...,0] = X*(1-Y)
+        cp[...,1] = X*X
+        cp[...,2] = Z**2 + 2
+
+        vol  = VolumeFactory.interpolate(cp, [b,b,b])
+        vol2 = vol.lower_order(1) # still in space, vol2 is *also* exact
+        u = np.linspace(0,1, 5)
+        v = np.linspace(0,1, 6)
+        w = np.linspace(0,1, 7)
+        self.assertTrue(np.allclose( vol(u,v,w), vol2(u,v,w) ))
+        self.assertTupleEqual(vol.order(), (4,4,4))
+        self.assertTupleEqual(vol2.order(), (3,3,3))
+        
 
     def test_insert_knot(self):
         # more or less random 3D volume with p=[2,2,1] and n=[4,3,2]

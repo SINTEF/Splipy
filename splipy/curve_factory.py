@@ -142,7 +142,7 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
         knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]) / 4.0 * 2 * pi
 
         result = Curve(BSplineBasis(3, knot, 0), controlpoints, True)
-    elif type == 'p4C1' or type == 'C1p4':
+    elif type.lower() == 'p4c1' or type.lower() == 'c1p4':
         w = 2*sqrt(2)/3
         a = 1.0/2/sqrt(2)
         b = 1.0/6 * (4*sqrt(2)-1)
