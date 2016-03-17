@@ -1001,7 +1001,6 @@ class SplineObject(object):
             if self.start(direction) < k < self.end(direction): # skip start/end points
                 mu = bisect_left(b.knots, k)
                 n_cp = mu - last_knot_i
-                print last_knot_i, mu
                 knot_slice          = slice(last_knot_i, mu+p, None)
                 cp_slice[direction] = slice(last_cp_i,   last_cp_i+n_cp,  None)
 
