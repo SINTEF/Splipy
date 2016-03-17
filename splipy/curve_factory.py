@@ -368,7 +368,7 @@ def bezier(pts, quadratic=False, relative=False):
     # compute number of intervals
     n = int((len(pts)-1)/(p-1))
     # generate uniform knot vector of repeated integers
-    knot = range(n+1) * (p-1) + [0, n]
+    knot = list(range(n+1)) * (p-1) + [0, n]
     knot.sort()
     if relative:
         pts = copy.deepcopy(pts)
