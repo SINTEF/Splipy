@@ -414,6 +414,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
         new_curve = manipulate(old_curve, move_3_to_right_fast, normalized=True, vectorized=True)
     """
     
+    b = crv.bases[0]
     t = np.array(b.greville())
     n = len(crv)
 
