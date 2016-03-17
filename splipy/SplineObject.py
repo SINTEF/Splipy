@@ -163,20 +163,24 @@ class SplineObject(object):
         :param u,v,...: Parametric coordinates in which to evaluate
         :type u,v,...: float or [float]
         :param (int) d: Order of derivative to compute
+        :param (bool) above: Evaluation in the limit from above
         :return: Derivatives
         :rtype: numpy.array
         """
         squeeze = all(is_singleton(p) for p in params)
         params = [ensure_listlike(p) for p in params]
 
-        derivs = kwargs.get('d', [1] * len(self.bases))
-        derivs = ensure_listlike(derivs)
+        derivs = kwargs.get('d', [1] * self.pardim)
+        derivs = ensure_listlike(derivs, self.pardim)
+
+        above = kwargs.get('above', [True] * self.pardim)
+        above = ensure_listlike(above, self.pardim)
 
         self._validate_domain(*params)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
-        dNs = [b.evaluate(p, d) for b, p, d in zip(self.bases, params, derivs)]
+        dNs = [b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params, derivs, above)]
         idx = len(self.bases) - 1
         result = self.controlpoints
         for dN in dNs[::-1]:
@@ -223,11 +227,16 @@ class SplineObject(object):
         :param u,v,...: Parametric coordinates in which to evaluate
         :type u,v,...: float or [float]
         :param int direction: The tangential direction
+        :param (bool) above: Evaluation in the limit from above
         :return: Tangents
         :rtype: numpy.array
         """
         direction = kwargs.get('direction', None)
         derivative = [0] * self.pardim
+
+        above = kwargs.get('above', [True] * self.pardim)
+        above = ensure_listlike(above, self.pardim)
+
         if self.pardim == 1:
             direction = 0
 
@@ -235,13 +244,13 @@ class SplineObject(object):
             result = ()
             for i in range(self.pardim):
                 derivative[i] = 1
-                result += (self.derivative(*params, d=derivative),)
+                result += (self.derivative(*params, d=derivative, above=above),)
                 derivative[i] = 0
             return result
 
         i = check_direction(direction, self.pardim)
         derivative[i] = 1
-        return self.derivative(*params, d=derivative)
+        return self.derivative(*params, d=derivative, above=above)
 
     def section(self, *args, **kwargs):
         """section(u, v, ..., [unwrap_points=False])

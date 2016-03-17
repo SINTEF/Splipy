@@ -285,7 +285,7 @@ def thicken(curve, amount):
         linear = BSplineBasis(2)
 
         x = np.matrix(curve.evaluate(t))  # curve at interpolation points
-        v = curve.tangent(t)      # velocity at interpolation points
+        v = curve.tangent(t)              # velocity at interpolation points
         l = np.sqrt(v[:, 0]**2 + v[:, 1]**2)  # normalizing factor for velocity
         v[:, 0] = v[:, 0] / l
         v[:, 1] = v[:, 1] / l

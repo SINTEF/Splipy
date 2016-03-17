@@ -72,7 +72,7 @@ class Curve(SplineObject):
 
         return result
 
-    def derivative(self, t, d=1):
+    def derivative(self, t, d=1, above=True):
         """derivative(u, [d=1])
 
         Evaluate the derivative of the curve at the given parametric values.
@@ -86,18 +86,19 @@ class Curve(SplineObject):
         :param u: Parametric coordinates in which to evaluate
         :type u: float or [float]
         :param int d: Number of derivatives to compute
+        :param bool above: Evaluation in the limit from above
         :return: Derivative array
         :rtype: numpy.array
         """
         if not self.rational or d != 2:
-            return super(Curve, self).derivative(t, d=d)
+            return super(Curve, self).derivative(t, d=d, above=above)
 
         t = ensure_listlike(t)
-        dN = self.bases[0].evaluate(t, d)
+        dN = self.bases[0].evaluate(t, d, above)
         result = np.array(dN * self.controlpoints)
 
         d2 = result
-        d1 = np.array(self.bases[0].evaluate(t, 1) * self.controlpoints)
+        d1 = np.array(self.bases[0].evaluate(t, 1, above) * self.controlpoints)
         d0 = np.array(self.bases[0].evaluate(t) * self.controlpoints)
         W = d0[:, -1]   # W(t)
         W1 = d1[:, -1]  # W'(t)

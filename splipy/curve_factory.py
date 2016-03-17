@@ -5,11 +5,13 @@
 from math import pi, cos, sin, sqrt, ceil
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
+from numpy.linalg import norm
 import numpy as np
 import copy
+import inspect
 
 __all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment',
-           'interpolate', 'least_square_fit', 'cubic_curve']
+           'interpolate', 'least_square_fit', 'cubic_curve', 'bezier', 'manipulate']
 
 class Boundary:
     """Enumeration representing different boundary conditions used in
@@ -373,3 +375,105 @@ def bezier(pts, quadratic=False, relative=False):
         for i in range(1, len(pts)):
             pts[i] = [x0 + x1 for (x0,x1) in zip(pts[i-1], pts[i])]
     return Curve(BSplineBasis(p, knot), pts)
+
+def manipulate(crv, f, normalized=False, vectorized=False):
+    """ Create a new curve based on an expression-evaluation of an existing one
+    :param function f: expression of the physical point *x*, the velocity
+        (tangent) *v*, parametric point *t* and/or acceleration *a*.
+    :param normalized: If velocity and acceleration terms should be normalized
+        to have length 1
+    :param vectorized: True if *f* is expressed in terms of vectorized
+        operations. The method is sped up whenever this is used.
+
+    Examples:
+
+    .. code:: python
+
+        def scale_by_two(x):
+            return 2*x
+
+        new_curve = manipulate(old_curve, scale_by_two) 
+        new_curve = old_curve * 2 # will give the same result
+
+        def move_3_to_right(x, v):
+            result = x
+            # *v* is velocity. Rotate this 90 to the right and it points (+v[1], -v[0])
+            result[0] += 3*v[1]
+            result[1] -= 3*v[0]
+            return result
+
+        # note that the velocity vector will not have length one unless normalized is passed
+        new_curve = manipulate(old_curve, move_3_to_right, normalized=True)
+
+        def move_3_to_right_fast(x, v):
+            result = x
+            result[:,0] += 3*v[:,1]
+            result[:,1] -= 3*v[:,0]
+            return result
+
+        new_curve = manipulate(old_curve, move_3_to_right_fast, normalized=True, vectorized=True)
+    """
+    
+    t = np.array(b.greville())
+    n = len(crv)
+
+    if vectorized:
+        x = crv(t)
+        arg_names = inspect.getargspec(f).args
+        argc = len(arg_names)
+        argv = [0] * argc
+        for j in range(argc):
+            if arg_names[j] == 'x':
+                argv[j] = x
+            elif arg_names[j] == 't':
+                argv[j] = t
+            elif arg_names[j] == 'v':
+                c0 = np.array([i for i in range(n) if b.continuity(t[i]) == 0])
+                v = crv.derivative(t, 1)
+                if len(c0)>0:
+                    v[c0,:] = (v[c0,:] + crv.derivative(t[c0], 1, above=False)) / 2.0
+                if normalized:
+                    v[:] = [vel / norm(vel) for vel in v]
+                argv[j] = v
+            elif arg_names[j] == 'a':
+                c1 = np.array([i for i in range(n) if b.continuity(t[i]) < 2])
+                a = crv.derivative(t, 2)
+                if len(c1)>0:
+                    a[c1,:] = (a[c1,:] + crv.derivative(t[c1], 2, above=False)) / 2.0
+                if normalized:
+                    a[:] = [acc / norm(acc) for acc in a]
+                argv[j] = a
+        destination   = f(*argv)
+    else:
+        destination = np.zeros((len(crv), crv.dimension))
+        for (t1, i) in zip(t, range(len(t))):
+            x = crv(t1)
+            arg_names = inspect.getargspec(f).args
+            argc = len(arg_names)
+            argv = [0] * argc
+            for j in range(argc):
+                if arg_names[j] == 'x':
+                    argv[j] = x
+                elif arg_names[j] == 't':
+                    argv[j] = t1
+                elif arg_names[j] == 'v':
+                    v = crv.derivative(t1, 1)
+                    if b.continuity(t1) < 1:
+                        v += crv.derivative(t1, 1, above=False)
+                        v /= 2.0
+                    if normalized:
+                        v /= norm(v)
+                    argv[j] = v
+                elif arg_names[j] == 'a':
+                    a = crv.derivative(t1, 2)
+                    if b.continuity(t1) < 2:
+                        a += crv.derivative(t1, 1, above=False)
+                        a /= 2.0
+                    if normalized:
+                        a /= norm(a)
+                    argv[j] = a
+            destination[i] = f(*argv)
+            
+    N = b(t)
+    controlpoints = np.linalg.solve(N, destination)
+    return Curve(b, controlpoints)

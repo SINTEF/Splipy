@@ -33,7 +33,7 @@ class Surface(SplineObject):
         """
         super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
 
-    def normal(self, u, v):
+    def normal(self, u, v, above=(True,True)):
         """Evaluate the normal of the surface at given parametric values.
 
         This is equal to the cross-product between tangents. The return value
@@ -43,6 +43,7 @@ class Surface(SplineObject):
         :type u: float or [float]
         :param v: Parametric coordinate(s) in the second direction
         :type v: float or [float]
+        :param (bool) above: Evaluation in the limit from above
         :return: Normal array *X[i,j,k]* of component *xj* evaluated at *(u[i], v[j])*
         :rtype: numpy.array
         :raises RuntimeError: If the physical dimension is not 2 or 3
@@ -55,7 +56,7 @@ class Surface(SplineObject):
             except TypeError:  # single valued input u, fails on len(u)
                 return np.array([0, 0, 1])
         elif self.dimension == 3:
-            (du, dv) = self.tangent(u, v)
+            (du, dv) = self.tangent(u, v, above=above)
             result = np.zeros(du.shape)
             # the cross product of the tangent is the normal
             if len(du.shape) == 1:
