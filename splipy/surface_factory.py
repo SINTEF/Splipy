@@ -3,7 +3,7 @@
 """Handy utilities for creating surfaces."""
 
 from splipy import BSplineBasis, Curve, Surface
-from math import pi, sqrt
+from math import pi, sqrt, atan2
 from splipy.utils import flip_and_move_plane_geometry
 import splipy.curve_factory as CurveFactory
 import inspect
@@ -32,8 +32,8 @@ def square(size=1, lower_left=(0,0)):
 def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     """disc([r=1], [type='radial'])
 
-    Create a circular disc with center at (0,0). The *type* parameter
-    distinguishes between different parametrizations.
+    Create a circular disc. The *type* parameter distinguishes between
+    different parametrizations.
 
     :param float r: Radius
     :param string type: The type of parametrization ('radial' or 'square')
@@ -41,11 +41,11 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     :rtype: Surface
     """
     if type == 'radial':
-        c = CurveFactory.circle(r)
-        cp = np.zeros((16, 3))
-        cp[:, -1] = 1
-        cp[1::2, :] = c.controlpoints
-        result = Surface(BSplineBasis(), c.bases[0], cp, True)
+        c1 = CurveFactory.circle(r)
+        c2 = c1*0
+        result = edge_curves(c2, c1)
+        result.swap()
+        result.reparam((0,r), (0,2*pi))
     elif type == 'square':
         w = 1 / sqrt(2)
         cp = [[-r * w, -r * w, 1],
@@ -101,37 +101,51 @@ def extrude(curve, amount):
     return Surface(curve.bases[0], BSplineBasis(2), cp, curve.rational)
 
 
-def revolve(curve, theta=2 * pi):
-    """revolve(curve, [theta=2pi])
+def revolve(curve, theta=2 * pi, axis=[0,0,1]):
+    """revolve(curve, [theta=2pi], [axis=[0,0,1]])
 
     Revolve a surface by sweeping a curve in a rotational fashion around the
     *z* axis.
 
     :param Curve curve: Curve to revolve
     :param float theta: Angle to revolve, in radians
-    :return: The revolved curve
+    :param vector-like axis: Axis of rotation
+    :return: The revolved surface
     :rtype: Surface
     """
     curve = curve.clone()  # clone input curve, throw away input reference
     curve.set_dimension(3)  # add z-components (if not already present)
     curve.force_rational()  # add weight (if not already present)
-    n = len(curve)  # number of control points of the curve
-    cp = np.zeros((8 * n, 4))
-    basis = BSplineBasis(3, [-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5], periodic=0)
-    basis *= 2 * pi / 4  # set parametric domain to (0,2pi) in v-direction
+
+    # align axis with the z-axis
+    normal_theta = atan2(axis[1], axis[0])
+    normal_phi   = atan2(sqrt(axis[0]**2 + axis[1]**2), axis[2])
+    curve.rotate(-normal_theta, [0,0,1])
+    curve.rotate(-normal_phi,   [0,1,0])
+
+    circle_seg = CurveFactory.circle_segment(theta)
+
+    n = len(curve)      # number of control points of the curve
+    m = len(circle_seg) # number of control points of the sweep
+    cp = np.zeros((m * n, 4))
 
     # loop around the circle and set control points by the traditional 9-point
     # circle curve with weights 1/sqrt(2), only here C0-periodic, so 8 points
-    for i in range(8):
-        if i % 2 == 0:
-            weight = 1.0
-        else:
-            weight = 1.0 / sqrt(2)
-        cp[i * n:(i + 1) * n, :] = curve.controlpoints
-        cp[i * n:(i + 1) * n, 2] *= weight
-        cp[i * n:(i + 1) * n, 3] *= weight
-        curve.rotate(pi / 4)
-    return Surface(curve.bases[0], basis, cp, True)
+    dt = 0
+    t  = 0
+    for i in range(m):
+        x,y,w = circle_seg[i]
+        dt  = atan2(y,x) - t
+        t  += dt
+        curve.rotate(dt)
+        cp[i * n:(i + 1) * n, :]  = curve[:]
+        cp[i * n:(i + 1) * n, 2] *= w
+        cp[i * n:(i + 1) * n, 3] *= w
+    result = Surface(curve.bases[0], circle_seg.bases[0], cp, True)
+    # rotate it back again
+    result.rotate(normal_phi,   [0,1,0])
+    result.rotate(normal_theta, [0,0,1])
+    return result
 
 
 def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
@@ -271,7 +285,7 @@ def thicken(curve, amount):
         linear = BSplineBasis(2)
 
         x = np.matrix(curve.evaluate(t))  # curve at interpolation points
-        v = curve.tangent(t)      # velocity at interpolation points
+        v = curve.tangent(t)              # velocity at interpolation points
         l = np.sqrt(v[:, 0]**2 + v[:, 1]**2)  # normalizing factor for velocity
         v[:, 0] = v[:, 0] / l
         v[:, 1] = v[:, 1] / l

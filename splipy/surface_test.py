@@ -36,6 +36,13 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(val[0], 0.5)
         self.assertEqual(len(surf4[0]), 4)
 
+        # test constructor with single basis
+        b = BSplineBasis(4)
+        surf = Surface(b,b)
+        surf.insert_knot(.3, 'u') # change one, but not the other
+        self.assertEqual(len(surf.knots('u')), 3)
+        self.assertEqual(len(surf.knots('v')), 2)
+
         # TODO: Include a default constructor specifying nothing, or just polynomial degrees, or just knot vectors.
         #       This should create identity mappings
 

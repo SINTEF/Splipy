@@ -4,6 +4,7 @@ import numpy as np
 import copy
 from operator import attrgetter, methodcaller
 from itertools import chain, product
+from bisect import bisect_left
 from splipy import BSplineBasis
 from splipy.utils import *
 
@@ -48,7 +49,7 @@ class SplineObject(object):
         :param bool raw: If True, skip any control point reordering.
             (For internal use.)
         """
-        bases = [(b if b else BSplineBasis()) for b in bases]
+        bases = [(b.clone() if b else BSplineBasis()) for b in bases]
         self.bases = bases
         if controlpoints is None:
             # `product' produces tuples in row-major format (the last input varies quickest)
@@ -162,20 +163,24 @@ class SplineObject(object):
         :param u,v,...: Parametric coordinates in which to evaluate
         :type u,v,...: float or [float]
         :param (int) d: Order of derivative to compute
+        :param (bool) above: Evaluation in the limit from above
         :return: Derivatives
         :rtype: numpy.array
         """
         squeeze = all(is_singleton(p) for p in params)
         params = [ensure_listlike(p) for p in params]
 
-        derivs = kwargs.get('d', [1] * len(self.bases))
-        derivs = ensure_listlike(derivs)
+        derivs = kwargs.get('d', [1] * self.pardim)
+        derivs = ensure_listlike(derivs, self.pardim)
+
+        above = kwargs.get('above', [True] * self.pardim)
+        above = ensure_listlike(above, self.pardim)
 
         self._validate_domain(*params)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
-        dNs = [b.evaluate(p, d) for b, p, d in zip(self.bases, params, derivs)]
+        dNs = [b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params, derivs, above)]
         idx = len(self.bases) - 1
         result = self.controlpoints
         for dN in dNs[::-1]:
@@ -222,11 +227,16 @@ class SplineObject(object):
         :param u,v,...: Parametric coordinates in which to evaluate
         :type u,v,...: float or [float]
         :param int direction: The tangential direction
+        :param (bool) above: Evaluation in the limit from above
         :return: Tangents
         :rtype: numpy.array
         """
         direction = kwargs.get('direction', None)
         derivative = [0] * self.pardim
+
+        above = kwargs.get('above', [True] * self.pardim)
+        above = ensure_listlike(above, self.pardim)
+
         if self.pardim == 1:
             direction = 0
 
@@ -234,13 +244,13 @@ class SplineObject(object):
             result = ()
             for i in range(self.pardim):
                 derivative[i] = 1
-                result += (self.derivative(*params, d=derivative),)
+                result += (self.derivative(*params, d=derivative, above=above),)
                 derivative[i] = 0
             return result
 
         i = check_direction(direction, self.pardim)
         derivative[i] = 1
-        return self.derivative(*params, d=derivative)
+        return self.derivative(*params, d=derivative, above=above)
 
     def section(self, *args, **kwargs):
         """section(u, v, ..., [unwrap_points=False])
@@ -348,6 +358,47 @@ class SplineObject(object):
         self.bases = new_bases
 
         return self
+
+    def lower_order(self, *lowers):
+        """lower_order(u, v, ...)
+
+        Lower the polynomial order of the object. If only one argument is
+        given, the order is lowered equally over all directions.
+
+        :param int u,v,...: Number of times to lower the order in a given
+            direction.
+        :return SplineObject: Approximation of the current object on a lower
+            order basis
+        """
+        if len(lowers) == 1:
+            lowers = [lowers[0]] * self.pardim
+        if all(l == 0 for l in lowers):
+            return self.clone()
+
+        new_bases = [b.lower_order(l) for b, l in zip(self.bases, lowers)]
+
+        # Set up an interpolation problem
+        # This works in projective space, so no special handling for rational objects
+        interpolation_pts = [b.greville() for b in new_bases]
+        N_old = [b(pts) for b, pts in zip(self.bases, interpolation_pts)]
+        N_new = [b(pts) for b, pts in zip(new_bases, interpolation_pts)]
+
+        # Calculate the projective interpolation points
+        new_controlpts = self.controlpoints
+        for n in N_old[::-1]:
+            new_controlpts = np.tensordot(n, new_controlpts, axes=(1, self.pardim-1))
+
+        # Solve the interpolation problem
+        for n in N_new[::-1]:
+            new_controlpts = np.tensordot(np.linalg.inv(n), new_controlpts, axes=(1, self.pardim-1))
+
+        # search for the right subclass constructor, i.e. Volume, Surface or Curve
+        constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
+        constructor = constructor[0]
+
+        # return approximated object
+        args = new_bases + [new_controlpts] + [self.rational]
+        return constructor(*args, raw=True)
 
     def start(self, direction=None):
         """start([direction=None])
@@ -892,6 +943,86 @@ class SplineObject(object):
 
         return self
 
+    def split(self, knots, direction=0):
+        """Split an object into two or more separate representations with C0
+        continuity between them.
+
+        :param int direction: The parametric direction to split in
+        :param knots: The splitting points
+        :type knots: float or [float]
+        :param direction: Parametric direction
+        :type direction: int
+        :return: The new volumes
+        :rtype: [Volume]
+        """
+        # for single-value input, wrap it into a list
+        knots = ensure_listlike(knots)
+
+        # error test input
+        direction = check_direction(direction, self.pardim)
+
+        p = self.order(direction)
+        results = []
+        splitting_obj = self.clone()
+        bases = self.bases
+        # insert knots to produce C{-1} at all splitting points
+        for k in knots:
+            continuity = bases[direction].continuity(k)
+            if continuity == np.inf:
+                continuity = p - 1
+            splitting_obj.insert_knot([k] * (continuity + 1), direction)
+
+        b = splitting_obj.bases[direction]
+        if b.periodic > -1:
+            mu = bisect_left(b.knots, knots[0])
+            b.roll(mu)
+            splitting_obj.controlpoints = np.roll(splitting_obj.controlpoints, -mu, direction)
+            b.knots = b.knots[:-b.periodic-1]
+            b.periodic = -1
+            if len(knots) > 1:
+                return splitting_obj.split(knots[1:], direction)
+            else:
+                return splitting_obj
+
+        # search for the right subclass constructor, i.e. Volume, Surface or Curve
+        spline_object = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(bases)]
+        spline_object = spline_object[0]
+
+        # everything is available now, just have to find the right index range
+        # in the knot vector and controlpoints to store in each separate curve
+        # piece
+        last_cp_i = 0
+        last_knot_i = 0
+
+        bases = splitting_obj.bases
+        b     = bases[direction]
+        cp_slice = [slice(None, None, None)] * len(self.controlpoints.shape)
+        for k in knots:
+            if self.start(direction) < k < self.end(direction): # skip start/end points
+                mu = bisect_left(b.knots, k)
+                n_cp = mu - last_knot_i
+                knot_slice          = slice(last_knot_i, mu+p, None)
+                cp_slice[direction] = slice(last_cp_i,   last_cp_i+n_cp,  None)
+
+                cp = splitting_obj.controlpoints[ cp_slice ]
+                bases[direction] = BSplineBasis(p, b.knots[knot_slice])
+
+                args = bases + [cp, splitting_obj.rational]
+                results.append(spline_object(*args, raw=True))
+
+                last_knot_i = mu
+                last_cp_i += n_cp
+
+        # with n splitting points, we're getting n+1 pieces. Add the final one:
+        knot_slice          = slice(last_knot_i, None, None)
+        cp_slice[direction] = slice(last_cp_i,   None, None)
+        bases[direction] = BSplineBasis(p, b.knots[knot_slice])
+        cp = splitting_obj.controlpoints[ cp_slice ]
+        args = bases + [cp, splitting_obj.rational]
+        results.append(spline_object(*args, raw=True))
+
+        return results
+
     @property
     def pardim(self):
         """The number of parametric dimensions: 1 for curves, 2 for surfaces, 3
@@ -1013,6 +1144,9 @@ class SplineObject(object):
         new_obj += x
         return new_obj
 
+    def __radd__(self, x):
+        return self + x
+
     def __sub__(self, x):
         new_obj = copy.deepcopy(self)
         new_obj -= x
@@ -1022,6 +1156,9 @@ class SplineObject(object):
         new_obj = copy.deepcopy(self)
         new_obj *= x
         return new_obj
+
+    def __rmul__(self, x):
+        return self * x
 
     def __div__(self, x):
         new_obj = copy.deepcopy(self)

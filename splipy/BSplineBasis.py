@@ -5,6 +5,7 @@ import splipy.state as state
 from bisect import bisect_right, bisect_left
 import numpy as np
 import copy
+from scipy.sparse import csr_matrix
 
 __all__ = ['BSplineBasis']
 
@@ -106,7 +107,7 @@ class BSplineBasis:
             result = float(np.sum(self.knots[index + 1:index + p])) / (p - 1)
         return result
 
-    def evaluate(self, t, d=0, from_right=True):
+    def evaluate(self, t, d=0, from_right=True, sparse=False):
         """evaluate(t, [d=0], [from_right=True])
 
         Evaluate all basis functions in a given set of points.
@@ -116,69 +117,73 @@ class BSplineBasis:
         :param int d: Number of derivatives to compute
         :param bool from_right: True if evaluation should be done in the limit
             from above
+        :param bool sparse: True if computed matrix should be returned as sparse
         :return: A matrix *N[i,j]* of all basis functions *j* evaluated in all
             points *i*
         :rtype: numpy.array
         """
-
         # for single-value input, wrap it into a list so it don't crash on the loop below
         t = ensure_listlike(t)
 
         p = self.order  # knot vector order
-        n = len(self.knots) - p  # number of basis functions (without periodicity)
-        N = np.matrix(np.zeros((len(t), n)))
+        n_all = len(self.knots) - p  # number of basis functions (without periodicity)
+        n = len(self.knots) - p - (self.periodic+1)  # number of basis functions (with periodicity)
+        m = len(t)
+        data    = np.zeros(m*p)
+        indices = np.zeros(m*p)
+        indptr  = range(0,m*p+1,p)
+        if p <= d: # requesting more derivatives than polymoial degree: return all zeros
+            return np.matrix(np.zeros((m,n)))
+        if self.periodic >= 0:
+            t = copy.deepcopy(t)
+            # Wrap periodic evaluation into domain
+            for i in range(len(t)):
+                if t[i] < self.start() or t[i] > self.end():
+                    t[i] = (t[i] - self.start()) % (self.end() - self.start()) + self.start()
         for i in range(len(t)):
             right = from_right
-            if p <= d:
-                continue  # requesting more derivatives than polymoial degree: return all zeros
             evalT = t[i]
-            # Wrap periodic evaluation into domain
-            if self.periodic >= 0:
-                if t[i] < self.start() or t[i] > self.end():
-                    evalT = (t[i] - self.start()) % (self.end() - self.start()) + self.start()
-            else:
-                # Special-case the endpoint, so the user doesn't need to
-                if abs(t[i] - self.end()) < state.knot_tolerance:
-                    right = False
-                # Skip non-periodic evaluation points outside the domain
-                if t[i] < self.start() or t[i] > self.end():
-                    continue
+            # Special-case the endpoint, so the user doesn't need to
+            if abs(t[i] - self.end()) < state.knot_tolerance:
+                right = False
+            # Skip non-periodic evaluation points outside the domain
+            if t[i] < self.start() or t[i] > self.end():
+                continue
 
             # mu = index of last non-zero basis function
             if right:
                 mu = bisect_right(self.knots, evalT)
             else:
                 mu = bisect_left(self.knots, evalT)
-            mu = min(mu, n)
+            mu = min(mu, n_all)
 
-            M = np.zeros(p + 1)  # temp storage to keep all the function evaluations
-            M[-2] = 1  # the last entry is a dummy-zero which is never used
-            for q in range(1, p):
+            M = np.zeros(p)  # temp storage to keep all the function evaluations
+            M[-1] = 1  # the last entry is a dummy-zero which is never used
+            for q in range(1, p-d):
                 for j in range(p - q - 1, p):
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
-                    if abs(self.knots[k + q] - self.knots[k]) > state.knot_tolerance:
-                        if q < p - d:  # in case of normal evaluation
-                            M[j] = M[j] * float(evalT - self.knots[k]) / (
-                                self.knots[k + q] - self.knots[k])
-                        else:  # in case of derivative evaluation
-                            M[j] = M[j] * float(q) / (self.knots[k + q] - self.knots[k])
-                    else:  # in case of multiplicative knot
-                        M[j] = 0
-                    if abs(self.knots[k + q + 1] - self.knots[
-                            k + 1]) > state.knot_tolerance:  # and the same for the second term in the sum
-                        if q < p - d:
-                            M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (
-                                self.knots[k + q + 1] - self.knots[k + 1])
-                        else:
-                            M[j] = M[j] - M[j + 1] * float(q) / (self.knots[k + q + 1] -
-                                                                 self.knots[k + 1])
-            N[i, (mu - p):mu] = M[0:-1]
+                    if j != p-q-1:
+                        M[j] = M[j] * float(evalT - self.knots[k]) / (self.knots[k + q] - self.knots[k])
+                                    
+                    if j != p-1:
+                        M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (self.knots[k + q + 1] - self.knots[k + 1])
+                                            
+                                    
+            for q in range(p-d, p):
+                for j in range(p - q - 1, p):
+                    k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
+                    if j != p-q-1:
+                        M[j] = M[j] * float(q) / (self.knots[k + q] - self.knots[k])
+                    if j != p-1:
+                        M[j] = M[j] - M[j + 1] * float(q) / (self.knots[k + q + 1] - self.knots[k + 1])
+                                                             
 
-        # collapse periodic functions onto themselves
-        for j in range(self.periodic + 1):
-            N[:, j] += N[:, -self.periodic - 1 + j]
-        N = np.delete(N, range(n - self.periodic - 1, n), 1)
+            data[i*p:(i+1)*p]    = M
+            indices[i*p:(i+1)*p] = np.arange(mu-p, mu) % n
 
+        N = csr_matrix((data, indices, indptr), (m,n))
+        if not sparse:
+            N = N.todense()
         return N
 
     def integrate(self, t0, t1):
@@ -310,6 +315,36 @@ class BSplineBasis:
             knots = knots[n0*amount : -n1*amount]
 
         return BSplineBasis(self.order + amount, knots, self.periodic)
+
+    def lower_order(self, amount):
+        """Create a knot vector with lower order.
+
+        The continuity at the knots are kept unchanged by decreasing their
+        multiplicities.
+
+        :return: New knot vector
+        :rtype: [float]
+        :raises TypeError: If `amount` is not an int
+        :raises ValueError: If `amount` is negative
+        """
+        if type(amount) is not int:
+            raise TypeError('amount needs to be a non-negative integer')
+        if amount < 0:
+            raise ValueError('amount needs to be a non-negative integer')
+        if self.order - amount < 2:
+            raise ValueError('cannot lower order to less than linears')
+
+        p = self.order - amount
+        knots = [ [k] * max(p-1-self.continuity(k), 1) for k in self.knot_spans(True)]
+        knots = [ k for sublist in knots for k in sublist]
+
+        if self.periodic > -1:
+            # remove excessive ghost knots which appear at both ends of the knot vector
+            n0 =                   bisect_left(knot_spans, self.start())
+            n1 = len(knot_spans) - bisect_left(knot_spans, self.end())   - 1
+            knots = knots[n0*amount : -n1*amount]
+
+        return BSplineBasis(p, knots, self.periodic)
 
     def insert_knot(self, new_knot):
         """Inserts a knot in the knot vector.

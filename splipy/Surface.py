@@ -33,7 +33,7 @@ class Surface(SplineObject):
         """
         super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
 
-    def normal(self, u, v):
+    def normal(self, u, v, above=(True,True)):
         """Evaluate the normal of the surface at given parametric values.
 
         This is equal to the cross-product between tangents. The return value
@@ -43,6 +43,7 @@ class Surface(SplineObject):
         :type u: float or [float]
         :param v: Parametric coordinate(s) in the second direction
         :type v: float or [float]
+        :param (bool) above: Evaluation in the limit from above
         :return: Normal array *X[i,j,k]* of component *xj* evaluated at *(u[i], v[j])*
         :rtype: numpy.array
         :raises RuntimeError: If the physical dimension is not 2 or 3
@@ -55,7 +56,7 @@ class Surface(SplineObject):
             except TypeError:  # single valued input u, fails on len(u)
                 return np.array([0, 0, 1])
         elif self.dimension == 3:
-            (du, dv) = self.tangent(u, v)
+            (du, dv) = self.tangent(u, v, above=above)
             result = np.zeros(du.shape)
             # the cross product of the tangent is the normal
             if len(du.shape) == 1:
@@ -127,91 +128,6 @@ class Surface(SplineObject):
         # compute the controlpoints and return Curve
         cp = np.tensordot(C[i,:], self.controlpoints, axes=(1, direction))
         return Curve(self.bases[1-direction], cp, self.rational)
-
-    def split(self, knots, direction):
-        """Split a surface into two or more separate representations with C0
-        continuity between them.
-
-        :param int direction: The parametric direction to split in
-        :param knots: The splitting points
-        :type knots: float or [float]
-        :param direction: Parametric direction
-        :type direction: int
-        :return: The new surfaces
-        :rtype: [Surface]
-        """
-        # for single-value input, wrap it into a list
-        knots = ensure_listlike(knots)
-        # error test input
-        direction = check_direction(direction, 2)
-
-        p = self.order()
-        results = []
-        splitting_surf = self.clone()
-        basis = self.bases
-        # insert knots to produce C{-1} at all splitting points
-        for k in knots:
-            continuity = basis[direction].continuity(k)
-            if continuity == np.inf:
-                continuity = p[direction] - 1
-            splitting_surf.insert_knot([k] * (continuity + 1), direction)
-
-        b = splitting_surf.bases[direction]
-        if b.periodic > -1:
-            mu = bisect_left(b.knots, knots[0])
-            b.roll(mu)
-            splitting_surf.controlpoints = np.roll(splitting_surf.controlpoints, -mu, direction)
-            b.knots = b.knots[:-b.periodic-1]
-            b.periodic = -1
-            if len(knots) > 1:
-                return splitting_surf.split(knots[1:], direction)
-            else:
-                return splitting_surf
-
-
-        # everything is available now, just have to find the right index range
-        # in the knot vector and controlpoints to store in each separate curve
-        # piece
-        last_cp_i = 0
-        last_knot_i = 0
-        (n1, n2, dim) = splitting_surf.controlpoints.shape
-        if direction == 0:
-            for k in knots:
-                mu = bisect_left(splitting_surf.bases[0].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[0], splitting_surf.bases[0].knots[last_knot_i:mu + p[0]])
-                cp = splitting_surf.controlpoints[last_cp_i:last_cp_i + n_cp, :, :]
-                cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n2, dim))
-
-                results.append(Surface(basis, self.bases[1], cp, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
-
-            # with n splitting points, we're getting n+1 pieces. Add the final one:
-            basis = BSplineBasis(p[0], splitting_surf.bases[0].knots[last_knot_i:])
-            n_cp = basis.num_functions()
-            cp = splitting_surf.controlpoints[last_cp_i:, :, :]
-            cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n2, dim))
-            results.append(Surface(basis, self.bases[1], cp, self.rational))
-        else:
-            for k in knots:
-                mu = bisect_left(splitting_surf.bases[1].knots, k)
-                n_cp = mu - last_knot_i
-                basis = BSplineBasis(p[1], splitting_surf.bases[1].knots[last_knot_i:mu + p[1]])
-                cp = splitting_surf.controlpoints[:, last_cp_i:last_cp_i + n_cp, :]
-                cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n1, dim))
-
-                results.append(Surface(self.bases[0], basis, cp, self.rational))
-                last_knot_i = mu
-                last_cp_i += n_cp
-            # with n splitting points, we're getting n+1 pieces. Add the final one:
-            basis = BSplineBasis(p[1], splitting_surf.bases[1].knots[last_knot_i:])
-            n_cp = basis.num_functions()
-            cp = splitting_surf.controlpoints[:, last_cp_i:, :]
-            cp = np.reshape(cp.transpose((1, 0, 2)), (n_cp * n1, dim))
-            results.append(Surface(self.bases[0], basis, cp, self.rational))
-
-        return results
 
     def rebuild(self, p, n):
         """Creates an approximation to this surface by resampling it using

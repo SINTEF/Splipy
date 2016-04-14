@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from splipy import SplineObject, Curve, BSplineBasis
+import splipy.curve_factory as CurveFactory
 from math import sqrt, pi
 import numpy as np
 import unittest
@@ -103,7 +104,6 @@ class TestCurve(unittest.TestCase):
         controlpoints = [[0, 0, 0], [1, 1, 1], [2, -1, 0], [3, 0, -1], [0, 0, -5]]
         crv = Curve(BSplineBasis(3, [0, 0, 0, .3, .4, 1, 1, 1]), controlpoints)
 
-        crv
         evaluation_point1 = crv(0.37)
         crv.raise_order(2)
         evaluation_point2 = crv(0.37)
@@ -120,9 +120,28 @@ class TestCurve(unittest.TestCase):
         with self.assertRaises(TypeError):
             crv.raise_order(0.5)
 
-        # check logic error for negative argument (gotools cast this error)
+        # check logic error for negative argument 
         with self.assertRaises(Exception):
             crv.raise_order(-1)
+
+    def test_lower_order(self):
+        basis = BSplineBasis(4, [0,0,0,0,.2, .3, .3, .6, .9, 1,1,1,1])
+        interp_pts = basis.greville()
+        x = [[t*(1-t), t**2] for t in interp_pts]
+        
+        crv = CurveFactory.interpolate(x, basis) # function in space, exact representation kept
+
+        crv2 = crv.lower_order(1) # still in space, crv2 is *also* exact
+
+        t = np.linspace(0,1, 13)
+        self.assertTrue(np.allclose( crv(t), crv2(t)) )
+        self.assertEqual(crv.order(0),  4)
+        self.assertEqual(crv2.order(0), 3)
+        self.assertEqual(crv.continuity(0.3),  1)
+        self.assertEqual(crv.continuity(0.6),  2)
+        self.assertEqual(crv2.continuity(0.3), 1)
+        self.assertEqual(crv2.continuity(0.6), 1)
+
 
     def test_insert_knot(self):
         # non-uniform knot vector of a squiggly quadratic n=5 curve in 3D

@@ -2,8 +2,7 @@
 
 from splipy import BSplineBasis
 from splipy.SplineObject import SplineObject
-from splipy.utils import ensure_listlike
-from bisect import bisect_left
+from splipy.utils import ensure_listlike, is_singleton
 from itertools import chain
 import numpy as np
 
@@ -33,7 +32,47 @@ class Curve(SplineObject):
         """
         super(Curve, self).__init__([basis], controlpoints, rational, **kwargs)
 
-    def derivative(self, t, d=1):
+    def evaluate(self, *params):
+        """evaluate(u, v, ...)
+
+        Evaluate the object at given parametric values.
+
+        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
+        the number of evaluation points in direction *i*, and *dim* is the
+        physical dimension of the object.
+
+        If there is only one evaluation point, a vector of length *dim* is
+        returned instead.
+
+        :param u,v,...: Parametric coordinates in which to evaluate
+        :type u,v,...: float or [float]
+        :return: Geometry coordinates
+        :rtype: numpy.array
+        """
+        squeeze = is_singleton(params[0])
+        params = [ensure_listlike(p) for p in params]
+
+        self._validate_domain(*params)
+
+        # Evaluate the derivatives of the corresponding bases at the corresponding points
+        # and build the result array
+        N = self.bases[0].evaluate(params[0], sparse=True)
+        result = N*self.controlpoints
+
+        # For rational objects, we divide out the weights, which are stored in the
+        # last coordinate
+        if self.rational:
+            for i in range(self.dimension):
+                result[..., i] /= result[..., -1]
+            result = np.delete(result, self.dimension, -1)
+
+        # Squeeze the singleton dimensions if we only have one point
+        if squeeze:
+            result = result.reshape(self.dimension)
+
+        return result
+
+    def derivative(self, t, d=1, above=True):
         """derivative(u, [d=1])
 
         Evaluate the derivative of the curve at the given parametric values.
@@ -47,18 +86,19 @@ class Curve(SplineObject):
         :param u: Parametric coordinates in which to evaluate
         :type u: float or [float]
         :param int d: Number of derivatives to compute
+        :param bool above: Evaluation in the limit from above
         :return: Derivative array
         :rtype: numpy.array
         """
         if not self.rational or d != 2:
-            return super(Curve, self).derivative(t, d=d)
+            return super(Curve, self).derivative(t, d=d, above=above)
 
         t = ensure_listlike(t)
-        dN = self.bases[0].evaluate(t, d)
+        dN = self.bases[0].evaluate(t, d, above)
         result = np.array(dN * self.controlpoints)
 
         d2 = result
-        d1 = np.array(self.bases[0].evaluate(t, 1) * self.controlpoints)
+        d1 = np.array(self.bases[0].evaluate(t, 1, above) * self.controlpoints)
         d0 = np.array(self.bases[0].evaluate(t) * self.controlpoints)
         W = d0[:, -1]   # W(t)
         W1 = d1[:, -1]  # W'(t)
@@ -162,65 +202,6 @@ class Curve(SplineObject):
         """Get the parametric coordinates at all points which have C0-
         continuity"""
         return [k for k in self.knots(0) if self.continuity(k)<1]
-
-    def split(self, knots, direction=0):
-        """Split a curve into two or more separate representations with C0
-        continuity between them.
-
-        :param knots    : The splitting points
-        :type  knots    : float or [float]
-        :param direction: Parametric direction, ignored for curves. Used for
-            Surfaces and Volumes and allows signatures to match
-        :type  direction: int
-        :return: The new curves
-        :rtype: [Curve]
-        """
-        # for single-value input, wrap it into a list
-        knots = ensure_listlike(knots)
-
-        p = self.order(0)
-        results = []
-        splitting_curve = self.clone()
-        # insert knots to produce C{-1} at all splitting points
-        for k in knots:
-            continuity = splitting_curve.continuity(k)
-            if continuity == np.inf:
-                continuity = p - 1
-            splitting_curve.insert_knot([k] * (continuity + 1))
-
-        b = splitting_curve.bases[0]
-        if b.periodic > -1:
-            mu = bisect_left(b.knots, knots[0])
-            b.roll(mu)
-            splitting_curve.controlpoints = np.roll(splitting_curve.controlpoints, -mu, 0)
-            b.knots = b.knots[:-b.periodic-1]
-            b.periodic = -1
-            if len(knots) > 1:
-                return splitting_curve.split(knots[1:])
-            else:
-                return splitting_curve
-
-
-        # everything is available now, just have to find the right index range
-        # in the knot vector and controlpoints to store in each separate curve
-        # piece
-        last_cp_i = 0
-        last_knot_i = 0
-        for k in knots:
-            mu = bisect_left(splitting_curve.bases[0].knots, k)
-            n_cp = mu - last_knot_i
-            basis = BSplineBasis(p, splitting_curve.bases[0].knots[last_knot_i:mu + p])
-            controlpoints = splitting_curve.controlpoints[last_cp_i:last_cp_i + n_cp, :]
-
-            results.append(Curve(basis, controlpoints, self.rational))
-            last_knot_i = mu
-            last_cp_i += n_cp
-        # with n splitting points, we're getting n+1 pieces. Add the final one:
-        basis = BSplineBasis(p, splitting_curve.bases[0].knots[last_knot_i:])
-        controlpoints = splitting_curve.controlpoints[last_cp_i:, :]
-        results.append(Curve(basis, controlpoints, self.rational))
-
-        return results
 
     def length(self):
         """ Computes the euclidian length of the curve in geometric space """

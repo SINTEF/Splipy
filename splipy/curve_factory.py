@@ -5,10 +5,13 @@
 from math import pi, cos, sin, sqrt, ceil
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
+from numpy.linalg import norm
 import numpy as np
+import copy
+import inspect
 
 __all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment',
-           'interpolate', 'least_square_fit', 'cubic_curve']
+           'interpolate', 'least_square_fit', 'cubic_curve', 'bezier', 'manipulate']
 
 class Boundary:
     """Enumeration representing different boundary conditions used in
@@ -47,12 +50,14 @@ def line(a, b, relative=False):
     return Curve(controlpoints=[a, b])
 
 
-def polygon(*points):
+def polygon(*points, **keywords):
     """polygon(points...)
 
     Create a linear interpolation between input points.
 
     :param [point-like] points: The points to interpolate
+    :param bool relative: If controlpoints are interpreted as relative to the 
+        previous one
     :return: Linear curve through the input points
     :rtype: Curve
     """
@@ -69,6 +74,12 @@ def polygon(*points):
         knot.append(knot[-1] + sqrt(dist))
         prevPt = pt
     knot.append(knot[-1])
+
+    relative = keywords.get('relative', False)
+    if relative:
+        points = list(points)
+        for i in range(1, len(points)):
+            points[i] = [x0 + x1 for (x0,x1) in zip(points[i-1], points[i])]
 
     return Curve(BSplineBasis(2, knot), points)
 
@@ -104,7 +115,7 @@ def n_gon(n=5, r=1, center=(0,0,0), normal=(0,0,1)):
     result =  Curve(basis, cp)
     return flip_and_move_plane_geometry(result, center, normal)
 
-def circle(r=1, center=(0,0,0), normal=(0,0,1)):
+def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
     """circle([r=1])
 
     Create a circle.
@@ -112,6 +123,7 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1)):
     :param float r: Radius
     :param point-like center: local origin
     :param vector-like normal: local normal
+    :param string type: The type of parametrization ('p2C0' or 'p4C1')
     :return: A periodic, quadratic rational curve
     :rtype: Curve
     :raises ValueError: If radius is not positive
@@ -119,18 +131,41 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1)):
     if r <= 0:
         raise ValueError('radius needs to be positive')
 
-    w = 1.0 / sqrt(2)
-    controlpoints = [[r, 0, 1],
-                     [r*w, r*w, w],
-                     [0, r, 1],
-                     [-r*w, r*w, w],
-                     [-r, 0, 1],
-                     [-r*w, -r*w, w],
-                     [0, -r, 1],
-                     [r*w, -r*w, w]]
-    knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]) / 4.0 * 2 * pi
+    if type == 'p2C0' or type == 'C0p2':
+        w = 1.0 / sqrt(2)
+        controlpoints = [[1, 0, 1],
+                         [w, w, w],
+                         [0, 1, 1],
+                         [-w, w, w],
+                         [-1, 0, 1],
+                         [-w, -w, w],
+                         [0, -1, 1],
+                         [w, -w, w]]
+        knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]) / 4.0 * 2 * pi
 
-    result = Curve(BSplineBasis(3, knot, 0), controlpoints, True)
+        result = Curve(BSplineBasis(3, knot, 0), controlpoints, True)
+    elif type.lower() == 'p4c1' or type.lower() == 'c1p4':
+        w = 2*sqrt(2)/3
+        a = 1.0/2/sqrt(2)
+        b = 1.0/6 * (4*sqrt(2)-1)
+        controlpoints = [[ 1,-a, 1],
+                         [ 1, a, 1],
+                         [ b, b, w],
+                         [ a, 1, 1],
+                         [-a, 1, 1],
+                         [-b, b, w],
+                         [-1, a, 1],
+                         [-1,-a, 1],
+                         [-b,-b, w],
+                         [-a,-1, 1],
+                         [ a,-1, 1],
+                         [ b,-b, w]]
+        knot = np.array([ -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5]) / 4.0 * 2 * pi
+        result = Curve(BSplineBasis(5, knot, 1), controlpoints, True)
+    else:
+        raise ValueError('Unkown type: %s' %(type))
+
+    result *= r
     return flip_and_move_plane_geometry(result, center, normal)
 
 def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
@@ -150,6 +185,8 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
         raise ValueError('theta needs to be in range [-2pi,2pi]')
     if r <= 0:
         raise ValueError('radius needs to be positive')
+    if theta == 2*pi:
+        return circle(r, center, normal)
 
     # build knot vector
     knot_spans = int(ceil(theta / (2 * pi / 3)))
@@ -310,3 +347,134 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     # wrap it all into a curve and return
     return Curve(basis, cp)
 
+def bezier(pts, quadratic=False, relative=False):
+    """Generate a cubic or quadratic bezier curve from a set of control points
+
+    :param [array-like] pts: list of control-points. In addition to a starting
+        point we need three points per bezier interval for cubic splines and
+        two points for quadratic splines
+    :param bool quadratic: True if a quadratic spline is to be returned, False
+        if a cubic spline is to be returned
+    :param bool relative: If controlpoints are interpreted as relative to the 
+        previous one
+    :return: Bezier curve
+    :rtype: Curve
+    
+    """
+    if quadratic:
+        p = 3
+    else:
+        p = 4
+    # compute number of intervals
+    n = int((len(pts)-1)/(p-1))
+    # generate uniform knot vector of repeated integers
+    knot = list(range(n+1)) * (p-1) + [0, n]
+    knot.sort()
+    if relative:
+        pts = copy.deepcopy(pts)
+        for i in range(1, len(pts)):
+            pts[i] = [x0 + x1 for (x0,x1) in zip(pts[i-1], pts[i])]
+    return Curve(BSplineBasis(p, knot), pts)
+
+def manipulate(crv, f, normalized=False, vectorized=False):
+    """ Create a new curve based on an expression-evaluation of an existing one
+    :param function f: expression of the physical point *x*, the velocity
+        (tangent) *v*, parametric point *t* and/or acceleration *a*.
+    :param normalized: If velocity and acceleration terms should be normalized
+        to have length 1
+    :param vectorized: True if *f* is expressed in terms of vectorized
+        operations. The method is sped up whenever this is used.
+
+    Examples:
+
+    .. code:: python
+
+        def scale_by_two(x):
+            return 2*x
+
+        new_curve = manipulate(old_curve, scale_by_two) 
+        new_curve = old_curve * 2 # will give the same result
+
+        def move_3_to_right(x, v):
+            result = x
+            # *v* is velocity. Rotate this 90 to the right and it points (+v[1], -v[0])
+            result[0] += 3*v[1]
+            result[1] -= 3*v[0]
+            return result
+
+        # note that the velocity vector will not have length one unless normalized is passed
+        new_curve = manipulate(old_curve, move_3_to_right, normalized=True)
+
+        def move_3_to_right_fast(x, v):
+            result = x
+            result[:,0] += 3*v[:,1]
+            result[:,1] -= 3*v[:,0]
+            return result
+
+        new_curve = manipulate(old_curve, move_3_to_right_fast, normalized=True, vectorized=True)
+    """
+    
+    b = crv.bases[0]
+    t = np.array(b.greville())
+    n = len(crv)
+
+    if vectorized:
+        x = crv(t)
+        arg_names = inspect.getargspec(f).args
+        argc = len(arg_names)
+        argv = [0] * argc
+        for j in range(argc):
+            if arg_names[j] == 'x':
+                argv[j] = x
+            elif arg_names[j] == 't':
+                argv[j] = t
+            elif arg_names[j] == 'v':
+                c0 = np.array([i for i in range(n) if b.continuity(t[i]) == 0])
+                v = crv.derivative(t, 1)
+                if len(c0)>0:
+                    v[c0,:] = (v[c0,:] + crv.derivative(t[c0], 1, above=False)) / 2.0
+                if normalized:
+                    v[:] = [vel / norm(vel) for vel in v]
+                argv[j] = v
+            elif arg_names[j] == 'a':
+                c1 = np.array([i for i in range(n) if b.continuity(t[i]) < 2])
+                a = crv.derivative(t, 2)
+                if len(c1)>0:
+                    a[c1,:] = (a[c1,:] + crv.derivative(t[c1], 2, above=False)) / 2.0
+                if normalized:
+                    a[:] = [acc / norm(acc) for acc in a]
+                argv[j] = a
+        destination   = f(*argv)
+    else:
+        destination = np.zeros((len(crv), crv.dimension))
+        for (t1, i) in zip(t, range(len(t))):
+            x = crv(t1)
+            arg_names = inspect.getargspec(f).args
+            argc = len(arg_names)
+            argv = [0] * argc
+            for j in range(argc):
+                if arg_names[j] == 'x':
+                    argv[j] = x
+                elif arg_names[j] == 't':
+                    argv[j] = t1
+                elif arg_names[j] == 'v':
+                    v = crv.derivative(t1, 1)
+                    if b.continuity(t1) < 1:
+                        v += crv.derivative(t1, 1, above=False)
+                        v /= 2.0
+                    if normalized:
+                        v /= norm(v)
+                    argv[j] = v
+                elif arg_names[j] == 'a':
+                    a = crv.derivative(t1, 2)
+                    if b.continuity(t1) < 2:
+                        a += crv.derivative(t1, 1, above=False)
+                        a /= 2.0
+                    if normalized:
+                        a /= norm(a)
+                    argv[j] = a
+            destination[i] = f(*argv)
+            
+    N = b(t)
+    controlpoints = np.linalg.solve(N, destination)
+    return Curve(b, controlpoints)

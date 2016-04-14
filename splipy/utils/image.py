@@ -171,8 +171,12 @@ def image_curves(filename):
         # make it span [0,1] instead of [0,n-1]
         for i in range(len(knot)):
             knot[i] /= float(n-1)
+        
+        # make it periodic since these are all closed curves
+        knot[0]  -= knot[-1] - knot[-5]
+        knot[-1] += knot[4]  - knot[1]
 
-        basis = BSplineBasis(4, knot)
+        basis = BSplineBasis(4, knot, 0)
 
         c = curve_factory.least_square_fit(pts, basis, parpt)
         result.append(c)
@@ -236,26 +240,28 @@ def image_convex_surface(filename):
     crv = image_curves(filename);
 
     # error test input
-    if type(crv) is list:
+    if len(crv) != 1:
         raise RuntimeError('Error: image_convex_surface expects a single closed curve. Multiple curves detected')
+
+    crv = crv[0]
 
     # parametric value of corner candidates. These are all in the range [0,1] and both 0 and 1 is present
     kinks = crv.get_kinks()
 
     # generate 4 corners
     if len(kinks) == 2:
-        corners = [.25, .5, .75]
+        corners = [0, .25, .5, .75]
 
     elif len(kinks) == 3:
-        corners = [(0+kinks[1])/2, kinks[1], (1+kinks[1])/2]
+        corners = [0, (0+kinks[1])/2, kinks[1], (1+kinks[1])/2]
 
     elif len(kinks) == 4:
         if kinks[1]-kinks[0] > kinks[2]-kinks[1] and kinks[1]-kinks[0] > kinks[3]-kinks[2]:
-            corners = [(kinks[0]+kinks[1])/2] + kinks[1:3]
+            corners = [0, (kinks[0]+kinks[1])/2] + kinks[1:3]
         elif kinks[2]-kinks[1] > kinks[3]-kinks[2]:
-            corners = [kinks[1], (kinks[1]+kinks[2])/2], kinks[2]
+            corners = [0, kinks[1], (kinks[1]+kinks[2])/2], kinks[2]
         else:
-            corners = kinks[1:3] + [(kinks[2]+kinks[3])/2]
+            corners = [0] + kinks[1:3] + [(kinks[2]+kinks[3])/2]
     
     else:
         while len(kinks) > 5:
@@ -265,7 +271,7 @@ def image_convex_surface(filename):
                 max_span   = max(max_span, kinks[i+1]-kinks[i-1])
                 max_span_i = i
             del kinks[max_span_i]
-        corners = kinks[1:4]
+        corners = kinks[0:4]
 
     return surface_factory.edge_curves(crv.split(corners));
 

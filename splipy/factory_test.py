@@ -6,6 +6,7 @@ import splipy.surface_factory as SurfaceFactory
 import splipy.volume_factory as VolumeFactory
 from math import pi, sqrt, cos, sin
 import numpy as np
+from numpy.linalg import norm
 import unittest
 
 
@@ -65,6 +66,13 @@ class TestCurveFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertAlmostEqual(np.linalg.norm(expected_knots - actual_knots), 0.0)
 
+        c = CurveFactory.polygon([0,0], [1,0], [0,1], [-1,0], relative=True)
+        self.assertEqual(len(c), 4)
+        self.assertAlmostEqual(c[2][0], 1)
+        self.assertAlmostEqual(c[2][1], 1)
+        self.assertAlmostEqual(c[3][0], 0)
+        self.assertAlmostEqual(c[3][1], 1)
+
     def test_circle(self):
 
         # unit circle of radius 1
@@ -109,6 +117,15 @@ class TestCurveFactory(unittest.TestCase):
             self.assertAlmostEqual(pt[0]+pt[1]+pt[2] - 1, 0.0) # in plane x+y+z=1
         self.assertAlmostEqual(c.length(), 2*pi, places=3)
 
+        # test alt circle
+        c = CurveFactory.circle(r=3, type='p4C1')
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        self.assertTrue(np.allclose(x[:,0]**2 + x[:,1]**2, 3.0**2))
+        for k in c.knots(0):
+            self.assertEqual(c.continuity(k), 1)
+
+
         # test errors and exceptions
         with self.assertRaises(ValueError):
             c = CurveFactory.circle(-2.5)  # negative radius
@@ -140,6 +157,7 @@ class TestCurveFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
         self.assertEqual(len(c.knots(0)), 2)
+        self.assertFalse(c.periodic(0))
         # test evaluation at 25 points for radius=1
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
@@ -150,7 +168,8 @@ class TestCurveFactory(unittest.TestCase):
         c = CurveFactory.circle_segment(2 * pi)
         self.assertEqual(c.dimension, 2)
         self.assertEqual(c.rational, True)
-        self.assertEqual(len(c.knots(0)), 4)
+        self.assertEqual(len(c.knots(0)), 5)
+        self.assertTrue(c.periodic(0))
         # test evaluation at 25 points for radius=1
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
@@ -178,6 +197,31 @@ class TestCurveFactory(unittest.TestCase):
         self.assertTrue(np.allclose(x[:,0],   16*t*t*(1-t)*(1-t), atol=1e-2))
         self.assertTrue(np.allclose(x[:,1], 1-16*t*t*(1-t)*(1-t), atol=1e-2))
 
+    def test_bezier(self):
+        crv = CurveFactory.bezier([[0,0], [0,1], [1,1], [1,0], [2,0], [2,1],[1,1]])
+        self.assertEqual(len(crv.knots(0)), 3)
+        self.assertTrue(np.allclose(crv(0), [0,0]))
+        t = crv.tangent(0)
+        self.assertTrue(np.allclose(t/norm(t), [0,1]))
+        t = crv.tangent(.9999999999999)
+        self.assertTrue(np.allclose(t/norm(t), [0,-1]))
+        t = crv.tangent(1.000000000001)
+        self.assertTrue(np.allclose(t/norm(t), [1,0]))
+        self.assertTrue(np.allclose(crv(1), [1,0]))
+        self.assertTrue(crv.order(0), 4)
+
+        # test the exact same curve, only with relative keyword
+        crv = CurveFactory.bezier([[0,0], [0,1], [1,0], [0,-1], [1,0], [0,1],[1,0]], relative=True)
+        self.assertEqual(len(crv.knots(0)), 3)
+        self.assertTrue(np.allclose(crv(0), [0,0]))
+        t = crv.tangent(0)
+        self.assertTrue(np.allclose(t/norm(t), [0,1]))
+        t = crv.tangent(.9999999999999)
+        self.assertTrue(np.allclose(t/norm(t), [0,-1]))
+        t = crv.tangent(1.000000000001)
+        self.assertTrue(np.allclose(t/norm(t), [1,0]))
+        self.assertTrue(np.allclose(crv(1), [1,0]))
+        self.assertTrue(crv.order(0), 4)
         
 
 class TestSurfaceFactory(unittest.TestCase):
@@ -221,11 +265,12 @@ class TestSurfaceFactory(unittest.TestCase):
         # radial disc of size different from 1
         surf = SurfaceFactory.disc(4)
         # test evaluation at 25 points for radius=4
-        v = np.linspace(0, 2 * pi, 25)
-        u = 1
+        v = np.linspace(surf.start('v'), surf.end('v'),25)
+        u = np.linspace(surf.start('u'), surf.end('u'), 5)
         x = surf.evaluate(u, v)
-        for pt in np.array(x[0, :, :]):
-            self.assertAlmostEqual(np.linalg.norm(pt, 2), 4.0)  # check radius
+        for circles, i in zip(x, range(5)):
+            for pt in circles:
+                self.assertAlmostEqual(norm(pt, 2), 4.0 * i / 4)  # check radius
         self.assertAlmostEqual(surf.area(), 4*4*pi, places=3)
 
         # square disc
@@ -263,6 +308,18 @@ class TestSurfaceFactory(unittest.TestCase):
         for pt in np.array(x[0, :, :]):
             self.assertAlmostEqual(pt[0] * pt[0] + pt[1] * pt[1], 1.5 * 1.5)  # check radius=1.5
             self.assertAlmostEqual(pt[2], .5)  # check height=0.5
+
+        # incomplete revolve
+        c    = CurveFactory.line([1,0], [0,1], relative=True)
+        surf = SurfaceFactory.revolve(c, theta=4.2222, axis=[0,1,0])
+        surf.reparam()
+        u = np.linspace(0,1,7)
+        v = np.linspace(0,1,7)
+        x = surf(u,v)
+        for uPt in x:
+            for pt in uPt:
+                self.assertAlmostEqual(pt[0]**2 + pt[2]**2, 1.0) # radius 1 from y-axis
+
 
     def test_surface_torus(self):
         # default torus

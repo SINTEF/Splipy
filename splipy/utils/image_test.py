@@ -14,6 +14,8 @@ class TestImage(unittest.TestCase):
     @unittest.skipIf(sys.version_info >= (3,), "Image module not supported on Python 3")
     def test_curve(self):
         crv = image_curves('splipy/utils/disc.png')
+        self.assertEqual(type(crv), list)
+        crv = crv[0]
         self.assertEqual(type(crv), Curve)
 
         bb = crv.bounding_box()
