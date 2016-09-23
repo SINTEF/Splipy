@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from splipy import __version__
+
+# Creates the __version__ name. We can't import it because it will try to load
+# dependencies before they are installed.
+with open('splipy/__version__.py', 'r') as f:
+    exec(f.read())
 
 setup(
     name='Splipy',
