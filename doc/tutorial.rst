@@ -14,7 +14,7 @@ Hello, Splipy
 
    from math import pi
    import splipy.curve_factory as cf
-   from splipy.io import G2
+   from splipy.IO import G2
 
    line = cf.line((0,0), (-3,2))
    arc = cf.circle_segment(pi/4)
