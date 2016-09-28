@@ -6,12 +6,18 @@ import numpy as np
 import unittest
 import sys
 
-if sys.version_info < (3,):
+try:
+    import cv2
+    has_image = True
+except ImportError:
+    has_image = False
+
+if has_image:
     from splipy.utils.image import *
 
 class TestImage(unittest.TestCase):
 
-    @unittest.skipIf(sys.version_info >= (3,), "Image module not supported on Python 3")
+    @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_curve(self):
         crv = image_curves('splipy/utils/disc.png')
         self.assertEqual(type(crv), list)
@@ -29,7 +35,7 @@ class TestImage(unittest.TestCase):
         self.assertTrue(np.allclose(radius, 1.0, atol=1e-2))
         self.assertAlmostEqual(crv.length(), 2*pi, places=1)
 
-    @unittest.skipIf(sys.version_info >= (3,), "Image module not supported on Python 3")
+    @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_surface(self):
         disc = image_convex_surface('splipy/utils/disc.png')
         self.assertEqual(type(disc), Surface)
