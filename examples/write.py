@@ -7,7 +7,7 @@
 
 from sys import path
 path.append('../')
-from splipy.io import *
+from splipy.IO import *
 import splipy.surface_factory as surfaces
 
 # create a NURBS torus
