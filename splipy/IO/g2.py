@@ -39,13 +39,11 @@ class G2(MasterIO):
         self.fstream.write('{} {}\n'.format(obj.dimension, int(obj.rational)))
         for b in obj.bases:
             self.fstream.write('%i %i\n' % (len(b.knots) - b.order, b.order))
-            for k in b.knots:
-                self.fstream.write('%f ' % k)
+            self.fstream.write(' '.join('%f' % k for k in b.knots))
             self.fstream.write('\n')
 
         for cp in obj:
-            for x in cp:
-                self.fstream.write('%f ' % x)
+            self.fstream.write(' '.join('%f' % x for x in cp))
             self.fstream.write('\n')
 
     def read(self):
