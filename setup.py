@@ -9,7 +9,7 @@ setup(
     description='Spline modelling library for Python',
     maintainer='Arne Morten Kvarving',
     maintainer_email='arne.morten.kvarving@sintef.no',
-    packages=['splipy', 'splipy.utils', 'splipy.io'],
+    packages=['splipy', 'splipy.utils', 'splipy.IO'],
     install_requires=[
         'numpy >= 1.9',
         'scipy >= 0.17',
