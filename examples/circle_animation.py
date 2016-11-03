@@ -38,3 +38,6 @@ def animate(i):
 # create and show the animation
 ani = animation.FuncAnimation(fig, animate, np.arange(1,n), interval=24)
 plt.show()
+
+# save results as an animated gif for web display (PS: this function call is slow)
+# ani.save('circle.gif', writer='imagemagick', fps=30);
