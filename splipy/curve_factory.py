@@ -6,6 +6,7 @@ from math import pi, cos, sin, sqrt, ceil
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
 from numpy.linalg import norm
+import splipy.state as state
 import numpy as np
 import copy
 import inspect
@@ -284,6 +285,19 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     :return: Interpolated curve
     :rtype: Curve
     """
+
+    # special case periodic curves to both allow repeated start/end or not
+    if boundary == Boundary.PERIODIC and (
+       np.allclose(x[0,:], x[-1,:],
+                   rtol = state.controlpoint_relative_tolerance,
+                   atol = state.controlpoint_absolute_tolerance)):
+        # count the seam (start/end point) as only one point, otherwise the
+        # interpolation matrix will have two identical rows corresponding to
+        # this point
+        x = x[:-1,:]
+        if t is not None:
+            t = t[:-1]
+
     n = len(x)
     if t is None:
         t = [0.0]
@@ -307,6 +321,9 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         knot[-2] = t[-1] + t[1]
         knot[-1] = t[-1] + t[2]
         basis = BSplineBasis(4, knot, 1)
+        # since we can't interpolate at the end and start simultaneously, we
+        # have to resample the interpolation points. We use the greville points
+        t = basis.greville()
     else:
         basis = BSplineBasis(4, knot)
     N = basis(t)  # left-hand-side matrix

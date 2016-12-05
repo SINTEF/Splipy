@@ -63,6 +63,7 @@ def geometric_refine(obj, alpha, n, direction=0, reverse=False):
 
     if reverse:
         obj.reverse(direction)
+    return obj
 
 
 def edge_refine(obj, S, n, direction=0):
@@ -101,6 +102,7 @@ def edge_refine(obj, S, n, direction=0):
     
     # do the actual knot insertion
     obj.insert_knot(new_knots, direction)
+    return obj
 
 
 def _splitvector(len, parts):
