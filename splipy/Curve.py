@@ -134,7 +134,7 @@ class Curve(SplineObject):
         interpolation_pts_x = N_old * self.controlpoints  # projective interpolation points (x,y,z,w)
 
         # solve the interpolation problem
-        self.controlpoints = np.linalg.solve(N_new, interpolation_pts_x)
+        self.controlpoints = np.array(np.linalg.solve(N_new, interpolation_pts_x))
         self.bases = [newBasis]
 
         return self
