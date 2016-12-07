@@ -118,6 +118,7 @@ class Curve(SplineObject):
         """Raise the polynomial order of the curve.
 
         :param int amount: Number of times to raise the order
+        :return: self
         """
         if amount < 0:
             raise ValueError('Raise order requires a non-negative parameter')
@@ -148,6 +149,7 @@ class Curve(SplineObject):
 
         :param Curve curve: Another curve
         :raises RuntimeError: If either curve is periodic
+        :return: self
         """
         # ASSUMPTION: open knot vectors
 

@@ -312,6 +312,7 @@ class SplineObject(object):
 
         :param int u,v,...: The new order in a given direction.
         :raises ValueError: If the order is reduced in any direction.
+        :return: self
         """
         if len(order) == 1:
             order = [order[0]] * self.pardim
@@ -329,6 +330,7 @@ class SplineObject(object):
 
         :param int u,v,...: Number of times to raise the order in a given
             direction.
+        :return: self
         """
         if len(raises) == 1:
             raises = [raises[0]] * self.pardim
@@ -477,6 +479,7 @@ class SplineObject(object):
         direction. The parametric domain remains unchanged.
 
         :param int direction: The direction to flip.
+        :return: self
         """
         direction = check_direction(direction, self.pardim)
         self.bases[direction].reverse()
@@ -499,6 +502,7 @@ class SplineObject(object):
 
         :param direction dir1: The first direction (default u)
         :param direction dir2: The second direction (default v)
+        :return: self
         """
         if self.pardim == 1:
             return
@@ -515,6 +519,8 @@ class SplineObject(object):
         # Swap knot vectors
         self.bases[dir1], self.bases[dir2] = self.bases[dir2], self.bases[dir1]
 
+        return self
+
     def insert_knot(self, knot, direction=0):
         """Insert a new knot into the spline.
 
@@ -522,6 +528,7 @@ class SplineObject(object):
         :param knot: The new knot(s) to insert
         :type knot: float or [float]
         :raises ValueError: For invalid direction
+        :return: self
         """
         shape  = self.controlpoints.shape
 
@@ -536,6 +543,8 @@ class SplineObject(object):
             C = self.bases[direction].insert_knot(k) * C
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
         self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim][direction])
+
+        return self
 
     def refine(self, *ns, **kwargs):
         """refine(nu, [nv, ...,] [direction=None])
@@ -558,6 +567,7 @@ class SplineObject(object):
 
         :param int nu,nv,...: Number of new knots to insert into each span
         :param int direction: Direction to refine in
+        :return: self
         """
         direction = kwargs.get('direction', None)
 
@@ -595,6 +605,7 @@ class SplineObject(object):
 
         :param tuple u, v, ...: New parametric domains, default to (0,1)
         :param int direction: The direction to reparametrize
+        :return: self
         """
         if 'direction' not in kwargs:
             # Pad the args with (0, 1) for the extra directions
@@ -616,6 +627,7 @@ class SplineObject(object):
         """Translate (i.e. move) the object by a given distance.
 
         :param point-like x: The vector to translate by.
+        :return: self
         """
         # 3D rational example: create a 4x4 translation matrix
         #
@@ -665,6 +677,7 @@ class SplineObject(object):
 
         :param args: Scaling factors, possibly different in each direction.
         :type args: point-like or float
+        :return: self
         """
         # 3D rational example: create a 4x4 scaling matrix
         #
@@ -703,6 +716,7 @@ class SplineObject(object):
         :param float theta: Angle to rotate about, measured in radians
         :param point-like normal: The normal axis (if 3D) to rotate about
         :raises RuntimeError: If the physical dimension is not 2 or 3
+        :return: self
         """
         # 2D rational example: create a 3x3 rotation matrix
         #
@@ -747,6 +761,7 @@ class SplineObject(object):
 
         :param point-like normal: The plane normal to mirror about.
         :raises RuntimeError: If the physical dimension is not 2 or 3
+        :return: self
         """
         # 3D rational example: create a 4x4 reflection matrix
         #
@@ -795,6 +810,7 @@ class SplineObject(object):
           *x* and *z* components to zero.
 
         :param string plane: Any combination of 'x', 'y' and 'z'
+        :return: self
         """
         keep = [c in plane.lower() for c in 'xyz']
 
@@ -893,6 +909,7 @@ class SplineObject(object):
         keeping the geometry unchanged.
 
         :param int direction: new periodicity, i.e. the basis is C^k over the start/end
+        :return: self
         """
         direction = check_direction(direction, self.pardim)
 
@@ -906,11 +923,14 @@ class SplineObject(object):
         if periodic > b.periodic:
             raise ValueError('Cannot raise periodicity')
 
+        return self
+
     def set_dimension(self, new_dim):
         """Sets the physical dimension of the object. If increased, the new
         components are set to zero.
 
         :param int new_dim: New dimension.
+        :return: self
         """
         dim = self.dimension
         shape = self.controlpoints.shape
@@ -934,6 +954,8 @@ class SplineObject(object):
         """Force a rational representation of the object.
 
         The weights of a non-rational object will be set to 1.
+
+        :return: self
         """
         if not self.rational:
             dim = self.dimension
@@ -952,8 +974,8 @@ class SplineObject(object):
         :type knots: float or [float]
         :param direction: Parametric direction
         :type direction: int
-        :return: The new volumes
-        :rtype: [Volume]
+        :return: The new objects
+        :rtype: [SplineObject]
         """
         # for single-value input, wrap it into a list
         knots = ensure_listlike(knots)
