@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from splipy import SplineObject
-from splipy.utils import check_section, sections, section_from_index, uniquify
+from splipy.utils import check_section, sections, section_from_index, section_to_index, uniquify
+from splipy.io import G2
 import splipy.state as state
 import numpy as np
 from collections import Counter, OrderedDict
@@ -243,6 +244,38 @@ class Orientation(object):
 
         new_flip = tuple(self.flip[d] for d in actual_dirs)
         return self.__class__(new_perm, new_flip)
+
+    @property
+    def ifem_format(self):
+        """Compute the orientation in IFEM format.
+
+        For one-dimensional objects, this is a single binary digit indicating
+        if the direction is reversed or not.
+
+        For two-dimensional objects, this is a single-digit octal number with
+        binary digits `ijk` with the following meanings:
+
+        - `i` is 1 if the directions are swapped
+        - `j` is 1 if the first direction in the reference system should be
+          reversed.
+        - `k` is 1 if the second direction in the reference system should be
+          reversed.
+
+        :raises RuntimeError: If the parametric dimension is not supported.
+        """
+        if len(self.flip) == 1:
+            return int(self.flip[0])
+        elif len(self.flip) == 2:
+            ret = 0
+            for i, f in enumerate(self.flip):
+                if f:
+                    ret |= 1 << i
+            if tuple(self.perm) == (1,0):
+                ret |= 1 << 2
+            return ret
+        raise RuntimeError(
+            'IFEM orientation format not supported for pardim {}'.format(len(self.flip))
+        )
 
 
 class TopologicalNode(object):
@@ -676,13 +709,16 @@ class SplineModel(object):
         self.dimension = dimension
 
         self.catalogue = ObjectCatalogue(pardim)
+        self.names = {}
         self.add(objs)
 
-    def add(self, obj):
+    def add(self, obj, name=None):
         if isinstance(obj, SplineObject):
             obj = [obj]
         self._validate(obj)
         self._generate(obj)
+        if name and isinstance(obj, SplineObject):
+            self.names[name] = obj
 
     def __getitem__(self, obj):
         return self.catalogue[obj]
@@ -740,3 +776,66 @@ class SplineModel(object):
         while isinstance(c, ObjectCatalogue):
             print('Dim {}: {}'.format(c.pardim, len(c.top_nodes())))
             c = c.lower
+
+    def write_ifem(self, filename):
+        p = self.pardim
+
+        # List the nodes so that the order is deterministic
+        nodes = list(self.catalogue.top_nodes())
+        node_ids = {node: i for i, node in enumerate(nodes)}
+
+        # dom = etree.Element('geometry')
+        # topology = etree.SubElement(dom, 'topology')
+
+        lines = [
+            "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
+            "<geometry>",
+            "  <topology>",
+        ]
+
+        # For every object in the model...
+        for node in nodes:
+
+            # Loop over its sections of one lower parametric dimension
+            # That is, for faces, loop over edges, and for volumes, loop over faces
+            for node_sub_idx, sub in enumerate(node.lower_nodes[p - 1]):
+                # The sub-node should have at most one neighbour, excluding the original node
+                neighbours = set(sub.higher_nodes[p]) - {node}
+                assert len(neighbours) <= 1
+                if not neighbours:
+                    continue
+
+                # Get the neighbour node and its section index to the same sub-node
+                neigh = next(iter(neighbours))
+                neigh_sub_idx = neigh.lower_nodes[p - 1].index(sub)
+
+                # Only output if the node has a lower ID than the neighbour,
+                # otherwise we'll get this pair when the reverse pair is found
+                if node_ids[node] > node_ids[neigh]:
+                    continue
+
+                # Find the actual SplineObjects representing the
+                # sub-node, as it is viewed from the perspective of
+                # both the node and the neighbour, then compute the
+                # orientation mapping between them
+                node_sec_idx = section_from_index(p, p - 1, node_sub_idx)
+                node_sub = node.obj.section(*node_sec_idx)
+                neigh_sec_idx = section_from_index(p, p - 1, neigh_sub_idx)
+                neigh_sub = neigh.obj.section(*neigh_sec_idx)
+                orientation = Orientation.compute(node_sub, neigh_sub)
+
+                lines.append('    <connection master="{}" slave="{}" midx="{}" sidx="{}" orient="{}"/>'.format(
+                    node_ids[node] + 1,
+                    node_ids[neigh] + 1,
+                    node_sub_idx + 1,
+                    neigh_sub_idx + 1,
+                    orientation.ifem_format,
+                ))
+
+        lines.extend(["  </topology>", "</geometry>"])
+
+        with open(filename + '.xinp', 'wb') as f:
+            f.write('\n'.join(lines).encode('utf-8'))
+
+        with G2(filename + '.g2') as f:
+            f.write([n.obj for n in nodes])
