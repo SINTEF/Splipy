@@ -56,7 +56,8 @@ def lissajous(a, b, d):
   N = (a/n) * (b/n) # number of periods before looping
 
   # compute a set of interpolation points
-  t = np.linspace(0,2*pi/n, 3*N) # using 3N interpolation points is decent enough
+  numb_pts = max(3*N, 100) # using 3N interpolation points is decent enough
+  t = np.linspace(0,2*pi/n, numb_pts)
   x = np.array([np.sin(a*t + d), np.sin(b*t)])
 
   # do a cubic curve interpolation with periodic boundary conditions

@@ -29,7 +29,8 @@ def lissajous(a, b, d):
     raise Exception('Non-periodic', 'a,b must be integers (of moderate size)')
 
   # compute a set of interpolation points
-  t = np.linspace(0,2*pi/n, 3*N) # using 3N interpolation points is decent enough
+  numb_pts = max(3*N, 100) # using 3N interpolation points is decent enough
+  t = np.linspace(0,2*pi/n, numb_pts)
   x = np.array([np.sin(a*t + d), np.sin(b*t)])
 
   # do a cubic curve interpolation with periodic boundary conditions
@@ -39,15 +40,13 @@ def lissajous(a, b, d):
 ### main program ###
 
 # create the curve
-crv = lissajous(60, 44, pi/2);
-# crv = lissajous(3, 4, pi/2);
+# crv = lissajous(60, 44, pi/2);
+crv = lissajous(3, 4, pi/2);
 
 # evalute the curve at n points
 n = 3000
 t = np.linspace(crv.start(0), crv.end(0), n);
 x = crv(t)
-
-
 
 ### do the  plotting animation
 fig = plt.figure()
