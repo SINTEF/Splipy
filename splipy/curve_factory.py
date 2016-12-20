@@ -286,17 +286,15 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     :rtype: Curve
     """
 
-    # special case periodic curves to both allow repeated start/end or not
-    if boundary == Boundary.PERIODIC and (
+    # if periodic input is not closed, make sure we do it now
+    if boundary == Boundary.PERIODIC and not (
        np.allclose(x[0,:], x[-1,:],
                    rtol = state.controlpoint_relative_tolerance,
                    atol = state.controlpoint_absolute_tolerance)):
-        # count the seam (start/end point) as only one point, otherwise the
-        # interpolation matrix will have two identical rows corresponding to
-        # this point
-        x = x[:-1,:]
+        x = np.append(x, [x[0,:]], axis=0)
         if t is not None:
-            t = t[:-1]
+            # augment interpolation knot by euclidian distance to end
+            t = list(t) + [t[-1] + np.linalg.norm(np.array(x[0,:])- np.array(x[-2,:]))]
 
     n = len(x)
     if t is None:
@@ -316,14 +314,20 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
 
     # create the interpolation basis and interpolation matrix on this
     if boundary == Boundary.PERIODIC:
-        knot[0]  = t[-3] - t[-1]
-        knot[1]  = t[-2] - t[-1]
-        knot[-2] = t[-1] + t[1]
-        knot[-1] = t[-1] + t[2]
-        basis = BSplineBasis(4, knot, 1)
-        # since we can't interpolate at the end and start simultaneously, we
-        # have to resample the interpolation points. We use the greville points
-        t = basis.greville()
+        # C2-periodic knots
+        knot[0]  = t[0]  + t[-4] - t[-1]
+        knot[1]  = t[0]  + t[-3] - t[-1]
+        knot[2]  = t[0]  + t[-2] - t[-1]
+        knot[-3] = t[-1] + t[1]  - t[0]
+        knot[-2] = t[-1] + t[2]  - t[0]
+        knot[-1] = t[-1] + t[3]  - t[0]
+
+        basis = BSplineBasis(4, knot, 2)
+
+        # do not duplicate the interpolation at the sem (start=end is the same point)
+        # identical points equal singular interpolation matrix
+        t = t[:-1]
+        x = x[:-1,:]
     else:
         basis = BSplineBasis(4, knot)
     N = basis(t)  # left-hand-side matrix
