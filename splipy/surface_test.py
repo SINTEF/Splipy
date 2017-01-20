@@ -568,7 +568,6 @@ class TestSurface(unittest.TestCase):
         # check that the normal is pointing out of the unit ball on a 9x9 evaluation grid
         for (i,j) in zip(xpts, npts):
             for (x,n) in zip(i,j):
-                n = n / np.linalg.norm(n)
                 self.assertAlmostEqual(n[0], x[0])
                 self.assertAlmostEqual(n[1], x[1])
                 self.assertAlmostEqual(n[2], x[2])
