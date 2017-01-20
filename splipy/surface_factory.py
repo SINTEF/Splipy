@@ -289,17 +289,17 @@ def thicken(curve, amount):
         right_points = np.matrix(np.zeros((n, 2)))
         linear = BSplineBasis(2)
 
-        x = np.matrix(curve.evaluate(t))  # curve at interpolation points
-        v = curve.tangent(t)              # velocity at interpolation points
+        x = np.matrix(curve.evaluate(t))      # curve at interpolation points
+        v = curve.derivative(t)               # velocity at interpolation points
         l = np.sqrt(v[:, 0]**2 + v[:, 1]**2)  # normalizing factor for velocity
-        v[:, 0] = v[:, 0] / l
-        v[:, 1] = v[:, 1] / l
         for i in range(n):
             if l[i] < 1e-13: # in case of zero velocity, use neighbour instead
                 if i>0:
                     v[i,:] = v[i-1,:]
                 else:
                     v[i,:] = v[i+1,:]
+            else:
+                v[i,:] /= l[i]
                 
         v = np.matrix(v)
         if inspect.isfunction(amount):

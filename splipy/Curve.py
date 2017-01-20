@@ -74,7 +74,7 @@ class Curve(SplineObject):
         return result
 
     def derivative(self, t, d=1, above=True, tensor=True):
-        """derivative(u, [d=1])
+        """derivative(t, [d=1], above=True, tensor=True)
 
         Evaluate the derivative of the curve at the given parametric values.
 
@@ -84,8 +84,8 @@ class Curve(SplineObject):
         If there is only one evaluation point, a vector of length *dim* is
         returned instead.
 
-        :param u: Parametric coordinates in which to evaluate
-        :type u: float or [float]
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
         :param int d: Number of derivatives to compute
         :param bool above: Evaluation in the limit from above
         :return: Derivative array
@@ -114,6 +114,70 @@ class Curve(SplineObject):
             result = np.array(result[0, :]).reshape(self.dimension)
 
         return result
+
+    def binormal(self, t, above=True):
+        """binormal(t, above=True)
+
+        Evaluate the normalized binormal of the curve at the given parametric value(s).
+
+        This function returns an *n* × 3 array, where *n* is the number of
+        evaluation points.
+
+        The binormal is computed as the normalized cross product between the
+        velocity and acceleration of the curve.
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        # error test input
+        if self.dimension != 3:
+            raise ValueError('Binormals require dimension = 3')
+
+        # compute derivative
+        dx    = self.derivative(t, d=1, above=above)
+        ddx   = self.derivative(t, d=2, above=above)
+
+        result = np.cross(dx, ddx)
+
+        # in case of single value input t, return vector instead of matrix
+        if len(dx.shape) == 1:
+            return result / np.linalg.norm(result)
+
+        # normalize
+        magnitude = np.apply_along_axis(np.linalg.norm, 1, result)
+        magnitude = magnitude.reshape(-1,1)
+
+        return result / magnitude
+
+    def normal(self, t, above=True):
+        """normal(t, above=True)
+
+        Evaluate the normal of the curve at the given parametric value(s).
+
+        This function returns an *n* × 3 array, where *n* is the number of
+        evaluation points.
+
+        The normal is computed as the cross product between the binormal and
+        the tangent of the curve.
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        # error test input
+        if self.dimension != 3:
+            raise ValueError('Normals require dimension = 3')
+
+        # compute derivative
+        T = self.tangent(t,  above=above)
+        B = self.binormal(t, above=above)
+
+        return np.cross(B,T)
 
     def raise_order(self, amount):
         """Raise the polynomial order of the curve.

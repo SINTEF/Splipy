@@ -383,14 +383,51 @@ class TestCurve(unittest.TestCase):
         # insert a few more knots to spice things up
         crv.insert_knot([.2, .71])
 
-        self.assertAlmostEqual(crv.tangent(0.32)[0], expect_derivative(0.32))
-        self.assertAlmostEqual(crv.tangent(0.32)[1], 0)
-        self.assertAlmostEqual(crv.tangent(0.71)[0], expect_derivative(0.71))
+        self.assertAlmostEqual(crv.derivative(0.32, 1)[0], expect_derivative(0.32))
+        self.assertAlmostEqual(crv.derivative(0.32, 1)[1], 0)
+        self.assertAlmostEqual(crv.derivative(0.71, 1)[0], expect_derivative(0.71))
 
         self.assertAlmostEqual(crv.derivative(0.22, 2)[0], expect_derivative_2(0.22))
         self.assertAlmostEqual(crv.derivative(0.22, 2)[1], 0)
         self.assertAlmostEqual(crv.derivative(0.86, 2)[0], expect_derivative_2(0.86))
-    
+
+    def test_tangent_and_normal(self):
+        crv = CurveFactory.circle()
+        crv.set_dimension(3)
+        t = np.linspace(crv.start(0), crv.end(0), 13)
+        X = crv(t)
+        T = crv.tangent(t)
+        B = crv.binormal(t)
+        N = crv.normal(t)
+
+        # check correct size
+        self.assertEqual(len(B.shape), 2) # returns a matrix
+        self.assertEqual(B.shape[0],  13)
+        self.assertEqual(B.shape[1],   3)
+
+        # check all evaluation points
+        for (x,t,b,n) in zip(X,T,B,N):
+            # for the circle we have x*t=0 and x=-n
+            self.assertAlmostEqual(np.dot(x,t), 0.0)
+            self.assertTrue(np.allclose( x, -n) )
+            # for all curves we have that t,b,n are orthogonal
+            self.assertAlmostEqual(np.dot(t,b), 0.0)
+            self.assertAlmostEqual(np.dot(b,n), 0.0)
+            self.assertAlmostEqual(np.dot(n,t), 0.0)
+            # for planar (2D) curves, we have b=[0,0,1]
+            self.assertTrue(np.allclose( b, [0,0,1]) )
+
+        # check that evaluations work for single-valued input
+        t = crv.tangent(.23)
+        b = crv.binormal(.23)
+        n = crv.normal(.23)
+        self.assertEqual(len(t.shape), 1) # is a vector (not matrix)
+        self.assertEqual(len(b.shape), 1)
+        self.assertEqual(len(n.shape), 1)
+        self.assertAlmostEqual(np.linalg.norm(t), 1.0) # should be normalized
+        self.assertAlmostEqual(np.linalg.norm(b), 1.0)
+        self.assertAlmostEqual(np.linalg.norm(n), 1.0)
+
     def test_append(self):
         crv  = Curve(BSplineBasis(3), [[0,0], [1,0], [0,1]])
         crv2 = Curve(BSplineBasis(4), [[0,1,0], [0,1,1], [0,2,1], [0,2,2]])
@@ -402,7 +439,7 @@ class TestCurve(unittest.TestCase):
         expected_knot = [0,0,0,0,1,1,1,1.5,2,2,2,2]
         self.assertEqual(crv3.order(direction=0),  4)
         self.assertEqual(crv3.rational, False)
-        self.assertEqual(np.linalg.norm(crv3.knots(0, True)-expected_knot), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(crv3.knots(0, True)-expected_knot), 0.0)
  
         t = np.linspace(0,1,11)
         pt        = np.zeros((11,3))
