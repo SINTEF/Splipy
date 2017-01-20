@@ -171,7 +171,7 @@ class Curve(SplineObject):
         """
         # error test input
         if self.dimension != 3:
-            raise ValueError('Normals require dimension = 3')
+            raise RuntimeError('Normals require dimension = 3')
 
         # compute derivative
         T = self.tangent(t,  above=above)
