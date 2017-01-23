@@ -4,6 +4,7 @@ from splipy import BSplineBasis
 from splipy.SplineObject import SplineObject
 from splipy.utils import ensure_listlike, is_singleton
 from itertools import chain
+from bisect import bisect_left, bisect_right
 import numpy as np
 import scipy.sparse.linalg as splinalg
 
@@ -339,10 +340,24 @@ class Curve(SplineObject):
         continuity"""
         return [k for k in self.knots(0) if self.continuity(k)<1]
 
-    def length(self):
-        """ Computes the euclidian length of the curve in geometric space """
+    def length(self, t0=None, t1=None):
+        """ Computes the euclidian length of the curve in geometric space
+
+        .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt
+        
+        """
         (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
         knots = self.knots(0)
+        # keep only integration boundaries within given start (t0) and stop (t1) interval
+        if t0 is not None:
+            i = bisect_left(knots, t0)
+            knots = np.insert(knots, i, t0)
+            knots = knots[i:]
+        if t1 is not None:
+            i = bisect_right(knots, t1)
+            knots = knots[:i]
+            knots = np.insert(knots, i, t1)
+
         t = np.array([ (x+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots[:-1], knots[1:]) ])
         w = np.array([     w/2*(t1-t0)    for t0,t1 in zip(knots[:-1], knots[1:]) ])
         t = np.ndarray.flatten(t)
