@@ -210,6 +210,45 @@ class SplineObject(object):
 
         return result
 
+    def get_derivative_spline(self, direction=None):
+        if self.rational:
+            raise RuntimeError('Not working for rational splines')
+
+        # if no direction is specified, return a tuple with all derivatives
+        if direction is None:
+            return tuple([self.get_derivative_spline(dim) for dim in range(self.pardim)])
+        else:
+            d = check_direction(direction, self.pardim)
+            k = self.knots(d, with_multiplicities=True)
+            p = self.order(d)-1
+            n = self.shape[d]
+            if self.bases[d].periodic < 0:
+                C = np.zeros((n-1, n))
+                for i in range(n-1):
+                    C[i,i]   = -float(p) / (k[i+p+1] - k[i+1])
+                    C[i,i+1] =  float(p) / (k[i+p+1] - k[i+1])
+            else:
+                C = np.zeros((n, n))
+                for i in range(n):
+                    ip1 = np.mod(i+1,n)
+                    C[i,i]   = -float(p) / (k[i+p+1] - k[i+1])
+                    C[i,ip1] =  float(p) / (k[i+p+1] - k[i+1])
+
+            transpose_fix = [[], [(0,1)], [(0,1,2), (1,0,2)], [(0,1,2,3),(1,0,2,3),(1,2,0,3)]]
+            derivative_controlpoints = np.tensordot(C, self.controlpoints, axes=(1, d))
+            derivative_controlpoints = derivative_controlpoints.transpose(transpose_fix[self.pardim][d])
+            bases    = [b for b in self.bases]
+            bases[d] = BSplineBasis(p, k[1:-1], bases[d].periodic-1)
+
+            # search for the right subclass constructor, i.e. Volume, Surface or Curve
+            constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
+            constructor = constructor[0]
+
+            # return approximated object
+            args = bases + [derivative_controlpoints] + [self.rational]
+            return constructor(*args, raw=True)
+
+
     def tangent(self, *params, **kwargs):
         """tangent(u, v, ..., [direction=None])
 

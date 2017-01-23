@@ -245,3 +245,6 @@ class Curve(SplineObject):
 
     def __repr__(self):
         return str(self.bases[0]) + '\n' + str(self.controlpoints)
+
+    def get_derivative_curve(self):
+        return super(Curve, self).get_derivative_spline(0)
