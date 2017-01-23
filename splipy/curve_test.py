@@ -490,5 +490,52 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.norm(orig.controlpoints - recons.controlpoints), 0.0)
         self.assertAlmostEqual(np.linalg.norm(orig.bases[0].knots - recons.bases[0].knots), 0.0)
 
+    def test_curvature(self):
+        # linear curves have zero curvature
+        crv = Curve()
+        self.assertAlmostEqual(crv.curvature(.3), 0.0)
+        # test multiple evaluation points
+        t = np.linspace(0,1, 10)
+        k = crv.curvature(t)
+        self.assertTrue(np.allclose(k, 0.0))
+
+        # test circle
+        crv = CurveFactory.circle(r=3) + [1,1]
+        t = np.linspace(0,2*pi, 10)
+        k = crv.curvature(t)
+        self.assertTrue(np.allclose(k, 1.0/3.0)) # circles: k = 1/r
+
+        # test 3D (np.cross has different behaviour in 2D/3D)
+        crv.set_dimension(3)
+        k = crv.curvature(t)
+        self.assertTrue(np.allclose(k, 1.0/3.0)) # circles: k = 1/r
+
+    def test_torsion(self):
+        # planar curves have zero torsion
+        controlpoints = [[1, 0, 1], [1, 1, .7], [0, 1, .89], [-1, 1, 0.5], [-1, 0, 1], [-1,-.5,1], [1, -.5, 1]]
+        basis = BSplineBasis(4, [-3, -2, -1, 0, 1, 2, 2.5, 4, 5, 6, 7, 8, 9, 9.5], 2)
+        crv = Curve(basis, controlpoints, rational=True)
+        self.assertAlmostEqual(crv.torsion(.3), 0.0)
+
+        # test multiple evaluation points
+        t = np.linspace(0,1, 10)
+        k = crv.torsion(t)
+        self.assertEqual(len(k.shape), 1)    # is vector
+        self.assertEqual(k.shape[0],  10)    # length 10 vector
+        self.assertTrue(np.allclose(k, 0.0)) # zero torsion for planar curves
+
+        # test helix: [a*cos(t), a*sin(t), b*t]
+        t = np.linspace(0, 6*pi, 300)
+        a = 3.0
+        b = 2.0
+        x = np.array([a*np.cos(t), a*np.sin(t), b*t])
+        crv = CurveFactory.cubic_curve(x.T, t=t)
+        t = np.linspace(0, 6*pi, 10)
+        k = crv.torsion(t)
+
+        # this is a helix approximation, hence atol=1e-3
+        self.assertTrue(np.allclose(k, b/(a**2+b**2), atol=1e-3)) # helix have const. torsion
+
+
 if __name__ == '__main__':
     unittest.main()

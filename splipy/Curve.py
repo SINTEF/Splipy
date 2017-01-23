@@ -179,6 +179,75 @@ class Curve(SplineObject):
 
         return np.cross(B,T)
 
+    def curvature(self, t, above=True):
+        """curvature(t, above=True)
+
+        Evaluate the curvaure at specified point(s). The curvature is defined as
+
+        .. math:: \\frac{|\\boldsymbol{v}\\times \\boldsymbol{a}|}{|\\boldsymbol{v}|^3}
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        # compute derivative
+        v = self.derivative(t, d=1, above=above)
+        a = self.derivative(t, d=2, above=above)
+        w = np.cross(v,a)
+
+        if len(v.shape) == 1: # single evaluation point
+            magnitude = np.linalg.norm(w)
+            speed     = np.linalg.norm(v)
+        else:                 # multiple evaluation points
+            if self.dimension == 2:
+                magnitude = w # for 2D-cases np.cross() outputs scalars
+            else:             # for 3D, it is vectors
+                magnitude = np.apply_along_axis(np.linalg.norm, -1, w)
+            speed     = np.apply_along_axis(np.linalg.norm, -1, v)
+
+        return magnitude / np.power(speed,3)
+
+    def torsion(self, t, above=True):
+        """torsion(t, above=True)
+
+        Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
+
+        .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        if self.dimension == 2:
+            # no torsion for 2D curves
+            t = ensure_listlike(t)
+            return np.zeros(len(t))
+        elif self.dimension == 3:
+            # only allow 3D curves
+            pass
+        else:
+            raise ValueError('dimension must be 2 or 3')
+
+        # compute derivative
+        v  = self.derivative(t, d=1, above=above)
+        a  = self.derivative(t, d=2, above=above)
+        da = self.derivative(t, d=3, above=above)
+        w = np.cross(v,a)
+
+        if len(v.shape) == 1: # single evaluation point
+            magnitude = np.linalg.norm(w)
+            nominator = np.dot(w, a)
+        else:                 # multiple evaluation points
+            magnitude = np.apply_along_axis(np.linalg.norm, -1, w)
+            nominator = np.array([np.dot(w1,da1) for (w1,da1) in zip(w, da)])
+
+        return nominator / np.power(magnitude, 2)
+
+
     def raise_order(self, amount):
         """Raise the polynomial order of the curve.
 
