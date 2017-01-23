@@ -155,3 +155,5 @@ class Volume(SplineObject):
                 for i in range(n1):
                     result += str(self.controlpoints[i, j, k, :]) + '\n'
         return result
+
+    get_derivative_volume = SplineObject.get_derivative_spline

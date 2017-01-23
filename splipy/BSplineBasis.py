@@ -35,6 +35,7 @@ class BSplineBasis:
         :raises ValueError: for inapproriate knot vectors
         """
 
+        periodic = max(periodic, -1)
         if knots is None:
             knots = [0] * order + [1] * order
             for i in range(periodic+1):
