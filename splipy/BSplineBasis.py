@@ -130,8 +130,8 @@ class BSplineBasis:
         n = len(self.knots) - p - (self.periodic+1)  # number of basis functions (with periodicity)
         m = len(t)
         data    = np.zeros(m*p)
-        indices = np.zeros(m*p)
-        indptr  = range(0,m*p+1,p)
+        indices = np.zeros(m*p, dtype='int32')
+        indptr  = np.array(range(0,m*p+1,p), dtype='int32')
         if p <= d: # requesting more derivatives than polymoial degree: return all zeros
             return np.matrix(np.zeros((m,n)))
         if self.periodic >= 0:

@@ -7,6 +7,7 @@ from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
 from numpy.linalg import norm
 import splipy.state as state
+import scipy.sparse.linalg as splinalg
 import numpy as np
 import copy
 import inspect
@@ -232,10 +233,10 @@ def interpolate(x, basis, t=None):
     # evaluate all basis functions in the interpolation points
     if t is None:
         t = basis.greville()
-    N = basis.evaluate(t)
+    N = basis.evaluate(t, sparse=True)
 
     # solve interpolation problem
-    controlpoints = np.linalg.solve(N, x)
+    controlpoints = splinalg.spsolve(N, x)
 
     return Curve(basis, controlpoints)
 
@@ -326,7 +327,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         t = basis.greville()
     else:
         basis = BSplineBasis(4, knot)
-    N = basis(t)  # left-hand-side matrix
+    N = basis(t, sparse=True)  # left-hand-side matrix
 
     # add derivative boundary conditions if applicable
     if boundary in [Boundary.TANGENT, Boundary.HERMITE, Boundary.TANGENTNATURAL]:
@@ -359,7 +360,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         x[-new:,:] = 0
 
     # solve system to get controlpoints
-    cp = np.linalg.solve(N,x)
+    cp = splinalg.spsolve(N,x)
 
     # wrap it all into a curve and return
     return Curve(basis, cp)
@@ -492,6 +493,6 @@ def manipulate(crv, f, normalized=False, vectorized=False):
                     argv[j] = a
             destination[i] = f(*argv)
             
-    N = b(t)
-    controlpoints = np.linalg.solve(N, destination)
+    N = b(t, sparse=True)
+    controlpoints = splinalg.spsolve(N, destination)
     return Curve(b, controlpoints)

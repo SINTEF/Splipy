@@ -5,6 +5,7 @@ from splipy.SplineObject import SplineObject
 from splipy.utils import ensure_listlike, is_singleton
 from itertools import chain
 import numpy as np
+import scipy.sparse.linalg as splinalg
 
 __all__ = ['Curve']
 
@@ -131,11 +132,11 @@ class Curve(SplineObject):
         # set up an interpolation problem. This is in projective space, so no problems for rational cases
         interpolation_pts_t = newBasis.greville()  # parametric interpolation points (t)
         N_old = self.bases[0].evaluate(interpolation_pts_t)
-        N_new = newBasis.evaluate(interpolation_pts_t)
+        N_new = newBasis.evaluate(interpolation_pts_t, sparse=True)
         interpolation_pts_x = N_old * self.controlpoints  # projective interpolation points (x,y,z,w)
 
         # solve the interpolation problem
-        self.controlpoints = np.array(np.linalg.solve(N_new, interpolation_pts_x))
+        self.controlpoints = np.array(splinalg.spsolve(N_new, interpolation_pts_x))
         self.bases = [newBasis]
 
         return self
@@ -237,8 +238,8 @@ class Curve(SplineObject):
         basis += t0
         # fetch evaluation points and solve interpolation problem
         t = basis.greville()
-        N = basis.evaluate(t)
-        controlpoints = np.linalg.solve(N, self.evaluate(t))
+        N = basis.evaluate(t, sparse=True)
+        controlpoints = splinalg.spsolve(N, self.evaluate(t))
 
         # return new resampled curve
         return Curve(basis, controlpoints)
