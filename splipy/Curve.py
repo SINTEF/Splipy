@@ -244,5 +244,47 @@ class Curve(SplineObject):
         # return new resampled curve
         return Curve(basis, controlpoints)
 
+    def error(self, target):
+        """ Computes the L2 (squared and per knot span) and max error between
+        this curve and a target curve
+
+        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^2(t_1,t_2)}^2 = \\int_{t_1}^{t_2}
+            |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|^2 dt, \\quad \\forall \;\\text{knots}\;t_1 < t_2
+
+        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\infty} = \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|
+
+        :param function target: callable function which takes as input a vector
+            of evaluation points t and gives as output a matrix x where
+            x[i,j] is component j evaluated at point t[i]
+        :return: L2 error per knot-span and the maximum error
+        :rtype:  tuple(list(float), float)
+
+        Examples:
+
+        .. code:: python
+
+            import numpy as np
+
+            def arclength_circle(t):
+                return np.array( [np.cos(t), np.sin(t)] ).T
+
+            crv = curve_factory.circle(r=1)
+            (err2, maxerr) = crv.error(arclength_circle)
+            print '|| e ||_L2  = ', np.sqrt(np.sum(err2))
+            print '|| e ||_max = ', maxerr
+        """
+        knots = self.knots(0)
+        (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
+        err2    = []
+        err_inf = 0.0
+        for t0,t1 in zip(knots[:-1], knots[1:]): # for all knot spans
+            tg  = (x+1)/2*(t1-t0)+t0 # evaluation points
+            wg  =   w  /2*(t1-t0)    # integration weights
+            error = self(tg) - target(tg)    # [x-xh, y-yh, z-zh]
+            error = np.sum(error**2, axis=1) # |x-xh|^2
+            err2.append(np.dot(error, wg))   # integrate over domain
+            err_inf = max(np.max(np.sqrt(error)), err_inf)
+        return (err2, err_inf)
+
     def __repr__(self):
         return str(self.bases[0]) + '\n' + str(self.controlpoints)
