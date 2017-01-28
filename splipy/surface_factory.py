@@ -346,7 +346,7 @@ def sweep(path, shape):
 
     The *shape* object has to be contained in the 'xy' plane (preferably centered
     around the origin) as its x-coordinate is extruded in the normal direction,
-    and its y-coordinate in the binormal direction.
+    and its y-coordinate in the binormal direction of the *path* curve.
 
     :param Curve path:  The path to drag *shape* along
     :param Curve shape: The shape to be dragged out to a surface
