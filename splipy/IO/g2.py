@@ -15,16 +15,15 @@ class G2(MasterIO):
         self.filename = filename
 
     def __enter__(self):
-        try:
-            self.onlywrite = False
-            self.fstream   = open(self.filename, 'r+')
-        except IOError:
-            self.onlywrite = True
-            self.fstream   = open(self.filename, 'w')
-            
         return self
 
     def write(self, obj):
+        if not hasattr(self, 'fstream'):
+            self.onlywrite = True
+            self.fstream   = open(self.filename, 'w')
+        if not self.onlywrite:
+            raise IOError('Could not write to file %s' % (self.filename))
+
         """Write the object in GoTools format. """
         if isinstance(obj[0], SplineObject): # input SplineModel or list
             for o in obj:
@@ -47,8 +46,13 @@ class G2(MasterIO):
             self.fstream.write('\n')
 
     def read(self):
+        if not hasattr(self, 'fstream'):
+            self.onlywrite = False
+            self.fstream   = open(self.filename, 'r')
+
         if self.onlywrite:
-            raise IOError('Could not open file %s' % (self.filename))
+            raise IOError('Could not read from file %s' % (self.filename))
+
         result = []
 
         for line in self.fstream:

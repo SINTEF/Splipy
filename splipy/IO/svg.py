@@ -95,7 +95,7 @@ class SVG(MasterIO):
             self.scale   = self.width*(1-2*self.margin) / (boundingbox[2]-boundingbox[0])
             self.height  = self.width*geometryRatio
         self.center      = [boundingbox[0], boundingbox[1]]
-        self.offset      = [marginPixels, -marginPixels]
+        self.offset      = [marginPixels, marginPixels]
         
         # populate tree with all curves and surfaces in entities
         for entry in self.all_objects:
