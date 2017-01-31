@@ -402,6 +402,22 @@ class TestSurfaceFactory(unittest.TestCase):
             self.assertAlmostEqual(surf(1, v)[0], c2(v)[0])  # x-coord, right crv
             self.assertAlmostEqual(surf(1, v)[1], c2(v)[1])  # y-coord, right crv
 
+        # add a case where opposing sites have mis-matching rationality
+        crvs = Surface().edges() # returned in order umin, umax, vmin, vmax
+        crvs[0].force_rational()
+        crvs[1].reverse()
+        crvs[2].reverse()
+        # input curves should be clockwise oriented closed loop
+        srf = SurfaceFactory.edge_curves(crvs[0], crvs[3], crvs[1], crvs[2])
+        crvs[1].reverse()
+        u = np.linspace(0,1,7)
+        self.assertTrue(np.allclose(srf(u,0).reshape((7,2)), crvs[0](u)))
+        self.assertTrue(np.allclose(srf(u,1).reshape((7,2)), crvs[1](u)))
+
+        # test error handling
+        with self.assertRaises(ValueError):
+            srf = SurfaceFactory.edge_curves(crvs + (Curve(),)) # 5 input curves
+
     def test_thicken(self):
         c = Curve()                       # 2D curve from (0,0) to (1,0)
         s = SurfaceFactory.thicken(c, .5) # extend to y=[-.5, .5]

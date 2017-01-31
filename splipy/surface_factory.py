@@ -223,6 +223,9 @@ def edge_curves(*curves):
         # create (linear,linear) corner parametrization
         linear = BSplineBasis(2)
         rat = s1.rational  # using control-points from top/bottom, so need to know if these are rational
+        if rat:
+            bottom = bottom.clone().force_rational() # don't mess with the input curve, make clone
+            top.force_rational()                     # this is already a clone
         s3 = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]], rat)
 
         # in order to add spline surfaces, they need identical parametrization
