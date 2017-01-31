@@ -9,7 +9,7 @@ achieve with conventional CAD tools.
 
 You can read the latest documentation `here <http://sintefmath.github.io/Splipy>`_.
 
-Also, take a look at the `examples <https://github.com/sintefmath/Splipy/tree/master/examples>` page
+Also, take a look at the `examples <https://github.com/sintefmath/Splipy/tree/master/examples>`_ page
 
 
 Dependencies
