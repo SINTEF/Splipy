@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from splipy import Curve, Surface, SplineObject, BSplineBasis
 import xml.etree.ElementTree as etree
+from xml.dom import minidom
 import numpy as np
 import re
 from .master import MasterIO
@@ -54,11 +55,6 @@ class SVG(MasterIO):
             filename += '.svg'
         self.filename = filename
 
-        # create xml root tag
-        self.xmlRoot = etree.Element('svg',  {'xmlns':'http://www.w3.org/2000/svg',
-                                              'version':'1.1',
-                                              'width':str(width),
-                                              'height':str(height)})
         self.width  = width
         self.height = height
         self.margin = margin
@@ -89,13 +85,19 @@ class SVG(MasterIO):
         if geometryRatio > imageRatio: # scale by y-coordinate
             marginPixels = self.height*self.margin
             self.scale   = self.height*(1-2*self.margin) / (boundingbox[3]-boundingbox[1])
-            self.width   = self.height/geometryRatio
+            self.width   = self.height/geometryRatio + 2*marginPixels
         else:                          # scale by x-coordinate
             marginPixels = self.width*self.margin
             self.scale   = self.width*(1-2*self.margin) / (boundingbox[2]-boundingbox[0])
-            self.height  = self.width*geometryRatio
+            self.height  = self.width*geometryRatio + 2*marginPixels
         self.center      = [boundingbox[0], boundingbox[1]]
         self.offset      = [marginPixels, marginPixels]
+
+        # create xml root tag
+        self.xmlRoot = etree.Element('svg',  {'xmlns':'http://www.w3.org/2000/svg',
+                                              'version':'1.1',
+                                              'width':str(self.width),
+                                              'height':str(self.height)})
         
         # populate tree with all curves and surfaces in entities
         for entry in self.all_objects:
@@ -106,8 +108,11 @@ class SVG(MasterIO):
 
         # if no objects are stored, then we've most likely only called read()
         if len(self.all_objects) > 0:
-            self.xmlTree = etree.ElementTree(self.xmlRoot)
-            self.xmlTree.write(self.filename, encoding='us-ascii', xml_declaration=True)
+            rough_string = etree.tostring(self.xmlRoot) # entire xml-file on one line
+            reparsed     = minidom.parseString(rough_string)
+            result       = reparsed.toprettyxml(indent="  ") # adds newline and inline
+            f = open(self.filename, 'w')
+            f.write(result)
 
     def write_curve(self, xmlNode, curve, fill='none', stroke='#000000', width=2):
         """ Writes a Curve to the xml tree. This will draw a single curve
@@ -131,10 +136,10 @@ class SVG(MasterIO):
         bezier -= self.center
         bezier *= self.scale
         bezier += self.offset
-        pathString = 'M %f,%f C ' % (bezier[0][0],  self.height - bezier[0][1])
+        pathString = 'M %f,%f C ' % (bezier[0][0],  self.height + 2*self.margin - bezier[0][1])
 
         for i in range(1,len(bezier)):
-            pathString += '%f,%f ' % (bezier[i][0], self.height - bezier[i][1])
+            pathString += '%f,%f ' % (bezier[i][0], self.height + 2*self.margin - bezier[i][1])
 
         curveNode.attrib['d'] = pathString
 
