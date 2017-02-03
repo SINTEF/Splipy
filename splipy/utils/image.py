@@ -7,8 +7,10 @@ from math import sqrt
 import numpy as np
 import sys
 
-if sys.version_info < (3,):
+try:
     import cv2
+except ImportError:
+    pass
 
 def get_corners(X, L=50, R=30, D=15):
     """Detects corners of traced outlines using the SAM04 algorithm.
@@ -36,7 +38,7 @@ def get_corners(X, L=50, R=30, D=15):
             index = np.array(range(i+1,k))
         else:
             k = i+L-n
-            index = np.array(range(i+1,n+1)+range(1,k))
+            index = np.array(list(range(i+1,n+1)) + list(range(1,k)))
 
         M = X[k-1,:]-X[i-1,:]
 
@@ -139,7 +141,7 @@ def image_curves(filename):
             corners = get_corners(pts)            # recompute corners, since previous sem might be smooth
 
         n = len(pts)
-        parpt = range(n)
+        parpt = list(range(n))
         for i in range(n):
             parpt[i] = float(parpt[i]) / (n-1)
 
