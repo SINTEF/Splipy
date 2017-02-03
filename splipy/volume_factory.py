@@ -5,10 +5,12 @@
 from math import pi, sqrt
 import numpy as np
 from splipy import Surface, Volume, BSplineBasis
+import splipy.curve_factory as CurveFactory
 import splipy.surface_factory as SurfaceFactory
 
-__all__ = ['cube', 'revolve', 'cylinder', 'extrude', 'edge_surfaces', 'loft',
-           'interpolate', 'least_square_fit']
+__all__ = ['cube', 'sphere', 'revolve', 'cylinder', 'extrude', 'edge_surfaces',
+           'loft', 'interpolate', 'least_square_fit']
+           
 
 
 def cube(size=1, lower_left=(0,0,0)):
@@ -25,6 +27,80 @@ def cube(size=1, lower_left=(0,0,0)):
     result.scale(size)
     result += lower_left
     return result
+
+def sphere(r=1, center=(0,0,0), type='radial', x0=0.5,w0=0.5):
+    """sphere([r=1], [center=(0,0,0)], type=[radial])
+
+    Create a solid sphere
+
+    :param float r: Radius
+    :param point-like center: Local origin of the sphere
+    :param string type: The type of parametrization ('radial' or 'square')
+    :return: A solid ball
+    :rtype: Volume
+    """
+    if type == 'radial':
+        shell    = SurfaceFactory.sphere(r, center)
+        midpoint = shell*0 + center
+        return edge_surfaces(shell, midpoint)
+    elif type == 'square':
+        # based on the work of James E.Cobb: "Tiling the Sphere with Rational Bezier Patches"
+        # University of Utah, July 11, 1988. UUCS-88-009
+        b = BSplineBasis(order=5);
+        sr2 = sqrt(2);
+        sr3 = sqrt(3);
+        sr6 = sqrt(6);
+        cp = [[      -4*(sr3-1),       4*(1-sr3),      4*(1-sr3),   4*(3-sr3)  ], # row 0
+              [           -sr2 ,     sr2*(sr3-4),    sr2*(sr3-4), sr2*(3*sr3-2)],
+              [              0 ,  4./3*(1-2*sr3), 4./3*(1-2*sr3),4./3*(5-sr3)  ],
+              [            sr2 ,     sr2*(sr3-4),    sr2*(sr3-4), sr2*(3*sr3-2)],
+              [       4*(sr3-1),       4*(1-sr3),      4*(1-sr3),   4*(3-sr3)  ],
+              [    -sr2*(4-sr3),            -sr2,    sr2*(sr3-4), sr2*(3*sr3-2)], # row 1
+              [    -(3*sr3-2)/2,     (2-3*sr3)/2,     -(sr3+6)/2,     (sr3+6)/2],
+              [              0 , sr2*(2*sr3-7)/3,       -5*sr6/3, sr2*(sr3+6)/3],
+              [     (3*sr3-2)/2,     (2-3*sr3)/2,     -(sr3+6)/2,     (sr3+6)/2],
+              [     sr2*(4-sr3),            -sr2,    sr2*(sr3-4), sr2*(3*sr3-2)],
+              [ -4./3*(2*sr3-1),               0, 4./3*(1-2*sr3),   4*(5-sr3)/3], # row 2
+              [-sr2/3*(7-2*sr3),               0,       -5*sr6/3, sr2*(sr3+6)/3], 
+              [              0 ,               0,    4*(sr3-5)/3, 4*(5*sr3-1)/9], 
+              [ sr2/3*(7-2*sr3),               0,       -5*sr6/3, sr2*(sr3+6)/3], 
+              [  4./3*(2*sr3-1),               0, 4./3*(1-2*sr3),   4*(5-sr3)/3],
+              [    -sr2*(4-sr3),             sr2,    sr2*(sr3-4), sr2*(3*sr3-2)], # row 3
+              [    -(3*sr3-2)/2,    -(2-3*sr3)/2,     -(sr3+6)/2,     (sr3+6)/2],
+              [              0 ,-sr2*(2*sr3-7)/3,       -5*sr6/3, sr2*(sr3+6)/3],
+              [     (3*sr3-2)/2,    -(2-3*sr3)/2,     -(sr3+6)/2,     (sr3+6)/2],
+              [     sr2*(4-sr3),             sr2,    sr2*(sr3-4), sr2*(3*sr3-2)],
+              [      -4*(sr3-1),      -4*(1-sr3),      4*(1-sr3),   4*(3-sr3)  ], # row 4
+              [           -sr2 ,    -sr2*(sr3-4),    sr2*(sr3-4), sr2*(3*sr3-2)],
+              [              0 , -4./3*(1-2*sr3), 4./3*(1-2*sr3),4./3*(5-sr3)  ],
+              [            sr2 ,    -sr2*(sr3-4),    sr2*(sr3-4), sr2*(3*sr3-2)],
+              [       4*(sr3-1),      -4*(1-sr3),      4*(1-sr3),   4*(3-sr3)  ]];
+        wmin = Surface(b,b,cp, rational=True)
+        wmax = wmin.clone().mirror([0,0,1])
+        vmax = wmin.clone().rotate(pi/2, [1,0,0])
+        vmin = vmax.clone().mirror([0,1,0])
+        umax = vmin.clone().rotate(pi/2, [0,0,1])
+        umin = umax.clone().mirror([1,0,0])
+        # ideally I would like to call edge_surfaces() now, but that function
+        # does not work with rational surfaces, so we'll just manually try
+        # and add some inner controlpoints
+        cp   = np.zeros((5,5,5,4))
+        cp[ :, :, 0,:] = wmin[:,:,:]
+        cp[ :, :,-1,:] = wmax[:,:,:]
+        cp[ :, 0, :,:] = vmin[:,:,:]
+        cp[ :,-1, :,:] = vmax[:,:,:]
+        cp[ 0, :, :,:] = umin[:,:,:]
+        cp[-1, :, :,:] = umax[:,:,:]
+        inner = np.linspace(-.5,.5, 3)
+        Y, X, Z = np.meshgrid(inner,inner,inner)
+        cp[1:4,1:4,1:4,0] = X
+        cp[1:4,1:4,1:4,1] = Y
+        cp[1:4,1:4,1:4,2] = Z
+        cp[1:4,1:4,1:4,3] = 1
+        ball = Volume(b,b,b,cp,rational=True, raw=True)
+        return r*ball + center
+    else:
+        raise ValueError('invalid type argument')
 
 
 def revolve(surf, theta=2 * pi):
@@ -123,11 +199,8 @@ def edge_surfaces(*surfaces):
 
         # Volume constructor orders control points in a different way, so we
         # create it from scratch here
-        result = Volume()
-        result.bases = [surf1.bases[0], surf1.bases[1], BSplineBasis(2)]
-        result.dimension = surf1.dimension
-        result.rational = surf1.rational
-        result.controlpoints = controlpoints
+        result = Volume(surf1.bases[0], surf1.bases[1], BSplineBasis(2), controlpoints,
+                         rational=surf1.rational, raw=True)
 
         return result
     elif len(surfaces) == 6:
@@ -152,7 +225,7 @@ def edge_surfaces(*surfaces):
         Volume.make_splines_identical(vol2, vol3)
         Volume.make_splines_identical(vol2, vol4)
         Volume.make_splines_identical(vol3, vol4)
-        result  = vol1.clone()
+        result                =   vol1.clone()
         result.controlpoints +=   vol2.controlpoints
         result.controlpoints +=   vol3.controlpoints
         result.controlpoints -= 2*vol4.controlpoints
