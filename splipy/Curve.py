@@ -72,7 +72,7 @@ class Curve(SplineObject):
 
         return result
 
-    def derivative(self, t, d=1, above=True):
+    def derivative(self, t, d=1, above=True, tensor=True):
         """derivative(u, [d=1])
 
         Evaluate the derivative of the curve at the given parametric values.
@@ -91,7 +91,7 @@ class Curve(SplineObject):
         :rtype: numpy.array
         """
         if not self.rational or d != 2:
-            return super(Curve, self).derivative(t, d=d, above=above)
+            return super(Curve, self).derivative(t, d=d, above=above, tensor=tensor)
 
         t = ensure_listlike(t)
         dN = self.bases[0].evaluate(t, d, above)
