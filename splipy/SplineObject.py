@@ -20,6 +20,12 @@ def rotation_matrix(theta, axis):
                       [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
 
 
+def transpose_fix(pardim, direction):
+    ret = list(range(1, pardim+1))
+    ret.insert(direction, 0)
+    return tuple(ret)
+
+
 class SplineObject(object):
     """SplineObject()
 
@@ -234,9 +240,8 @@ class SplineObject(object):
                     C[i,i]   = -float(p) / (k[i+p+1] - k[i+1])
                     C[i,ip1] =  float(p) / (k[i+p+1] - k[i+1])
 
-            transpose_fix = [[], [(0,1)], [(0,1,2), (1,0,2)], [(0,1,2,3),(1,0,2,3),(1,2,0,3)]]
-            derivative_controlpoints = np.tensordot(C, self.controlpoints, axes=(1, d))
-            derivative_controlpoints = derivative_controlpoints.transpose(transpose_fix[self.pardim][d])
+            derivative_cps = np.tensordot(C, self.controlpoints, axes=(1, d))
+            derivative_cps = derivative_cps.transpose(transpose_fix(self.pardim, d))
             bases    = [b for b in self.bases]
             bases[d] = BSplineBasis(p, k[1:-1], bases[d].periodic-1)
 
@@ -245,7 +250,7 @@ class SplineObject(object):
             constructor = constructor[0]
 
             # return approximated object
-            args = bases + [derivative_controlpoints] + [self.rational]
+            args = bases + [derivative_cps] + [self.rational]
             return constructor(*args, raw=True)
 
 
@@ -576,12 +581,11 @@ class SplineObject(object):
 
         direction = check_direction(direction, self.pardim)
 
-        transpose_fix = [[], [(0,1)], [(0,1,2), (1,0,2)], [(0,1,2,3),(1,0,2,3),(1,2,0,3)]]
         C = np.matrix(np.identity(shape[direction]))
         for k in knot:
             C = self.bases[direction].insert_knot(k) * C
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
-        self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim][direction])
+        self.controlpoints = self.controlpoints.transpose(transpose_fix(self.pardim, direction))
 
         return self
 
