@@ -13,5 +13,6 @@ setup(
     install_requires=[
         'numpy >= 1.9',
         'scipy >= 0.17',
+        'lxml',
     ]
 )
