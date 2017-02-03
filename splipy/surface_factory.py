@@ -9,6 +9,7 @@ import splipy.curve_factory as CurveFactory
 import inspect
 import numpy as np
 import os
+from os.path import dirname, realpath, join
 
 __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus', 'edge_curves',
            'thicken', 'loft', 'interpolate', 'least_square_fit', 'teapot']
@@ -454,6 +455,7 @@ def least_square_fit(x, bases, u):
 
     return Surface(bases[0], bases[1], cp.transpose(1,0,2).reshape((np.prod(surf_shape),dim)))
 
+
 def teapot():
     """Generate the Utah teapot as 32 cubic bezier patches. This teapot has a
     rim, but no bottom. It is also self-intersecting making it unsuitable for
@@ -464,18 +466,17 @@ def teapot():
     :return: The utah teapot
     :rtype: List of Surface
     """
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    f = open(dir_path + '/templates/teapot.bpt', 'r')
-    results = [] 
-    numb_patches = int(f.readline())
-    for i in range(numb_patches):
-        p = np.fromstring(f.readline(), dtype=np.uint8, count=2, sep=' ')
-        basis1 = BSplineBasis(p[0]+1)
-        basis2 = BSplineBasis(p[1]+1)
+    path = join(dirname(realpath(__file__)), 'templates', 'teapot.bpt')
+    with open(path) as f:
+        results = []
+        numb_patches = int(f.readline())
+        for i in range(numb_patches):
+            p = np.fromstring(f.readline(), dtype=np.uint8, count=2, sep=' ')
+            basis1 = BSplineBasis(p[0]+1)
+            basis2 = BSplineBasis(p[1]+1)
 
-        ncp = basis1.num_functions() * basis2.num_functions()
-        cp  = [np.fromstring(f.readline(), dtype=np.float, count=3, sep=' ') for j in range(ncp)]
-        results.append(Surface(basis1, basis2, cp))
+            ncp = basis1.num_functions() * basis2.num_functions()
+            cp  = [np.fromstring(f.readline(), dtype=np.float, count=3, sep=' ') for j in range(ncp)]
+            results.append(Surface(basis1, basis2, cp))
 
     return results
-
