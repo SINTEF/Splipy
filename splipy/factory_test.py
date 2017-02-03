@@ -359,6 +359,25 @@ class TestSurfaceFactory(unittest.TestCase):
                 self.assertAlmostEqual(np.linalg.norm(surf(u, v), 2), 1.0)
         self.assertAlmostEqual(surf.area(), 4*pi, places=3)
 
+    def test_volume_sphere(self):
+        # unit ball
+        ball = VolumeFactory.sphere(type='square')
+        # test 7x7 grid for radius = 1
+        for surf in ball.faces():
+            for u in np.linspace(surf.start(0), surf.end(0), 7):
+                for v in np.linspace(surf.start(1), surf.end(1), 7):
+                    self.assertAlmostEqual(np.linalg.norm(surf(u, v), 2), 1.0)
+            self.assertAlmostEqual(surf.area(), 4*pi/6, places=3)
+
+        # unit ball
+        ball = VolumeFactory.sphere(type='radial')
+        # test 7x7 grid for radius = 1
+        for u in np.linspace(surf.start(0), surf.end(0), 7):
+            for v in np.linspace(surf.start(1), surf.end(1), 7):
+                self.assertAlmostEqual(np.linalg.norm(ball(u, v, 0), 2), 1.0) # w=0 is outer shell
+                self.assertAlmostEqual(np.linalg.norm(ball(u, v, 1), 2), 0.0) # w=1 is the degenerate core
+        self.assertAlmostEqual(ball.faces()[4].area(), 4*pi, places=3)
+
     def test_cylinder_surface(self):
         # unit cylinder
         surf = SurfaceFactory.cylinder()
