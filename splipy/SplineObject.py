@@ -217,6 +217,38 @@ class SplineObject(object):
         return result
 
     def get_derivative_spline(self, direction=None):
+        """ get_derivative_spline(self, [direction=None]):
+
+        Compute the controlpoints associated with the derivative spline object
+
+        If `direction` is given, only the derivatives in that direction are
+        returned.
+
+        If `direction` is not given, this function returns a tuple of all
+        partial derivatives
+
+        .. code:: python
+
+           # Create a 4x4 element cubic spline surface
+           surf = Surface()
+           surf.raise_order(2,2)
+           surf.refine(3,3)
+           surf[1:4,1:4,:] += 0.1 # make the surface non-trivial by moving controlpoints
+
+           # Create the derivative surface
+           du = surf.get_derivative_spline(direction='u')
+
+           # evaluation is identical 
+           print(du.evaluate(0.3, 0.4))
+           print(surf.derivative(0.3, 0.4, d=(1,0)))
+
+           print(surf.order()) # prints (3,3)
+           print(du.order())   # prints (2,3)
+
+        :param int direction: The tangential direction
+        :return: Derivative spline
+        :rtype: SplineObject
+        """
         if self.rational:
             raise RuntimeError('Not working for rational splines')
 
@@ -249,7 +281,7 @@ class SplineObject(object):
             constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
             constructor = constructor[0]
 
-            # return approximated object
+            # return derivative object
             args = bases + [derivative_cps] + [self.rational]
             return constructor(*args, raw=True)
 
