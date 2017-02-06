@@ -184,3 +184,4 @@ class Surface(SplineObject):
                 result += str(self.controlpoints[i, j, :]) + '\n'
         return result
 
+    get_derivative_surface = SplineObject.get_derivative_spline

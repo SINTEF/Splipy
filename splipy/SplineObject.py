@@ -20,6 +20,12 @@ def rotation_matrix(theta, axis):
                       [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
 
 
+def transpose_fix(pardim, direction):
+    ret = list(range(1, pardim+1))
+    ret.insert(direction, 0)
+    return tuple(ret)
+
+
 class SplineObject(object):
     """SplineObject()
 
@@ -209,6 +215,76 @@ class SplineObject(object):
             result = result.reshape(self.dimension)
 
         return result
+
+    def get_derivative_spline(self, direction=None):
+        """ get_derivative_spline(self, [direction=None]):
+
+        Compute the controlpoints associated with the derivative spline object
+
+        If `direction` is given, only the derivatives in that direction are
+        returned.
+
+        If `direction` is not given, this function returns a tuple of all
+        partial derivatives
+
+        .. code:: python
+
+           # Create a 4x4 element cubic spline surface
+           surf = Surface()
+           surf.raise_order(2,2)
+           surf.refine(3,3)
+           surf[1:4,1:4,:] += 0.1 # make the surface non-trivial by moving controlpoints
+
+           # Create the derivative surface
+           du = surf.get_derivative_spline(direction='u')
+
+           # evaluation is identical 
+           print(du.evaluate(0.3, 0.4))
+           print(surf.derivative(0.3, 0.4, d=(1,0)))
+
+           print(surf.order()) # prints (3,3)
+           print(du.order())   # prints (2,3)
+
+        :param int direction: The tangential direction
+        :return: Derivative spline
+        :rtype: SplineObject
+        """
+        if self.rational:
+            raise RuntimeError('Not working for rational splines')
+
+        # if no direction is specified, return a tuple with all derivatives
+        if direction is None:
+            return tuple([self.get_derivative_spline(dim) for dim in range(self.pardim)])
+        else:
+            d = check_direction(direction, self.pardim)
+            k = self.knots(d, with_multiplicities=True)
+            p = self.order(d)-1
+            n = self.shape[d]
+            if self.bases[d].periodic < 0:
+                C = np.zeros((n-1, n))
+                for i in range(n-1):
+                    C[i,i]   = -float(p) / (k[i+p+1] - k[i+1])
+                    C[i,i+1] =  float(p) / (k[i+p+1] - k[i+1])
+            else:
+                C = np.zeros((n, n))
+                for i in range(n):
+                    ip1 = np.mod(i+1,n)
+                    C[i,i]   = -float(p) / (k[i+p+1] - k[i+1])
+                    C[i,ip1] =  float(p) / (k[i+p+1] - k[i+1])
+
+            derivative_cps = np.tensordot(C, self.controlpoints, axes=(1, d))
+            derivative_cps = derivative_cps.transpose(transpose_fix(self.pardim, d))
+            bases    = [b for b in self.bases]
+            bases[d] = BSplineBasis(p, k[1:-1], bases[d].periodic-1)
+
+            # search for the right subclass constructor, i.e. Volume, Surface or Curve
+            constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
+            constructor = constructor[0]
+
+            # return derivative object
+            args = bases + [derivative_cps] + [self.rational]
+            return constructor(*args, raw=True)
+
 
     def tangent(self, *params, **kwargs):
         """tangent(u, v, ..., [direction=None])
@@ -537,12 +613,11 @@ class SplineObject(object):
 
         direction = check_direction(direction, self.pardim)
 
-        transpose_fix = [[], [(0,1)], [(0,1,2), (1,0,2)], [(0,1,2,3),(1,0,2,3),(1,2,0,3)]]
         C = np.matrix(np.identity(shape[direction]))
         for k in knot:
             C = self.bases[direction].insert_knot(k) * C
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
-        self.controlpoints = self.controlpoints.transpose(transpose_fix[self.pardim][direction])
+        self.controlpoints = self.controlpoints.transpose(transpose_fix(self.pardim, direction))
 
         return self
 
