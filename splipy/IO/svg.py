@@ -234,10 +234,10 @@ class SVG(MasterIO):
             # if not single-letter command (i.e. 'z')
             if len(piece)>1:
                 # points is a (string-)list of (x,y)-coordinates for the given operator
-                points = re.findall('[0-9].*[0-9]', piece[1:])[0].split(' ')
+                points = re.findall('-?\d+\.?\d*', piece[1:])
 
                 # convert string-list to a list of numpy arrays (of size 2)
-                np_pts = [np.array(pt.split(','), float) for pt in points]
+                np_pts = np.reshape(np.array(points, 'float'), (len(points)/2,2))
 
             if piece[0] == 'm' or piece[0] == 'M':
                 # I really hope it always start with a move command (think it does)
