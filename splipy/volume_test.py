@@ -43,6 +43,22 @@ class TestVolume(unittest.TestCase):
         with self.assertRaises(ValueError):
             val = vol(.5, .2, -10)  # evalaute outside parametric domain
 
+    def test_evaluate_nontensor(self):
+        vol = Volume(BSplineBasis(7), BSplineBasis(7), BSplineBasis(5))
+
+        u_val = [0, 0.1, 0.9, 0.3]
+        v_val = [0.2, 0.3, 0.9, 0.4]
+        w_val = [0.3, 0.5, 0.5, 0.0]
+        value = vol(u_val, v_val, w_val, tensor=False)
+
+        self.assertEqual(value.shape[0], 4)
+        self.assertEqual(value.shape[1], 3)
+
+        for i, (u, v, w) in enumerate(zip(u_val, v_val, w_val)):
+            self.assertAlmostEqual(value[i, 0], u)  # identity map x=u
+            self.assertAlmostEqual(value[i, 1], v)  # identity map y=v
+            self.assertAlmostEqual(value[i, 2], w)  # identity map z=w
+
     def test_indexing(self):
         v = Volume()
 

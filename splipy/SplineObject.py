@@ -26,6 +26,18 @@ def transpose_fix(pardim, direction):
     return tuple(ret)
 
 
+def evaluate(bases, cps, tensor=True):
+    if tensor:
+        idx = len(bases) - 1
+        for N in bases[::-1]:
+            cps = np.tensordot(N, cps, axes=(1, idx))
+    else:
+        cps = np.einsum('ij,j...->i...', bases[0], cps)
+        for N in bases[1:]:
+            cps = np.einsum('ij,ij...->i...', N, cps)
+    return cps
+
+
 class SplineObject(object):
     """SplineObject()
 
@@ -91,35 +103,43 @@ class SplineObject(object):
                 if min(p) < b.start() or b.end() < max(p):
                     raise ValueError('Evaluation outside parametric domain')
 
-    def evaluate(self, *params):
-        """evaluate(u, v, ...)
+    def evaluate(self, *params, **kwargs):
+        """evaluate(u, v, ..., tensor=True)
 
         Evaluate the object at given parametric values.
 
-        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
-        the number of evaluation points in direction *i*, and *dim* is the
-        physical dimension of the object.
+        If *tensor* is true, evaluation will take place on a tensor product
+        grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where
+        *ni* is the number of evaluation points in direction *i*, and *dim* is
+        the physical dimension of the object.
+
+        If *tensor* is false, there must be an equal number *n* of evaluation
+        points in all directions, and the return value will be an *n* × *dim*
+        array.
 
         If there is only one evaluation point, a vector of length *dim* is
         returned instead.
 
         :param u,v,...: Parametric coordinates in which to evaluate
         :type u,v,...: float or [float]
+        :param tensor: Whether to evaluate on a tensor product grid
+        :type tensor: bool
         :return: Geometry coordinates
         :rtype: numpy.array
         """
         squeeze = all(is_singleton(p) for p in params)
         params = [ensure_listlike(p) for p in params]
 
+        tensor = kwargs.get('tensor', True)
+        if not tensor and len({len(p) for p in params}) != 1:
+            raise ValueError('Parameters must have same length')
+
         self._validate_domain(*params)
 
-        # Evaluate the derivatives of the corresponding bases at the corresponding points
+        # Evaluate the corresponding bases at the corresponding points
         # and build the result array
         Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
-        idx = len(self.bases) - 1
-        result = self.controlpoints
-        for N in Ns[::-1]:
-            result = np.tensordot(N, result, axes=(1, idx))
+        result = evaluate(Ns, self.controlpoints, tensor)
 
         # For rational objects, we divide out the weights, which are stored in the
         # last coordinate
@@ -135,13 +155,18 @@ class SplineObject(object):
         return result
 
     def derivative(self, *params, **kwargs):
-        """derivative(u, v, ..., [d=(1,1,...)])
+        """derivative(u, v, ..., [d=(1,1,...)], [tensor=True])
 
         Evaluate the derivative of the object at the given parametric values.
 
-        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
-        the number of evaluation points in direction *i*, and *dim* is the
-        physical dimension of the object.
+        If *tensor* is true, evaluation will take place on a tensor product
+        grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where
+        *ni* is the number of evaluation points in direction *i*, and *dim* is
+        the physical dimension of the object.
+
+        If *tensor* is false, there must be an equal number *n* of evaluation
+        points in all directions, and the return value will be an *n* × *dim*
+        array.
 
         If there is only one evaluation point, a vector of length *dim* is
         returned instead.
@@ -170,6 +195,8 @@ class SplineObject(object):
         :type u,v,...: float or [float]
         :param (int) d: Order of derivative to compute
         :param (bool) above: Evaluation in the limit from above
+        :param tensor: Whether to evaluate on a tensor product grid
+        :type tensor: bool
         :return: Derivatives
         :rtype: numpy.array
         """
@@ -182,15 +209,17 @@ class SplineObject(object):
         above = kwargs.get('above', [True] * self.pardim)
         above = ensure_listlike(above, self.pardim)
 
+        tensor = kwargs.get('tensor', True)
+
+        if not tensor and len({len(p) for p in params}) != 1:
+            raise ValueError('Parameters must have same length')
+
         self._validate_domain(*params)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
         dNs = [b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params, derivs, above)]
-        idx = len(self.bases) - 1
-        result = self.controlpoints
-        for dN in dNs[::-1]:
-            result = np.tensordot(dN, result, axes=(1, idx))
+        result = evaluate(dNs, self.controlpoints, tensor)
 
         # For rational curves, we need to use the quotient rule
         # (n/W)' = (n' W - n W') / W^2 = n'/W - nW'/W^2
@@ -201,9 +230,7 @@ class SplineObject(object):
             if sum(derivs) > 1:
                 raise RuntimeError('Rational derivative not implemented for order %i' % sum(derivs))
             Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
-            non_derivative = self.controlpoints
-            for N in Ns[::-1]:
-                non_derivative = np.tensordot(N, non_derivative, axes=(1, idx))
+            non_derivative = evaluate(Ns, self.controlpoints, tensor)
             W = non_derivative[..., -1]  # W
             Wd = result[..., -1]         # W'
             for i in range(self.dimension):
@@ -288,7 +315,7 @@ class SplineObject(object):
 
 
     def tangent(self, *params, **kwargs):
-        """tangent(u, v, ..., [direction=None])
+        """tangent(u, v, ..., [direction=None], [tensor=True])
 
         Evaluate the tangents of the object at the given parametric values.
 
@@ -305,6 +332,8 @@ class SplineObject(object):
         :type u,v,...: float or [float]
         :param int direction: The tangential direction
         :param (bool) above: Evaluation in the limit from above
+        :param tensor: Whether to evaluate on a tensor product grid
+        :type tensor: bool
         :return: Tangents
         :rtype: numpy.array
         """
@@ -314,6 +343,8 @@ class SplineObject(object):
         above = kwargs.get('above', [True] * self.pardim)
         above = ensure_listlike(above, self.pardim)
 
+        tensor = kwargs.get('tensor', True)
+
         if self.pardim == 1:
             direction = 0
 
@@ -321,13 +352,13 @@ class SplineObject(object):
             result = ()
             for i in range(self.pardim):
                 derivative[i] = 1
-                result += (self.derivative(*params, d=derivative, above=above),)
+                result += (self.derivative(*params, d=derivative, above=above, tensor=tensor),)
                 derivative[i] = 0
             return result
 
         i = check_direction(direction, self.pardim)
         derivative[i] = 1
-        return self.derivative(*params, d=derivative, above=above)
+        return self.derivative(*params, d=derivative, above=above, tensor=tensor)
 
     def section(self, *args, **kwargs):
         """section(u, v, ..., [unwrap_points=False])
