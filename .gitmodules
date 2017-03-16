@@ -1,0 +1,3 @@
+[submodule "submodules/LRSplines"]
+	path = submodules/LRSplines
+	url = https://github.com/VikingScientist/LRSplines
