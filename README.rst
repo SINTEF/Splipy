@@ -61,3 +61,32 @@ To run the tests, you can use your favourite test runner. For example, with
 pytest::
 
     py.test splipy test_utils
+
+
+Releasing
+---------
+
+To make a new release, it is recommended to install `bumpversion
+<https://pypi.python.org/pypi/bumpversion>`_. To make a new release, run::
+
+    bumpversion <type>
+
+where `type` is one of `patch`, `minor` or `major`. This will up the version
+number, create a commit and a tag. To push this to github, use::
+
+    git push --tags
+
+After that, to create the actual packages, run::
+
+    rm -rf dist
+    python setup.py sdist
+    python setup.py bdist_wheel --universal
+
+to create a source distribution and a wheel. These can then be uploaded where
+they need to be uploaded. The recommended way to do that is using `twine
+<https://pypi.python.org/pypi/twine>`_::
+
+    twine upload dist/* -r <index>
+
+Where `index` is the name of the index in your `~/.pypirc` where you want to
+upload.
