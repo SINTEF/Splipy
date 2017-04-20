@@ -453,19 +453,24 @@ class ObjectCatalogue(object):
         # identity view on it.
         try:
             for candidate_node in self.internal[lower_nodes[-1]]:
-                return candidate_node.view(obj)
-        # FIXME: It might be useful to optionally not silence OrientationError,
-        # since that more often than not indicates a real error
-        except (KeyError, OrientationError):
-            if not add:
-                raise KeyError("No such object found")
-            node = TopologicalNode(self, obj, lower_nodes)
-            # Assign the new node to each possible permutation of lower-order
-            # nodes. This is slight overkill since some of these permutations
-            # are invalid, but c'est la vie.
-            for p in permutations(lower_nodes[-1]):
-                self.internal.setdefault(p, []).append(node)
-            return node.view()
+                try:
+                    return candidate_node.view(obj)
+                # FIXME: It might be useful to optionally not silence OrientationError,
+                # since that more often than not indicates a real error
+                except OrientationError:
+                    pass
+        except KeyError:
+            pass
+
+        if not add:
+            raise KeyError("No such object found")
+        node = TopologicalNode(self, obj, lower_nodes)
+        # Assign the new node to each possible permutation of lower-order
+        # nodes. This is slight overkill since some of these permutations
+        # are invalid, but c'est la vie.
+        for p in permutations(lower_nodes[-1]):
+            self.internal.setdefault(p, []).append(node)
+        return node.view()
 
     def add(self, obj):
         """Add new nodes to the graph to accommodate the given object, then return the
