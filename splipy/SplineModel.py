@@ -4,7 +4,7 @@ from splipy import *
 from splipy.utils import *
 import splipy.state as state
 import numpy as np
-from collections import Counter
+from collections import Counter, defaultdict
 from itertools import chain, product, permutations
 
 try:
@@ -284,7 +284,7 @@ class TopologicalNode(object):
         self.catalogue = catalogue
         self.obj = obj
         self.lower_nodes = lower_nodes
-        self.higher_nodes = {}
+        self.higher_nodes = defaultdict(list)
 
         for dim_nodes in self.lower_nodes:
             for node in dim_nodes:
@@ -296,7 +296,7 @@ class TopologicalNode(object):
 
     def assign_higher(self, node):
         """Add a link to a node of higher dimension."""
-        self.higher_nodes.setdefault(node.pardim, set()).add(node)
+        self.higher_nodes[node.pardim].append(node)
 
     def view(self, other_obj=None):
         """Return a `NodeView` object of this node.
@@ -402,7 +402,7 @@ class ObjectCatalogue(object):
         self.pardim = pardim
 
         # Internal mapping from tuples of lower-order nodes to lists of nodes
-        self.internal = {}
+        self.internal = defaultdict(list)
 
         # Function for computing orientations
         self.make_orientation = (
@@ -474,7 +474,7 @@ class ObjectCatalogue(object):
         # nodes. This is slight overkill since some of these permutations
         # are invalid, but c'est la vie.
         for p in permutations(lower_nodes[-1]):
-            self.internal.setdefault(p, []).append(node)
+            self.internal[p].append(node)
         return node.view()
 
     def add(self, obj):
