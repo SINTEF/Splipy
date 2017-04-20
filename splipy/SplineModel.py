@@ -140,16 +140,16 @@ class Orientation(object):
         if len(shape_a) != len(shape_b):
             raise OrientationError("Mismatching parametric dimensions")
 
-        cpa = cpa.controlpoints
-        cpb = cpb.controlpoints
+        cpsa = cpa.controlpoints
+        cpsb = cpb.controlpoints
         if not interior:
             # Pick out just the corners
             indexes = np.ix_(*[[0,-1] for _ in range(pardim)])
             indexes = list(indexes) + [slice(None)]
-            cpa = cpa[indexes]
-            cpb = cpb[indexes]
-            shape_a = cpa.shape
-            shape_b = cpb.shape
+            cpsa = cpsa[indexes]
+            cpsb = cpsb[indexes]
+            shape_a = cpsa.shape
+            shape_b = cpsb.shape
 
         # Deal with the rest of the easy cases: dimension mismatch, and
         # comparing the shapes as multisets
@@ -160,17 +160,22 @@ class Orientation(object):
 
         # Enumerate all permutations of directions
         for perm in permutations(range(pardim)):
-            transposed = cpb.transpose(perm + (pardim,))
+            transposed = cpsb.transpose(perm + (pardim,))
             if transposed.shape != shape_a:
                 continue
             # Enumerate all possible direction reversals
             for flip in product([False, True], repeat=pardim):
                 slices = tuple(slice(None, None, -1) if f else slice(None) for f in flip)
                 test_b = transposed[slices + (slice(None),)]
-                if np.allclose(cpa, test_b,
+                if np.allclose(cpsa, test_b,
                                rtol=state.controlpoint_relative_tolerance,
                                atol=state.controlpoint_absolute_tolerance):
-                    if all([cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i]) for i in range(pardim)]):
+                    ok = (
+                        not interior or
+                        all([cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i])
+                             for i in range(pardim)])
+                    )
+                    if ok:
                         return cls(perm, flip)
 
         raise OrientationError("Non-matching objects")
