@@ -84,14 +84,9 @@ class SplineObject(object):
         self.rational = rational
 
         if not raw:
-            # Reshape the array so that it's not just flat
-            cp_shape = tuple([b.num_functions() for b in bases[::-1]] + [self.dimension + rational])
-            self.controlpoints = np.reshape(self.controlpoints, cp_shape)
-
-            # Compensate for numpy's row-major ordering
-            # cps = cps.transpose((n-1,n-2,...,0,n))
-            spec = tuple(list(range(len(bases)))[::-1] + [len(bases)])
-            self.controlpoints = self.controlpoints.transpose(spec)
+            shape = tuple(b.num_functions() for b in bases)
+            ncomps = self.dimension + rational
+            self.controlpoints = reshape(self.controlpoints, shape, order='F', ncomps=ncomps)
 
     def _validate_domain(self, *params):
         """Check whether the given evaluation parameters are valid.
