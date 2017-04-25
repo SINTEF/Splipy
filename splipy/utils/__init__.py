@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import division
 from itertools import combinations, product
 from math import atan2, sqrt
+import numpy as np
 
 try:
     from collections.abc import Sized
@@ -104,3 +106,32 @@ def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
     if center != (0,0,0):
         obj.translate(center)
     return obj
+
+def reshape(cps, newshape, order='C', ncomps=None):
+    """Like numpy's reshape, but preserves control points of several dimensions
+    that are stored contiguously.
+
+    The return value has shape (*newshape, ncomps), where ncomps is the number
+    of components per control point, as inferred by the size of `cps` and the
+    desired shape.
+
+    The `order` argument ('C' or 'F') determines the order in which control
+    points are read, but does *not* affect the order in which each component of
+    a control point is read.
+    """
+    npts = np.prod(newshape)
+    if ncomps is None:
+        try:
+            ncomps = cps.size // npts
+        except AttributeError:
+            ncomps = len(cps) // npts
+
+    if order == 'C':
+        shape = list(newshape) + [ncomps]
+    elif order == 'F':
+        shape = list(newshape[::-1]) + [ncomps]
+    cps = np.reshape(cps, shape)
+    if order == 'F':
+        spec = list(range(len(newshape)))[::-1] + [len(newshape)]
+        cps = cps.transpose(spec)
+    return cps
