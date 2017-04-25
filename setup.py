@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+from distutils.extension import Extension
 from setuptools import setup
 from splipy import __version__
+from Cython.Build import cythonize
 
 setup(
     name='Splipy',
@@ -10,6 +12,12 @@ setup(
     maintainer='Arne Morten Kvarving',
     maintainer_email='arne.morten.kvarving@sintef.no',
     packages=['splipy', 'splipy.utils', 'splipy.IO'],
+    ext_modules=cythonize(Extension(
+        'lrsplines',
+        ['lrsplines.pyx'],
+        include_dirs=['submodules/LRSplines/include/LRSpline'],
+        libraries=['LRSpline'],
+    )),
     package_data={
         'splipy': ['templates/*.bpt'],
     },
