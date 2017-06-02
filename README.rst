@@ -66,6 +66,17 @@ pytest::
 
     py.test splipy test_utils
 
+Code analysis
+-------------
+You can use pylint3 to perform static code analysis on the module.
+This can help identify bugs and give suggestions for improvements.
+
+To install, use::
+    pip3 install pylint
+
+To perform the code analysis, use::
+    pylint -d C --rcfile=pylint.cfg splipy/
+
 
 Releasing
 ---------
