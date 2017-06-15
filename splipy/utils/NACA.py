@@ -50,7 +50,7 @@ def camber(M, P, order=5):
     return Curve(basis, controlpoints)
 
 
-def NACA(M, P, X, n=40, order=5):
+def NACA(M, P, X, n=40, order=5, closed=False):
     """ Create the NACA 4 digit airfoil. This is generated as an approximation
     through the use of SurfaceFactory.thicken functions.
     @param M: Max camber height (y) given as percentage 0% to 9% of length
@@ -82,11 +82,19 @@ def NACA(M, P, X, n=40, order=5):
         a1 = -0.126
         a2 = -0.3516
         a3 = 0.2843
-        a4 = -0.1015
+        a4 = -0.1036 if closed else -0.1015
         return T / 0.2 * (a0 * np.sqrt(x) + a1 * x + a2 * x**2 + a3 * x**3 + a4 * x**4)
 
     surf = SurfaceFactory.thicken(center_line, thickness)
     edg = surf.edges()
     edg[2].reverse()
     edg[2].append(edg[3])
+
+    if closed:
+        knots = edg[2].knots(0)
+        edg[2].controlpoints = edg[2].controlpoints[:-1,:]
+        edg[2].bases[0].periodic = 0
+        edg[2].bases[0].knots[0] -= knots[-1] - knots[-2]
+        edg[2].bases[0].knots[-1] += knots[1] - knots[0]
+
     return edg[2]
