@@ -269,6 +269,21 @@ class BSplineBasis:
             mu += 1
         return continuity
 
+    def make_periodic(self, continuity):
+        """Create a periodic basis with a given continuity."""
+        deg = self.order - 1
+        new_knots = self.knots[deg:-deg]
+
+        diff = self.end() - self.start()
+        n_reps = deg - continuity - 1
+        n_copy = deg - n_reps
+
+        head = new_knots[-n_copy-1:-1] - diff
+        tail = new_knots[1:n_copy+1] + diff
+
+        new_knots = np.hstack((head, [self.start()] * n_reps, new_knots, [self.end()] * n_reps, tail))
+        return BSplineBasis(self.order, new_knots, continuity)
+
     def knot_spans(self, include_ghost_knots=False):
         """Return the set of unique knots in the knot vector.
 

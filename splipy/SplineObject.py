@@ -1147,6 +1147,58 @@ class SplineObject(object):
 
         return results
 
+    def make_periodic(self, continuity=None, direction=0):
+        """Make the spline object periodic in a given parametric direction.
+
+        :param continuity: The continuity along the boundary (default max).
+        :param direction: The direction to ensure continuity in.
+        """
+
+        direction = check_direction(direction, self.pardim)
+        basis = self.bases[direction]
+        if continuity is None:
+            continuity = basis.order - 2
+        if not -1 <= continuity <= basis.order - 2:
+            raise ValueError('Illegal continuity for basis of order {}: {}'.format(
+                continuity, order
+            ))
+        if continuity == -1:
+            raise ValueError(
+                'Operation not supported. '
+                'For discontinuous spline spaces, consider SplineObject.split().'
+            )
+        if basis.periodic >= 0:
+            raise ValueError('Basis is already periodic')
+
+        basis = basis.make_periodic(continuity)
+
+        # Merge control points
+        index_beg = [slice(None,None,None)] * (self.pardim + 1)
+        index_end = [slice(None,None,None)] * (self.pardim + 1)
+        cps = np.array(self.controlpoints)
+        weights = np.linspace(0, 1, continuity + 1) if continuity > 0 else [0.5]
+        for i, j, t in zip(range(continuity + 1), range(-continuity-1, 0), weights):
+            # Weighted average between cps[..., i, ..., :] and cps[..., -c-1+i, ..., :]
+            # The weights are chosen so that, for periodic c, the round trip
+            # c.split().make_periodic() with suitable arguments produces an
+            # object identical to c. (Mostly black magic.)
+            index_beg[direction] = i
+            index_end[direction] = j
+            cps[index_beg] = t * cps[index_beg] + (1 - t) * cps[index_end]
+
+        # cps[..., :-(continuity+1), ..., :]
+        index_beg[direction] = slice(None, -(continuity + 1), None)
+        cps = cps[index_beg]
+
+        bases = list(self.bases)
+        bases[direction] = basis
+        args = bases + [cps] + [self.rational]
+
+        # search for the right subclass constructor, i.e. Volume, Surface or Curve
+        constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
+        constructor = constructor[0]
+        return constructor(*args, raw=True)
+
     @property
     def pardim(self):
         """The number of parametric dimensions: 1 for curves, 2 for surfaces, 3

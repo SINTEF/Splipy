@@ -58,8 +58,6 @@ class TestBasis(unittest.TestCase):
         expect = [-.2, -.1, 0, 0, 0, .2, .8, .9, 1.0, 1.0, 1.0, 1.2, 1.8]
         self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
 
-        
-
     def test_greville(self):
         b = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
         self.assertAlmostEqual(b.greville(0), 0.0)
@@ -181,6 +179,54 @@ class TestBasis(unittest.TestCase):
         self.assertEqual(b5.matches(b6), False)
         self.assertEqual(b7.matches(b8, reverse=True), True)
         self.assertEqual(b8.matches(b7, reverse=True), True)
+
+    def test_make_periodic(self):
+        b = BSplineBasis(4, [1,1,1,1,2,3,4,5,5,5,5])
+
+        c = b.make_periodic(0)
+        self.assertEqual(c.periodic, 0)
+        self.assertEqual(c.order, 4)
+        self.assertAlmostEqual(c.knots[0], 0)
+        self.assertAlmostEqual(c.knots[1], 1)
+        self.assertAlmostEqual(c.knots[2], 1)
+        self.assertAlmostEqual(c.knots[3], 1)
+        self.assertAlmostEqual(c.knots[4], 2)
+        self.assertAlmostEqual(c.knots[5], 3)
+        self.assertAlmostEqual(c.knots[6], 4)
+        self.assertAlmostEqual(c.knots[7], 5)
+        self.assertAlmostEqual(c.knots[8], 5)
+        self.assertAlmostEqual(c.knots[9], 5)
+        self.assertAlmostEqual(c.knots[10], 6)
+
+        c = b.make_periodic(1)
+        self.assertEqual(c.periodic, 1)
+        self.assertEqual(c.order, 4)
+        self.assertAlmostEqual(c.knots[0], -1)
+        self.assertAlmostEqual(c.knots[1], 0)
+        self.assertAlmostEqual(c.knots[2], 1)
+        self.assertAlmostEqual(c.knots[3], 1)
+        self.assertAlmostEqual(c.knots[4], 2)
+        self.assertAlmostEqual(c.knots[5], 3)
+        self.assertAlmostEqual(c.knots[6], 4)
+        self.assertAlmostEqual(c.knots[7], 5)
+        self.assertAlmostEqual(c.knots[8], 5)
+        self.assertAlmostEqual(c.knots[9], 6)
+        self.assertAlmostEqual(c.knots[10], 7)
+
+        c = b.make_periodic(2)
+        self.assertEqual(c.periodic, 2)
+        self.assertEqual(c.order, 4)
+        self.assertAlmostEqual(c.knots[0], -2)
+        self.assertAlmostEqual(c.knots[1], -1)
+        self.assertAlmostEqual(c.knots[2], 0)
+        self.assertAlmostEqual(c.knots[3], 1)
+        self.assertAlmostEqual(c.knots[4], 2)
+        self.assertAlmostEqual(c.knots[5], 3)
+        self.assertAlmostEqual(c.knots[6], 4)
+        self.assertAlmostEqual(c.knots[7], 5)
+        self.assertAlmostEqual(c.knots[8], 6)
+        self.assertAlmostEqual(c.knots[9], 7)
+        self.assertAlmostEqual(c.knots[10], 8)
 
 if __name__ == '__main__':
     unittest.main()
