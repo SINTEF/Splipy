@@ -86,15 +86,11 @@ def NACA(M, P, X, n=40, order=5, closed=False):
         return T / 0.2 * (a0 * np.sqrt(x) + a1 * x + a2 * x**2 + a3 * x**3 + a4 * x**4)
 
     surf = SurfaceFactory.thicken(center_line, thickness)
-    edg = surf.edges()
-    edg[2].reverse()
-    edg[2].append(edg[3])
+    _, _, top, btm = surf.edges()
+    top.reverse()
+    top.append(btm)
 
     if closed:
-        knots = edg[2].knots(0)
-        edg[2].controlpoints = edg[2].controlpoints[:-1,:]
-        edg[2].bases[0].periodic = 0
-        edg[2].bases[0].knots[0] -= knots[-1] - knots[-2]
-        edg[2].bases[0].knots[-1] += knots[1] - knots[0]
+        top = top.make_periodic(0)
 
-    return edg[2]
+    return top
