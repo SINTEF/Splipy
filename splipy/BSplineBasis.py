@@ -304,6 +304,8 @@ class BSplineBasis:
             raise TypeError('amount needs to be a non-negative integer')
         if amount < 0:
             raise ValueError('amount needs to be a non-negative integer')
+        if amount == 0:
+            return self.clone()
         knot_spans = list(self.knot_spans(True))  # list of unique knots
         # For every degree we raise, we need to increase the multiplicity by one
         knots = list(self.knots) + knot_spans * amount
