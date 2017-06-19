@@ -14,12 +14,12 @@ def camber(M, P, order=5):
     one of two representations: For order<5 it will create x(t)=t and
     for order>4 it will create x(t) as qudratic in t and stretched towards the
     endpointspoints creating a more optimized parametrization.
-    @param M: Max camber height (y) given as percentage 0% to 9% of length
-    @type  M: Int 0<M<10
-    @param P: Max camber position (x) given as percentage 0% to 90% of length
-    @type  P: Int 0<P<10
-    @return : Exact centerline representation
-    @rtype  : Curve
+    :param M: Max camber height (y) given as percentage 0% to 9% of length
+    :type  M: Int 0<M<10
+    :param P: Max camber position (x) given as percentage 0% to 90% of length
+    :type  P: Int 0<P<10
+    :return : Exact centerline representation
+    :rtype  : Curve
     """
     # parametrized by x=t or x="t^2" if order>4
     M = M / 100.0
@@ -53,18 +53,18 @@ def camber(M, P, order=5):
 def NACA(M, P, X, n=40, order=5, closed=False):
     """ Create the NACA 4 digit airfoil. This is generated as an approximation
     through the use of SurfaceFactory.thicken functions.
-    @param M: Max camber height (y) given as percentage 0% to 9% of length
-    @type  M: Int 0<M<10
-    @param P: Max camber position (x) given as percentage 0% to 90% of length
-    @type  P: Int 0<P<10
-    @param P: Thickness given in percentage 1
-    @type  P: Int 0<T<40
-    @param n: Number of knot spans in resulting parametrization
-    @type  n: Int
-    @param order: Order of resulting spline curve
-    @type  order: Int
-    @return : Approximation of NACA wing profile
-    @rtype  : Curve
+    :param M: Max camber height (y) given as percentage 0% to 9% of length
+    :type  M: Int 0<M<10
+    :param P: Max camber position (x) given as percentage 0% to 90% of length
+    :type  P: Int 0<P<10
+    :param X: Thickness given in percentage 1
+    :type  X: Int 0<X<40
+    :param n: Number of knot spans in resulting parametrization
+    :type  n: Int
+    :param order: Order of resulting spline curve
+    :type  order: Int
+    :return : Approximation of NACA wing profile
+    :rtype  : Curve
     """
 
     n = int(n / 4.0)  # knot spans on each side
