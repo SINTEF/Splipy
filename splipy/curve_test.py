@@ -419,6 +419,39 @@ class TestCurve(unittest.TestCase):
         crv = Curve(BSplineBasis(2, [-1,-1,1,2,3,3]), [[0,0,0], [1,0,0], [1,0,3],[1,10,3]])
         self.assertAlmostEqual(crv.length(), 14.0)
 
+    def test_make_periodic(self):
+        my_cps = np.array([[0, -1], [1, 0], [0, 1], [-1, 0], [0, -1]], dtype=np.float)
+
+        crv = Curve(BSplineBasis(2, [0, 0, 1, 2, 3, 4, 4]), my_cps, rational=False)
+        crv = crv.make_periodic(0)
+        cps = [[0, -1], [1, 0], [0, 1], [-1, 0]]
+        self.assertAlmostEqual(np.linalg.norm(crv.controlpoints - cps), 0.0)
+
+        crv = Curve(BSplineBasis(2, [0, 0, 1, 2, 3, 4, 4]), my_cps, rational=False)
+        crv = crv.make_periodic(0)
+        cps = [[0, -1], [1, 0], [0, 1], [-1, 0]]
+        self.assertAlmostEqual(np.linalg.norm(crv.controlpoints - cps), 0.0)
+
+        crv = Curve(BSplineBasis(3, [0, 0, 0, 1, 2, 3, 3, 3]), my_cps, rational=False)
+        crv = crv.make_periodic(0)
+        cps = [[0, -1], [1, 0], [0, 1], [-1, 0]]
+        self.assertAlmostEqual(np.linalg.norm(crv.controlpoints - cps), 0.0)
+
+        crv = Curve(BSplineBasis(3, [0, 0, 0, 1, 2, 3, 3, 3]), my_cps, rational=False)
+        crv = crv.make_periodic(1)
+        cps = [[-1, 0], [1, 0], [0, 1]]
+        self.assertAlmostEqual(np.linalg.norm(crv.controlpoints - cps), 0.0)
+
+    def test_make_periodic_reconstruct(self):
+        orig = Curve(
+            BSplineBasis(4, [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7], 2),
+            [[1, 1], [2, 2], [3, 3], [4, 4]],
+            rational=True,
+        )
+        recons = orig.split(0).make_periodic(2)
+
+        self.assertAlmostEqual(np.linalg.norm(orig.controlpoints - recons.controlpoints), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(orig.bases[0].knots - recons.bases[0].knots), 0.0)
 
 if __name__ == '__main__':
     unittest.main()

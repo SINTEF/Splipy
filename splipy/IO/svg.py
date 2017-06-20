@@ -312,13 +312,9 @@ class SVG(MasterIO):
                     controlpoints.append(cp)
                 curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
             elif piece[0] == 'z' or piece[0] == 'Z':
-                # manually set to periodic curve, since we don't have a Curve.make_periodic()
+                # periodic curve
                 curve_piece = Curve(BSplineBasis(2), [startpoint, result[0]])
-                result.append(curve_piece)
-                result.controlpoints = result.controlpoints[:-1,:]
-                result.bases[0].periodic = 0
-                result.bases[0].knots[0]  -= 1
-                result.bases[0].knots[-1] += 1
+                result.append(curve_piece.make_periodic(0))
                 continue
             else:
                 raise RuntimeError('Unknown path parameter:' + piece)
