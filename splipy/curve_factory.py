@@ -9,6 +9,7 @@ from numpy.linalg import norm
 import splipy.state as state
 import scipy.sparse.linalg as splinalg
 import numpy as np
+import scipy.sparse as sp
 import copy
 import inspect
 
@@ -311,7 +312,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         del knot[-5]
         del knot[4]
     elif boundary == Boundary.HERMITE:
-        knot = sorted(knot + t[1:-1])
+        knot = sorted(list(knot) + list(t[1:-1]))
 
     # create the interpolation basis and interpolation matrix on this
     if boundary == Boundary.PERIODIC:
@@ -337,18 +338,12 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     if boundary in [Boundary.TANGENT, Boundary.HERMITE, Boundary.TANGENTNATURAL]:
         if boundary == Boundary.TANGENT:
             dn = basis([t[0], t[-1]], d=1)
-            N  = np.resize(N, (N.shape[0]+2, N.shape[1]))
-            x  = np.resize(x, (x.shape[0]+2, x.shape[1]))
         elif boundary == Boundary.TANGENTNATURAL:
             dn = basis(t[0], d=1)
-            N  = np.resize(N, (N.shape[0]+1, N.shape[1]))
-            x  = np.resize(x, (x.shape[0]+1, x.shape[1]))
         elif boundary == Boundary.HERMITE:
-            dn = getBasis(t, d=1)
-            N  = np.resize(N, (N.shape[0]+n, N.shape[1]))
-            x  = np.resize(x, (x.shape[0]+n, x.shape[1]))
-        x[n:,:] = tangents
-        N[n:,:] = dn
+            dn = basis(t, d=1)
+        N  = sp.vstack([N, sp.csr_matrix(dn)])
+        x  = np.vstack([x, tangents])
 
     # add double derivative boundary conditions if applicable
     if boundary in [Boundary.NATURAL, Boundary.TANGENTNATURAL]:
@@ -358,10 +353,8 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         elif boundary == Boundary.TANGENTNATURAL:
             ddn  = basis(t[-1], d=2)
             new  = 1
-        N  = np.resize(N, (N.shape[0]+new, N.shape[1]))
-        x  = np.resize(x, (x.shape[0]+new, x.shape[1]))
-        N[-new:,:] = ddn
-        x[-new:,:] = 0
+        N  = sp.vstack([N, sp.csr_matrix(ddn)])
+        x  = np.vstack([x, np.zeros((new, x.shape[1]))])
 
     # solve system to get controlpoints
     cp = splinalg.spsolve(N,x)

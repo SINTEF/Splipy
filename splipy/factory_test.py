@@ -193,26 +193,45 @@ class TestCurveFactory(unittest.TestCase):
         x[:,0] = 16*t*t*(1-t)*(1-t)
         x[:,1] = 1-x[:,0]
         crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.PERIODIC, t)
-        x = crv(s)
+        y = crv(s)
         # exact solution is t^4, cubic approximation gives t^3, needs atol
-        self.assertTrue(np.allclose(x[:,0],   16*s*s*(1-s)*(1-s), atol=1e-2))
-        self.assertTrue(np.allclose(x[:,1], 1-16*s*s*(1-s)*(1-s), atol=1e-2))
+        self.assertTrue(np.allclose(y[:,0],   16*s*s*(1-s)*(1-s), atol=1e-2))
+        self.assertTrue(np.allclose(y[:,1], 1-16*s*s*(1-s)*(1-s), atol=1e-2))
 
         # test FREE boundary type
         x[:,0] = 12*t*t*t         + 2*t
         x[:,1] = 12*t*t*t - 3*t*t 
         crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.FREE, t=t)
-        x = crv(s)
-        self.assertTrue(np.allclose(x[:,0], 12*s*s*s         + 2*s))
-        self.assertTrue(np.allclose(x[:,1], 12*s*s*s - 3*s*s      ))
+        y = crv(s)
+        self.assertTrue(np.allclose(y[:,0], 12*s*s*s         + 2*s))
+        self.assertTrue(np.allclose(y[:,1], 12*s*s*s - 3*s*s      ))
 
         # test NATURAL boundary type (x''(t)=0 at the boundary)
         x[:,0] = t
         x[:,1] = 3
         crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.NATURAL, t=t)
-        x = crv(s)
-        self.assertTrue(np.allclose(x[:,0],   s))
-        self.assertTrue(np.allclose(x[:,1], 3.0))
+        y = crv(s)
+        self.assertTrue(np.allclose(y[:,0],   s))
+        self.assertTrue(np.allclose(y[:,1], 3.0))
+
+        # test TANGENT boundary type (x'(t)=g at both endpoints)
+        x[:,0] =   t*t +   t - 1
+        x[:,1] = 3*t*t - 3*t + 1
+        dx     = [[2*t[ 0] + 1, 6*t[ 0]-3],
+                  [2*t[-1] + 1, 6*t[-1]-3]]
+        crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.TANGENT, t=t, tangents=dx)
+        y = crv(s)
+        self.assertTrue(np.allclose(y[:,0],   s*s +   s - 1))
+        self.assertTrue(np.allclose(y[:,1], 3*s*s - 3*s + 1))
+
+        # test HERMITE boundary type (x'(t)=g(t) at all interior points)
+        x[:,0] =   t*t +   t - 1
+        x[:,1] = 3*t*t - 3*t + 1
+        dx     = np.vstack([[2*t + 1], [6*t-3]]).T
+        crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.HERMITE, t=t, tangents=dx)
+        y = crv(s)
+        self.assertTrue(np.allclose(y[:,0],   s*s +   s - 1))
+        self.assertTrue(np.allclose(y[:,1], 3*s*s - 3*s + 1))
 
     def test_bezier(self):
         crv = CurveFactory.bezier([[0,0], [0,1], [1,1], [1,0], [2,0], [2,1],[1,1]])
