@@ -330,7 +330,7 @@ class SplineObject(object):
         :param tensor: Whether to evaluate on a tensor product grid
         :type tensor: bool
         :return: Tangents
-        :rtype: numpy.array
+        :rtype: tuple<numpy.array>
         """
         direction = kwargs.get('direction', None)
         derivative = [0] * self.pardim
@@ -340,20 +340,38 @@ class SplineObject(object):
 
         tensor = kwargs.get('tensor', True)
 
-        if self.pardim == 1:
+        if self.pardim == 1: # curves
             direction = 0
 
         if direction is None:
             result = ()
             for i in range(self.pardim):
                 derivative[i] = 1
-                result += (self.derivative(*params, d=derivative, above=above, tensor=tensor),)
+                # compute velocity in this direction
+                v = self.derivative(*params, d=derivative, above=above, tensor=tensor)
+                # normalize
+                if len(v.shape)==1:
+                    speed = np.linalg.norm(v)
+                else:
+                    speed = np.apply_along_axis(np.linalg.norm, -1, v)
+                    speed = np.reshape(speed, speed.shape +(1,))
+                # store in result tuple
+                result += (v/speed,)
                 derivative[i] = 0
             return result
 
         i = check_direction(direction, self.pardim)
         derivative[i] = 1
-        return self.derivative(*params, d=derivative, above=above, tensor=tensor)
+        # compute velocity in this direction
+        v = self.derivative(*params, d=derivative, above=above, tensor=tensor)
+        # normalize
+        if len(v.shape)==1:
+            speed = np.linalg.norm(v)
+        else:
+            speed = np.apply_along_axis(np.linalg.norm, -1, v)
+            speed = np.reshape(speed, speed.shape +(1,))
+
+        return v / speed;
 
     def section(self, *args, **kwargs):
         """section(u, v, ..., [unwrap_points=False])

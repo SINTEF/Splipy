@@ -37,7 +37,7 @@ class Surface(SplineObject):
         """Evaluate the normal of the surface at given parametric values.
 
         This is equal to the cross-product between tangents. The return value
-        is **not** normalized.
+        is normalized.
 
         :param u: Parametric coordinate(s) in the first direction
         :type u: float or [float]
@@ -56,18 +56,18 @@ class Surface(SplineObject):
             except TypeError:  # single valued input u, fails on len(u)
                 return np.array([0, 0, 1])
         elif self.dimension == 3:
+            # fetch the tangent vectors
             (du, dv) = self.tangent(u, v, above=above)
-            result = np.zeros(du.shape)
-            # the cross product of the tangent is the normal
+
+            # compute normals
+            normals = np.cross(du,dv)
+
+            # normalize output
             if len(du.shape) == 1:
-                result[0] = du[1] * dv[2] - du[2] * dv[1]
-                result[1] = du[2] * dv[0] - du[0] * dv[2]
-                result[2] = du[0] * dv[1] - du[1] * dv[0]
-            else:  # grid evaluation
-                result[:, :, 0] = du[:, :, 1] * dv[:, :, 2] - du[:, :, 2] * dv[:, :, 1]
-                result[:, :, 1] = du[:, :, 2] * dv[:, :, 0] - du[:, :, 0] * dv[:, :, 2]
-                result[:, :, 2] = du[:, :, 0] * dv[:, :, 1] - du[:, :, 1] * dv[:, :, 0]
-            return result
+                return normals / np.linalg.norm(normals)
+            magnitude = np.apply_along_axis(np.linalg.norm, -1, normals)
+            magnitude = magnitude.reshape(magnitude.shape + (1,))
+            return normals / magnitude
         else:
             raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
 

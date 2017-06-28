@@ -4,6 +4,7 @@ from splipy import BSplineBasis
 from splipy.SplineObject import SplineObject
 from splipy.utils import ensure_listlike, is_singleton
 from itertools import chain
+from bisect import bisect_left, bisect_right
 import numpy as np
 import scipy.sparse.linalg as splinalg
 
@@ -74,7 +75,7 @@ class Curve(SplineObject):
         return result
 
     def derivative(self, t, d=1, above=True, tensor=True):
-        """derivative(u, [d=1])
+        """derivative(t, [d=1], above=True, tensor=True)
 
         Evaluate the derivative of the curve at the given parametric values.
 
@@ -84,8 +85,8 @@ class Curve(SplineObject):
         If there is only one evaluation point, a vector of length *dim* is
         returned instead.
 
-        :param u: Parametric coordinates in which to evaluate
-        :type u: float or [float]
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
         :param int d: Number of derivatives to compute
         :param bool above: Evaluation in the limit from above
         :return: Derivative array
@@ -114,6 +115,139 @@ class Curve(SplineObject):
             result = np.array(result[0, :]).reshape(self.dimension)
 
         return result
+
+    def binormal(self, t, above=True):
+        """binormal(t, above=True)
+
+        Evaluate the normalized binormal of the curve at the given parametric value(s).
+
+        This function returns an *n* × 3 array, where *n* is the number of
+        evaluation points.
+
+        The binormal is computed as the normalized cross product between the
+        velocity and acceleration of the curve.
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        # error test input
+        if self.dimension != 3:
+            raise ValueError('Binormals require dimension = 3')
+
+        # compute derivative
+        dx    = self.derivative(t, d=1, above=above)
+        ddx   = self.derivative(t, d=2, above=above)
+
+        result = np.cross(dx, ddx)
+
+        # in case of single value input t, return vector instead of matrix
+        if len(dx.shape) == 1:
+            return result / np.linalg.norm(result)
+
+        # normalize
+        magnitude = np.apply_along_axis(np.linalg.norm, 1, result)
+        magnitude = magnitude.reshape(-1,1)
+
+        return result / magnitude
+
+    def normal(self, t, above=True):
+        """normal(t, above=True)
+
+        Evaluate the normal of the curve at the given parametric value(s).
+
+        This function returns an *n* × 3 array, where *n* is the number of
+        evaluation points.
+
+        The normal is computed as the cross product between the binormal and
+        the tangent of the curve.
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        # error test input
+        if self.dimension != 3:
+            raise RuntimeError('Normals require dimension = 3')
+
+        # compute derivative
+        T = self.tangent(t,  above=above)
+        B = self.binormal(t, above=above)
+
+        return np.cross(B,T)
+
+    def curvature(self, t, above=True):
+        """curvature(t, above=True)
+
+        Evaluate the curvaure at specified point(s). The curvature is defined as
+
+        .. math:: \\frac{|\\boldsymbol{v}\\times \\boldsymbol{a}|}{|\\boldsymbol{v}|^3}
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        # compute derivative
+        v = self.derivative(t, d=1, above=above)
+        a = self.derivative(t, d=2, above=above)
+        w = np.cross(v,a)
+
+        if len(v.shape) == 1: # single evaluation point
+            magnitude = np.linalg.norm(w)
+            speed     = np.linalg.norm(v)
+        else:                 # multiple evaluation points
+            if self.dimension == 2:
+                magnitude = w # for 2D-cases np.cross() outputs scalars
+            else:             # for 3D, it is vectors
+                magnitude = np.apply_along_axis(np.linalg.norm, -1, w)
+            speed     = np.apply_along_axis(np.linalg.norm, -1, v)
+
+        return magnitude / np.power(speed,3)
+
+    def torsion(self, t, above=True):
+        """torsion(t, above=True)
+
+        Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
+
+        .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}
+
+        :param t: Parametric coordinates in which to evaluate
+        :type t: float or [float]
+        :param bool above: Evaluation in the limit from above
+        :return: Derivative array
+        :rtype: numpy.array
+        """
+        if self.dimension == 2:
+            # no torsion for 2D curves
+            t = ensure_listlike(t)
+            return np.zeros(len(t))
+        elif self.dimension == 3:
+            # only allow 3D curves
+            pass
+        else:
+            raise ValueError('dimension must be 2 or 3')
+
+        # compute derivative
+        v  = self.derivative(t, d=1, above=above)
+        a  = self.derivative(t, d=2, above=above)
+        da = self.derivative(t, d=3, above=above)
+        w = np.cross(v,a)
+
+        if len(v.shape) == 1: # single evaluation point
+            magnitude = np.linalg.norm(w)
+            nominator = np.dot(w, a)
+        else:                 # multiple evaluation points
+            magnitude = np.apply_along_axis(np.linalg.norm, -1, w)
+            nominator = np.array([np.dot(w1,da1) for (w1,da1) in zip(w, da)])
+
+        return nominator / np.power(magnitude, 2)
+
 
     def raise_order(self, amount):
         """Raise the polynomial order of the curve.
@@ -206,10 +340,24 @@ class Curve(SplineObject):
         continuity"""
         return [k for k in self.knots(0) if self.continuity(k)<1]
 
-    def length(self):
-        """ Computes the euclidian length of the curve in geometric space """
+    def length(self, t0=None, t1=None):
+        """ Computes the euclidian length of the curve in geometric space
+
+        .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt
+        
+        """
         (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
         knots = self.knots(0)
+        # keep only integration boundaries within given start (t0) and stop (t1) interval
+        if t0 is not None:
+            i = bisect_left(knots, t0)
+            knots = np.insert(knots, i, t0)
+            knots = knots[i:]
+        if t1 is not None:
+            i = bisect_right(knots, t1)
+            knots = knots[:i]
+            knots = np.insert(knots, i, t1)
+
         t = np.array([ (x+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots[:-1], knots[1:]) ])
         w = np.array([     w/2*(t1-t0)    for t0,t1 in zip(knots[:-1], knots[1:]) ])
         t = np.ndarray.flatten(t)
