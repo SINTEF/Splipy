@@ -5,7 +5,7 @@ from splipy import __version__
 
 setup(
     name='Splipy',
-    version='1.0.0',
+    version='1.1.0',
     description='Spline modelling library for Python',
     url='https://github.com/sintefmath/Splipy'
     maintainer='Kjetil Andre Johannessen',
