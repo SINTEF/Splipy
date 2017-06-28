@@ -7,12 +7,13 @@ from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
 from numpy.linalg import norm
 import splipy.state as state
+import scipy.sparse.linalg as splinalg
 import numpy as np
 import copy
 import inspect
 
 __all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment',
-           'interpolate', 'least_square_fit', 'cubic_curve', 'bezier', 'manipulate']
+           'interpolate', 'least_square_fit', 'cubic_curve', 'bezier', 'manipulate', 'fit']
 
 class Boundary:
     """Enumeration representing different boundary conditions used in
@@ -232,10 +233,10 @@ def interpolate(x, basis, t=None):
     # evaluate all basis functions in the interpolation points
     if t is None:
         t = basis.greville()
-    N = basis.evaluate(t)
+    N = basis.evaluate(t, sparse=True)
 
     # solve interpolation problem
-    controlpoints = np.linalg.solve(N, x)
+    controlpoints = splinalg.spsolve(N, x)
 
     return Curve(basis, controlpoints)
 
@@ -330,7 +331,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         x = x[:-1,:]
     else:
         basis = BSplineBasis(4, knot)
-    N = basis(t)  # left-hand-side matrix
+    N = basis(t, sparse=True)  # left-hand-side matrix
 
     # add derivative boundary conditions if applicable
     if boundary in [Boundary.TANGENT, Boundary.HERMITE, Boundary.TANGENTNATURAL]:
@@ -363,7 +364,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         x[-new:,:] = 0
 
     # solve system to get controlpoints
-    cp = np.linalg.solve(N,x)
+    cp = splinalg.spsolve(N,x)
 
     # wrap it all into a curve and return
     return Curve(basis, cp)
@@ -496,6 +497,101 @@ def manipulate(crv, f, normalized=False, vectorized=False):
                     argv[j] = a
             destination[i] = f(*argv)
             
-    N = b(t)
-    controlpoints = np.linalg.solve(N, destination)
+    N = b(t, sparse=True)
+    controlpoints = splinalg.spsolve(N, destination)
     return Curve(b, controlpoints)
+
+def fit(x, t0, t1, rtol=1e-4, atol=0.0):
+    """ Computes an interpolation for a parametric curve up to a specified tolerance.
+    The method will iteratively refine parts where needed resulting in a non-uniform
+    knot vector with as optimized knot locations as possible.
+
+    :param function x: callable function which takes as input a vector of evaluation
+        points t and gives as output a matrix x where x[i,j] is component j evaluated
+        at point t[i]
+    :param float t0: start of parametric domain
+    :param float t1: end of parametric domain
+    :param float rtol: relative tolerance for stopping criterium. It is defined
+        to be ||e||_L2 / D, where D is the length of the curve and ||e||_L2 is the
+        L2-error (see Curve.error)
+    :param float atol: absolute tolerance for stopping criterium. It is defined to
+        be the maximal distance between the curve approximation and the exact curve
+    :return: Curve Non-uniform cubic B-spline curve
+
+    Examples:
+
+    .. code:: python
+
+        import numpy as np
+
+        # gives a B-spline approximation to the circle with arclength parametrization;
+        # unlike curve_factory.circle which is exact, but not arclength
+        def arclength_circle(t):
+            return np.array( [np.cos(t), np.sin(t)] ).T
+        crv = curve_factory.fit(arclength_circle, 0, 2*np.pi)
+        print crv
+
+        # approximates a difficult function with wild behaviour around t=0, but
+        # this is overcome by a higher knot density around this point
+        def one_over_t(t):
+            t = np.array(t)
+            eps = 1e-8 # to avoid 1/0 we add a small epsilon
+            return np.array( [t, 1.0/(t+eps)] ).T
+        crv = curve_factory.fit(one_over_t, 0, 1, rtol=1e-6)
+        print crv # first knot span is ~1e-9, last knot is ~1e-1
+
+        # one can specify the target curve in terms of existing Curve objects
+        crv = curve_factory.circle(r=1)     # Curve-object, quadratic NURBS
+        def move_along_tangent(t):
+            return crv(t) + crv.tangent(t)  # can evaluate curve or its derivatives
+        # fit() will create a B-spline approximation using non-uniform refinement
+        crv2 = curve_factory.fit(move_along_tangent, crv.start(0), crv.end(0))
+    """
+
+    b = BSplineBasis(4, [t0,t0,t0,t0, t1,t1,t1,t1])
+    t = b.greville()
+    crv = interpolate(x(t), b, t)
+    (err2, maxerr) = crv.error(x)
+    # polynomial input (which can be exactly represented) only use one knot span
+    if maxerr < 1e-13:
+        return crv
+
+    # for all other curves, start with 4 knot spans
+    knot_vector = [t0,t0,t0] + [i/5.0*(t1-t0)+t0 for i in range(6)] + [t1,t1,t1]
+    b = BSplineBasis(4, knot_vector)
+    t = b.greville()
+    crv = interpolate(x(t), b, t)
+    (err2, maxerr) = crv.error(x)
+    # this is technically false since we need the length of the target function *x*
+    # and not our approximation *crv*, but we don't have the derivative of *x*, so
+    # we can't compute it. This seems like a healthy compromise
+    length = crv.length()
+    while np.sqrt(np.sum(err2))/length > rtol and maxerr > atol:
+        knot_span    = crv.knots(0) # knot vector without multiplicities
+        target_error = (rtol*length)**2 / len(err2) # equidistribute error among all knot spans
+        refinements  = []
+        for i in range(len(err2)):
+            # figure out how many new knots we require in this knot interval:
+            # if we converge with *scale* and want an error of *target_error*
+            # |e|^2 * (1/n)^scale = target_error^2
+
+            conv_order = 4                   # cubic interpolateion is order=4
+            square_conv_order = 2*conv_order # we are computing with square of error
+            scale = square_conv_order + 4    # don't want to converge too quickly in case of highly non-uniform mesh refinement is required
+            n = int(np.ceil(np.exp((np.log(err2[i]) - np.log(target_error))/scale)))
+
+            # add *n* new interior knots to this knot span
+            new_knots = np.linspace(knot_span[i], knot_span[i+1], n+1)
+            knot_vector = knot_vector + list(new_knots[1:-1])
+
+        # build new refined knot vector
+        knot_vector.sort()
+        b = BSplineBasis(4, knot_vector)
+        # do interpolation and return result
+        t = b.greville()
+        crv = interpolate(x(t), b, t)
+        (err2, maxerr) = crv.error(x)
+        length = crv.length()
+
+    return crv
+

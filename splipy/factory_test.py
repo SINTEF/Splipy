@@ -185,17 +185,34 @@ class TestCurveFactory(unittest.TestCase):
             c = CurveFactory.circle_segment(pi, -2)  # negative radius
 
     def test_cubic_curve(self):
-        t = np.linspace(0,1,80)
-        x = np.zeros((80,2))
+        t = np.linspace(0,1,80)  # interpolation points
+        s = np.linspace(0,1,150) # evaluation points
+        x = np.zeros((80,2))     # physical points
+
+        # test PERIODIC curves
         x[:,0] = 16*t*t*(1-t)*(1-t)
         x[:,1] = 1-x[:,0]
         crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.PERIODIC, t)
-
-        t = np.linspace(0,1,150)
-        x = crv(t)
+        x = crv(s)
         # exact solution is t^4, cubic approximation gives t^3, needs atol
-        self.assertTrue(np.allclose(x[:,0],   16*t*t*(1-t)*(1-t), atol=1e-2))
-        self.assertTrue(np.allclose(x[:,1], 1-16*t*t*(1-t)*(1-t), atol=1e-2))
+        self.assertTrue(np.allclose(x[:,0],   16*s*s*(1-s)*(1-s), atol=1e-2))
+        self.assertTrue(np.allclose(x[:,1], 1-16*s*s*(1-s)*(1-s), atol=1e-2))
+
+        # test FREE boundary type
+        x[:,0] = 12*t*t*t         + 2*t
+        x[:,1] = 12*t*t*t - 3*t*t 
+        crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.FREE, t=t)
+        x = crv(s)
+        self.assertTrue(np.allclose(x[:,0], 12*s*s*s         + 2*s))
+        self.assertTrue(np.allclose(x[:,1], 12*s*s*s - 3*s*s      ))
+
+        # test NATURAL boundary type (x''(t)=0 at the boundary)
+        x[:,0] = t
+        x[:,1] = 3
+        crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.NATURAL, t=t)
+        x = crv(s)
+        self.assertTrue(np.allclose(x[:,0],   s))
+        self.assertTrue(np.allclose(x[:,1], 3.0))
 
     def test_bezier(self):
         crv = CurveFactory.bezier([[0,0], [0,1], [1,1], [1,0], [2,0], [2,1],[1,1]])
