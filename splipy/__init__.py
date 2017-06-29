@@ -7,5 +7,5 @@ from splipy.Surface import Surface
 from splipy.Volume import Volume
 from splipy.SplineModel import SplineModel
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 __all__ = ['BSplineBasis', 'SplineObject', 'Curve', 'Surface', 'Volume', 'SplineModel']
