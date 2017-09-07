@@ -1,8 +1,8 @@
-# Reuleaux triangles, or rollers, are objecets of constant width that are not
+# Reuleaux triangles, or rollers, are objects of constant width that are not
 # circles. More info: https://en.wikipedia.org/wiki/Reuleaux_triangle
 #
 # Author:    Kjetil Andre Johannessen
-# Institute: Norwegian Univeristy of Science and Technology (NTNU)
+# Institute: Norwegian University of Science and Technology (NTNU)
 # Date:      March 2016
 #
 
@@ -21,7 +21,7 @@ c1 = curves.circle_segment(pi/3)
 c2 = c1.clone().rotate(2*pi/3) + [1,0]
 c3 = c1.clone().rotate(4*pi/3) + [cos(pi/3), sin(pi/3)]
 
-# merge the three cirlces into one, and center it at the origin
+# merge the three circles into one, and center it at the origin
 c = c1.append(c2).append(c3)
 c -= c.center()
 
