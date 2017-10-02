@@ -57,24 +57,28 @@ def polygon(*points, **keywords):
     """  Create a linear interpolation between input points.
 
     :param [array-like] points: The points to interpolate
-    :param bool relative: If controlpoints are interpreted as relative to the 
+    :param bool relative: If controlpoints are interpreted as relative to the
         previous one
+    :param [float] t: specify parametric interpolation points (the knot vector)
     :return: Linear curve through the input points
     :rtype: Curve
     """
     if len(points) == 1:
         points = points[0]
 
-    # establish knot vector based on eucledian length between points
-    knot = [0, 0]
-    prevPt = points[0]
-    for pt in points[1:]:
-        dist = 0
-        for (x0, x1) in zip(prevPt, pt):  # loop over (x,y) and maybe z-coordinate
-            dist += (x1 - x0)**2
-        knot.append(knot[-1] + sqrt(dist))
-        prevPt = pt
-    knot.append(knot[-1])
+    knot = keywords.get('t', []);
+    if len(knot) == 0: # establish knot vector based on eucledian length between points
+        knot = [0, 0]
+        prevPt = points[0]
+        for pt in points[1:]:
+            dist = 0
+            for (x0, x1) in zip(prevPt, pt):  # loop over (x,y) and maybe z-coordinate
+                dist += (x1 - x0)**2
+            knot.append(knot[-1] + sqrt(dist))
+            prevPt = pt
+        knot.append(knot[-1])
+    else: # use knot vector given as input argument
+        knot = [knot[0]] + list(knot) + [knot[-1]]
 
     relative = keywords.get('relative', False)
     if relative:
@@ -364,7 +368,7 @@ def bezier(pts, quadratic=False, relative=False):
         previous one
     :return: Bezier curve
     :rtype: Curve
-    
+
     """
     if quadratic:
         p = 3
@@ -579,3 +583,24 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
 
     return crv
 
+def fit_points(x, t=[], rtol=1e-4, atol=0.0):
+    """ Computes an approximation for a list of points up to a specified tolerance.
+    The method will iteratively refine parts where needed resulting in a non-uniform
+    knot vector with as optimized knot locations as possible. The target curve is the
+    linear interpolation of the input points
+
+    :param [point-like] x: The points to approximate
+    :param [float] t: parametric values for curve points (same length as x)
+    :param float rtol: relative tolerance for stopping criterium. It is defined
+        to be ||e||_L2 / D, where D is the length of the curve and ||e||_L2 is the
+        L2-error (see Curve.error)
+    :param float atol: absolute tolerance for stopping criterium. It is defined to
+        be the maximal distance between the curve approximation and the exact curve
+    :return: Curve Non-uniform cubic B-spline curve
+    """
+
+    if len(t)>0:
+        linear = polygon(x, t=t)
+    else:
+        linear = polygon(x)
+    return fit(linear, linear.start(0), linear.end(0), rtol=rtol, atol=atol)
