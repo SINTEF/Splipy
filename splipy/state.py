@@ -31,6 +31,8 @@ def state(**kwargs):
 
     .. code:: python
 
+       from splipy.state import state
+
        with state(controlpoint_relative_tolerance=1e-2):
            # Code that runs with relative tolerance 1e-2
        # Relative tolerance restored at this point
