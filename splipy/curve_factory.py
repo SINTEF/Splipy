@@ -178,9 +178,11 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
 
     :param float theta: Angle in radians
     :param float r: Radius
+    :param vector-like center: circle segment center
+    :param vector-like normal: normal vector to the plane that contains circle
     :return: A quadratic rational curve
     :rtype: Curve
-    :raises ValueError: If radiusis not positive
+    :raises ValueError: If radius is not positive
     :raises ValueError: If theta is not in the range *[-2pi, 2pi]*
     """
     # error test input
