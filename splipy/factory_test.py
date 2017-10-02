@@ -469,6 +469,12 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertTrue(np.allclose(srf(u,0).reshape((7,2)), crvs[0](u)))
         self.assertTrue(np.allclose(srf(u,1).reshape((7,2)), crvs[1](u)))
 
+        # test self-organizing curve ordering when they are not sequential
+        srf = SurfaceFactory.edge_curves(crvs[0], crvs[2].reverse(), crvs[3], crvs[1])
+        u = np.linspace(0,1,7)
+        self.assertTrue(np.allclose(srf(u,0).reshape((7,2)), crvs[0](u)))
+        self.assertTrue(np.allclose(srf(u,1).reshape((7,2)), crvs[1](u)))
+
         # test error handling
         with self.assertRaises(ValueError):
             srf = SurfaceFactory.edge_curves(crvs + (Curve(),)) # 5 input curves

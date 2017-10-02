@@ -6,6 +6,7 @@ from splipy import BSplineBasis, Curve, Surface
 from math import pi, sqrt, atan2
 from splipy.utils import flip_and_move_plane_geometry
 import splipy.curve_factory as CurveFactory
+import splipy.state as state
 import inspect
 import numpy as np
 import os
@@ -199,6 +200,41 @@ def edge_curves(*curves):
 
         return Surface(crv1.bases[0], linear, controlpoints, crv1.rational)
     elif len(curves) == 4:
+        # reorganize input curves so they form a directed loop around surface
+        rtol = state.controlpoint_relative_tolerance
+        atol = state.controlpoint_absolute_tolerance
+        curves = list(curves)
+        dim = np.max([c.dimension for c in curves])
+        rat = np.any([c.rational  for c in curves])
+        for i in range(4):
+            if curves[i].dimension != dim:
+                tmp = curves[i].clone().set_dimension(dim)
+                curves[i] = tmp
+            if rat and not curves[i].rational:
+                tmp = curves[i].clone().force_rational()
+                curves[i] = tmp
+        if not (np.allclose(curves[0][-1], curves[1][0], rtol=rtol, atol=atol) and
+                np.allclose(curves[1][-1], curves[2][0], rtol=rtol, atol=atol) and
+                np.allclose(curves[2][-1], curves[3][0], rtol=rtol, atol=atol) and
+                np.allclose(curves[3][-1], curves[0][0], rtol=rtol, atol=atol)):
+            args = [curves[0]]
+            del curves[0]
+            for j in range(3):
+                found_match = False
+                for i in range(len(curves)):
+                    if(np.allclose(args[j][-1], curves[i][0], rtol=rtol, atol=atol)):
+                        args.append(curves[i])
+                        del curves[i]
+                        found_match = True
+                        break
+                    elif(np.allclose(args[j][-1], curves[i][-1], rtol=rtol, atol=atol)):
+                        args.append(curves[i].clone().reverse())
+                        del curves[i]
+                        found_match = True
+                        break
+                if not found_match:
+                    raise RuntimeError('Curves do not form a closed loop (end-points do not match)')
+            return edge_curves(args)
         # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
         bottom = curves[0]
         right  = curves[1]
