@@ -109,7 +109,7 @@ class TestCurveFactory(unittest.TestCase):
 
         # circle not at origin
         c = CurveFactory.circle(1, center=(1,0,0), normal=(1,1,1))
-        # test evaluation at 25 points 
+        # test evaluation at 25 points
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
@@ -258,7 +258,7 @@ class TestCurveFactory(unittest.TestCase):
         self.assertTrue(np.allclose(t/norm(t), [1,0]))
         self.assertTrue(np.allclose(crv(1), [1,0]))
         self.assertTrue(crv.order(0), 4)
-        
+
 
 class TestSurfaceFactory(unittest.TestCase):
     def test_square(self):
@@ -490,7 +490,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
         # test a case with vanishing velocity. x'(t)=0, y'(t)=0 for t=0
         c = Curve(BSplineBasis(3), [[0,0],[0,0],[1,0]]) # x(t)=t^2, y(t)=0
-        s = SurfaceFactory.thicken(c, .5) 
+        s = SurfaceFactory.thicken(c, .5)
         self.assertTupleEqual(s.order(), (3,2))
         self.assertTupleEqual(s.start(), (0,0))
         self.assertTupleEqual(s.end(),   (1,1))
@@ -500,7 +500,7 @@ class TestSurfaceFactory(unittest.TestCase):
         def myThickness(t):
             return t**2
         c = Curve(BSplineBasis(3))
-        s = SurfaceFactory.thicken(c, myThickness) 
+        s = SurfaceFactory.thicken(c, myThickness)
         self.assertTupleEqual(s.order(), (3,2))
         self.assertTupleEqual(s.start(), (0,0))
         self.assertTupleEqual(s.end(),   (1,1))
@@ -546,7 +546,7 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertTrue(np.allclose(x[:,:,2], U*U*V*V*V - U*V + 3))
 
 
-        
+
 
 class TestVolumeFactory(unittest.TestCase):
 
@@ -561,7 +561,7 @@ class TestVolumeFactory(unittest.TestCase):
                     self.assertAlmostEqual(
                         np.linalg.norm(x[:2], 2), u)  # (x,y) coordinates to z-axis
                     self.assertAlmostEqual(x[2], w)  # z coordinate should be linear
-        self.assertAlmostEqual(vol.volume(), pi, places=3) 
+        self.assertAlmostEqual(vol.volume(), pi, places=3)
 
     def test_edge_surfaces(self):
         # test 3D surface vs 2D rational surface
@@ -649,7 +649,7 @@ class TestVolumeFactory(unittest.TestCase):
         pt  = vol( u,v,w)
         pt2 = vol2(u,v,w)
         self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
-    
+
     def test_surface_loft(self):
         crv1 = Curve(BSplineBasis(3, range(11), 1), [[1,-1], [1,0], [1,1], [-1,1], [-1,0], [-1,-1]])
         crv2 = CurveFactory.circle(2) + (0,0,1)
@@ -685,7 +685,7 @@ class TestVolumeFactory(unittest.TestCase):
         crv2 = CurveFactory.circle(2) + (0,0,1)
         crv3 = Curve(BSplineBasis(4, range(11), 2), [[1,-1,2], [1,1,2], [-1,1,2], [-1,-1,2]])
         crv4 = CurveFactory.circle(2) + (0,0,3)
-        
+
         surf = []
         for c in [crv1, crv2, crv3, crv4]:
             c2 = c.clone()
@@ -726,7 +726,7 @@ class TestVolumeFactory(unittest.TestCase):
         # square torus
         square = Surface() + (1,0)
         square.rotate(pi / 2, (1, 0, 0)) # in xz-plane with corners at (1,0),(2,0),(2,1),(1,1)
-        
+
         vol = VolumeFactory.revolve(square)
         vol.reparam()  # set parametric space to (0,1)^3
         u = np.linspace(0, 1, 7)

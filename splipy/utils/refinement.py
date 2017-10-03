@@ -83,13 +83,13 @@ def edge_refine(obj, S, n, direction=0):
         raise ValueError('n should be greater than 0')
 
     direction = check_direction(direction, obj.pardim)
-    
+
     # fetch knots
     knots = obj.knots()
     knot_start = knots[direction][0]
     knot_end   = knots[direction][-1]
     dk = knot_end - knot_start
-    
+
     # compute knot locations
     new_knots = []
     max_atan  = atan(S)
@@ -99,7 +99,7 @@ def edge_refine(obj, S, n, direction=0):
         k   = knot_start + (atan(xi)+max_atan)/2/max_atan*dk
         if not knot_exists(knots[direction], k):
             new_knots.append(k)
-    
+
     # do the actual knot insertion
     obj.insert_knot(new_knots, direction)
     return obj

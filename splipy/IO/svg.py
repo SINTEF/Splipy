@@ -38,7 +38,7 @@ def bezier_representation(curve):
     if bezier.periodic():
         bezier = bezier.split(bezier.start(0))
 
-    # make sure it is C0 everywhere 
+    # make sure it is C0 everywhere
     for k in bezier.knots(0):
         bezier.insert_knot( [k]*bezier.continuity(k) )
 
@@ -46,7 +46,7 @@ def bezier_representation(curve):
 
 
 class SVG(MasterIO):
-    
+
     namespace = '{http://www.w3.org/2000/svg}'
 
     def __init__(self, filename, width=1000, height=1000, margin=0.05):
@@ -55,7 +55,7 @@ class SVG(MasterIO):
           :type  filename: String
           :param width   : Maximum image width in pixels
           :type  width   : Int
-          :param height  : Maximum image height in pixels 
+          :param height  : Maximum image height in pixels
           :type  height  : Int
           :param margin  : White-space around all edges of image, given in percentage of total size (default 5%)
           :type  margin  : Float
@@ -79,7 +79,7 @@ class SVG(MasterIO):
             print(exc_type, exc_value, traceback)
             return False
 
-        # compute the bounding box for all geometries 
+        # compute the bounding box for all geometries
         boundingbox = [np.inf, np.inf, -np.inf, -np.inf]
         for entry in self.all_objects:
             bb = entry.bounding_box()
@@ -107,7 +107,7 @@ class SVG(MasterIO):
                                               'version':'1.1',
                                               'width':str(self.width),
                                               'height':str(self.height)})
-        
+
         # populate tree with all curves and surfaces in entities
         for entry in self.all_objects:
             if isinstance(entry, Curve):
@@ -170,7 +170,7 @@ class SVG(MasterIO):
         boundary.append(bndry_curves[2])
         boundary.append(bndry_curves[1])
         boundary.append(bndry_curves[3])
-        
+
         # fetch all meshlines (i.e. elements, also known as knot spans)
         knot = surface.knots()
         knotlines = []
@@ -181,7 +181,7 @@ class SVG(MasterIO):
 
         # create a group node for all elements corresponding to this surface patch
         groupNode = etree.SubElement(self.xmlRoot, 'g')
-        
+
         # fill interior with a peach color
         self.write_curve(groupNode, boundary, fill, width=2)
 

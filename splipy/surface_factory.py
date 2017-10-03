@@ -324,7 +324,7 @@ def thicken(curve, amount):
                     v[i,:] = v[i+1,:]
             else:
                 v[i,:] /= l[i]
-                
+
         v = np.matrix(v)
         if inspect.isfunction(amount):
             arg_names = inspect.getargspec(amount).args
@@ -425,12 +425,12 @@ def loft(*curves):
     for i in range(n):
         for j in range(i+1,n):
             Curve.make_splines_identical(curves[i], curves[j])
-    
+
     basis1 = curves[0].bases[0]
     m      = basis1.num_functions()
     u      = basis1.greville() # parametric interpolation points
     v      = dist              # parametric interpolation points
-    
+
     # compute matrices
     Nu     = basis1(u)
     Nv     = basis2(v)

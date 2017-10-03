@@ -158,7 +158,7 @@ class TestBasis(unittest.TestCase):
         self.assertAlmostEqual(b.integrate(0,2)[0], 2.0/6)
         self.assertAlmostEqual(b.integrate(0,2)[1], 5.0/6)
         self.assertAlmostEqual(b.integrate(0,2)[2], 5.0/6)
-    
+
     def test_matches(self):
         b1 = BSplineBasis(3, [0,0,0,1,2,3,4,4,4])
         b2 = BSplineBasis(3, [1,1,1,2,3,4,5,5,5])

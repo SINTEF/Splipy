@@ -331,7 +331,7 @@ class Curve(SplineObject):
         """ Computes the euclidian length of the curve in geometric space
 
         .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt
-        
+
         """
         (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
         knots = self.knots(0)

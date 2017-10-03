@@ -296,7 +296,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     if t is None:
         t = [0.0]
         for (x0,x1) in zip(x[:-1,:], x[1:,:]):
-            # eucledian distance between two consecutive points 
+            # eucledian distance between two consecutive points
             dist = np.linalg.norm(np.array(x1)-np.array(x0))
             t.append(t[-1]+dist)
 
@@ -364,7 +364,7 @@ def bezier(pts, quadratic=False, relative=False):
         two points for quadratic splines
     :param bool quadratic: True if a quadratic spline is to be returned, False
         if a cubic spline is to be returned
-    :param bool relative: If controlpoints are interpreted as relative to the 
+    :param bool relative: If controlpoints are interpreted as relative to the
         previous one
     :return: Bezier curve
     :rtype: Curve
@@ -402,7 +402,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
         def scale_by_two(x):
             return 2*x
 
-        new_curve = manipulate(old_curve, scale_by_two) 
+        new_curve = manipulate(old_curve, scale_by_two)
         new_curve = old_curve * 2 # will give the same result
 
         def move_3_to_right(x, v):
@@ -423,7 +423,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
 
         new_curve = manipulate(old_curve, move_3_to_right_fast, normalized=True, vectorized=True)
     """
-    
+
     b = crv.bases[0]
     t = np.array(b.greville())
     n = len(crv)
@@ -484,7 +484,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
                         a /= norm(a)
                     argv[j] = a
             destination[i] = f(*argv)
-            
+
     N = b(t, sparse=True)
     controlpoints = splinalg.spsolve(N, destination)
     return Curve(b, controlpoints)

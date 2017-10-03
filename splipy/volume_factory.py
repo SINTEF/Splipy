@@ -10,7 +10,7 @@ import splipy.surface_factory as SurfaceFactory
 
 __all__ = ['cube', 'sphere', 'revolve', 'cylinder', 'extrude', 'edge_surfaces',
            'loft', 'interpolate', 'least_square_fit']
-           
+
 
 
 def cube(size=1, lower_left=(0,0,0)):
@@ -57,9 +57,9 @@ def sphere(r=1, center=(0,0,0), type='radial'):
               [     (3*sr3-2)/2,     (2-3*sr3)/2,     -(sr3+6)/2,     (sr3+6)/2],
               [     sr2*(4-sr3),            -sr2,    sr2*(sr3-4), sr2*(3*sr3-2)],
               [ -4./3*(2*sr3-1),               0, 4./3*(1-2*sr3),   4*(5-sr3)/3], # row 2
-              [-sr2/3*(7-2*sr3),               0,       -5*sr6/3, sr2*(sr3+6)/3], 
-              [              0 ,               0,    4*(sr3-5)/3, 4*(5*sr3-1)/9], 
-              [ sr2/3*(7-2*sr3),               0,       -5*sr6/3, sr2*(sr3+6)/3], 
+              [-sr2/3*(7-2*sr3),               0,       -5*sr6/3, sr2*(sr3+6)/3],
+              [              0 ,               0,    4*(sr3-5)/3, 4*(5*sr3-1)/9],
+              [ sr2/3*(7-2*sr3),               0,       -5*sr6/3, sr2*(sr3+6)/3],
               [  4./3*(2*sr3-1),               0, 4./3*(1-2*sr3),   4*(5-sr3)/3],
               [    -sr2*(4-sr3),             sr2,    sr2*(sr3-4), sr2*(3*sr3-2)], # row 3
               [    -(3*sr3-2)/2,    -(2-3*sr3)/2,     -(sr3+6)/2,     (sr3+6)/2],

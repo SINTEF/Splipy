@@ -11,7 +11,7 @@ def gen_knot(n, p, periodic):
         result[-periodic + i - 1] +=   result[p+i]
         result[ i  ] -= m-p-result[-p-periodic+i-1]
     return result
-    
+
 def gen_cp_curve(n,dim,periodic):
     cp = np.zeros((n,dim))
     if periodic > -1:
