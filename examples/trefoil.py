@@ -1,7 +1,7 @@
 # Examples on how to create a sweeping geometry
 #
 # Author:    Kjetil Andre Johannessen
-# Institute: Norwegian Univeristy of Science and Technology (NTNU)
+# Institute: Norwegian University of Science and Technology (NTNU)
 # Date:      June 2017
 #
 
