@@ -4,7 +4,7 @@
 # More info: https://en.wikipedia.org/wiki/Lissajous_curve
 #
 # Author:    Kjetil Andre Johannessen
-# Institute: Norwegian Univeristy of Science and Technology (NTNU)
+# Institute: Norwegian University of Science and Technology (NTNU)
 # Date:      October 2016
 #
 

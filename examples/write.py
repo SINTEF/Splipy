@@ -1,7 +1,7 @@
 # Examples on how to write geometries to file
 #
 # Author:    Kjetil Andre Johannessen
-# Institute: Norwegian Univeristy of Science and Technology (NTNU)
+# Institute: Norwegian University of Science and Technology (NTNU)
 # Date:      March 2016
 #
 

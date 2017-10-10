@@ -22,6 +22,16 @@ code looks like this:
 
 ![Missing circle animation](http://i.imgur.com/8MaBiTW.gif "Circle animation")
 
+## Read.py
+
+Displays the interface to write geometries to file
+
+``` python
+
+  # Read multiple NURBS patches from the file 'teapot.g2'
+  with G2('teapot.g2') as my_file:
+      my_teapot = my_file.read()
+```
 
 ## Write.py
 
