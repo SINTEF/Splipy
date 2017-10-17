@@ -184,6 +184,47 @@ class TestCurveFactory(unittest.TestCase):
         with self.assertRaises(ValueError):
             c = CurveFactory.circle_segment(pi, -2)  # negative radius
 
+    def test_circle_segment_from_three_points(self):
+        # quarter circle (xy-plane)
+        c = CurveFactory.circle_segment_from_three_points([1,0], [1.0/sqrt(2), 1.0/sqrt(2)], [0,1])
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        self.assertEqual(c.dimension, 2)
+        self.assertTrue(c.rational)
+        for pt in np.array(x):
+            self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
+        self.assertTrue(np.allclose(c[0],  [1,0,1]))         # check endpoints
+        self.assertTrue(np.allclose(c[-1], [0,1,1]))
+
+        # quarter circle (x=y plane)
+        c = CurveFactory.circle_segment_from_three_points([1.0/sqrt(2), 1.0/sqrt(2),0], [.5, .5, 1/sqrt(2)], [0,0,1])
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        self.assertEqual(c.dimension, 3)
+        self.assertTrue(c.rational)
+        for pt in np.array(x):
+            self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
+        self.assertTrue(np.allclose(x[:,0], x[:,1]))         # check x=y plane
+        self.assertTrue(np.allclose(c[-1], [0,0,1,1]))       # check endpoints
+
+        # one-eight circle ([1,-1,0] normal, center in (0,0,0) )
+        c = CurveFactory.circle_segment_from_three_points([.5, .5, 1/sqrt(2)], [2**(-3.0/2), 2**(-3.0/2), sqrt(3)/2], [0,0,1])
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        for pt in np.array(x):
+            self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
+        self.assertTrue(np.allclose(x[:,0], x[:,1]))         # check x=y plane
+        self.assertTrue(np.allclose(c[-1], [0,0,1,1]))       # check endpoints
+
+        # one-eight circle ([1,-1,0] normal, center in (1,0,0))
+        c = CurveFactory.circle_segment_from_three_points([1.5, .5, 1/sqrt(2)], [1+2**(-3.0/2), 2**(-3.0/2), sqrt(3)/2], [1,0,1])
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        for pt in np.array(x):
+            self.assertAlmostEqual(np.linalg.norm(pt-np.array([1,0,0])), 1.0)  # check radius=1
+        self.assertTrue(np.allclose(x[:,0]-1, x[:,1]))       # check (x-1)=y plane
+        self.assertTrue(np.allclose(c[-1], [1,0,1,1]))       # check endpoints
+
     def test_cubic_curve(self):
         t = np.linspace(0,1,80)  # interpolation points
         s = np.linspace(0,1,150) # evaluation points

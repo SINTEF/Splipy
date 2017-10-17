@@ -3,6 +3,7 @@
 """Handy utilities for creating curves."""
 
 from math import pi, cos, sin, sqrt, ceil
+from splipy.SplineObject import rotation_matrix
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
 from numpy.linalg import norm
@@ -13,8 +14,9 @@ import scipy.sparse as sp
 import copy
 import inspect
 
-__all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment',
-           'interpolate', 'least_square_fit', 'cubic_curve', 'bezier', 'manipulate', 'fit']
+__all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment_from_three_points',
+           'circle_segment', 'interpolate', 'least_square_fit', 'cubic_curve', 'bezier',
+           'manipulate', 'fit']
 
 class Boundary:
     """Enumeration representing different boundary conditions used in
@@ -168,6 +170,52 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
 
     result *= r
     return flip_and_move_plane_geometry(result, center, normal)
+
+def circle_segment_from_three_points(x0, x1, x2):
+    """circle_segment_from_three_points(x0, x1, x2)
+
+    Create a circle segment going from the point x0 to x2 throught x1
+
+    :param vector-like x0: The start point (2D or 3D point)
+    :param vector-like x1: An intermediate point (2D or 3D)
+    :param vector-like x2: The end point (2D or 3D)
+    :rtype: Curve
+    """
+    # wrap input into 3d numpy arrays
+    pt0 = np.array([0,0,0], dtype='float')
+    pt1 = np.array([0,0,0], dtype='float')
+    pt2 = np.array([0,0,0], dtype='float')
+    pt0[:len(x0)] = x0
+    pt1[:len(x1)] = x1
+    pt2[:len(x2)] = x2
+
+    # figure out normal, center and radius
+    normal = np.cross(pt1-pt0, pt2-pt0)
+    A = np.matrix(np.vstack((2*(pt1-pt0), 2*(pt2-pt0), normal)))
+    b = np.array([ np.dot(pt1,pt1) - np.dot(pt0,pt0),
+                   np.dot(pt2,pt2) - np.dot(pt0,pt0),
+                   np.dot(normal,pt0)])
+    center = np.linalg.solve(A,b)
+    radius = np.linalg.norm(pt2-center)
+    v1 = pt2-center
+    v2 = pt0-center
+    len_v1 = np.linalg.norm(v1)
+    len_v2 = np.linalg.norm(v2)
+    theta  = np.arccos(np.dot(v1,v2) / len_v1 / len_v2)
+
+    # create control points, rational weights and knot vector
+    w =  cos(theta/2)
+    R = rotation_matrix(theta/2, -normal)
+    pt1 = np.dot(R,pt0-center)/w + center
+    cp = np.vstack((pt0, w*pt1, pt2))
+    cp = np.hstack((cp, np.array([[1],[w],[1]])))
+    knot = [0,0,0,theta,theta,theta]
+
+    result = Curve(BSplineBasis(3, knot), cp, True)
+    # spit out 2D curve if all input points were 2D, otherwise return 3D
+    result.set_dimension(np.max([len(x0), len(x1), len(x2)]))
+    return result
+
 
 def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
     """  Create a circle segment starting paralell to the rotated x-axis.
