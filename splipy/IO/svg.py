@@ -7,6 +7,15 @@ import numpy as np
 import re
 from .master import MasterIO
 
+def read_number_and_unit(mystring):
+    try:
+        for i in range(1, len(mystring)):
+            number=float(mystring[:i])
+    except ValueError:
+        unit=mystring[i-1:]
+    return (number, unit)
+
+
 def bezier_representation(curve):
     """ Compute a Bezier representation of a given spline curve. The input
         curve must be of order less than or equal to 4. The bezier
@@ -208,8 +217,8 @@ class SVG(MasterIO):
     def read(self):
         tree = etree.parse(self.filename)
         root = tree.getroot()
-        self.width  = float(root.attrib['width'])
-        self.height = float(root.attrib['height'])
+        self.width,_  = read_number_and_unit(root.attrib['width'])
+        self.height,_ = read_number_and_unit(root.attrib['height'])
         result = []
         for path in root.iter(SVG.namespace + 'path'):
             result.append(self.curve_from_path(path.attrib['d']))
@@ -237,17 +246,17 @@ class SVG(MasterIO):
                 points = re.findall('-?\d+\.?\d*', piece[1:])
 
                 # convert string-list to a list of numpy arrays (of size 2)
-                np_pts = np.reshape(np.array(points, 'float'), (len(points)/2,2))
+                np_pts = np.reshape(np.array(points).astype('float'), (int(len(points)/2),2))
 
             if piece[0] == 'm' or piece[0] == 'M':
                 # I really hope it always start with a move command (think it does)
                 startpoint = np_pts[0]
                 if len(np_pts) > 1:
                     if piece[0] == 'M':
-                        knot = [0] + range(len(np_pts)) + [len(np_pts)-1]
+                        knot = [0] + list(range(len(np_pts))) + [len(np_pts)-1]
                         curve_piece = Curve(BSplineBasis(2, knot), np_pts)
                     elif piece[0] == 'm':
-                        knot = [0] + range(len(np_pts)) + [len(np_pts)-1]
+                        knot = [0] + list(range(len(np_pts))) + [len(np_pts)-1]
                         controlpoints = [startpoint]
                         for cp in np_pts[1:]:
                             controlpoints.append(cp + controlpoints[-1])
@@ -257,7 +266,7 @@ class SVG(MasterIO):
             elif piece[0] == 'c':
                 # cubic spline, relatively positioned
                 controlpoints = [startpoint]
-                knot = range(len(np_pts)/3+1) * 3
+                knot = list(range(int(len(np_pts)/3)+1)) * 3
                 knot += [knot[0], knot[-1]]
                 knot.sort()
                 for cp in np_pts:
@@ -267,7 +276,7 @@ class SVG(MasterIO):
             elif piece[0] == 'C':
                 # cubic spline, absolute position
                 controlpoints = [startpoint]
-                knot = range(len(np_pts)/3+1) * 3
+                knot = list(range(int(len(np_pts)/3)+1)) * 3
                 knot += [knot[0], knot[-1]]
                 knot.sort()
                 for cp in np_pts:
@@ -276,7 +285,7 @@ class SVG(MasterIO):
             elif piece[0] == 'q':
                 # quadratic spline, relatively positioned
                 controlpoints = [startpoint]
-                knot = range(len(np_pts)/2+1) * 2
+                knot = list(range(int(len(np_pts)/2)+1)) * 2
                 knot += [knot[0], knot[-1]]
                 knot.sort()
                 for cp in np_pts:
@@ -286,7 +295,7 @@ class SVG(MasterIO):
             elif piece[0] == 'Q':
                 # quadratic spline, absolute position
                 controlpoints = [startpoint]
-                knot = range(len(np_pts)/2+1) * 2
+                knot = list(range(len(np_pts)/2+1)) * 2
                 knot += [knot[0], knot[-1]]
                 knot.sort()
                 for cp in np_pts:
@@ -295,7 +304,7 @@ class SVG(MasterIO):
             elif piece[0] == 'l':
                 # linear spline, relatively positioned
                 controlpoints = [startpoint]
-                knot = range(len(np_pts)+1)
+                knot = list(range(len(np_pts)+1))
                 knot += [knot[0], knot[-1]]
                 knot.sort()
                 for cp in np_pts:
@@ -305,7 +314,7 @@ class SVG(MasterIO):
             elif piece[0] == 'L':
                 # linear spline, absolute position
                 controlpoints = [startpoint]
-                knot = range(len(np_pts)+1)
+                knot = list(range(len(np_pts)+1))
                 knot += [knot[0], knot[-1]]
                 knot.sort()
                 for cp in np_pts:
