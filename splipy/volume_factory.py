@@ -118,22 +118,19 @@ def revolve(surf, theta=2 * pi):
     surf.set_dimension(3)  # add z-components (if not already present)
     surf.force_rational()  # add weight (if not already present)
     n = len(surf)  # number of control points of the surface
-    cp = np.zeros((8 * n, 4))
-    basis = BSplineBasis(3, [-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5], periodic=0)
-    basis *= 2 * pi / 4  # set parametric domain to (0,2pi) in w-direction
+    path = CurveFactory.circle_segment(theta=theta)
+    m = len(path)
 
-    # loop around the circle and set control points by the traditional 9-point
-    # circle curve with weights 1/sqrt(2), only here C0-periodic, so 8 points
-    for i in range(8):
-        if i % 2 == 0:
-            weight = 1.0
-        else:
-            weight = 1.0 / sqrt(2)
+    cp = np.zeros((m * n, 4))
+
+    dt = (path.knots(0)[1] - path.knots(0)[0]) / 2.0
+    for i in range(m):
+        weight = path[i,-1]
         cp[i * n:(i + 1) * n, :] = np.reshape(surf.controlpoints.transpose(1, 0, 2), (n, 4))
         cp[i * n:(i + 1) * n, 2] *= weight
         cp[i * n:(i + 1) * n, 3] *= weight
-        surf.rotate(pi / 4)
-    return Volume(surf.bases[0], surf.bases[1], basis, cp, True)
+        surf.rotate(dt)
+    return Volume(surf.bases[0], surf.bases[1], path.bases[0], cp, True)
 
 
 def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):

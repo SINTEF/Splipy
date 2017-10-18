@@ -733,7 +733,22 @@ class TestVolumeFactory(unittest.TestCase):
         self.assertEqual(np.allclose(R, U+1), True)
         self.assertEqual(np.allclose(x[:,:,:,2], V), True)
         self.assertAlmostEqual(vol.volume(), 2*pi*1.5, places=3)
-    
+
+        # test incomplete reolve
+        vol = VolumeFactory.revolve(square, theta=pi/3)
+        vol.reparam()  # set parametric space to (0,1)^3
+        u = np.linspace(0, 1, 7)
+        v = np.linspace(0, 1, 7)
+        w = np.linspace(0, 1, 7)
+        x = vol.evaluate(u,v,w)
+        V,U,W = np.meshgrid(v,u,w)
+        R = np.sqrt(x[:,:,:,0]**2 + x[:,:,:,1]**2)
+
+        self.assertEqual(np.allclose(R, U+1), True)
+        self.assertEqual(np.allclose(x[:,:,:,2], V), True)
+        self.assertAlmostEqual(vol.volume(), 2*pi*1.5/6, places=3)
+        self.assertTrue(np.all(x >= 0)) # completely contained in first octant
+
     def test_interpolate(self):
         t = np.linspace(0, 1, 5)
         V,U,W = np.meshgrid(t,t,t)
