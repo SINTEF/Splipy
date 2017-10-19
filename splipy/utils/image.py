@@ -156,7 +156,7 @@ def image_curves(filename):
 
         # start off with a uniform(ish) knot vector
         knot = []
-        nStart = min(n/10, 90)
+        nStart = int(min(n/10, 90))
         for i in range(nStart+1):
             knot.append(int(1.0*i*(n-1)/nStart))
         c = corners.tolist()
