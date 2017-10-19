@@ -42,8 +42,8 @@ class Boundary:
 def line(a, b, relative=False):
     """  Create a line between two points.
 
-    :param point-like a: Start point
-    :param point-like b: End point
+    :param array-like a: Start point
+    :param array-like b: End point
     :param bool relative: Whether *b* is relative to *a*
     :return: Linear curve from *a* to *b*
     :rtype: Curve
@@ -56,7 +56,7 @@ def line(a, b, relative=False):
 def polygon(*points, **keywords):
     """  Create a linear interpolation between input points.
 
-    :param [point-like] points: The points to interpolate
+    :param [array-like] points: The points to interpolate
     :param bool relative: If controlpoints are interpreted as relative to the 
         previous one
     :return: Linear curve through the input points
@@ -90,8 +90,8 @@ def n_gon(n=5, r=1, center=(0,0,0), normal=(0,0,1)):
 
     :param int n: Number of sides and vertices
     :param float r: Radius
-    :param point-like center: local origin
-    :param vector-like normal: local normal
+    :param array-like center: local origin
+    :param array-like normal: local normal
     :return: A linear, periodic, 2D curve
     :rtype: Curve
     :raises ValueError: If radius is not positive
@@ -118,8 +118,8 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
     """  Create a circle.
 
     :param float r: Radius
-    :param point-like center: local origin
-    :param vector-like normal: local normal
+    :param array-like center: local origin
+    :param array-like normal: local normal
     :param string type: The type of parametrization ('p2C0' or 'p4C1')
     :return: A periodic, quadratic rational curve
     :rtype: Curve
@@ -170,8 +170,8 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
 
     :param float theta: Angle in radians
     :param float r: Radius
-    :param vector-like center: circle segment center
-    :param vector-like normal: normal vector to the plane that contains circle
+    :param array-like center: circle segment center
+    :param array-like normal: normal vector to the plane that contains circle
     :return: A quadratic rational curve
     :rtype: Curve
     :raises ValueError: If radius is not positive

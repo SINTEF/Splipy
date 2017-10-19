@@ -17,7 +17,7 @@ def cube(size=1, lower_left=(0,0,0)):
     """  Create a cube with parmetric origin at *(0,0,0)*.
 
     :param float size: Size(s), either a single scalar or a tuple of scalars per axis
-    :param point-like lower_left: local origin, the lower bottom left corner of the cube
+    :param array-like lower_left: local origin, the lower bottom left corner of the cube
     :return: A linear parametrized box
     :rtype: Volume
     """
@@ -30,7 +30,7 @@ def sphere(r=1, center=(0,0,0), type='radial'):
     """  Create a solid sphere
 
     :param float r: Radius
-    :param point-like center: Local origin of the sphere
+    :param array-like center: Local origin of the sphere
     :param string type: The type of parametrization ('radial' or 'square')
     :return: A solid ball
     :rtype: Volume
@@ -135,8 +135,8 @@ def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
 
     :param float r: Radius
     :param float h: Height
-    :param point-like center: The center of the bottom circle
-    :param vector-like axis: Cylinder axis
+    :param array-like center: The center of the bottom circle
+    :param array-like axis: Cylinder axis
     :return: The cylinder
     :rtype: Volume
     """
@@ -147,7 +147,7 @@ def extrude(surf, amount):
     """  Extrude a surface by sweeping it to a given height.
 
     :param Surface surf: Surface to extrude
-    :param vector-like amount: 3-component vector of sweeping amount and direction
+    :param array-like amount: 3-component vector of sweeping amount and direction
     :return: The extruded surface
     :rtype: Volume
     """

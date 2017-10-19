@@ -19,7 +19,7 @@ def square(size=1, lower_left=(0,0)):
     """  Create a square with parametric origin at *(0,0)*.
 
     :param float size: Size(s), either a single scalar or a tuple of scalars per axis
-    :param point-like lower_left: local origin, the lower left corner of the square
+    :param array-like lower_left: local origin, the lower left corner of the square
     :return: A linear parametrized square
     :rtype: Surface
     """
@@ -34,8 +34,8 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     different parametrizations.
 
     :param float r: Radius
-    :param point-like center: local origin
-    :param vector-like normal: local normal
+    :param array-like center: local origin
+    :param array-like normal: local normal
     :param string type: The type of parametrization ('radial' or 'square')
     :return: The disc
     :rtype: Surface
@@ -70,7 +70,7 @@ def sphere(r=1, center=(0,0,0)):
     """  Create a spherical shell.
 
     :param float r: Radius
-    :param point-like center: Local origin of the sphere
+    :param array-like center: Local origin of the sphere
     :return: The spherical shell
     :rtype: Surface
     """
@@ -84,7 +84,7 @@ def extrude(curve, amount):
     """  Extrude a curve by sweeping it to a given height.
 
     :param Curve curve: Curve to extrude
-    :param vector-like amount: 3-component vector of sweeping amount and
+    :param array-like amount: 3-component vector of sweeping amount and
                                direction
     :return: The extruded curve
     :rtype: Surface
@@ -105,7 +105,7 @@ def revolve(curve, theta=2 * pi, axis=[0,0,1]):
 
     :param Curve curve: Curve to revolve
     :param float theta: Angle to revolve, in radians
-    :param vector-like axis: Axis of rotation
+    :param array-like axis: Axis of rotation
     :return: The revolved surface
     :rtype: Surface
     """
@@ -149,8 +149,8 @@ def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
 
     :param float r: Radius
     :param float h: Height
-    :param point-like center: The center of the bottom circle
-    :param vector-like axis: Cylinder axis
+    :param array-like center: The center of the bottom circle
+    :param array-like axis: Cylinder axis
     :return: The cylinder shell
     :rtype: Surface
     """
@@ -163,7 +163,7 @@ def torus(minor_r=1, major_r=3, center=(0,0,0)):
 
     :param float minor_r: The thickness of the torus (radius in the *xz* plane)
     :param float major_r: The size of the torus (radius in the *xy* plane)
-    :param point-like center: Local origin of the torus
+    :param array-like center: Local origin of the torus
     :return: A periodic torus
     :rtype: Surface
     """
