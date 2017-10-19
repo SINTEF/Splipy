@@ -712,7 +712,7 @@ class SplineObject(object):
     def translate(self, x):
         """  Translate (i.e. move) the object by a given distance.
 
-        :param point-like x: The vector to translate by.
+        :param array-like x: The vector to translate by.
         :return: self
         """
         # 3D rational example: create a 4x4 translation matrix
@@ -760,7 +760,7 @@ class SplineObject(object):
         In case of one input argument, the scaling is uniform.
 
         :param args: Scaling factors, possibly different in each direction.
-        :type args: point-like or float
+        :type args: array-like or float
         :return: self
         """
         # 3D rational example: create a 4x4 scaling matrix
@@ -796,7 +796,7 @@ class SplineObject(object):
         """  Rotate the object around an axis.
 
         :param float theta: Angle to rotate about, measured in radians
-        :param point-like normal: The normal axis (if 3D) to rotate about
+        :param array-like normal: The normal axis (if 3D) to rotate about
         :raises RuntimeError: If the physical dimension is not 2 or 3
         :return: self
         """
@@ -841,7 +841,7 @@ class SplineObject(object):
     def mirror(self, normal):
         """  Mirror the object around a plane through the origin.
 
-        :param point-like normal: The plane normal to mirror about.
+        :param array-like normal: The plane normal to mirror about.
         :raises RuntimeError: If the physical dimension is not 2 or 3
         :return: self
         """
