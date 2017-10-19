@@ -18,8 +18,8 @@ __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus'
 def square(size=1, lower_left=(0,0)):
     """  Create a square with parametric origin at *(0,0)*.
 
-    :param size: Size(s), either a single scalar or a tuple of scalars per axis
-    :type size: float or (float)
+    :param float size: Size(s), either a single scalar or a tuple of scalars per axis
+    :param point-like lower_left: local origin, the lower left corner of the square
     :return: A linear parametrized square
     :rtype: Surface
     """
@@ -34,6 +34,8 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     different parametrizations.
 
     :param float r: Radius
+    :param point-like center: local origin
+    :param vector-like normal: local normal
     :param string type: The type of parametrization ('radial' or 'square')
     :return: The disc
     :rtype: Surface
@@ -422,8 +424,7 @@ def interpolate(x, bases, u=None):
     interpreted as a flat row-first index of the interpolation grid) or a 3D
     tensor. In both cases the last index is the physical coordinates.
 
-    :param x: Grid of interpolation points
-    :type x: matrix-like or 3D-tensor-like
+    :param numpy.ndarray x: Grid of interpolation points
     :param [BSplineBasis] bases: The basis to interpolate on
     :param [array-like] u: Parametric interpolation points, defaults to
         Greville points of the basis
@@ -454,8 +455,7 @@ def least_square_fit(x, bases, u):
 
     There must be at least as many points as basis functions.
 
-    :param x: Grid of evaluation points
-    :type x: matrix-like or 3D-tensor-like
+    :param numpy.ndarray x: Grid of evaluation points
     :param [BSplineBasis] bases: Basis on which to interpolate
     :param [array-like] u: Parametric values at evaluation points
     :return: Approximated surface

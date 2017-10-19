@@ -383,6 +383,7 @@ def bezier(pts, quadratic=False, relative=False):
 
 def manipulate(crv, f, normalized=False, vectorized=False):
     """  Create a new curve based on an expression-evaluation of an existing one
+    :param Curve crv: original curve on which f is to be applied
     :param function f: expression of the physical point *x*, the velocity
         (tangent) *v*, parametric point *t* and/or acceleration *a*.
     :param normalized: If velocity and acceleration terms should be normalized

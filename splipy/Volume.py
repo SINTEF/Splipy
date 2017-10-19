@@ -99,8 +99,8 @@ class Volume(SplineObject):
         """  Creates an approximation to this volume by resampling it using
         uniform knot vectors of order *p* with *n* control points.
 
-        :param int p: Polynomial discretization order
-        :param int n: Number of control points
+        :param (int) p: Tuple of polynomial discretization order in each direction
+        :param (int) n: Tuple of number of control points in each direction
         :return: A new approximate volume
         :rtype: Volume
         """
