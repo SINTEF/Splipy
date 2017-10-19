@@ -107,8 +107,13 @@ class Surface(SplineObject):
         return tuple(self.section(*args) for args in sections(2, 1))
 
     def const_par_curve(self, knot, direction):
-        """Get a Curve representation of the parametric line of some constant 
-        knot value."""
+        """  Get a Curve representation of the parametric line of some constant 
+        knot value.
+        :param float knot: The constant knot value to sample the surface
+        :param int direction: The parametric direction for the constant value
+        :return: curve on this surface
+        :rtype: Curve
+        """
         direction = check_direction(direction, 2)
         
         # clone basis since we need to augment this by knot insertion
@@ -131,8 +136,8 @@ class Surface(SplineObject):
         """  Creates an approximation to this surface by resampling it using
         uniform knot vectors of order *p* with *n* control points.
 
-        :param int p: Polynomial discretization order
-        :param int n: Number of control points
+        :param (int) p: Tuple of polynomial discretization order in each direction
+        :param (int) n: Tuple of number of control points in each direction
         :return: A new approximate surface
         :rtype: Surface
         """

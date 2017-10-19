@@ -990,7 +990,8 @@ class SplineObject(object):
         """  Sets the periodicity of the spline object in the given direction,
         keeping the geometry unchanged.
 
-        :param int direction: new periodicity, i.e. the basis is C^k over the start/end
+        :param int periodic: new periodicity, i.e. the basis is C^k over the start/end
+        :param int direction: the parametric direction of the basis to modify
         :return: self
         """
         direction = check_direction(direction, self.pardim)
@@ -1051,7 +1052,6 @@ class SplineObject(object):
         """  Split an object into two or more separate representations with C0
         continuity between them.
 
-        :param int direction: The parametric direction to split in
         :param knots: The splitting points
         :type knots: float or [float]
         :param direction: Parametric direction
@@ -1130,8 +1130,8 @@ class SplineObject(object):
     def make_periodic(self, continuity=None, direction=0):
         """  Make the spline object periodic in a given parametric direction.
 
-        :param continuity: The continuity along the boundary (default max).
-        :param direction: The direction to ensure continuity in.
+        :param int continuity: The continuity along the boundary (default max).
+        :param int direction: The direction to ensure continuity in.
         """
 
         direction = check_direction(direction, self.pardim)

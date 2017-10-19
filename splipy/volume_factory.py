@@ -16,8 +16,8 @@ __all__ = ['cube', 'sphere', 'revolve', 'cylinder', 'extrude', 'edge_surfaces',
 def cube(size=1, lower_left=(0,0,0)):
     """  Create a cube with parmetric origin at *(0,0,0)*.
 
-    :param size: Size(s), either a single scalar or a tuple of scalars per axis
-    :type size: float or (float)
+    :param float size: Size(s), either a single scalar or a tuple of scalars per axis
+    :param point-like lower_left: local origin, the lower bottom left corner of the cube
     :return: A linear parametrized box
     :rtype: Volume
     """
@@ -26,7 +26,7 @@ def cube(size=1, lower_left=(0,0,0)):
     result += lower_left
     return result
 
-def sphere(r=1, center=(0,0,0), type='radial', x0=0.5,w0=0.5):
+def sphere(r=1, center=(0,0,0), type='radial'):
     """  Create a solid sphere
 
     :param float r: Radius
@@ -147,8 +147,7 @@ def extrude(surf, amount):
     """  Extrude a surface by sweeping it to a given height.
 
     :param Surface surf: Surface to extrude
-    :param vector-like amount: 3-component vector of sweeping amount and
-                               direction
+    :param vector-like amount: 3-component vector of sweeping amount and direction
     :return: The extruded surface
     :rtype: Volume
     """
@@ -335,8 +334,7 @@ def interpolate(x, bases, u=None):
     interpreted as a flat row-first index of the interpolation grid) or a 4D
     tensor. In both cases the last index is the physical coordinates.
 
-    :param x: Grid of interpolation points
-    :type x: matrix-like or 4D-tensor-like
+    :param numpy.ndarray x: Grid of interpolation points
     :param [BSplineBasis] bases: The basis to interpolate on
     :param [array-like] u: Parametric interpolation points, defaults to
         Greville points of the basis
@@ -367,8 +365,7 @@ def least_square_fit(x, bases, u):
 
     There must be at least as many points as basis functions.
 
-    :param x: Grid of evaluation points
-    :type x: matrix-like or 4D-tensor-like
+    :param numpy.ndarray x: Grid of evaluation points
     :param [BSplineBasis] bases: Basis on which to interpolate
     :param [array-like] u: Parametric values at evaluation points
     :return: Approximated volume

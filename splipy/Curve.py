@@ -83,6 +83,7 @@ class Curve(SplineObject):
         :type t: float or [float]
         :param int d: Number of derivatives to compute
         :param bool above: Evaluation in the limit from above
+        :param bool tensor: Not used in this method
         :return: Derivative array
         :rtype: numpy.array
         """
