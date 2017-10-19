@@ -40,7 +40,7 @@ class Boundary:
 
 
 def line(a, b, relative=False):
-    """Create a line between two points.
+    """  Create a line between two points.
 
     :param point-like a: Start point
     :param point-like b: End point
@@ -54,9 +54,7 @@ def line(a, b, relative=False):
 
 
 def polygon(*points, **keywords):
-    """polygon(points...)
-
-    Create a linear interpolation between input points.
+    """  Create a linear interpolation between input points.
 
     :param [point-like] points: The points to interpolate
     :param bool relative: If controlpoints are interpreted as relative to the 
@@ -88,9 +86,7 @@ def polygon(*points, **keywords):
 
 
 def n_gon(n=5, r=1, center=(0,0,0), normal=(0,0,1)):
-    """n_gon([n=5], [r=1])
-
-    Create a regular polygon of *n* equal sides centered at the origin.
+    """  Create a regular polygon of *n* equal sides centered at the origin.
 
     :param int n: Number of sides and vertices
     :param float r: Radius
@@ -119,9 +115,7 @@ def n_gon(n=5, r=1, center=(0,0,0), normal=(0,0,1)):
     return flip_and_move_plane_geometry(result, center, normal)
 
 def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
-    """circle([r=1])
-
-    Create a circle.
+    """  Create a circle.
 
     :param float r: Radius
     :param point-like center: local origin
@@ -172,9 +166,7 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
     return flip_and_move_plane_geometry(result, center, normal)
 
 def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
-    """circle_segment(theta, [r=1])
-
-    Create a circle segment starting paralell to the rotated x-axis.
+    """  Create a circle segment starting paralell to the rotated x-axis.
 
     :param float theta: Angle in radians
     :param float r: Radius
@@ -218,9 +210,7 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
     return flip_and_move_plane_geometry(result, center, normal)
 
 def interpolate(x, basis, t=None):
-    """interpolate(x, basis, [t=None])
-
-    Perform general spline interpolation on a provided basis.
+    """  Perform general spline interpolation on a provided basis.
 
     :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with
         components *j*
@@ -244,7 +234,7 @@ def interpolate(x, basis, t=None):
     return Curve(basis, controlpoints)
 
 def least_square_fit(x, basis, t):
-    """Perform a least-square fit of a point cloud onto a spline basis
+    """  Perform a least-square fit of a point cloud onto a spline basis
 
     :param matrix-like x: Matrix *X[i,j]* of interpolation points *xi* with
         components *j*. The number of points must be equal to or larger than
@@ -267,9 +257,7 @@ def least_square_fit(x, basis, t):
 
 
 def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
-    """cubic_curve(x, [boundary=Boundary.FREE], [t=None], [tangents=None])
-
-    Perform cubic spline interpolation on a provided basis.
+    """  Perform cubic spline interpolation on a provided basis.
 
     The valid boundary conditions are enumerated in :class:`Boundary`. The
     meaning of the `tangents` parameter depends on the specified boundary
@@ -365,7 +353,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     return Curve(basis, cp)
 
 def bezier(pts, quadratic=False, relative=False):
-    """Generate a cubic or quadratic bezier curve from a set of control points
+    """  Generate a cubic or quadratic bezier curve from a set of control points
 
     :param [array-like] pts: list of control-points. In addition to a starting
         point we need three points per bezier interval for cubic splines and
@@ -394,7 +382,7 @@ def bezier(pts, quadratic=False, relative=False):
     return Curve(BSplineBasis(p, knot), pts)
 
 def manipulate(crv, f, normalized=False, vectorized=False):
-    """ Create a new curve based on an expression-evaluation of an existing one
+    """  Create a new curve based on an expression-evaluation of an existing one
     :param function f: expression of the physical point *x*, the velocity
         (tangent) *v*, parametric point *t* and/or acceleration *a*.
     :param normalized: If velocity and acceleration terms should be normalized
@@ -497,7 +485,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
     return Curve(b, controlpoints)
 
 def fit(x, t0, t1, rtol=1e-4, atol=0.0):
-    """ Computes an interpolation for a parametric curve up to a specified tolerance.
+    """  Computes an interpolation for a parametric curve up to a specified tolerance.
     The method will iteratively refine parts where needed resulting in a non-uniform
     knot vector with as optimized knot locations as possible.
 
