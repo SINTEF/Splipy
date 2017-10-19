@@ -21,14 +21,18 @@ Resources
 Dependencies
 ------------
 
-This library depends on numpy and scipy. E.g. on Ubuntu::
+** Required **
+
+This library requires numpy and scipy. E.g. on Ubuntu::
 
     pip install numpy
     pip install scipy
 
-If you use Python 2, you need OpenCV for the imaging tools to work::
+** Optional **
 
-    sudo apt-get install python-opencv
+To use image processing tools, you need OpenCV ::
+
+    pip install python-opencv
 
 To generate the documentation you will need Sphinx::
 
