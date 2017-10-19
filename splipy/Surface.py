@@ -17,9 +17,7 @@ class Surface(SplineObject):
     _intended_pardim = 2
 
     def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False, **kwargs):
-        """__init__([basis1=None], [basis2=None], [controlpoints=None], [rational=False])
-
-        Construct a surface with the given basis and control points.
+        """  Construct a surface with the given basis and control points.
 
         The default is to create a linear one-element mapping from and to the
         unit square.
@@ -34,7 +32,7 @@ class Surface(SplineObject):
         super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
 
     def normal(self, u, v, above=(True,True)):
-        """Evaluate the normal of the surface at given parametric values.
+        """  Evaluate the normal of the surface at given parametric values.
 
         This is equal to the cross-product between tangents. The return value
         is normalized.
@@ -130,7 +128,7 @@ class Surface(SplineObject):
         return Curve(self.bases[1-direction], cp, self.rational)
 
     def rebuild(self, p, n):
-        """Creates an approximation to this surface by resampling it using
+        """  Creates an approximation to this surface by resampling it using
         uniform knot vectors of order *p* with *n* control points.
 
         :param int p: Polynomial discretization order

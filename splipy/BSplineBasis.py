@@ -23,9 +23,7 @@ class BSplineBasis:
     periodic = -1
 
     def __init__(self, order=2, knots=None, periodic=-1):
-        """__init__([order=2], [knots=None], [periodic=-1])
-
-        Construct a B-Spline basis with a given order and knot vector.
+        """  Construct a B-Spline basis with a given order and knot vector.
 
         :param int order: Spline order, i.e. one greater than the polynomial degree.
         :param [float] knots: Knot vector of non-decreasing components.
@@ -64,7 +62,7 @@ class BSplineBasis:
                 raise ValueError('knot vector needs to be non-decreasing')
 
     def num_functions(self):
-        """Returns the number of basis functions in the basis.
+        """  Returns the number of basis functions in the basis.
 
         .. warning:: This is different from :func:`splipy.BSplineBasis.__len__`."""
         return len(self.knots) - self.order - (self.periodic + 1)
@@ -89,9 +87,7 @@ class BSplineBasis:
         return self.knots[-self.order]
 
     def greville(self, index=None):
-        """greville([index=None])
-
-        Fetch greville points, also known as knot averages:
+        """  Fetch greville points, also known as knot averages:
 
         .. math:: \sum_{j=i+1}^{i+p-1} \\frac{t_j}{p-1}
 
@@ -109,9 +105,7 @@ class BSplineBasis:
         return result
 
     def evaluate(self, t, d=0, from_right=True, sparse=False):
-        """evaluate(t, [d=0], [from_right=True])
-
-        Evaluate all basis functions in a given set of points.
+        """  Evaluate all basis functions in a given set of points.
 
         :param t: The parametric coordinate(s) in which to evaluate
         :type t: float or [float]
@@ -188,9 +182,7 @@ class BSplineBasis:
         return N
 
     def integrate(self, t0, t1):
-        """integrate(t0, t1)
-
-        Integrate all basis functions over a given domain
+        """  Integrate all basis functions over a given domain
 
         :param float t0: The parametric starting point
         :param float t1: The parametric end point
@@ -224,9 +216,7 @@ class BSplineBasis:
         self /= self.end()  # set end-point to 1
 
     def reparam(self, start=0, end=1):
-        """reparam([start=0], [end=1])
-
-        Set the parametric domain to be (start, end)
+        """  Set the parametric domain to be (start, end)
 
         :raises ValueError: If *end* ≤ *start*"""
         if end <= start:

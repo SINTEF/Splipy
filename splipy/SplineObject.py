@@ -39,9 +39,7 @@ def evaluate(bases, cps, tensor=True):
 
 
 class SplineObject(object):
-    """SplineObject()
-
-    Master class for spline objects with arbitrary dimensions.
+    """  Master class for spline objects with arbitrary dimensions.
 
     This class should be subclassed instead of used directly.
 
@@ -51,9 +49,7 @@ class SplineObject(object):
     """
 
     def __init__(self, bases=None, controlpoints=None, rational=False, raw=False):
-        """__init__([bases=None], [controlpoints=None], [rational=False])
-
-        Construct a spline object with the given bases and control points.
+        """  Construct a spline object with the given bases and control points.
 
         The default is to create a linear one-element mapping from and to the
         unit (hyper)cube.
@@ -89,7 +85,7 @@ class SplineObject(object):
             self.controlpoints = reshape(self.controlpoints, shape, order='F', ncomps=ncomps)
 
     def _validate_domain(self, *params):
-        """Check whether the given evaluation parameters are valid.
+        """  Check whether the given evaluation parameters are valid.
 
         :raises ValueError: If the parameters are outside the domain
         """
@@ -99,9 +95,7 @@ class SplineObject(object):
                     raise ValueError('Evaluation outside parametric domain')
 
     def evaluate(self, *params, **kwargs):
-        """evaluate(u, v, ..., tensor=True)
-
-        Evaluate the object at given parametric values.
+        """  Evaluate the object at given parametric values.
 
         If *tensor* is true, evaluation will take place on a tensor product
         grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where
@@ -150,9 +144,7 @@ class SplineObject(object):
         return result
 
     def derivative(self, *params, **kwargs):
-        """derivative(u, v, ..., [d=(1,1,...)], [tensor=True])
-
-        Evaluate the derivative of the object at the given parametric values.
+        """  Evaluate the derivative of the object at the given parametric values.
 
         If *tensor* is true, evaluation will take place on a tensor product
         grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where
@@ -239,9 +231,7 @@ class SplineObject(object):
         return result
 
     def get_derivative_spline(self, direction=None):
-        """get_derivative_spline(self, [direction=None]):
-
-        Compute the controlpoints associated with the derivative spline object
+        """  Compute the controlpoints associated with the derivative spline object
 
         If `direction` is given, only the derivatives in that direction are
         returned.
@@ -310,9 +300,7 @@ class SplineObject(object):
 
 
     def tangent(self, *params, **kwargs):
-        """tangent(u, v, ..., [direction=None], [tensor=True])
-
-        Evaluate the tangents of the object at the given parametric values.
+        """  Evaluate the tangents of the object at the given parametric values.
 
         If `direction` is given, only the derivatives in that direction are
         evaluated. This is equivalent to calling
@@ -374,9 +362,7 @@ class SplineObject(object):
         return v / speed;
 
     def section(self, *args, **kwargs):
-        """section(u, v, ..., [unwrap_points=False])
-
-        Returns a section from the object. A section can be any sub-object of
+        """  Returns a section from the object. A section can be any sub-object of
         parametric dimension not exceeding that of the object. E.g. for a
         volume, sections include vertices, edges, faces, etc.
 
@@ -426,10 +412,8 @@ class SplineObject(object):
         return self.controlpoints[slices]
 
     def set_order(self, *order):
-        """set_order(u, v, ...)
-
-        Set the polynomial order of the object. If only one argument is given,
-        the order is set uniformly over all directions.
+        """  Set the polynomial order of the object. If only one argument is
+        given, the order is set uniformly over all directions.
 
         :param int u,v,...: The new order in a given direction.
         :raises ValueError: If the order is reduced in any direction.
@@ -444,9 +428,7 @@ class SplineObject(object):
         return self.raise_order(*diff)
 
     def raise_order(self, *raises):
-        """raise_order(u, v, ...)
-
-        Raise the polynomial order of the object. If only one argument is
+        """  Raise the polynomial order of the object. If only one argument is
         given, the order is raised equally over all directions.
 
         :param int u,v,...: Number of times to raise the order in a given
@@ -483,9 +465,7 @@ class SplineObject(object):
         return self
 
     def lower_order(self, *lowers):
-        """lower_order(u, v, ...)
-
-        Lower the polynomial order of the object. If only one argument is
+        """  Lower the polynomial order of the object. If only one argument is
         given, the order is lowered equally over all directions.
 
         :param int u,v,...: Number of times to lower the order in a given
@@ -524,9 +504,7 @@ class SplineObject(object):
         return constructor(*args, raw=True)
 
     def start(self, direction=None):
-        """start([direction=None])
-
-        Return the start of the parametric domain.
+        """  Return the start of the parametric domain.
 
         If `direction` is given, returns the start of that direction, as a
         float. If it is not given, returns the start of all directions, as a
@@ -541,9 +519,7 @@ class SplineObject(object):
         return self.bases[direction].start()
 
     def end(self, direction=None):
-        """end([direction=None])
-
-        Return the end of the parametric domain.
+        """  Return the end of the parametric domain.
 
         If `direction` is given, returns the end of that direction, as a float.
         If it is not given, returns the end of all directions, as a tuple.
@@ -557,9 +533,7 @@ class SplineObject(object):
         return self.bases[direction].end()
 
     def order(self, direction=None):
-        """order([direction=None])
-
-        Return polynomial order (degree + 1).
+        """  Return polynomial order (degree + 1).
 
         If `direction` is given, returns the order of that direction, as an
         int. If it is not given, returns the order of all directions, as a
@@ -574,9 +548,7 @@ class SplineObject(object):
         return self.bases[direction].order
 
     def knots(self, direction=None, with_multiplicities=False):
-        """knots([direction=None], [with_multiplicities=False])
-
-        Return knots.
+        """  Return knots vector
 
         If `direction` is given, returns the knots in that direction, as a
         list. If it is not given, returns the knots of all directions, as a
@@ -594,9 +566,7 @@ class SplineObject(object):
         return getter(self.bases[direction])
 
     def reverse(self, direction=0):
-        """reverse([direction=0])
-
-        Swap the direction of a parameter by making it go in the reverse
+        """  Swap the direction of a parameter by making it go in the reverse
         direction. The parametric domain remains unchanged.
 
         :param int direction: The direction to flip.
@@ -617,7 +587,7 @@ class SplineObject(object):
         return self
 
     def swap(self, dir1=0, dir2=1):
-        """Swaps two parameter directions.
+        """  Swaps two parameter directions.
 
         This function silently passes for curves.
 
@@ -643,7 +613,7 @@ class SplineObject(object):
         return self
 
     def insert_knot(self, knot, direction=0):
-        """Insert a new knot into the spline.
+        """  Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
         :param knot: The new knot(s) to insert
@@ -667,9 +637,7 @@ class SplineObject(object):
         return self
 
     def refine(self, *ns, **kwargs):
-        """refine(nu, [nv, ...,] [direction=None])
-
-        Enrich the spline space by inserting knots into each existing knot
+        """  Enrich the spline space by inserting knots into each existing knot
         span.
 
         This method supports three different usage patterns:
@@ -709,9 +677,7 @@ class SplineObject(object):
         return self
 
     def reparam(self, *args, **kwargs):
-        """reparam([u, v, ...], [direction=None])
-
-        Redefine the parametric domain. This function accepts two calling
+        """  Redefine the parametric domain. This function accepts two calling
         conventions:
 
         `reparametrize(u, v, ...)` reparametrizes each direction to the domains
@@ -744,7 +710,7 @@ class SplineObject(object):
         return self
 
     def translate(self, x):
-        """Translate (i.e. move) the object by a given distance.
+        """  Translate (i.e. move) the object by a given distance.
 
         :param point-like x: The vector to translate by.
         :return: self
@@ -789,9 +755,7 @@ class SplineObject(object):
         return self
 
     def scale(self, *args):
-        """scale(sx, [sy, sz, ...])
-
-        Scale, or magnify the object by a given amount.
+        """  Scale, or magnify the object by a given amount.
 
         In case of one input argument, the scaling is uniform.
 
@@ -829,9 +793,7 @@ class SplineObject(object):
         return self
 
     def rotate(self, theta, normal=(0, 0, 1)):
-        """rotate(theta, [normal=(0,0,1)])
-
-        Rotate the object around an axis.
+        """  Rotate the object around an axis.
 
         :param float theta: Angle to rotate about, measured in radians
         :param point-like normal: The normal axis (if 3D) to rotate about
@@ -877,7 +839,7 @@ class SplineObject(object):
         return self
 
     def mirror(self, normal):
-        """Mirror the object around a plane through the origin.
+        """  Mirror the object around a plane through the origin.
 
         :param point-like normal: The plane normal to mirror about.
         :raises RuntimeError: If the physical dimension is not 2 or 3
@@ -922,7 +884,7 @@ class SplineObject(object):
         return self
 
     def project(self, plane):
-        """Projects the geometry onto a plane or axis.
+        """  Projects the geometry onto a plane or axis.
 
         - `project('xy')` will project the object onto the *xy* plane, setting
           all *z* components to zero.
@@ -942,7 +904,7 @@ class SplineObject(object):
         return self
 
     def bounding_box(self):
-        """Gets the bounding box of a spline object, computed from the
+        """  Gets the bounding box of a spline object, computed from the
         control-point values. Could be inaccurate for rational splines.
 
         Returns the minima and maxima for each direction:
@@ -960,7 +922,7 @@ class SplineObject(object):
         return result
 
     def center(self):
-        """Gets the center of the domain
+        """  Gets the center of the domain
         
         For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
 
@@ -1003,7 +965,7 @@ class SplineObject(object):
         return result
 
     def corners(self, order='C'):
-        """Return the corner control points.
+        """  Return the corner control points.
 
         The `order` parameter determines which order to use, either ``'F'`` or
         ``'C'``, for row-major or column-major ordering. E.g. for a volume, in
@@ -1025,7 +987,7 @@ class SplineObject(object):
         return result
 
     def lower_periodic(self, periodic, direction=0):
-        """Sets the periodicity of the spline object in the given direction,
+        """  Sets the periodicity of the spline object in the given direction,
         keeping the geometry unchanged.
 
         :param int direction: new periodicity, i.e. the basis is C^k over the start/end
@@ -1046,7 +1008,7 @@ class SplineObject(object):
         return self
 
     def set_dimension(self, new_dim):
-        """Sets the physical dimension of the object. If increased, the new
+        """  Sets the physical dimension of the object. If increased, the new
         components are set to zero.
 
         :param int new_dim: New dimension.
@@ -1071,7 +1033,7 @@ class SplineObject(object):
         return self.bases[direction].periodic > -1
 
     def force_rational(self):
-        """Force a rational representation of the object.
+        """  Force a rational representation of the object.
 
         The weights of a non-rational object will be set to 1.
 
@@ -1086,7 +1048,7 @@ class SplineObject(object):
         return self
 
     def split(self, knots, direction=0):
-        """Split an object into two or more separate representations with C0
+        """  Split an object into two or more separate representations with C0
         continuity between them.
 
         :param int direction: The parametric direction to split in
@@ -1166,7 +1128,7 @@ class SplineObject(object):
         return results
 
     def make_periodic(self, continuity=None, direction=0):
-        """Make the spline object periodic in a given parametric direction.
+        """  Make the spline object periodic in a given parametric direction.
 
         :param continuity: The continuity along the boundary (default max).
         :param direction: The direction to ensure continuity in.
@@ -1219,7 +1181,7 @@ class SplineObject(object):
 
     @property
     def pardim(self):
-        """The number of parametric dimensions: 1 for curves, 2 for surfaces, 3
+        """  The number of parametric dimensions: 1 for curves, 2 for surfaces, 3
         for volumes, etc.
         """
         return len(self.controlpoints.shape)-1

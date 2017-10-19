@@ -19,9 +19,7 @@ class Curve(SplineObject):
     _intended_pardim = 1
 
     def __init__(self, basis=None, controlpoints=None, rational=False, **kwargs):
-        """__init__([basis=None], [controlpoints=None], [rational=False])
-
-        Construct a curve with the given basis and control points.
+        """  Construct a curve with the given basis and control points.
 
         The default is to create a linear one-element mapping from (0,1) to the
         unit interval.
@@ -35,9 +33,7 @@ class Curve(SplineObject):
         super(Curve, self).__init__([basis], controlpoints, rational, **kwargs)
 
     def evaluate(self, *params):
-        """evaluate(u, v, ...)
-
-        Evaluate the object at given parametric values.
+        """  Evaluate the object at given parametric values.
 
         This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
         the number of evaluation points in direction *i*, and *dim* is the
@@ -75,9 +71,7 @@ class Curve(SplineObject):
         return result
 
     def derivative(self, t, d=1, above=True, tensor=True):
-        """derivative(t, [d=1], above=True, tensor=True)
-
-        Evaluate the derivative of the curve at the given parametric values.
+        """  Evaluate the derivative of the curve at the given parametric values.
 
         This function returns an *n* × *dim* array, where *n* is the number of
         evaluation points, and *dim* is the physical dimension of the curve.
@@ -117,9 +111,7 @@ class Curve(SplineObject):
         return result
 
     def binormal(self, t, above=True):
-        """binormal(t, above=True)
-
-        Evaluate the normalized binormal of the curve at the given parametric value(s).
+        """  Evaluate the normalized binormal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
         evaluation points.
@@ -154,9 +146,7 @@ class Curve(SplineObject):
         return result / magnitude
 
     def normal(self, t, above=True):
-        """normal(t, above=True)
-
-        Evaluate the normal of the curve at the given parametric value(s).
+        """  Evaluate the normal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
         evaluation points.
@@ -181,9 +171,7 @@ class Curve(SplineObject):
         return np.cross(B,T)
 
     def curvature(self, t, above=True):
-        """curvature(t, above=True)
-
-        Evaluate the curvaure at specified point(s). The curvature is defined as
+        """  Evaluate the curvaure at specified point(s). The curvature is defined as
 
         .. math:: \\frac{|\\boldsymbol{v}\\times \\boldsymbol{a}|}{|\\boldsymbol{v}|^3}
 
@@ -211,9 +199,7 @@ class Curve(SplineObject):
         return magnitude / np.power(speed,3)
 
     def torsion(self, t, above=True):
-        """torsion(t, above=True)
-
-        Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
+        """  Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
 
         .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}
 
@@ -250,7 +236,7 @@ class Curve(SplineObject):
 
 
     def raise_order(self, amount):
-        """Raise the polynomial order of the curve.
+        """  Raise the polynomial order of the curve.
 
         :param int amount: Number of times to raise the order
         :return: self
@@ -276,7 +262,7 @@ class Curve(SplineObject):
         return self
 
     def append(self, curve):
-        """Extend the curve by merging another curve to the end of it.
+        """  Extend the curve by merging another curve to the end of it.
 
         The curves are glued together in a C0 fashion with enough repeated
         knots. The function assumes that the end of this curve perfectly
@@ -331,12 +317,12 @@ class Curve(SplineObject):
         return self
 
     def continuity(self, knot):
-        """Get the parametric continuity of the curve at a given point. Will
+        """  Get the parametric continuity of the curve at a given point. Will
         return p-1-m, where m is the knot multiplicity and inf between knots"""
         return self.bases[0].continuity(knot)
 
     def get_kinks(self):
-        """Get the parametric coordinates at all points which have C0-
+        """  Get the parametric coordinates at all points which have C0-
         continuity"""
         return [k for k in self.knots(0) if self.continuity(k)<1]
 
@@ -367,7 +353,7 @@ class Curve(SplineObject):
         return np.dot(detJ, w)
 
     def rebuild(self, p, n):
-        """Creates an approximation to this curve by resampling it using a
+        """  Creates an approximation to this curve by resampling it using a
         uniform knot vector of order *p* with *n* control points.
 
         :param int p: Polynomial discretization order
@@ -393,7 +379,7 @@ class Curve(SplineObject):
         return Curve(basis, controlpoints)
 
     def error(self, target):
-        """ Computes the L2 (squared and per knot span) and max error between
+        """  Computes the L2 (squared and per knot span) and max error between
         this curve and a target curve
 
         .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^2(t_1,t_2)}^2 = \\int_{t_1}^{t_2}

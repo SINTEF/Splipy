@@ -16,9 +16,7 @@ class Volume(SplineObject):
     _intended_pardim = 3
 
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False, **kwargs):
-        """__init__([basis1=None], [basis2=None], [basis3=None], [controlpoints=None], [rational=False])
-
-        Construct a volume with the given basis and control points.
+        """  Construct a volume with the given basis and control points.
 
         The default is to create a linear one-element mapping from and to the
         unit cube.
@@ -98,7 +96,7 @@ class Volume(SplineObject):
         return np.abs(J).dot(w3).dot(w2).dot(w1)
 
     def rebuild(self, p, n):
-        """Creates an approximation to this volume by resampling it using
+        """  Creates an approximation to this volume by resampling it using
         uniform knot vectors of order *p* with *n* control points.
 
         :param int p: Polynomial discretization order
