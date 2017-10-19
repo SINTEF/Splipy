@@ -21,14 +21,14 @@ Resources
 Dependencies
 ------------
 
-** Required **
+**Required**
 
 This library requires numpy and scipy. E.g. on Ubuntu::
 
     pip install numpy
     pip install scipy
 
-** Optional **
+**Optional**
 
 To use image processing tools, you need OpenCV ::
 
@@ -78,9 +78,11 @@ You can use pylint3 to perform static code analysis on the module.
 This can help identify bugs and give suggestions for improvements.
 
 To install, use::
+
     pip3 install pylint
 
 To perform the code analysis, use::
+
     pylint -d C --rcfile=pylint.cfg splipy/
 
 
