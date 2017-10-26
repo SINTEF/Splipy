@@ -103,7 +103,7 @@ class TestAffine(unittest.TestCase):
         pt2[...,1] -= 9.500000
         pt2[...,2] -= 8.300000
         allZero           = pt2
-        allZero[...,:-1] -= pt 
+        allZero[...,:-1] -= pt
         self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
 
     def test_scale_curve_2D_p3_rational_C0_periodic(self):
@@ -1690,7 +1690,7 @@ class TestAffine(unittest.TestCase):
         pt2[...,1] -= 4.000000
         pt2[...,2] -= 8.700000
         allZero           = pt2
-        allZero[...,:-1] -= pt 
+        allZero[...,:-1] -= pt
         self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
 
     def test_scale_curve_2D_p5_rational_C0_periodic(self):
@@ -1736,7 +1736,7 @@ class TestAffine(unittest.TestCase):
         pt2[...,1] -= 7.000000
         pt2[...,2] -= 9.100000
         allZero           = pt2
-        allZero[...,:-1] -= pt 
+        allZero[...,:-1] -= pt
         self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
 
     def test_scale_surface_2D_p76_rational_C0_periodic(self):
@@ -1821,7 +1821,7 @@ class TestAffine(unittest.TestCase):
         pt2[...,1] -= 7.500000
         pt2[...,2] -= 0.100000
         allZero           = pt2
-        allZero[...,:-1] -= pt 
+        allZero[...,:-1] -= pt
         self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
 
     def test_scale_surface_2D_p76_rational_C1_periodic(self):
@@ -1867,7 +1867,7 @@ class TestAffine(unittest.TestCase):
         pt2[...,1] -= 0.400000
         pt2[...,2] -= 4.900000
         allZero           = pt2
-        allZero[...,:-1] -= pt 
+        allZero[...,:-1] -= pt
         self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
 
     def test_scale_curve_2D_p7(self):
@@ -2000,7 +2000,7 @@ class TestAffine(unittest.TestCase):
         pt2[...,1] -= 6.200000
         pt2[...,2] -= 9.400000
         allZero           = pt2
-        allZero[...,:-1] -= pt 
+        allZero[...,:-1] -= pt
         self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
 
     def test_scale_surface_2D_p67_C0_periodic(self):

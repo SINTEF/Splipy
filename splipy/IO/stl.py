@@ -118,7 +118,7 @@ class STL(MasterIO):
 
         else:
             raise ValueError('Unsopported object for STL format')
-        
+
     def write_surface(self, surface, n=None):
         # choose evaluation points as one of three cases:
         #   1. specified with input
@@ -154,7 +154,7 @@ class STL(MasterIO):
         if x.shape[2] != 3:
             x.resize((x.shape[0],x.shape[1],3))
 
-        # compute tiny quad pieces 
+        # compute tiny quad pieces
         faces = [[x[i,j], x[i,j+1], x[i+1,j+1], x[i+1,j]] for i in range(x.shape[0]-1) for j in range(x.shape[1]-1)]
 
         self.writer.add_faces(faces)

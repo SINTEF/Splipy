@@ -476,7 +476,7 @@ class TestSurface(unittest.TestCase):
     def test_center(self):
         # make an ellipse at (2,1)
         surf = SurfaceFactory.disc(3)
-        surf.scale((3,1)) 
+        surf.scale((3,1))
         surf += (2,1)
         center = surf.center()
         self.assertEqual(len(center), 2)
@@ -521,7 +521,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(umin[0,1], 0)
         self.assertAlmostEqual(umin[1,0], 0)
         self.assertAlmostEqual(umin[1,1], 1)
-        
+
         self.assertAlmostEqual(umax[0,0], 1)
         self.assertAlmostEqual(umax[0,1], 0)
         self.assertAlmostEqual(umax[1,0], 1)
@@ -533,8 +533,8 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(vmin[1,1], 0)
 
         # check a slightly more general surface
-        cp = [[0,0], [.5, -.5], [1, 0], 
-              [-.6,1], [1, 1], [2, 1.4], 
+        cp = [[0,0], [.5, -.5], [1, 0],
+              [-.6,1], [1, 1], [2, 1.4],
               [0,2], [.8, 3], [2, 2.4]]
         surf = Surface(BSplineBasis(3), BSplineBasis(3), cp)
         edg  = surf.edges()
@@ -590,12 +590,12 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(n[1,4,0], 0.0)
         self.assertAlmostEqual(n[1,4,1], 0.0)
         self.assertAlmostEqual(n[1,4,2], 1.0)
-        
+
         # test errors
         s = Surface(BSplineBasis(3), BSplineBasis(3), [[0]]*9) # 1D-surface
         with self.assertRaises(RuntimeError):
             s.normal(.5, .5)
-    
+
     def test_area(self):
         s = Surface()
         self.assertAlmostEqual(s.area(), 1.0)
@@ -630,13 +630,13 @@ class TestSurface(unittest.TestCase):
         crv = surf.const_par_curve(0.0, 'v')
         u = np.linspace(0,1,13)
         self.assertTrue(np.allclose(surf(u, 0.0).reshape(13,2), crv(u)))
-        
+
         # try end-point
         crv = surf.const_par_curve(1.0, 'v')
         u = np.linspace(0,1,13)
         self.assertTrue(np.allclose(surf(u, 1.0).reshape(13,2), crv(u)))
 
-        
+
 
 
 if __name__ == '__main__':

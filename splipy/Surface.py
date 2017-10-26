@@ -107,7 +107,7 @@ class Surface(SplineObject):
         return tuple(self.section(*args) for args in sections(2, 1))
 
     def const_par_curve(self, knot, direction):
-        """  Get a Curve representation of the parametric line of some constant 
+        """  Get a Curve representation of the parametric line of some constant
         knot value.
         :param float knot: The constant knot value to sample the surface
         :param int direction: The parametric direction for the constant value
@@ -115,7 +115,7 @@ class Surface(SplineObject):
         :rtype: Curve
         """
         direction = check_direction(direction, 2)
-        
+
         # clone basis since we need to augment this by knot insertion
         b    = self.bases[direction].clone()
 
@@ -126,7 +126,7 @@ class Surface(SplineObject):
             C = b.insert_knot(knot) * C
 
         # at this point we have a C0 basis, find the right interpolating index
-        i  = max(bisect_left(b.knots, knot) - 1,0) 
+        i  = max(bisect_left(b.knots, knot) - 1,0)
 
         # compute the controlpoints and return Curve
         cp = np.tensordot(C[i,:], self.controlpoints, axes=(1, direction))

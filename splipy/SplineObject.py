@@ -923,10 +923,10 @@ class SplineObject(object):
 
     def center(self):
         """  Gets the center of the domain
-        
+
         For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
 
-        .. math:: \\tilde{x} = \\frac{1}{L} \int_{t_0}^{t_1} x(t) \; dt 
+        .. math:: \\tilde{x} = \\frac{1}{L} \int_{t_0}^{t_1} x(t) \; dt
 
         and :math:`L=t_1-t_0` is the length of the parametric domain :math:`[t_0,t_1]`.
 

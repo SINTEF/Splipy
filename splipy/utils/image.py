@@ -180,7 +180,7 @@ def image_curves(filename):
         # make it span [0,1] instead of [0,n-1]
         for i in range(len(knot)):
             knot[i] /= float(n-1)
-        
+
         # make it periodic since these are all closed curves
         knot[0]  -= knot[-1] - knot[-5]
         knot[-1] += knot[4]  - knot[1]
@@ -274,7 +274,7 @@ def image_convex_surface(filename):
             corners = [0, kinks[1], (kinks[1]+kinks[2])/2], kinks[2]
         else:
             corners = [0] + kinks[1:3] + [(kinks[2]+kinks[3])/2]
-    
+
     else:
         while len(kinks) > 5:
             max_span   = 0

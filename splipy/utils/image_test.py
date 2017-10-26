@@ -27,7 +27,7 @@ class TestImage(unittest.TestCase):
         bb = crv.bounding_box()
         crv -= [(x[0]+x[1])/2 for x in bb] # move circle center to the origin
         crv /= (bb[0][1]-bb[0][0])/2       # scale to have unit radius
-        
+
         t = np.linspace(crv.start(0), crv.end(0), 113)
         x = crv(t)
         radius = np.sqrt(x[:,0]**2 + x[:,1]**2)

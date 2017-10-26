@@ -160,7 +160,7 @@ class TestVolume(unittest.TestCase):
         self.assertTrue(np.allclose( vol(u,v,w), vol2(u,v,w) ))
         self.assertTupleEqual(vol.order(), (4,4,4))
         self.assertTupleEqual(vol2.order(), (3,3,3))
-        
+
 
     def test_insert_knot(self):
         # more or less random 3D volume with p=[2,2,1] and n=[4,3,2]
@@ -439,7 +439,7 @@ class TestVolume(unittest.TestCase):
         basis2 = BSplineBasis(3, [-3,-3,-3,20,30,33,33,33])
         basis3 = BSplineBasis(5, [0,0,0,0,0,8,8,8,8,8])
         vol = Volume(basis1, basis2, basis3)
-        
+
         u = np.linspace( 2,12,5)
         v = np.linspace(-3,33,5)
         w = np.linspace( 0, 8,5)
@@ -476,7 +476,7 @@ class TestVolume(unittest.TestCase):
             self.assertAlmostEqual(len(v.knots(0, True)), 11)
             self.assertAlmostEqual(len(v.knots(1, True)), 8)
             self.assertAlmostEqual(len(v.knots(2, True)), 5)
-    
+
     def test_bounding_box(self):
         vol = Volume()
         bb = vol.bounding_box()

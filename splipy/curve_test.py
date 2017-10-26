@@ -120,7 +120,7 @@ class TestCurve(unittest.TestCase):
         with self.assertRaises(TypeError):
             crv.raise_order(0.5)
 
-        # check logic error for negative argument 
+        # check logic error for negative argument
         with self.assertRaises(Exception):
             crv.raise_order(-1)
 
@@ -128,7 +128,7 @@ class TestCurve(unittest.TestCase):
         basis = BSplineBasis(4, [0,0,0,0,.2, .3, .3, .6, .9, 1,1,1,1])
         interp_pts = basis.greville()
         x = [[t*(1-t), t**2] for t in interp_pts]
-        
+
         crv = CurveFactory.interpolate(x, basis) # function in space, exact representation kept
 
         crv2 = crv.lower_order(1) # still in space, crv2 is *also* exact
@@ -435,12 +435,12 @@ class TestCurve(unittest.TestCase):
 
         crv3 = crv.clone()
         crv3.append(crv2)
- 
+
         expected_knot = [0,0,0,0,1,1,1,1.5,2,2,2,2]
         self.assertEqual(crv3.order(direction=0),  4)
         self.assertEqual(crv3.rational, False)
         self.assertAlmostEqual(np.linalg.norm(crv3.knots(0, True)-expected_knot), 0.0)
- 
+
         t = np.linspace(0,1,11)
         pt        = np.zeros((11,3))
         pt[:,:-1] = crv(t)

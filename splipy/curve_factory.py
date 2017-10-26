@@ -3,6 +3,7 @@
 """Handy utilities for creating curves."""
 
 from math import pi, cos, sin, sqrt, ceil
+from splipy.SplineObject import rotation_matrix
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
 from numpy.linalg import norm
@@ -13,8 +14,9 @@ import scipy.sparse as sp
 import copy
 import inspect
 
-__all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment',
-           'interpolate', 'least_square_fit', 'cubic_curve', 'bezier', 'manipulate', 'fit']
+__all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'circle_segment_from_three_points',
+           'circle_segment', 'interpolate', 'least_square_fit', 'cubic_curve', 'bezier',
+           'manipulate', 'fit']
 
 class Boundary:
     """Enumeration representing different boundary conditions used in
@@ -57,24 +59,28 @@ def polygon(*points, **keywords):
     """  Create a linear interpolation between input points.
 
     :param [array-like] points: The points to interpolate
-    :param bool relative: If controlpoints are interpreted as relative to the 
+    :param bool relative: If controlpoints are interpreted as relative to the
         previous one
+    :param [float] t: specify parametric interpolation points (the knot vector)
     :return: Linear curve through the input points
     :rtype: Curve
     """
     if len(points) == 1:
         points = points[0]
 
-    # establish knot vector based on eucledian length between points
-    knot = [0, 0]
-    prevPt = points[0]
-    for pt in points[1:]:
-        dist = 0
-        for (x0, x1) in zip(prevPt, pt):  # loop over (x,y) and maybe z-coordinate
-            dist += (x1 - x0)**2
-        knot.append(knot[-1] + sqrt(dist))
-        prevPt = pt
-    knot.append(knot[-1])
+    knot = keywords.get('t', []);
+    if len(knot) == 0: # establish knot vector based on eucledian length between points
+        knot = [0, 0]
+        prevPt = points[0]
+        for pt in points[1:]:
+            dist = 0
+            for (x0, x1) in zip(prevPt, pt):  # loop over (x,y) and maybe z-coordinate
+                dist += (x1 - x0)**2
+            knot.append(knot[-1] + sqrt(dist))
+            prevPt = pt
+        knot.append(knot[-1])
+    else: # use knot vector given as input argument
+        knot = [knot[0]] + list(knot) + [knot[-1]]
 
     relative = keywords.get('relative', False)
     if relative:
@@ -164,6 +170,52 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
 
     result *= r
     return flip_and_move_plane_geometry(result, center, normal)
+
+def circle_segment_from_three_points(x0, x1, x2):
+    """circle_segment_from_three_points(x0, x1, x2)
+
+    Create a circle segment going from the point x0 to x2 throught x1
+
+    :param vector-like x0: The start point (2D or 3D point)
+    :param vector-like x1: An intermediate point (2D or 3D)
+    :param vector-like x2: The end point (2D or 3D)
+    :rtype: Curve
+    """
+    # wrap input into 3d numpy arrays
+    pt0 = np.array([0,0,0], dtype='float')
+    pt1 = np.array([0,0,0], dtype='float')
+    pt2 = np.array([0,0,0], dtype='float')
+    pt0[:len(x0)] = x0
+    pt1[:len(x1)] = x1
+    pt2[:len(x2)] = x2
+
+    # figure out normal, center and radius
+    normal = np.cross(pt1-pt0, pt2-pt0)
+    A = np.matrix(np.vstack((2*(pt1-pt0), 2*(pt2-pt0), normal)))
+    b = np.array([ np.dot(pt1,pt1) - np.dot(pt0,pt0),
+                   np.dot(pt2,pt2) - np.dot(pt0,pt0),
+                   np.dot(normal,pt0)])
+    center = np.linalg.solve(A,b)
+    radius = np.linalg.norm(pt2-center)
+    v1 = pt2-center
+    v2 = pt0-center
+    len_v1 = np.linalg.norm(v1)
+    len_v2 = np.linalg.norm(v2)
+    theta  = np.arccos(np.dot(v1,v2) / len_v1 / len_v2)
+
+    # create control points, rational weights and knot vector
+    w =  cos(theta/2)
+    R = rotation_matrix(theta/2, -normal)
+    pt1 = np.dot(R,pt0-center)/w + center
+    cp = np.vstack((pt0, w*pt1, pt2))
+    cp = np.hstack((cp, np.array([[1],[w],[1]])))
+    knot = [0,0,0,theta,theta,theta]
+
+    result = Curve(BSplineBasis(3, knot), cp, True)
+    # spit out 2D curve if all input points were 2D, otherwise return 3D
+    result.set_dimension(np.max([len(x0), len(x1), len(x2)]))
+    return result
+
 
 def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
     """  Create a circle segment starting paralell to the rotated x-axis.
@@ -292,7 +344,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
     if t is None:
         t = [0.0]
         for (x0,x1) in zip(x[:-1,:], x[1:,:]):
-            # eucledian distance between two consecutive points 
+            # eucledian distance between two consecutive points
             dist = np.linalg.norm(np.array(x1)-np.array(x0))
             t.append(t[-1]+dist)
 
@@ -360,11 +412,11 @@ def bezier(pts, quadratic=False, relative=False):
         two points for quadratic splines
     :param bool quadratic: True if a quadratic spline is to be returned, False
         if a cubic spline is to be returned
-    :param bool relative: If controlpoints are interpreted as relative to the 
+    :param bool relative: If controlpoints are interpreted as relative to the
         previous one
     :return: Bezier curve
     :rtype: Curve
-    
+
     """
     if quadratic:
         p = 3
@@ -398,7 +450,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
         def scale_by_two(x):
             return 2*x
 
-        new_curve = manipulate(old_curve, scale_by_two) 
+        new_curve = manipulate(old_curve, scale_by_two)
         new_curve = old_curve * 2 # will give the same result
 
         def move_3_to_right(x, v):
@@ -419,7 +471,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
 
         new_curve = manipulate(old_curve, move_3_to_right_fast, normalized=True, vectorized=True)
     """
-    
+
     b = crv.bases[0]
     t = np.array(b.greville())
     n = len(crv)
@@ -480,7 +532,7 @@ def manipulate(crv, f, normalized=False, vectorized=False):
                         a /= norm(a)
                     argv[j] = a
             destination[i] = f(*argv)
-            
+
     N = b(t, sparse=True)
     controlpoints = splinalg.spsolve(N, destination)
     return Curve(b, controlpoints)
@@ -579,3 +631,24 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
 
     return crv
 
+def fit_points(x, t=[], rtol=1e-4, atol=0.0):
+    """ Computes an approximation for a list of points up to a specified tolerance.
+    The method will iteratively refine parts where needed resulting in a non-uniform
+    knot vector with as optimized knot locations as possible. The target curve is the
+    linear interpolation of the input points
+
+    :param [point-like] x: The points to approximate
+    :param [float] t: parametric values for curve points (same length as x)
+    :param float rtol: relative tolerance for stopping criterium. It is defined
+        to be ||e||_L2 / D, where D is the length of the curve and ||e||_L2 is the
+        L2-error (see Curve.error)
+    :param float atol: absolute tolerance for stopping criterium. It is defined to
+        be the maximal distance between the curve approximation and the exact curve
+    :return: Curve Non-uniform cubic B-spline curve
+    """
+
+    if len(t)>0:
+        linear = polygon(x, t=t)
+    else:
+        linear = polygon(x)
+    return fit(linear, linear.start(0), linear.end(0), rtol=rtol, atol=atol)

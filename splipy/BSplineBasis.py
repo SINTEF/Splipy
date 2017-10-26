@@ -159,11 +159,11 @@ class BSplineBasis:
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
                     if j != p-q-1:
                         M[j] = M[j] * float(evalT - self.knots[k]) / (self.knots[k + q] - self.knots[k])
-                                    
+
                     if j != p-1:
                         M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (self.knots[k + q + 1] - self.knots[k + 1])
-                                            
-                                    
+
+
             for q in range(p-d, p):
                 for j in range(p - q - 1, p):
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
@@ -171,7 +171,7 @@ class BSplineBasis:
                         M[j] = M[j] * float(q) / (self.knots[k + q] - self.knots[k])
                     if j != p-1:
                         M[j] = M[j] - M[j + 1] * float(q) / (self.knots[k + q + 1] - self.knots[k + 1])
-                                                             
+
 
             data[i*p:(i+1)*p]    = M
             indices[i*p:(i+1)*p] = np.arange(mu-p, mu) % n
@@ -427,10 +427,10 @@ class BSplineBasis:
         len_left = left.stop - left.start
         right = slice(0, n-len_left, None)
         (self.knots[:len_left], self.knots[len_left:]) = (self.knots[left], self.knots[right] - t1)
-    
+
     def matches(self, bspline, reverse=False):
         """ Checks if this basis equals another basis, when disregarding
-        scaling and translation of the knots vector. I.e. will this basis and 
+        scaling and translation of the knots vector. I.e. will this basis and
         *bspline* yield the same spline object if paired with identical
         controlpoints """
         if self.order != bspline.order or self.periodic != bspline.periodic:
