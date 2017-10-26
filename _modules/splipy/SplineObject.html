@@ -6,51 +6,58 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>splipy.SplineObject &mdash; Splip  1.0.0 documentation</title>
+    <title>splipy.SplineObject &#8212; Splipy 1.1.0 documentation</title>
     
-    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Splip  1.0.0 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" /> 
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head>
   <body role="document">
-      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>Splip  1.0.0 documentation</span></a></h1>
-        <h2 class="heading"><span>splipy.SplineObject</span></h2>
-      </div>
-      <div class="topnav" role="navigation" aria-label="top navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
 
-      </div>
-      <div class="content">
-        
-        
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <h1>Source code for splipy.SplineObject</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">attrgetter</span><span class="p">,</span> <span class="n">methodcaller</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">product</span>
-<span class="kn">from</span> <span class="nn">splipy</span> <span class="kn">import</span> <span class="n">BSplineBasis</span>
-<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">attrgetter</span><span class="p">,</span> <span class="n">methodcaller</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">product</span>
+<span class="kn">from</span> <span class="nn">bisect</span> <span class="k">import</span> <span class="n">bisect_left</span>
+<span class="kn">from</span> <span class="nn">splipy</span> <span class="k">import</span> <span class="n">BSplineBasis</span>
+<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="k">import</span> <span class="o">*</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;SplineObject&#39;</span><span class="p">]</span>
 
@@ -64,10 +71,26 @@
                       <span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="n">d</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">c</span><span class="p">),</span>     <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">d</span><span class="o">+</span><span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="p">),</span>     <span class="n">a</span><span class="o">*</span><span class="n">a</span><span class="o">+</span><span class="n">d</span><span class="o">*</span><span class="n">d</span><span class="o">-</span><span class="n">b</span><span class="o">*</span><span class="n">b</span><span class="o">-</span><span class="n">c</span><span class="o">*</span><span class="n">c</span><span class="p">]])</span>
 
 
-<div class="viewcode-block" id="SplineObject"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject">[docs]</a><span class="k">class</span> <span class="nc">SplineObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;SplineObject()</span>
+<span class="k">def</span> <span class="nf">transpose_fix</span><span class="p">(</span><span class="n">pardim</span><span class="p">,</span> <span class="n">direction</span><span class="p">):</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pardim</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">ret</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
 
-<span class="sd">    Master class for spline objects with arbitrary dimensions.</span>
+
+<span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">cps</span><span class="p">,</span> <span class="n">tensor</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">tensor</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">N</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">cps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">cps</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,j...-&gt;i...&#39;</span><span class="p">,</span> <span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cps</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">N</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">cps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ij...-&gt;i...&#39;</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">cps</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cps</span>
+
+
+<div class="viewcode-block" id="SplineObject"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject">[docs]</a><span class="k">class</span> <span class="nc">SplineObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;  Master class for spline objects with arbitrary dimensions.</span>
 
 <span class="sd">    This class should be subclassed instead of used directly.</span>
 
@@ -76,10 +99,8 @@
 <span class="sd">    object, while infix operators (e.g. ``+``) create new objects.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="SplineObject.__init__"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bases</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;__init__([bases=None], [controlpoints=None], [rational=False])</span>
-
-<span class="sd">        Construct a spline object with the given bases and control points.</span>
+<div class="viewcode-block" id="SplineObject.__init__"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bases</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Construct a spline object with the given bases and control points.</span>
 
 <span class="sd">        The default is to create a linear one-element mapping from and to the</span>
 <span class="sd">        unit (hyper)cube.</span>
@@ -93,9 +114,9 @@
 <span class="sd">        :param bool raw: If True, skip any control point reordering.</span>
 <span class="sd">            (For internal use.)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">bases</span> <span class="o">=</span> <span class="p">[(</span><span class="n">b</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="n">BSplineBasis</span><span class="p">())</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">]</span>
+        <span class="n">bases</span> <span class="o">=</span> <span class="p">[(</span><span class="n">b</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="n">BSplineBasis</span><span class="p">())</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="n">bases</span>
-        <span class="k">if</span> <span class="n">controlpoints</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">controlpoints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># `product&#39; produces tuples in row-major format (the last input varies quickest)</span>
             <span class="c1"># We want them in column-major format, so we reverse the basis orders, and then</span>
             <span class="c1"># also reverse the output tuples</span>
@@ -110,17 +131,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rational</span> <span class="o">=</span> <span class="n">rational</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
-            <span class="c1"># Reshape the array so that it&#39;s not just flat</span>
-            <span class="n">cp_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">b</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">+</span> <span class="n">rational</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">cp_shape</span><span class="p">)</span>
-
-            <span class="c1"># Compensate for numpy&#39;s row-major ordering</span>
-            <span class="c1"># cps = cps.transpose((n-1,n-2,...,0,n))</span>
-            <span class="n">spec</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">)))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">)])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span></div>
+            <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">)</span>
+            <span class="n">ncomps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">+</span> <span class="n">rational</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">ncomps</span><span class="o">=</span><span class="n">ncomps</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_validate_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Check whether the given evaluation parameters are valid.</span>
+        <span class="sd">&quot;&quot;&quot;  Check whether the given evaluation parameters are valid.</span>
 
 <span class="sd">        :raises ValueError: If the parameters are outside the domain</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -129,35 +145,41 @@
                 <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">b</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="ow">or</span> <span class="n">b</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Evaluation outside parametric domain&#39;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SplineObject.evaluate"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;evaluate(u, v, ...)</span>
+<div class="viewcode-block" id="SplineObject.evaluate"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the object at given parametric values.</span>
 
-<span class="sd">        Evaluate the object at given parametric values.</span>
+<span class="sd">        If *tensor* is true, evaluation will take place on a tensor product</span>
+<span class="sd">        grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where</span>
+<span class="sd">        *ni* is the number of evaluation points in direction *i*, and *dim* is</span>
+<span class="sd">        the physical dimension of the object.</span>
 
-<span class="sd">        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is</span>
-<span class="sd">        the number of evaluation points in direction *i*, and *dim* is the</span>
-<span class="sd">        physical dimension of the object.</span>
+<span class="sd">        If *tensor* is false, there must be an equal number *n* of evaluation</span>
+<span class="sd">        points in all directions, and the return value will be an *n* × *dim*</span>
+<span class="sd">        array.</span>
 
 <span class="sd">        If there is only one evaluation point, a vector of length *dim* is</span>
 <span class="sd">        returned instead.</span>
 
 <span class="sd">        :param u,v,...: Parametric coordinates in which to evaluate</span>
 <span class="sd">        :type u,v,...: float or [float]</span>
+<span class="sd">        :param tensor: Whether to evaluate on a tensor product grid</span>
+<span class="sd">        :type tensor: bool</span>
 <span class="sd">        :return: Geometry coordinates</span>
 <span class="sd">        :rtype: numpy.array</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">squeeze</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_singleton</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">ensure_listlike</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">]</span>
 
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tensor&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tensor</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">({</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">})</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parameters must have same length&#39;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_domain</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
 
-        <span class="c1"># Evaluate the derivatives of the corresponding bases at the corresponding points</span>
+        <span class="c1"># Evaluate the corresponding bases at the corresponding points</span>
         <span class="c1"># and build the result array</span>
         <span class="n">Ns</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">params</span><span class="p">)]</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span>
-        <span class="k">for</span> <span class="n">N</span> <span class="ow">in</span> <span class="n">Ns</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">Ns</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span>
 
         <span class="c1"># For rational objects, we divide out the weights, which are stored in the</span>
         <span class="c1"># last coordinate</span>
@@ -173,13 +195,16 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="SplineObject.derivative"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.derivative">[docs]</a>    <span class="k">def</span> <span class="nf">derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;derivative(u, v, ..., [d=(1,1,...)])</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the derivative of the object at the given parametric values.</span>
 
-<span class="sd">        Evaluate the derivative of the object at the given parametric values.</span>
+<span class="sd">        If *tensor* is true, evaluation will take place on a tensor product</span>
+<span class="sd">        grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where</span>
+<span class="sd">        *ni* is the number of evaluation points in direction *i*, and *dim* is</span>
+<span class="sd">        the physical dimension of the object.</span>
 
-<span class="sd">        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is</span>
-<span class="sd">        the number of evaluation points in direction *i*, and *dim* is the</span>
-<span class="sd">        physical dimension of the object.</span>
+<span class="sd">        If *tensor* is false, there must be an equal number *n* of evaluation</span>
+<span class="sd">        points in all directions, and the return value will be an *n* × *dim*</span>
+<span class="sd">        array.</span>
 
 <span class="sd">        If there is only one evaluation point, a vector of length *dim* is</span>
 <span class="sd">        returned instead.</span>
@@ -207,24 +232,32 @@
 <span class="sd">        :param u,v,...: Parametric coordinates in which to evaluate</span>
 <span class="sd">        :type u,v,...: float or [float]</span>
 <span class="sd">        :param (int) d: Order of derivative to compute</span>
+<span class="sd">        :param (bool) above: Evaluation in the limit from above</span>
+<span class="sd">        :param tensor: Whether to evaluate on a tensor product grid</span>
+<span class="sd">        :type tensor: bool</span>
 <span class="sd">        :return: Derivatives</span>
 <span class="sd">        :rtype: numpy.array</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">squeeze</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_singleton</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">ensure_listlike</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">]</span>
 
-        <span class="n">derivs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">))</span>
-        <span class="n">derivs</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">derivs</span><span class="p">)</span>
+        <span class="n">derivs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+        <span class="n">derivs</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">derivs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+
+        <span class="n">above</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;above&#39;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+        <span class="n">above</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">above</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tensor&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tensor</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">({</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">})</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parameters must have same length&#39;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_domain</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
 
         <span class="c1"># Evaluate the derivatives of the corresponding bases at the corresponding points</span>
         <span class="c1"># and build the result array</span>
-        <span class="n">dNs</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">derivs</span><span class="p">)]</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span>
-        <span class="k">for</span> <span class="n">dN</span> <span class="ow">in</span> <span class="n">dNs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">dN</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
+        <span class="n">dNs</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">from_right</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">from_right</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">derivs</span><span class="p">,</span> <span class="n">above</span><span class="p">)]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">dNs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span>
 
         <span class="c1"># For rational curves, we need to use the quotient rule</span>
         <span class="c1"># (n/W)&#39; = (n&#39; W - n W&#39;) / W^2 = n&#39;/W - nW&#39;/W^2</span>
@@ -235,9 +268,7 @@
             <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">derivs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Rational derivative not implemented for order </span><span class="si">%i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">sum</span><span class="p">(</span><span class="n">derivs</span><span class="p">))</span>
             <span class="n">Ns</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">params</span><span class="p">)]</span>
-            <span class="n">non_derivative</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span>
-            <span class="k">for</span> <span class="n">N</span> <span class="ow">in</span> <span class="n">Ns</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="n">non_derivative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">non_derivative</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
+            <span class="n">non_derivative</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">Ns</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span>
             <span class="n">W</span> <span class="o">=</span> <span class="n">non_derivative</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># W</span>
             <span class="n">Wd</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>         <span class="c1"># W&#39;</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
@@ -250,10 +281,77 @@
 
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="SplineObject.tangent"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.tangent">[docs]</a>    <span class="k">def</span> <span class="nf">tangent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;tangent(u, v, ..., [direction=None])</span>
+<div class="viewcode-block" id="SplineObject.get_derivative_spline"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.get_derivative_spline">[docs]</a>    <span class="k">def</span> <span class="nf">get_derivative_spline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Compute the controlpoints associated with the derivative spline object</span>
 
-<span class="sd">        Evaluate the tangents of the object at the given parametric values.</span>
+<span class="sd">        If `direction` is given, only the derivatives in that direction are</span>
+<span class="sd">        returned.</span>
+
+<span class="sd">        If `direction` is not given, this function returns a tuple of all</span>
+<span class="sd">        partial derivatives</span>
+
+<span class="sd">        .. code:: python</span>
+
+<span class="sd">           # Create a 4x4 element cubic spline surface</span>
+<span class="sd">           surf = Surface()</span>
+<span class="sd">           surf.raise_order(2,2)</span>
+<span class="sd">           surf.refine(3,3)</span>
+<span class="sd">           surf[1:4,1:4,:] += 0.1 # make the surface non-trivial by moving controlpoints</span>
+
+<span class="sd">           # Create the derivative surface</span>
+<span class="sd">           du = surf.get_derivative_spline(direction=&#39;u&#39;)</span>
+
+<span class="sd">           # evaluation is identical</span>
+<span class="sd">           print(du.evaluate(0.3, 0.4))</span>
+<span class="sd">           print(surf.derivative(0.3, 0.4, d=(1,0)))</span>
+
+<span class="sd">           print(surf.order()) # prints (3,3)</span>
+<span class="sd">           print(du.order())   # prints (2,3)</span>
+
+<span class="sd">        :param int direction: The tangential direction</span>
+<span class="sd">        :return: Derivative spline</span>
+<span class="sd">        :rtype: SplineObject</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Not working for rational splines&#39;</span><span class="p">)</span>
+
+        <span class="c1"># if no direction is specified, return a tuple with all derivatives</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">get_derivative_spline</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                    <span class="n">ip1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+                    <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">ip1</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="n">derivative_cps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+            <span class="n">derivative_cps</span> <span class="o">=</span> <span class="n">derivative_cps</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">transpose_fix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+            <span class="n">bases</span>    <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">]</span>
+            <span class="n">bases</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">bases</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># search for the right subclass constructor, i.e. Volume, Surface or Curve</span>
+            <span class="n">constructor</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SplineObject</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">_intended_pardim</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)]</span>
+            <span class="n">constructor</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># return derivative object</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">derivative_cps</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SplineObject.tangent"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.tangent">[docs]</a>    <span class="k">def</span> <span class="nf">tangent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the tangents of the object at the given parametric values.</span>
 
 <span class="sd">        If `direction` is given, only the derivatives in that direction are</span>
 <span class="sd">        evaluated. This is equivalent to calling</span>
@@ -267,30 +365,55 @@
 <span class="sd">        :param u,v,...: Parametric coordinates in which to evaluate</span>
 <span class="sd">        :type u,v,...: float or [float]</span>
 <span class="sd">        :param int direction: The tangential direction</span>
+<span class="sd">        :param (bool) above: Evaluation in the limit from above</span>
+<span class="sd">        :param tensor: Whether to evaluate on a tensor product grid</span>
+<span class="sd">        :type tensor: bool</span>
 <span class="sd">        :return: Tangents</span>
-<span class="sd">        :rtype: numpy.array</span>
+<span class="sd">        :rtype: tuple&lt;numpy.array&gt;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;direction&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;direction&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">derivative</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+
+        <span class="n">above</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;above&#39;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+        <span class="n">above</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">above</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tensor&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># curves</span>
             <span class="n">direction</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="p">()</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">):</span>
                 <span class="n">derivative</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="n">result</span> <span class="o">+=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">derivative</span><span class="p">),)</span>
+                <span class="c1"># compute velocity in this direction</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">derivative</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">,</span> <span class="n">tensor</span><span class="o">=</span><span class="n">tensor</span><span class="p">)</span>
+                <span class="c1"># normalize</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                    <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="n">speed</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+                <span class="c1"># store in result tuple</span>
+                <span class="n">result</span> <span class="o">+=</span> <span class="p">(</span><span class="n">v</span><span class="o">/</span><span class="n">speed</span><span class="p">,)</span>
                 <span class="n">derivative</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">return</span> <span class="n">result</span>
 
         <span class="n">i</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
         <span class="n">derivative</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">derivative</span><span class="p">)</span></div>
+        <span class="c1"># compute velocity in this direction</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">derivative</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">,</span> <span class="n">tensor</span><span class="o">=</span><span class="n">tensor</span><span class="p">)</span>
+        <span class="c1"># normalize</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="n">speed</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+
+        <span class="k">return</span> <span class="n">v</span> <span class="o">/</span> <span class="n">speed</span><span class="p">;</span></div>
 
 <div class="viewcode-block" id="SplineObject.section"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.section">[docs]</a>    <span class="k">def</span> <span class="nf">section</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;section(u, v, ..., [unwrap_points=False])</span>
-
-<span class="sd">        Returns a section from the object. A section can be any sub-object of</span>
+        <span class="sd">&quot;&quot;&quot;  Returns a section from the object. A section can be any sub-object of</span>
 <span class="sd">        parametric dimension not exceeding that of the object. E.g. for a</span>
 <span class="sd">        volume, sections include vertices, edges, faces, etc.</span>
 
@@ -327,26 +450,41 @@
 <span class="sd">        :rtype: SplineObject or np.array</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">section</span> <span class="o">=</span> <span class="n">check_section</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">pardim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">unwrap_points</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;unwrap_points&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="n">unwrap_points</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;unwrap_points&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">slices</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">section</span><span class="p">)</span>
-        <span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">section</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">]</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">section</span><span class="p">)</span>
+        <span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">section</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">bases</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">unwrap_points</span><span class="p">:</span>
             <span class="n">classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SplineObject</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">_intended_pardim</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">)]</span>
             <span class="k">if</span> <span class="n">classes</span><span class="p">:</span>
                 <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
-                <span class="k">return</span> <span class="n">classes</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">SplineObject</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">classes</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SplineObject</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="SplineObject.raise_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.raise_order">[docs]</a>    <span class="k">def</span> <span class="nf">raise_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">raises</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;raise_order(u, v, ...)</span>
+<div class="viewcode-block" id="SplineObject.set_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.set_order">[docs]</a>    <span class="k">def</span> <span class="nf">set_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">order</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Set the polynomial order of the object. If only one argument is</span>
+<span class="sd">        given, the order is set uniformly over all directions.</span>
 
-<span class="sd">        Raise the polynomial order of the object. If only one argument is</span>
+<span class="sd">        :param int u,v,...: The new order in a given direction.</span>
+<span class="sd">        :raises ValueError: If the order is reduced in any direction.</span>
+<span class="sd">        :return: self</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">new</span> <span class="o">&gt;=</span> <span class="n">old</span> <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">())):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot lower order using set_order&quot;</span><span class="p">)</span>
+
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span><span class="n">new</span> <span class="o">-</span> <span class="n">old</span> <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">())]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_order</span><span class="p">(</span><span class="o">*</span><span class="n">diff</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SplineObject.raise_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.raise_order">[docs]</a>    <span class="k">def</span> <span class="nf">raise_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">raises</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Raise the polynomial order of the object. If only one argument is</span>
 <span class="sd">        given, the order is raised equally over all directions.</span>
 
 <span class="sd">        :param int u,v,...: Number of times to raise the order in a given</span>
 <span class="sd">            direction.</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">raises</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">raises</span> <span class="o">=</span> <span class="p">[</span><span class="n">raises</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span>
@@ -373,12 +511,51 @@
             <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">result</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">result</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="n">new_bases</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="n">new_bases</span>
 
-<div class="viewcode-block" id="SplineObject.start"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;start([direction=None])</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
-<span class="sd">        Return the start of the parametric domain.</span>
+<div class="viewcode-block" id="SplineObject.lower_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.lower_order">[docs]</a>    <span class="k">def</span> <span class="nf">lower_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">lowers</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Lower the polynomial order of the object. If only one argument is</span>
+<span class="sd">        given, the order is lowered equally over all directions.</span>
+
+<span class="sd">        :param int u,v,...: Number of times to lower the order in a given</span>
+<span class="sd">            direction.</span>
+<span class="sd">        :return SplineObject: Approximation of the current object on a lower</span>
+<span class="sd">            order basis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lowers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">lowers</span> <span class="o">=</span> <span class="p">[</span><span class="n">lowers</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lowers</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="n">new_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">lower_order</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">lowers</span><span class="p">)]</span>
+
+        <span class="c1"># Set up an interpolation problem</span>
+        <span class="c1"># This works in projective space, so no special handling for rational objects</span>
+        <span class="n">interpolation_pts</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">new_bases</span><span class="p">]</span>
+        <span class="n">N_old</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">pts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">interpolation_pts</span><span class="p">)]</span>
+        <span class="n">N_new</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">pts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">new_bases</span><span class="p">,</span> <span class="n">interpolation_pts</span><span class="p">)]</span>
+
+        <span class="c1"># Calculate the projective interpolation points</span>
+        <span class="n">new_controlpts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">N_old</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">new_controlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">new_controlpts</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Solve the interpolation problem</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">N_new</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">new_controlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">new_controlpts</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># search for the right subclass constructor, i.e. Volume, Surface or Curve</span>
+        <span class="n">constructor</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SplineObject</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">_intended_pardim</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)]</span>
+        <span class="n">constructor</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># return approximated object</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">new_bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_controlpts</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SplineObject.start"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Return the start of the parametric domain.</span>
 
 <span class="sd">        If `direction` is given, returns the start of that direction, as a</span>
 <span class="sd">        float. If it is not given, returns the start of all directions, as a</span>
@@ -387,15 +564,13 @@
 <span class="sd">        :param int direction: Direction in which to get the start.</span>
 <span class="sd">        :raises ValueError: For invalid direction</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SplineObject.end"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;end([direction=None])</span>
-
-<span class="sd">        Return the end of the parametric domain.</span>
+<div class="viewcode-block" id="SplineObject.end"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Return the end of the parametric domain.</span>
 
 <span class="sd">        If `direction` is given, returns the end of that direction, as a float.</span>
 <span class="sd">        If it is not given, returns the end of all directions, as a tuple.</span>
@@ -403,15 +578,13 @@
 <span class="sd">        :param int direction: Direction in which to get the end.</span>
 <span class="sd">        :raises ValueError: For invalid direction</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">end</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SplineObject.order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.order">[docs]</a>    <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;order([direction=None])</span>
-
-<span class="sd">        Return polynomial order (degree + 1).</span>
+<div class="viewcode-block" id="SplineObject.order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.order">[docs]</a>    <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Return polynomial order (degree + 1).</span>
 
 <span class="sd">        If `direction` is given, returns the order of that direction, as an</span>
 <span class="sd">        int. If it is not given, returns the order of all directions, as a</span>
@@ -420,15 +593,13 @@
 <span class="sd">        :param int direction: Direction in which to get the order.</span>
 <span class="sd">        :raises ValueError: For invalid direction</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">order</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">order</span></div>
 
-<div class="viewcode-block" id="SplineObject.knots"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.knots">[docs]</a>    <span class="k">def</span> <span class="nf">knots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;knots([direction=None], [with_multiplicities=False])</span>
-
-<span class="sd">        Return knots.</span>
+<div class="viewcode-block" id="SplineObject.knots"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.knots">[docs]</a>    <span class="k">def</span> <span class="nf">knots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Return knots vector</span>
 
 <span class="sd">        If `direction` is given, returns the knots in that direction, as a</span>
 <span class="sd">        list. If it is not given, returns the knots of all directions, as a</span>
@@ -440,18 +611,17 @@
 <span class="sd">        :raises ValueError: For invalid direction</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">getter</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;knots&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">with_multiplicities</span> <span class="k">else</span> <span class="n">methodcaller</span><span class="p">(</span><span class="s1">&#39;knot_spans&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">getter</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">getter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="SplineObject.reverse"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.reverse">[docs]</a>    <span class="k">def</span> <span class="nf">reverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;reverse([direction=0])</span>
-
-<span class="sd">        Swap the direction of a parameter by making it go in the reverse</span>
+        <span class="sd">&quot;&quot;&quot;  Swap the direction of a parameter by making it go in the reverse</span>
 <span class="sd">        direction. The parametric domain remains unchanged.</span>
 
 <span class="sd">        :param int direction: The direction to flip.</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
@@ -462,16 +632,19 @@
         <span class="c1"># :    =&gt; slice(None, None, None)</span>
         <span class="c1"># ::-1 =&gt; slice(None, None, -1)</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
-        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">direction</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span></div>
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">direction</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.swap"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.swap">[docs]</a>    <span class="k">def</span> <span class="nf">swap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dir1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dir2</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Swaps two parameter directions.</span>
+        <span class="sd">&quot;&quot;&quot;  Swaps two parameter directions.</span>
 
 <span class="sd">        This function silently passes for curves.</span>
 
 <span class="sd">        :param direction dir1: The first direction (default u)</span>
 <span class="sd">        :param direction dir2: The second direction (default v)</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span>
@@ -486,15 +659,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">new_directions</span><span class="p">)</span>
 
         <span class="c1"># Swap knot vectors</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir1</span><span class="p">]</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.insert_knot"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.insert_knot">[docs]</a>    <span class="k">def</span> <span class="nf">insert_knot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Insert a new knot into the spline.</span>
+        <span class="sd">&quot;&quot;&quot;  Insert a new knot into the spline.</span>
 
 <span class="sd">        :param int direction: The direction to insert in</span>
 <span class="sd">        :param knot: The new knot(s) to insert</span>
 <span class="sd">        :type knot: float or [float]</span>
 <span class="sd">        :raises ValueError: For invalid direction</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">shape</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
 
@@ -503,17 +679,16 @@
 
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
 
-        <span class="n">transpose_fix</span> <span class="o">=</span> <span class="p">[[],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">)]]</span>
         <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="n">direction</span><span class="p">]))</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knot</span><span class="p">:</span>
             <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">*</span> <span class="n">C</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">direction</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">transpose_fix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">][</span><span class="n">direction</span><span class="p">])</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">transpose_fix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">,</span> <span class="n">direction</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.refine"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.refine">[docs]</a>    <span class="k">def</span> <span class="nf">refine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ns</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;refine(nu, [nv, ...,] [direction=None])</span>
-
-<span class="sd">        Enrich the spline space by inserting knots into each existing knot</span>
+        <span class="sd">&quot;&quot;&quot;  Enrich the spline space by inserting knots into each existing knot</span>
 <span class="sd">        span.</span>
 
 <span class="sd">        This method supports three different usage patterns:</span>
@@ -531,10 +706,11 @@
 
 <span class="sd">        :param int nu,nv,...: Number of new knots to insert into each span</span>
 <span class="sd">        :param int direction: Direction to refine in</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;direction&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;direction&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">directions</span> <span class="o">=</span> <span class="p">[</span><span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">directions</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
@@ -547,12 +723,12 @@
             <span class="n">new_knots</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="p">(</span><span class="n">k0</span><span class="p">,</span> <span class="n">k1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
                 <span class="n">new_knots</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">k0</span><span class="p">,</span> <span class="n">k1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">(</span><span class="n">new_knots</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">(</span><span class="n">new_knots</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.reparam"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.reparam">[docs]</a>    <span class="k">def</span> <span class="nf">reparam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;reparam([u, v, ...], [direction=None])</span>
-
-<span class="sd">        Redefine the parametric domain. This function accepts two calling</span>
+        <span class="sd">&quot;&quot;&quot;  Redefine the parametric domain. This function accepts two calling</span>
 <span class="sd">        conventions:</span>
 
 <span class="sd">        `reparametrize(u, v, ...)` reparametrizes each direction to the domains</span>
@@ -566,6 +742,7 @@
 
 <span class="sd">        :param tuple u, v, ...: New parametric domains, default to (0,1)</span>
 <span class="sd">        :param int direction: The direction to reparametrize</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s1">&#39;direction&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="c1"># Pad the args with (0, 1) for the extra directions</span>
@@ -579,12 +756,15 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">reparam</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">reparam</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">reparam</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.translate"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.translate">[docs]</a>    <span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Translate (i.e. move) the object by a given distance.</span>
+        <span class="sd">&quot;&quot;&quot;  Translate (i.e. move) the object by a given distance.</span>
 
-<span class="sd">        :param point-like x: The vector to translate by.</span>
+<span class="sd">        :param array-like x: The vector to translate by.</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># 3D rational example: create a 4x4 translation matrix</span>
         <span class="c1">#</span>
@@ -626,14 +806,13 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.scale"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.scale">[docs]</a>    <span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;scale(sx, [sy, sz, ...])</span>
-
-<span class="sd">        Scale, or magnify the object by a given amount.</span>
+        <span class="sd">&quot;&quot;&quot;  Scale, or magnify the object by a given amount.</span>
 
 <span class="sd">        In case of one input argument, the scaling is uniform.</span>
 
 <span class="sd">        :param args: Scaling factors, possibly different in each direction.</span>
-<span class="sd">        :type args: point-like or float</span>
+<span class="sd">        :type args: array-like or float</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># 3D rational example: create a 4x4 scaling matrix</span>
         <span class="c1">#</span>
@@ -665,13 +844,12 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.rotate"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.rotate">[docs]</a>    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>
-        <span class="sd">&quot;&quot;&quot;rotate(theta, [normal=(0,0,1)])</span>
-
-<span class="sd">        Rotate the object around an axis.</span>
+        <span class="sd">&quot;&quot;&quot;  Rotate the object around an axis.</span>
 
 <span class="sd">        :param float theta: Angle to rotate about, measured in radians</span>
-<span class="sd">        :param point-like normal: The normal axis (if 3D) to rotate about</span>
+<span class="sd">        :param array-like normal: The normal axis (if 3D) to rotate about</span>
 <span class="sd">        :raises RuntimeError: If the physical dimension is not 2 or 3</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># 2D rational example: create a 3x3 rotation matrix</span>
         <span class="c1">#</span>
@@ -712,10 +890,11 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.mirror"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">normal</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Mirror the object around a plane through the origin.</span>
+        <span class="sd">&quot;&quot;&quot;  Mirror the object around a plane through the origin.</span>
 
-<span class="sd">        :param point-like normal: The plane normal to mirror about.</span>
+<span class="sd">        :param array-like normal: The plane normal to mirror about.</span>
 <span class="sd">        :raises RuntimeError: If the physical dimension is not 2 or 3</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># 3D rational example: create a 4x4 reflection matrix</span>
         <span class="c1">#</span>
@@ -756,7 +935,7 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.project"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.project">[docs]</a>    <span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plane</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Projects the geometry onto a plane or axis.</span>
+        <span class="sd">&quot;&quot;&quot;  Projects the geometry onto a plane or axis.</span>
 
 <span class="sd">        - `project(&#39;xy&#39;)` will project the object onto the *xy* plane, setting</span>
 <span class="sd">          all *z* components to zero.</span>
@@ -764,6 +943,7 @@
 <span class="sd">          *x* and *z* components to zero.</span>
 
 <span class="sd">        :param string plane: Any combination of &#39;x&#39;, &#39;y&#39; and &#39;z&#39;</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">keep</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="ow">in</span> <span class="n">plane</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="s1">&#39;xyz&#39;</span><span class="p">]</span>
 
@@ -775,7 +955,7 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.bounding_box"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.bounding_box">[docs]</a>    <span class="k">def</span> <span class="nf">bounding_box</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Gets the bounding box of a spline object, computed from the</span>
+        <span class="sd">&quot;&quot;&quot;  Gets the bounding box of a spline object, computed from the</span>
 <span class="sd">        control-point values. Could be inaccurate for rational splines.</span>
 
 <span class="sd">        Returns the minima and maxima for each direction:</span>
@@ -793,7 +973,7 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="SplineObject.center"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.center">[docs]</a>    <span class="k">def</span> <span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Gets the center of the domain</span>
+        <span class="sd">&quot;&quot;&quot;  Gets the center of the domain</span>
 <span class="sd">        </span>
 <span class="sd">        For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where</span>
 
@@ -836,7 +1016,7 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="SplineObject.corners"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.corners">[docs]</a>    <span class="k">def</span> <span class="nf">corners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the corner control points.</span>
+        <span class="sd">&quot;&quot;&quot;  Return the corner control points.</span>
 
 <span class="sd">        The `order` parameter determines which order to use, either ``&#39;F&#39;`` or</span>
 <span class="sd">        ``&#39;C&#39;``, for row-major or column-major ordering. E.g. for a volume, in</span>
@@ -858,10 +1038,12 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="SplineObject.lower_periodic"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.lower_periodic">[docs]</a>    <span class="k">def</span> <span class="nf">lower_periodic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">periodic</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sets the periodicity of the spline object in the given direction,</span>
+        <span class="sd">&quot;&quot;&quot;  Sets the periodicity of the spline object in the given direction,</span>
 <span class="sd">        keeping the geometry unchanged.</span>
 
-<span class="sd">        :param int direction: new periodicity, i.e. the basis is C^k over the start/end</span>
+<span class="sd">        :param int periodic: new periodicity, i.e. the basis is C^k over the start/end</span>
+<span class="sd">        :param int direction: the parametric direction of the basis to modify</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
 
@@ -873,13 +1055,16 @@
             <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">b</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">periodic</span> <span class="o">&gt;</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot raise periodicity&#39;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot raise periodicity&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="SplineObject.set_dimension"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.set_dimension">[docs]</a>    <span class="k">def</span> <span class="nf">set_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_dim</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sets the physical dimension of the object. If increased, the new</span>
+        <span class="sd">&quot;&quot;&quot;  Sets the physical dimension of the object. If increased, the new</span>
 <span class="sd">        components are set to zero.</span>
 
 <span class="sd">        :param int new_dim: New dimension.</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
@@ -900,9 +1085,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span></div>
 
 <div class="viewcode-block" id="SplineObject.force_rational"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.force_rational">[docs]</a>    <span class="k">def</span> <span class="nf">force_rational</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Force a rational representation of the object.</span>
+        <span class="sd">&quot;&quot;&quot;  Force a rational representation of the object.</span>
 
 <span class="sd">        The weights of a non-rational object will be set to 1.</span>
+
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">:</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
@@ -912,9 +1099,140 @@
 
         <span class="k">return</span> <span class="bp">self</span></div>
 
+<div class="viewcode-block" id="SplineObject.split"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knots</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Split an object into two or more separate representations with C0</span>
+<span class="sd">        continuity between them.</span>
+
+<span class="sd">        :param knots: The splitting points</span>
+<span class="sd">        :type knots: float or [float]</span>
+<span class="sd">        :param direction: Parametric direction</span>
+<span class="sd">        :type direction: int</span>
+<span class="sd">        :return: The new objects</span>
+<span class="sd">        :rtype: [SplineObject]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># for single-value input, wrap it into a list</span>
+        <span class="n">knots</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span>
+
+        <span class="c1"># error test input</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">splitting_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">bases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span>
+        <span class="c1"># insert knots to produce C{-1} at all splitting points</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
+            <span class="n">continuity</span> <span class="o">=</span> <span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">continuity</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
+                <span class="n">continuity</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">splitting_obj</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">([</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">direction</span><span class="p">)</span>
+
+        <span class="n">b</span> <span class="o">=</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
+            <span class="n">splitting_obj</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">splitting_obj</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="o">-</span><span class="n">mu</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="n">b</span><span class="o">.</span><span class="n">periodic</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">direction</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">splitting_obj</span>
+
+        <span class="c1"># search for the right subclass constructor, i.e. Volume, Surface or Curve</span>
+        <span class="n">spline_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SplineObject</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">_intended_pardim</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">)]</span>
+        <span class="n">spline_object</span> <span class="o">=</span> <span class="n">spline_object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># everything is available now, just have to find the right index range</span>
+        <span class="c1"># in the knot vector and controlpoints to store in each separate curve</span>
+        <span class="c1"># piece</span>
+        <span class="n">last_cp_i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">last_knot_i</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">bases</span> <span class="o">=</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">bases</span>
+        <span class="n">b</span>     <span class="o">=</span> <span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span>
+        <span class="n">cp_slice</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="n">direction</span><span class="p">):</span> <span class="c1"># skip start/end points</span>
+                <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+                <span class="n">n_cp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">last_knot_i</span>
+                <span class="n">knot_slice</span>          <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">last_knot_i</span><span class="p">,</span> <span class="n">mu</span><span class="o">+</span><span class="n">p</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">cp_slice</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">last_cp_i</span><span class="p">,</span>   <span class="n">last_cp_i</span><span class="o">+</span><span class="n">n_cp</span><span class="p">,</span>  <span class="kc">None</span><span class="p">)</span>
+
+                <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span> <span class="n">cp_slice</span> <span class="p">]</span>
+                <span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">knot_slice</span><span class="p">])</span>
+
+                <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">cp</span><span class="p">,</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spline_object</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+                <span class="n">last_knot_i</span> <span class="o">=</span> <span class="n">mu</span>
+                <span class="n">last_cp_i</span> <span class="o">+=</span> <span class="n">n_cp</span>
+
+        <span class="c1"># with n splitting points, we&#39;re getting n+1 pieces. Add the final one:</span>
+        <span class="n">knot_slice</span>          <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">last_knot_i</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">cp_slice</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">last_cp_i</span><span class="p">,</span>   <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">knot_slice</span><span class="p">])</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span> <span class="n">cp_slice</span> <span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">cp</span><span class="p">,</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spline_object</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+<div class="viewcode-block" id="SplineObject.make_periodic"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.make_periodic">[docs]</a>    <span class="k">def</span> <span class="nf">make_periodic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">continuity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Make the spline object periodic in a given parametric direction.</span>
+
+<span class="sd">        :param int continuity: The continuity along the boundary (default max).</span>
+<span class="sd">        :param int direction: The direction to ensure continuity in.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+        <span class="n">basis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">continuity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">continuity</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">order</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">continuity</span> <span class="o">&lt;=</span> <span class="n">basis</span><span class="o">.</span><span class="n">order</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Illegal continuity for basis of order </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">continuity</span><span class="p">,</span> <span class="n">order</span>
+            <span class="p">))</span>
+        <span class="k">if</span> <span class="n">continuity</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Operation not supported. &#39;</span>
+                <span class="s1">&#39;For discontinuous spline spaces, consider SplineObject.split().&#39;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">basis</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Basis is already periodic&#39;</span><span class="p">)</span>
+
+        <span class="n">basis</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">make_periodic</span><span class="p">(</span><span class="n">continuity</span><span class="p">)</span>
+
+        <span class="c1"># Merge control points</span>
+        <span class="n">index_beg</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">index_end</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">cps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">continuity</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">continuity</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">weights</span><span class="p">):</span>
+            <span class="c1"># Weighted average between cps[..., i, ..., :] and cps[..., -c-1+i, ..., :]</span>
+            <span class="c1"># The weights are chosen so that, for periodic c, the round trip</span>
+            <span class="c1"># c.split().make_periodic() with suitable arguments produces an</span>
+            <span class="c1"># object identical to c. (Mostly black magic.)</span>
+            <span class="n">index_beg</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="n">index_end</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
+            <span class="n">cps</span><span class="p">[</span><span class="n">index_beg</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="n">cps</span><span class="p">[</span><span class="n">index_beg</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">cps</span><span class="p">[</span><span class="n">index_end</span><span class="p">]</span>
+
+        <span class="c1"># cps[..., :-(continuity+1), ..., :]</span>
+        <span class="n">index_beg</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">cps</span> <span class="o">=</span> <span class="n">cps</span><span class="p">[</span><span class="n">index_beg</span><span class="p">]</span>
+
+        <span class="n">bases</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+        <span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="n">basis</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">cps</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
+
+        <span class="c1"># search for the right subclass constructor, i.e. Volume, Surface or Curve</span>
+        <span class="n">constructor</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SplineObject</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">_intended_pardim</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)]</span>
+        <span class="n">constructor</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">pardim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The number of parametric dimensions: 1 for curves, 2 for surfaces, 3</span>
+        <span class="sd">&quot;&quot;&quot;  The number of parametric dimensions: 1 for curves, 2 for surfaces, 3</span>
 <span class="sd">        for volumes, etc.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
@@ -1033,6 +1351,9 @@
         <span class="n">new_obj</span> <span class="o">+=</span> <span class="n">x</span>
         <span class="k">return</span> <span class="n">new_obj</span>
 
+    <span class="k">def</span> <span class="nf">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="o">+</span> <span class="n">x</span>
+
     <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">new_obj</span> <span class="o">-=</span> <span class="n">x</span>
@@ -1042,6 +1363,9 @@
         <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">new_obj</span> <span class="o">*=</span> <span class="n">x</span>
         <span class="k">return</span> <span class="n">new_obj</span>
+
+    <span class="k">def</span> <span class="nf">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="o">*</span> <span class="n">x</span>
 
     <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -1126,18 +1450,41 @@
 
 </pre></div>
 
+          </div>
+        </div>
       </div>
-      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
-
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
       </div>
-
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+        &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
     </div>
   </body>
 </html>

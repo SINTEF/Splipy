@@ -6,50 +6,55 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>splipy.Volume &mdash; Splip  1.0.0 documentation</title>
+    <title>splipy.Volume &#8212; Splipy 1.1.0 documentation</title>
     
-    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Splip  1.0.0 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" /> 
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head>
   <body role="document">
-      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>Splip  1.0.0 documentation</span></a></h1>
-        <h2 class="heading"><span>splipy.Volume</span></h2>
-      </div>
-      <div class="topnav" role="navigation" aria-label="top navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
 
-      </div>
-      <div class="content">
-        
-        
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <h1>Source code for splipy.Volume</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 
-<span class="kn">from</span> <span class="nn">splipy</span> <span class="kn">import</span> <span class="n">BSplineBasis</span><span class="p">,</span> <span class="n">SplineObject</span>
-<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="kn">import</span> <span class="n">ensure_listlike</span><span class="p">,</span> <span class="n">check_direction</span><span class="p">,</span> <span class="n">sections</span>
-<span class="kn">from</span> <span class="nn">bisect</span> <span class="kn">import</span> <span class="n">bisect_left</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">splipy</span> <span class="k">import</span> <span class="n">BSplineBasis</span><span class="p">,</span> <span class="n">SplineObject</span>
+<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="k">import</span> <span class="n">ensure_listlike</span><span class="p">,</span> <span class="n">check_direction</span><span class="p">,</span> <span class="n">sections</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Volume&#39;</span><span class="p">]</span>
 
@@ -61,10 +66,8 @@
 
     <span class="n">_intended_pardim</span> <span class="o">=</span> <span class="mi">3</span>
 
-<div class="viewcode-block" id="Volume.__init__"><a class="viewcode-back" href="../../basic_classes.html#splipy.Volume.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basis1</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">basis2</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">basis3</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;__init__([basis1=None], [basis2=None], [basis3=None], [controlpoints=None], [rational=False])</span>
-
-<span class="sd">        Construct a volume with the given basis and control points.</span>
+<div class="viewcode-block" id="Volume.__init__"><a class="viewcode-back" href="../../basic_classes.html#splipy.Volume.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basis1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">basis2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">basis3</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Construct a volume with the given basis and control points.</span>
 
 <span class="sd">        The default is to create a linear one-element mapping from and to the</span>
 <span class="sd">        unit cube.</span>
@@ -143,111 +146,12 @@
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">J</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w3</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w2</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Volume.split"><a class="viewcode-back" href="../../basic_classes.html#splipy.Volume.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knots</span><span class="p">,</span> <span class="n">direction</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Split a volume into two or more separate representations with C0</span>
-<span class="sd">        continuity between them.</span>
-
-<span class="sd">        :param int direction: The parametric direction to split in</span>
-<span class="sd">        :param knots: The splitting points</span>
-<span class="sd">        :type knots: float or [float]</span>
-<span class="sd">        :return: The new volumes</span>
-<span class="sd">        :rtype: [Volume]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># for single-value input, wrap it into a list</span>
-        <span class="n">knots</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span>
-        <span class="c1"># error test input</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
-
-        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">()</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">splitting_vol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-        <span class="n">basis</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
-        <span class="c1"># insert knots to produce C{-1} at all splitting points</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
-            <span class="n">continuity</span> <span class="o">=</span> <span class="n">basis</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">continuity</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
-                <span class="n">continuity</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
-            <span class="n">splitting_vol</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">([</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">direction</span><span class="p">)</span>
-
-        <span class="n">b</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
-            <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="o">-</span><span class="n">mu</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="n">b</span><span class="o">.</span><span class="n">periodic</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">direction</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">splitting_vol</span>
-
-        <span class="c1"># everything is available now, just have to find the right index range</span>
-        <span class="c1"># in the knot vector and controlpoints to store in each separate curve</span>
-        <span class="c1"># piece</span>
-        <span class="n">last_cp_i</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">last_knot_i</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">n3</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
-                <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-                <span class="n">n_cp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">last_knot_i</span>
-                <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:</span><span class="n">mu</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-                <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">last_cp_i</span><span class="p">:</span><span class="n">last_cp_i</span> <span class="o">+</span> <span class="n">n_cp</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span>
-                <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="n">n_cp</span> <span class="o">*</span> <span class="n">n2</span> <span class="o">*</span> <span class="n">n3</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
-
-                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Volume</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-                <span class="n">last_knot_i</span> <span class="o">=</span> <span class="n">mu</span>
-                <span class="n">last_cp_i</span> <span class="o">+=</span> <span class="n">n_cp</span>
-
-            <span class="c1"># with n splitting points, we&#39;re getting n+1 pieces. Add the final one:</span>
-            <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:])</span>
-            <span class="n">n_cp</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
-            <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">last_cp_i</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span>
-            <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="n">n_cp</span> <span class="o">*</span> <span class="n">n2</span> <span class="o">*</span> <span class="n">n3</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Volume</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
-                <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-                <span class="n">n_cp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">last_knot_i</span>
-                <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:</span><span class="n">mu</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
-                <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[:,</span> <span class="n">last_cp_i</span><span class="p">:</span><span class="n">last_cp_i</span> <span class="o">+</span> <span class="n">n_cp</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
-                <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="n">n_cp</span> <span class="o">*</span> <span class="n">n1</span> <span class="o">*</span> <span class="n">n3</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
-
-                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Volume</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-                <span class="n">last_knot_i</span> <span class="o">=</span> <span class="n">mu</span>
-                <span class="n">last_cp_i</span> <span class="o">+=</span> <span class="n">n_cp</span>
-            <span class="c1"># with n splitting points, we&#39;re getting n+1 pieces. Add the final one:</span>
-            <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:])</span>
-            <span class="n">n_cp</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
-            <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[:,</span> <span class="n">last_cp_i</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span>
-            <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="n">n_cp</span> <span class="o">*</span> <span class="n">n1</span> <span class="o">*</span> <span class="n">n3</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Volume</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
-                <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-                <span class="n">n_cp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">last_knot_i</span>
-                <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:</span><span class="n">mu</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
-                <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">last_cp_i</span><span class="p">:</span><span class="n">last_cp_i</span> <span class="o">+</span> <span class="n">n_cp</span><span class="p">,</span> <span class="p">:]</span>
-                <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="n">n_cp</span> <span class="o">*</span> <span class="n">n1</span> <span class="o">*</span> <span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
-
-                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Volume</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-                <span class="n">last_knot_i</span> <span class="o">=</span> <span class="n">mu</span>
-                <span class="n">last_cp_i</span> <span class="o">+=</span> <span class="n">n_cp</span>
-            <span class="c1"># with n splitting points, we&#39;re getting n+1 pieces. Add the final one:</span>
-            <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:])</span>
-            <span class="n">n_cp</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
-            <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_vol</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">last_cp_i</span><span class="p">:,</span> <span class="p">:]</span>
-            <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="n">n_cp</span> <span class="o">*</span> <span class="n">n1</span> <span class="o">*</span> <span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Volume</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="n">results</span></div>
-
 <div class="viewcode-block" id="Volume.rebuild"><a class="viewcode-back" href="../../basic_classes.html#splipy.Volume.rebuild">[docs]</a>    <span class="k">def</span> <span class="nf">rebuild</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Creates an approximation to this volume by resampling it using</span>
+        <span class="sd">&quot;&quot;&quot;  Creates an approximation to this volume by resampling it using</span>
 <span class="sd">        uniform knot vectors of order *p* with *n* control points.</span>
 
-<span class="sd">        :param int p: Polynomial discretization order</span>
-<span class="sd">        :param int n: Number of control points</span>
+<span class="sd">        :param (int) p: Tuple of polynomial discretization order in each direction</span>
+<span class="sd">        :param (int) n: Tuple of number of control points in each direction</span>
 <span class="sd">        :return: A new approximate volume</span>
 <span class="sd">        :rtype: Volume</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -299,21 +203,46 @@
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n2</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n1</span><span class="p">):</span>
                     <span class="n">result</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="p">:])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="n">get_derivative_volume</span> <span class="o">=</span> <span class="n">SplineObject</span><span class="o">.</span><span class="n">get_derivative_spline</span></div>
 </pre></div>
 
+          </div>
+        </div>
       </div>
-      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
-
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
       </div>
-
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+        &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
     </div>
   </body>
 </html>

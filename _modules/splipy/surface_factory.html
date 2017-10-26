@@ -6,65 +6,71 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>splipy.surface_factory &mdash; Splip  1.0.0 documentation</title>
+    <title>splipy.surface_factory &#8212; Splipy 1.1.0 documentation</title>
     
-    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Splip  1.0.0 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" /> 
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head>
   <body role="document">
-      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>Splip  1.0.0 documentation</span></a></h1>
-        <h2 class="heading"><span>splipy.surface_factory</span></h2>
-      </div>
-      <div class="topnav" role="navigation" aria-label="top navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
 
-      </div>
-      <div class="content">
-        
-        
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <h1>Source code for splipy.surface_factory</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 
 <span class="sd">&quot;&quot;&quot;Handy utilities for creating surfaces.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">splipy</span> <span class="kn">import</span> <span class="n">BSplineBasis</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Surface</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sqrt</span>
-<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="kn">import</span> <span class="n">flip_and_move_plane_geometry</span>
-<span class="kn">import</span> <span class="nn">splipy.curve_factory</span> <span class="kn">as</span> <span class="nn">CurveFactory</span>
+<span class="kn">from</span> <span class="nn">splipy</span> <span class="k">import</span> <span class="n">BSplineBasis</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Surface</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">atan2</span>
+<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="k">import</span> <span class="n">flip_and_move_plane_geometry</span>
+<span class="kn">import</span> <span class="nn">splipy.curve_factory</span> <span class="k">as</span> <span class="nn">CurveFactory</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">realpath</span><span class="p">,</span> <span class="n">join</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;square&#39;</span><span class="p">,</span> <span class="s1">&#39;disc&#39;</span><span class="p">,</span> <span class="s1">&#39;sphere&#39;</span><span class="p">,</span> <span class="s1">&#39;extrude&#39;</span><span class="p">,</span> <span class="s1">&#39;revolve&#39;</span><span class="p">,</span> <span class="s1">&#39;cylinder&#39;</span><span class="p">,</span> <span class="s1">&#39;torus&#39;</span><span class="p">,</span> <span class="s1">&#39;edge_curves&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;thicken&#39;</span><span class="p">,</span> <span class="s1">&#39;loft&#39;</span><span class="p">,</span> <span class="s1">&#39;interpolate&#39;</span><span class="p">,</span> <span class="s1">&#39;least_square_fit&#39;</span><span class="p">]</span>
+           <span class="s1">&#39;thicken&#39;</span><span class="p">,</span> <span class="s1">&#39;sweep&#39;</span><span class="p">,</span> <span class="s1">&#39;loft&#39;</span><span class="p">,</span> <span class="s1">&#39;interpolate&#39;</span><span class="p">,</span> <span class="s1">&#39;least_square_fit&#39;</span><span class="p">,</span> <span class="s1">&#39;teapot&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="square"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.square">[docs]</a><span class="k">def</span> <span class="nf">square</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lower_left</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)):</span>
-    <span class="sd">&quot;&quot;&quot;square([size=1])</span>
+    <span class="sd">&quot;&quot;&quot;  Create a square with parametric origin at *(0,0)*.</span>
 
-<span class="sd">    Create a square with parametric origin at *(0,0)*.</span>
-
-<span class="sd">    :param size: Size(s), either a single scalar or a tuple of scalars per axis</span>
-<span class="sd">    :type size: float or (float)</span>
+<span class="sd">    :param float size: Size(s), either a single scalar or a tuple of scalars per axis</span>
+<span class="sd">    :param array-like lower_left: local origin, the lower left corner of the square</span>
 <span class="sd">    :return: A linear parametrized square</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -75,22 +81,22 @@
 
 
 <div class="viewcode-block" id="disc"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.disc">[docs]</a><span class="k">def</span> <span class="nf">disc</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;radial&#39;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;disc([r=1], [type=&#39;radial&#39;])</span>
-
-<span class="sd">    Create a circular disc with center at (0,0). The *type* parameter</span>
-<span class="sd">    distinguishes between different parametrizations.</span>
+    <span class="sd">&quot;&quot;&quot;  Create a circular disc. The *type* parameter distinguishes between</span>
+<span class="sd">    different parametrizations.</span>
 
 <span class="sd">    :param float r: Radius</span>
+<span class="sd">    :param array-like center: local origin</span>
+<span class="sd">    :param array-like normal: local normal</span>
 <span class="sd">    :param string type: The type of parametrization (&#39;radial&#39; or &#39;square&#39;)</span>
 <span class="sd">    :return: The disc</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;radial&#39;</span><span class="p">:</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">CurveFactory</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-        <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">16</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-        <span class="n">cp</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">cp</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">controlpoints</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">Surface</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(),</span> <span class="n">c</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">CurveFactory</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="mi">0</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">edge_curves</span><span class="p">(</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">swap</span><span class="p">()</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">reparam</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">))</span>
     <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;square&#39;</span><span class="p">:</span>
         <span class="n">w</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">cp</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
@@ -104,7 +110,7 @@
               <span class="p">[</span><span class="n">r</span> <span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
         <span class="n">basis1</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
         <span class="n">basis2</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">Surface</span><span class="p">(</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">Surface</span><span class="p">(</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid type argument&#39;</span><span class="p">)</span>
 
@@ -112,12 +118,10 @@
 
 
 <div class="viewcode-block" id="sphere"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.sphere">[docs]</a><span class="k">def</span> <span class="nf">sphere</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)):</span>
-    <span class="sd">&quot;&quot;&quot;sphere([r=1])</span>
-
-<span class="sd">    Create a spherical shell.</span>
+    <span class="sd">&quot;&quot;&quot;  Create a spherical shell.</span>
 
 <span class="sd">    :param float r: Radius</span>
-<span class="sd">    :param point-like center: Local origin of the sphere</span>
+<span class="sd">    :param array-like center: Local origin of the sphere</span>
 <span class="sd">    :return: The spherical shell</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -128,10 +132,10 @@
 
 
 <div class="viewcode-block" id="extrude"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.extrude">[docs]</a><span class="k">def</span> <span class="nf">extrude</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Extrude a curve by sweeping it to a given height.</span>
+    <span class="sd">&quot;&quot;&quot;  Extrude a curve by sweeping it to a given height.</span>
 
 <span class="sd">    :param Curve curve: Curve to extrude</span>
-<span class="sd">    :param vector-like amount: 3-component vector of sweeping amount and</span>
+<span class="sd">    :param array-like amount: 3-component vector of sweeping amount and</span>
 <span class="sd">                               direction</span>
 <span class="sd">    :return: The extruded curve</span>
 <span class="sd">    :rtype: Surface</span>
@@ -146,48 +150,58 @@
     <span class="k">return</span> <span class="n">Surface</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">cp</span><span class="p">,</span> <span class="n">curve</span><span class="o">.</span><span class="n">rational</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="revolve"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.revolve">[docs]</a><span class="k">def</span> <span class="nf">revolve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;revolve(curve, [theta=2pi])</span>
-
-<span class="sd">    Revolve a surface by sweeping a curve in a rotational fashion around the</span>
-<span class="sd">    *z* axis.</span>
+<div class="viewcode-block" id="revolve"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.revolve">[docs]</a><span class="k">def</span> <span class="nf">revolve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;  Revolve a surface by sweeping a curve in a rotational fashion around</span>
+<span class="sd">    the *z* axis.</span>
 
 <span class="sd">    :param Curve curve: Curve to revolve</span>
 <span class="sd">    :param float theta: Angle to revolve, in radians</span>
-<span class="sd">    :return: The revolved curve</span>
+<span class="sd">    :param array-like axis: Axis of rotation</span>
+<span class="sd">    :return: The revolved surface</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">curve</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># clone input curve, throw away input reference</span>
     <span class="n">curve</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># add z-components (if not already present)</span>
     <span class="n">curve</span><span class="o">.</span><span class="n">force_rational</span><span class="p">()</span>  <span class="c1"># add weight (if not already present)</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">curve</span><span class="p">)</span>  <span class="c1"># number of control points of the curve</span>
-    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">8</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-    <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">periodic</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">basis</span> <span class="o">*=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span>  <span class="c1"># set parametric domain to (0,2pi) in v-direction</span>
+
+    <span class="c1"># align axis with the z-axis</span>
+    <span class="n">normal_theta</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">axis</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">normal_phi</span>   <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">axis</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">axis</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">curve</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="o">-</span><span class="n">normal_theta</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">curve</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="o">-</span><span class="n">normal_phi</span><span class="p">,</span>   <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">circle_seg</span> <span class="o">=</span> <span class="n">CurveFactory</span><span class="o">.</span><span class="n">circle_segment</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">curve</span><span class="p">)</span>      <span class="c1"># number of control points of the curve</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">circle_seg</span><span class="p">)</span> <span class="c1"># number of control points of the sweep</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 
     <span class="c1"># loop around the circle and set control points by the traditional 9-point</span>
     <span class="c1"># circle curve with weights 1/sqrt(2), only here C0-periodic, so 8 points</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">controlpoints</span>
-        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="n">weight</span>
-        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="n">weight</span>
-        <span class="n">curve</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">Surface</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span></div>
+    <span class="n">dt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">t</span>  <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">w</span> <span class="o">=</span> <span class="n">circle_seg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">dt</span>  <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">t</span>
+        <span class="n">t</span>  <span class="o">+=</span> <span class="n">dt</span>
+        <span class="n">curve</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="p">:]</span>  <span class="o">=</span> <span class="n">curve</span><span class="p">[:]</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="n">w</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="n">w</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">Surface</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">circle_seg</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cp</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># rotate it back again</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">normal_phi</span><span class="p">,</span>   <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">normal_theta</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">result</span></div>
 
 
 <div class="viewcode-block" id="cylinder"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.cylinder">[docs]</a><span class="k">def</span> <span class="nf">cylinder</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
-    <span class="sd">&quot;&quot;&quot;cylinder([r=1], [h=1], [center=(0,0,0)], [axis=(0,0,1)])</span>
-
-<span class="sd">    Create a cylinder shell with no top or bottom </span>
+    <span class="sd">&quot;&quot;&quot;  Create a cylinder shell with no top or bottom</span>
 
 <span class="sd">    :param float r: Radius</span>
 <span class="sd">    :param float h: Height</span>
-<span class="sd">    :param point-like center: The center of the bottom circle</span>
-<span class="sd">    :param vector-like axis: Cylinder axis</span>
+<span class="sd">    :param array-like center: The center of the bottom circle</span>
+<span class="sd">    :param array-like axis: Cylinder axis</span>
 <span class="sd">    :return: The cylinder shell</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -195,14 +209,12 @@
 
 
 <div class="viewcode-block" id="torus"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.torus">[docs]</a><span class="k">def</span> <span class="nf">torus</span><span class="p">(</span><span class="n">minor_r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">major_r</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)):</span>
-    <span class="sd">&quot;&quot;&quot;torus([minor_r=1], [major_r=3])</span>
-
-<span class="sd">    Create a torus (doughnut) by revolving a circle of size *minor_r* around</span>
-<span class="sd">    the *z* axis with radius *major_r*.</span>
+    <span class="sd">&quot;&quot;&quot;  Create a torus (doughnut) by revolving a circle of size *minor_r*</span>
+<span class="sd">    around the *z* axis with radius *major_r*.</span>
 
 <span class="sd">    :param float minor_r: The thickness of the torus (radius in the *xz* plane)</span>
 <span class="sd">    :param float major_r: The size of the torus (radius in the *xy* plane)</span>
-<span class="sd">    :param point-like center: Local origin of the torus</span>
+<span class="sd">    :param array-like center: Local origin of the torus</span>
 <span class="sd">    :return: A periodic torus</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -213,9 +225,7 @@
 
 
 <div class="viewcode-block" id="edge_curves"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.edge_curves">[docs]</a><span class="k">def</span> <span class="nf">edge_curves</span><span class="p">(</span><span class="o">*</span><span class="n">curves</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;edge_curves(curves...)</span>
-
-<span class="sd">    Create the surface defined by the region between the input curves.</span>
+    <span class="sd">&quot;&quot;&quot;  Create the surface defined by the region between the input curves.</span>
 
 <span class="sd">    In case of four input curves, these must be given in an ordered directional</span>
 <span class="sd">    closed loop around the resulting surface.</span>
@@ -254,6 +264,9 @@
         <span class="c1"># create (linear,linear) corner parametrization</span>
         <span class="n">linear</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">rat</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">rational</span>  <span class="c1"># using control-points from top/bottom, so need to know if these are rational</span>
+        <span class="k">if</span> <span class="n">rat</span><span class="p">:</span>
+            <span class="n">bottom</span> <span class="o">=</span> <span class="n">bottom</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">force_rational</span><span class="p">()</span> <span class="c1"># don&#39;t mess with the input curve, make clone</span>
+            <span class="n">top</span><span class="o">.</span><span class="n">force_rational</span><span class="p">()</span>                     <span class="c1"># this is already a clone</span>
         <span class="n">s3</span> <span class="o">=</span> <span class="n">Surface</span><span class="p">(</span><span class="n">linear</span><span class="p">,</span> <span class="n">linear</span><span class="p">,</span> <span class="p">[</span><span class="n">bottom</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bottom</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">top</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">top</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">rat</span><span class="p">)</span>
 
         <span class="c1"># in order to add spline surfaces, they need identical parametrization</span>
@@ -270,7 +283,7 @@
 
 
 <div class="viewcode-block" id="thicken"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.thicken">[docs]</a><span class="k">def</span> <span class="nf">thicken</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate a surface by adding thickness to a curve.</span>
+    <span class="sd">&quot;&quot;&quot;  Generate a surface by adding thickness to a curve.</span>
 
 <span class="sd">    - For 2D curves this will generate a 2D planar surface with the curve</span>
 <span class="sd">      through the center.</span>
@@ -315,17 +328,17 @@
         <span class="n">right_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
         <span class="n">linear</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
-        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>  <span class="c1"># curve at interpolation points</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">tangent</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>      <span class="c1"># velocity at interpolation points</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>      <span class="c1"># curve at interpolation points</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>               <span class="c1"># velocity at interpolation points</span>
         <span class="n">l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">v</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">v</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># normalizing factor for velocity</span>
-        <span class="n">v</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">l</span>
-        <span class="n">v</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">l</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-13</span><span class="p">:</span> <span class="c1"># in case of zero velocity, use neighbour instead</span>
+            <span class="k">if</span> <span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">13</span><span class="p">:</span> <span class="c1"># in case of zero velocity, use neighbour instead</span>
                 <span class="k">if</span> <span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
                     <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,:]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">/=</span> <span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 
         <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">amount</span><span class="p">):</span>
@@ -363,6 +376,40 @@
 
     <span class="k">else</span><span class="p">:</span>  <span class="c1"># dimension=3, we will create a surrounding tube</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Currently only 2D supported. See comments in source code&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sweep"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.sweep">[docs]</a><span class="k">def</span> <span class="nf">sweep</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;  Generate a surface by sweeping a shape along a path</span>
+
+<span class="sd">    The resulting surface is an approximation generated by interpolating at the</span>
+<span class="sd">    Greville points. It is generated by sweeping a shape curve along a path.</span>
+
+<span class="sd">    The *shape* object has to be contained in the &#39;xy&#39; plane (preferably centered</span>
+<span class="sd">    around the origin) as its x-coordinate is extruded in the normal direction,</span>
+<span class="sd">    and its y-coordinate in the binormal direction of the *path* curve.</span>
+
+<span class="sd">    :param Curve path:  The path to drag *shape* along</span>
+<span class="sd">    :param Curve shape: The shape to be dragged out to a surface</span>
+<span class="sd">    :return: Surrounding surface</span>
+<span class="sd">    :rtype: Surface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n1</span> <span class="o">=</span> <span class="n">b1</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
+    <span class="n">n2</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
+    <span class="c1"># this requires binormals and normals, which only work in 3D, so assume this here</span>
+    <span class="n">X</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n1</span><span class="p">,</span><span class="n">n2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n1</span><span class="p">):</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">b1</span><span class="o">.</span><span class="n">greville</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">path</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">binormal</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n2</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">greville</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">shape</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">N</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">B</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">interpolate</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span><span class="n">b2</span><span class="p">])</span></div>
+
 
 <span class="k">def</span> <span class="nf">loft</span><span class="p">(</span><span class="o">*</span><span class="n">curves</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">curves</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -420,17 +467,18 @@
 
     <span class="k">return</span> <span class="n">Surface</span><span class="p">(</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="n">curves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rational</span><span class="p">)</span>
 
-<div class="viewcode-block" id="interpolate"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.interpolate">[docs]</a><span class="k">def</span> <span class="nf">interpolate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">u</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Interpolate a surface on a set of regular gridded interpolation points</span>
 
-<span class="sd">    :param x: Grid of interpolation points. Component *x[i,j,k]* denotes</span>
-<span class="sd">        component *x[k]* at index *(i,j)* in the surface. For matrix input *x[i,j]*</span>
-<span class="sd">        then index *i* is interpreted as a flat row-first indexing of the </span>
-<span class="sd">        interpolation grid with components *x[j]*</span>
-<span class="sd">    :type x: matrix-like or 3D-tensor-like</span>
+<div class="viewcode-block" id="interpolate"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.interpolate">[docs]</a><span class="k">def</span> <span class="nf">interpolate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">u</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;  Interpolate a surface on a set of regular gridded interpolation points `x`.</span>
+
+<span class="sd">    The points can be either a matrix (in which case the first index is</span>
+<span class="sd">    interpreted as a flat row-first index of the interpolation grid) or a 3D</span>
+<span class="sd">    tensor. In both cases the last index is the physical coordinates.</span>
+
+<span class="sd">    :param numpy.ndarray x: Grid of interpolation points</span>
 <span class="sd">    :param [BSplineBasis] bases: The basis to interpolate on</span>
-<span class="sd">    :param [array-like]   u    : Parametric interpolation points, defaults to</span>
-<span class="sd">                                 greville points of the basis</span>
+<span class="sd">    :param [array-like] u: Parametric interpolation points, defaults to</span>
+<span class="sd">        Greville points of the basis</span>
 <span class="sd">    :return: Interpolated surface</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -438,7 +486,7 @@
     <span class="n">dim</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">surf_shape</span> <span class="o">+</span> <span class="p">[</span><span class="n">dim</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">u</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">u</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">u</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">]</span>
     <span class="n">N_all</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span><span class="p">,</span><span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">u</span><span class="p">)]</span>
     <span class="n">N_all</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
@@ -448,17 +496,19 @@
 
     <span class="k">return</span> <span class="n">Surface</span><span class="p">(</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">surf_shape</span><span class="p">),</span><span class="n">dim</span><span class="p">)))</span></div>
 
-<div class="viewcode-block" id="least_square_fit"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.least_square_fit">[docs]</a><span class="k">def</span> <span class="nf">least_square_fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Perform a least-square fit of a point cloud onto a spline basis</span>
 
-<span class="sd">    :param x: Grid of evaluation points. Component *x[i,j,k]* denotes</span>
-<span class="sd">        component *x[k]* at index *(i,j)* in the surface. For matrix input *x[i,j]*</span>
-<span class="sd">        then index *i* is interpreted as a flat row-first indexing of the </span>
-<span class="sd">        interpolation grid with components *x[j]*. The number of points must be</span>
-<span class="sd">        equal to or larger than the number of basis functions</span>
-<span class="sd">    :type x: matrix-like or 3D-tensor-like</span>
+<div class="viewcode-block" id="least_square_fit"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.least_square_fit">[docs]</a><span class="k">def</span> <span class="nf">least_square_fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;  Perform a least-square fit of a point cloud `x` onto a spline basis.</span>
+
+<span class="sd">    The points can be either a matrix (in which case the first index is</span>
+<span class="sd">    interpreted as a flat row-first index of the interpolation grid) or a 3D</span>
+<span class="sd">    tensor. In both cases the last index is the physical coordinates.</span>
+
+<span class="sd">    There must be at least as many points as basis functions.</span>
+
+<span class="sd">    :param numpy.ndarray x: Grid of evaluation points</span>
 <span class="sd">    :param [BSplineBasis] bases: Basis on which to interpolate</span>
-<span class="sd">    :param [array-like]   t    : parametric values at evaluation points</span>
+<span class="sd">    :param [array-like] u: Parametric values at evaluation points</span>
 <span class="sd">    :return: Approximated surface</span>
 <span class="sd">    :rtype: Surface</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -475,20 +525,69 @@
         <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">T</span><span class="o">*</span><span class="n">N</span><span class="p">),</span> <span class="n">cp</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">Surface</span><span class="p">(</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">cp</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">surf_shape</span><span class="p">),</span><span class="n">dim</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="teapot"><a class="viewcode-back" href="../../factories.html#splipy.surface_factory.teapot">[docs]</a><span class="k">def</span> <span class="nf">teapot</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;  Generate the Utah teapot as 32 cubic bezier patches. This teapot has a</span>
+<span class="sd">    rim, but no bottom. It is also self-intersecting making it unsuitable for</span>
+<span class="sd">    perfect-match multipatch modeling.</span>
+
+<span class="sd">    The data is picked from http://www.holmes3d.net/graphics/teapot/</span>
+
+<span class="sd">    :return: The utah teapot</span>
+<span class="sd">    :rtype: List of Surface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">realpath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span> <span class="s1">&#39;templates&#39;</span><span class="p">,</span> <span class="s1">&#39;teapot.bpt&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">numb_patches</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numb_patches</span><span class="p">):</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="n">basis1</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">basis2</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">ncp</span> <span class="o">=</span> <span class="n">basis1</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span> <span class="o">*</span> <span class="n">basis2</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span>
+            <span class="n">cp</span>  <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncp</span><span class="p">)]</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Surface</span><span class="p">(</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">,</span> <span class="n">cp</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">results</span></div>
 </pre></div>
 
+          </div>
+        </div>
       </div>
-      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
-
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
       </div>
-
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+        &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
     </div>
   </body>
 </html>

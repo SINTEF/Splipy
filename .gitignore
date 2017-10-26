@@ -1,5 +1,6 @@
 build/
 *.pyc
+*.g2
 .cache
 doc/_build
 doc/_static

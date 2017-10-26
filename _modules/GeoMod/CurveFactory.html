@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>GeoMod.CurveFactory &mdash; SplineModeller 1.0.0 documentation</title>
+    <title>GeoMod.CurveFactory &mdash; Splipy 1.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -24,12 +24,12 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="SplineModeller 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="Splipy 1.0.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>SplineModeller 1.0.0 documentation</span></a></h1>
+          <span>Splipy 1.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>GeoMod.CurveFactory</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -49,7 +49,6 @@
 
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">ceil</span>
 <span class="kn">from</span> <span class="nn">GeoMod</span> <span class="kn">import</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">BSplineBasis</span>
-<span class="kn">from</span> <span class="nn">GeoMod.Utils</span> <span class="kn">import</span> <span class="n">flip_and_move_plane_geometry</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;line&#39;</span><span class="p">,</span> <span class="s1">&#39;polygon&#39;</span><span class="p">,</span> <span class="s1">&#39;n_gon&#39;</span><span class="p">,</span> <span class="s1">&#39;circle&#39;</span><span class="p">,</span> <span class="s1">&#39;circle_segment&#39;</span><span class="p">,</span> <span class="s1">&#39;interpolate&#39;</span><span class="p">]</span>
@@ -67,9 +66,7 @@
 
 
 <div class="viewcode-block" id="polygon"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.polygon">[docs]</a><span class="k">def</span> <span class="nf">polygon</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;polygon(points...)</span>
-
-<span class="sd">    Create a linear interpolation between input points.</span>
+    <span class="sd">&quot;&quot;&quot;Create a linear interpolation between input points.</span>
 
 <span class="sd">    :param [point-like] points: The points to interpolate</span>
 <span class="sd">    :return: Linear curve through the input points</span>
@@ -81,26 +78,24 @@
     <span class="c1"># establish knot vector based on eucledian length between points</span>
     <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
     <span class="n">prevPt</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-        <span class="n">dist</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">prevPt</span><span class="p">,</span> <span class="n">pt</span><span class="p">):</span>  <span class="c1"># loop over (x,y) and maybe z-coordinate</span>
             <span class="n">dist</span> <span class="o">+=</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
-        <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+        <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
         <span class="n">prevPt</span> <span class="o">=</span> <span class="n">pt</span>
     <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">knot</span><span class="p">),</span> <span class="n">points</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="n_gon"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.n_gon">[docs]</a><span class="k">def</span> <span class="nf">n_gon</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+<div class="viewcode-block" id="n_gon"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.n_gon">[docs]</a><span class="k">def</span> <span class="nf">n_gon</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;n_gon([n=5], [r=1])</span>
 
 <span class="sd">    Create a regular polygon of *n* equal sides centered at the origin.</span>
 
 <span class="sd">    :param int n: Number of sides and vertices</span>
 <span class="sd">    :param float r: Radius</span>
-<span class="sd">    :param point-like center: local origin</span>
-<span class="sd">    :param vector-like normal: local normal</span>
 <span class="sd">    :return: A linear, periodic, 2D curve</span>
 <span class="sd">    :rtype: Curve</span>
 <span class="sd">    :raises ValueError: If radius is not positive</span>
@@ -119,18 +114,15 @@
         <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
     <span class="n">knot</span> <span class="o">+=</span> <span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">)</span></div>
 
-    <span class="n">result</span> <span class="o">=</span>  <span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">cp</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">flip_and_move_plane_geometry</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="circle"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.circle">[docs]</a><span class="k">def</span> <span class="nf">circle</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+<div class="viewcode-block" id="circle"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.circle">[docs]</a><span class="k">def</span> <span class="nf">circle</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;circle([r=1])</span>
 
-<span class="sd">    Create a circle.</span>
+<span class="sd">    Create a circle at the origin.</span>
 
 <span class="sd">    :param float r: Radius</span>
-<span class="sd">    :param point-like center: local origin</span>
-<span class="sd">    :param vector-like normal: local normal</span>
 <span class="sd">    :return: A periodic, quadratic rational curve</span>
 <span class="sd">    :rtype: Curve</span>
 <span class="sd">    :raises ValueError: If radius is not positive</span>
@@ -148,14 +140,13 @@
                      <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
                      <span class="p">[</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">w</span><span class="p">]]</span>
     <span class="n">knot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span> <span class="o">/</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span>
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span></div>
 
-    <span class="n">result</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">flip_and_move_plane_geometry</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="circle_segment"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.circle_segment">[docs]</a><span class="k">def</span> <span class="nf">circle_segment</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+<div class="viewcode-block" id="circle_segment"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.circle_segment">[docs]</a><span class="k">def</span> <span class="nf">circle_segment</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;circle_segment(theta, [r=1])</span>
 
-<span class="sd">    Create a circle segment starting paralell to the rotated x-axis.</span>
+<span class="sd">    Create a circle segment centered at the origin, starting at *(r,0)*.</span>
 
 <span class="sd">    :param float theta: Angle in radians</span>
 <span class="sd">    :param float r: Radius</span>
@@ -191,8 +182,8 @@
         <span class="n">cp</span> <span class="o">+=</span> <span class="p">[[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">]]</span>
         <span class="n">t</span> <span class="o">+=</span> <span class="n">dt</span>
 
-    <span class="n">result</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">knot</span><span class="p">),</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">flip_and_move_plane_geometry</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">knot</span><span class="p">),</span> <span class="n">cp</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="interpolate"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.interpolate">[docs]</a><span class="k">def</span> <span class="nf">interpolate</span><span class="p">(</span><span class="n">x_pts</span><span class="p">,</span> <span class="n">basis</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Perform general spline interpolation at the Greville points of a basis.</span>

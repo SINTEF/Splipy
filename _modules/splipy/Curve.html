@@ -6,51 +6,58 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>splipy.Curve &mdash; Splip  1.0.0 documentation</title>
+    <title>splipy.Curve &#8212; Splipy 1.1.0 documentation</title>
     
-    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Splip  1.0.0 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" /> 
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head>
   <body role="document">
-      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>Splip  1.0.0 documentation</span></a></h1>
-        <h2 class="heading"><span>splipy.Curve</span></h2>
-      </div>
-      <div class="topnav" role="navigation" aria-label="top navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
 
-      </div>
-      <div class="content">
-        
-        
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <h1>Source code for splipy.Curve</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 
-<span class="kn">from</span> <span class="nn">splipy</span> <span class="kn">import</span> <span class="n">BSplineBasis</span>
-<span class="kn">from</span> <span class="nn">splipy.SplineObject</span> <span class="kn">import</span> <span class="n">SplineObject</span>
-<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="kn">import</span> <span class="n">ensure_listlike</span>
-<span class="kn">from</span> <span class="nn">bisect</span> <span class="kn">import</span> <span class="n">bisect_left</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">splipy</span> <span class="k">import</span> <span class="n">BSplineBasis</span>
+<span class="kn">from</span> <span class="nn">splipy.SplineObject</span> <span class="k">import</span> <span class="n">SplineObject</span>
+<span class="kn">from</span> <span class="nn">splipy.utils</span> <span class="k">import</span> <span class="n">ensure_listlike</span><span class="p">,</span> <span class="n">is_singleton</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">bisect</span> <span class="k">import</span> <span class="n">bisect_left</span><span class="p">,</span> <span class="n">bisect_right</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse.linalg</span> <span class="k">as</span> <span class="nn">splinalg</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Curve&#39;</span><span class="p">]</span>
 
@@ -62,10 +69,8 @@
 
     <span class="n">_intended_pardim</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Curve.__init__"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;__init__([basis=None], [controlpoints=None], [rational=False])</span>
-
-<span class="sd">        Construct a curve with the given basis and control points.</span>
+<div class="viewcode-block" id="Curve.__init__"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Construct a curve with the given basis and control points.</span>
 
 <span class="sd">        The default is to create a linear one-element mapping from (0,1) to the</span>
 <span class="sd">        unit interval.</span>
@@ -78,10 +83,46 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">([</span><span class="n">basis</span><span class="p">],</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="n">rational</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Curve.derivative"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.derivative">[docs]</a>    <span class="k">def</span> <span class="nf">derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;derivative(u, [d=1])</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the object at given parametric values.</span>
 
-<span class="sd">        Evaluate the derivative of the curve at the given parametric values.</span>
+<span class="sd">        This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is</span>
+<span class="sd">        the number of evaluation points in direction *i*, and *dim* is the</span>
+<span class="sd">        physical dimension of the object.</span>
+
+<span class="sd">        If there is only one evaluation point, a vector of length *dim* is</span>
+<span class="sd">        returned instead.</span>
+
+<span class="sd">        :param u,v,...: Parametric coordinates in which to evaluate</span>
+<span class="sd">        :type u,v,...: float or [float]</span>
+<span class="sd">        :return: Geometry coordinates</span>
+<span class="sd">        :rtype: numpy.array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">squeeze</span> <span class="o">=</span> <span class="n">is_singleton</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">ensure_listlike</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_domain</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+
+        <span class="c1"># Evaluate the derivatives of the corresponding bases at the corresponding points</span>
+        <span class="c1"># and build the result array</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">N</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span>
+
+        <span class="c1"># For rational objects, we divide out the weights, which are stored in the</span>
+        <span class="c1"># last coordinate</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
+                <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">/=</span> <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Squeeze the singleton dimensions if we only have one point</span>
+        <span class="k">if</span> <span class="n">squeeze</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="Curve.derivative"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.derivative">[docs]</a>    <span class="k">def</span> <span class="nf">derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tensor</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the derivative of the curve at the given parametric values.</span>
 
 <span class="sd">        This function returns an *n* × *dim* array, where *n* is the number of</span>
 <span class="sd">        evaluation points, and *dim* is the physical dimension of the curve.</span>
@@ -89,21 +130,23 @@
 <span class="sd">        If there is only one evaluation point, a vector of length *dim* is</span>
 <span class="sd">        returned instead.</span>
 
-<span class="sd">        :param u: Parametric coordinates in which to evaluate</span>
-<span class="sd">        :type u: float or [float]</span>
+<span class="sd">        :param t: Parametric coordinates in which to evaluate</span>
+<span class="sd">        :type t: float or [float]</span>
 <span class="sd">        :param int d: Number of derivatives to compute</span>
+<span class="sd">        :param bool above: Evaluation in the limit from above</span>
+<span class="sd">        :param bool tensor: Not used in this method</span>
 <span class="sd">        :return: Derivative array</span>
 <span class="sd">        :rtype: numpy.array</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span> <span class="ow">or</span> <span class="n">d</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">,</span> <span class="n">tensor</span><span class="o">=</span><span class="n">tensor</span><span class="p">)</span>
 
         <span class="n">t</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-        <span class="n">dN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">dN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">above</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dN</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span>
 
         <span class="n">d2</span> <span class="o">=</span> <span class="n">result</span>
-        <span class="n">d1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">above</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span>
         <span class="n">d0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span>
         <span class="n">W</span> <span class="o">=</span> <span class="n">d0</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>   <span class="c1"># W(t)</span>
         <span class="n">W1</span> <span class="o">=</span> <span class="n">d1</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># W&#39;(t)</span>
@@ -119,10 +162,136 @@
 
         <span class="k">return</span> <span class="n">result</span></div>
 
+<div class="viewcode-block" id="Curve.binormal"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.binormal">[docs]</a>    <span class="k">def</span> <span class="nf">binormal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the normalized binormal of the curve at the given parametric value(s).</span>
+
+<span class="sd">        This function returns an *n* × 3 array, where *n* is the number of</span>
+<span class="sd">        evaluation points.</span>
+
+<span class="sd">        The binormal is computed as the normalized cross product between the</span>
+<span class="sd">        velocity and acceleration of the curve.</span>
+
+<span class="sd">        :param t: Parametric coordinates in which to evaluate</span>
+<span class="sd">        :type t: float or [float]</span>
+<span class="sd">        :param bool above: Evaluation in the limit from above</span>
+<span class="sd">        :return: Derivative array</span>
+<span class="sd">        :rtype: numpy.array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># error test input</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Binormals require dimension = 3&#39;</span><span class="p">)</span>
+
+        <span class="c1"># compute derivative</span>
+        <span class="n">dx</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+        <span class="n">ddx</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">ddx</span><span class="p">)</span>
+
+        <span class="c1"># in case of single value input t, return vector instead of matrix</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dx</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="c1"># normalize</span>
+        <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+        <span class="n">magnitude</span> <span class="o">=</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span> <span class="o">/</span> <span class="n">magnitude</span></div>
+
+<div class="viewcode-block" id="Curve.normal"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.normal">[docs]</a>    <span class="k">def</span> <span class="nf">normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the normal of the curve at the given parametric value(s).</span>
+
+<span class="sd">        This function returns an *n* × 3 array, where *n* is the number of</span>
+<span class="sd">        evaluation points.</span>
+
+<span class="sd">        The normal is computed as the cross product between the binormal and</span>
+<span class="sd">        the tangent of the curve.</span>
+
+<span class="sd">        :param t: Parametric coordinates in which to evaluate</span>
+<span class="sd">        :type t: float or [float]</span>
+<span class="sd">        :param bool above: Evaluation in the limit from above</span>
+<span class="sd">        :return: Derivative array</span>
+<span class="sd">        :rtype: numpy.array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># error test input</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Normals require dimension = 3&#39;</span><span class="p">)</span>
+
+        <span class="c1"># compute derivative</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tangent</span><span class="p">(</span><span class="n">t</span><span class="p">,</span>  <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">binormal</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">T</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Curve.curvature"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.curvature">[docs]</a>    <span class="k">def</span> <span class="nf">curvature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the curvaure at specified point(s). The curvature is defined as</span>
+
+<span class="sd">        .. math:: \\frac{|\\boldsymbol{v}\\times \\boldsymbol{a}|}{|\\boldsymbol{v}|^3}</span>
+
+<span class="sd">        :param t: Parametric coordinates in which to evaluate</span>
+<span class="sd">        :type t: float or [float]</span>
+<span class="sd">        :param bool above: Evaluation in the limit from above</span>
+<span class="sd">        :return: Derivative array</span>
+<span class="sd">        :rtype: numpy.array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># compute derivative</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">a</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># single evaluation point</span>
+            <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+            <span class="n">speed</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>                 <span class="c1"># multiple evaluation points</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">magnitude</span> <span class="o">=</span> <span class="n">w</span> <span class="c1"># for 2D-cases np.cross() outputs scalars</span>
+            <span class="k">else</span><span class="p">:</span>             <span class="c1"># for 3D, it is vectors</span>
+                <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+            <span class="n">speed</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">magnitude</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Curve.torsion"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.torsion">[docs]</a>    <span class="k">def</span> <span class="nf">torsion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as</span>
+
+<span class="sd">        .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}</span>
+
+<span class="sd">        :param t: Parametric coordinates in which to evaluate</span>
+<span class="sd">        :type t: float or [float]</span>
+<span class="sd">        :param bool above: Evaluation in the limit from above</span>
+<span class="sd">        :return: Derivative array</span>
+<span class="sd">        :rtype: numpy.array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># no torsion for 2D curves</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># only allow 3D curves</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;dimension must be 2 or 3&#39;</span><span class="p">)</span>
+
+        <span class="c1"># compute derivative</span>
+        <span class="n">v</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+        <span class="n">a</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">above</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">a</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># single evaluation point</span>
+            <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+            <span class="n">nominator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>                 <span class="c1"># multiple evaluation points</span>
+            <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+            <span class="n">nominator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span><span class="n">da1</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">w1</span><span class="p">,</span><span class="n">da1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">da</span><span class="p">)])</span>
+
+        <span class="k">return</span> <span class="n">nominator</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">magnitude</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="Curve.raise_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.raise_order">[docs]</a>    <span class="k">def</span> <span class="nf">raise_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Raise the polynomial order of the curve.</span>
+        <span class="sd">&quot;&quot;&quot;  Raise the polynomial order of the curve.</span>
 
 <span class="sd">        :param int amount: Number of times to raise the order</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">amount</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Raise order requires a non-negative parameter&#39;</span><span class="p">)</span>
@@ -135,15 +304,17 @@
         <span class="c1"># set up an interpolation problem. This is in projective space, so no problems for rational cases</span>
         <span class="n">interpolation_pts_t</span> <span class="o">=</span> <span class="n">newBasis</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span>  <span class="c1"># parametric interpolation points (t)</span>
         <span class="n">N_old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">interpolation_pts_t</span><span class="p">)</span>
-        <span class="n">N_new</span> <span class="o">=</span> <span class="n">newBasis</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">interpolation_pts_t</span><span class="p">)</span>
+        <span class="n">N_new</span> <span class="o">=</span> <span class="n">newBasis</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">interpolation_pts_t</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">interpolation_pts_x</span> <span class="o">=</span> <span class="n">N_old</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span>  <span class="c1"># projective interpolation points (x,y,z,w)</span>
 
         <span class="c1"># solve the interpolation problem</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">N_new</span><span class="p">,</span> <span class="n">interpolation_pts_x</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">newBasis</span><span class="p">]</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">splinalg</span><span class="o">.</span><span class="n">spsolve</span><span class="p">(</span><span class="n">N_new</span><span class="p">,</span> <span class="n">interpolation_pts_x</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">newBasis</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="Curve.append"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curve</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Extend the curve by merging another curve to the end of it.</span>
+        <span class="sd">&quot;&quot;&quot;  Extend the curve by merging another curve to the end of it.</span>
 
 <span class="sd">        The curves are glued together in a C0 fashion with enough repeated</span>
 <span class="sd">        knots. The function assumes that the end of this curve perfectly</span>
@@ -151,6 +322,7 @@
 
 <span class="sd">        :param Curve curve: Another curve</span>
 <span class="sd">        :raises RuntimeError: If either curve is periodic</span>
+<span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># ASSUMPTION: open knot vectors</span>
 
@@ -174,8 +346,8 @@
         <span class="n">p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
 
         <span class="c1"># build new knot vector by merging the two existing ones</span>
-        <span class="n">old_knot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">add_knot</span> <span class="o">=</span> <span class="n">extending_curve</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">old_knot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">add_knot</span> <span class="o">=</span> <span class="n">extending_curve</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># make sure that the new one starts where the old one stops</span>
         <span class="n">add_knot</span> <span class="o">-=</span> <span class="n">add_knot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">add_knot</span> <span class="o">+=</span> <span class="n">old_knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -197,78 +369,33 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="Curve.continuity"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.continuity">[docs]</a>    <span class="k">def</span> <span class="nf">continuity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knot</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the parametric continuity of the curve at a given point. Will</span>
+        <span class="sd">&quot;&quot;&quot;  Get the parametric continuity of the curve at a given point. Will</span>
 <span class="sd">        return p-1-m, where m is the knot multiplicity and inf between knots&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">knot</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Curve.get_kinks"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.get_kinks">[docs]</a>    <span class="k">def</span> <span class="nf">get_kinks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the parametric coordinates at all points which have C0-</span>
+        <span class="sd">&quot;&quot;&quot;  Get the parametric coordinates at all points which have C0-</span>
 <span class="sd">        continuity&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Curve.split"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knots</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Split a curve into two or more separate representations with C0</span>
-<span class="sd">        continuity between them.</span>
+<div class="viewcode-block" id="Curve.length"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.length">[docs]</a>    <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t1</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Computes the euclidian length of the curve in geometric space</span>
 
-<span class="sd">        :param knots    : The splitting points</span>
-<span class="sd">        :type  knots    : float or [float]</span>
-<span class="sd">        :param direction: Parametric direction, ignored for curves. Used for</span>
-<span class="sd">                          Surfaces and Volumes and allows signatures to match</span>
-<span class="sd">        :type  direction: int</span>
-<span class="sd">        :return: The new curves</span>
-<span class="sd">        :rtype: [Curve]</span>
+<span class="sd">        .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt</span>
+<span class="sd">        </span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># for single-value input, wrap it into a list</span>
-        <span class="n">knots</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span>
-
-        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">splitting_curve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-        <span class="c1"># insert knots to produce C{-1} at all splitting points</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
-            <span class="n">continuity</span> <span class="o">=</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">continuity</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
-                <span class="n">continuity</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>
-            <span class="n">splitting_curve</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">([</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-
-        <span class="n">b</span> <span class="o">=</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
-            <span class="n">splitting_curve</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">splitting_curve</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="o">-</span><span class="n">mu</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="n">b</span><span class="o">.</span><span class="n">periodic</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">splitting_curve</span>
-
-
-        <span class="c1"># everything is available now, just have to find the right index range</span>
-        <span class="c1"># in the knot vector and controlpoints to store in each separate curve</span>
-        <span class="c1"># piece</span>
-        <span class="n">last_cp_i</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">last_knot_i</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">knots</span><span class="p">:</span>
-            <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">splitting_curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-            <span class="n">n_cp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">last_knot_i</span>
-            <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:</span><span class="n">mu</span> <span class="o">+</span> <span class="n">p</span><span class="p">])</span>
-            <span class="n">controlpoints</span> <span class="o">=</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">last_cp_i</span><span class="p">:</span><span class="n">last_cp_i</span> <span class="o">+</span> <span class="n">n_cp</span><span class="p">,</span> <span class="p">:]</span>
-
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-            <span class="n">last_knot_i</span> <span class="o">=</span> <span class="n">mu</span>
-            <span class="n">last_cp_i</span> <span class="o">+=</span> <span class="n">n_cp</span>
-        <span class="c1"># with n splitting points, we&#39;re getting n+1 pieces. Add the final one:</span>
-        <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">last_knot_i</span><span class="p">:])</span>
-        <span class="n">controlpoints</span> <span class="o">=</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">last_cp_i</span><span class="p">:,</span> <span class="p">:]</span>
-        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="n">results</span></div>
-
-<div class="viewcode-block" id="Curve.length"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.length">[docs]</a>    <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Computes the euclidian length of the curve in geometric space &quot;&quot;&quot;</span>
         <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">w</span><span class="p">)</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">knots</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># keep only integration boundaries within given start (t0) and stop (t1) interval</span>
+        <span class="k">if</span> <span class="n">t0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">t0</span><span class="p">)</span>
+            <span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">t0</span><span class="p">)</span>
+            <span class="n">knots</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">t1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+            <span class="n">knots</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+
         <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">t1</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span><span class="o">+</span><span class="n">t0</span> <span class="k">for</span> <span class="n">t0</span><span class="p">,</span><span class="n">t1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="p">])</span>
         <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>     <span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">t1</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span>    <span class="k">for</span> <span class="n">t0</span><span class="p">,</span><span class="n">t1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="p">])</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
@@ -278,7 +405,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">detJ</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Curve.rebuild"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.rebuild">[docs]</a>    <span class="k">def</span> <span class="nf">rebuild</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Creates an approximation to this curve by resampling it using a</span>
+        <span class="sd">&quot;&quot;&quot;  Creates an approximation to this curve by resampling it using a</span>
 <span class="sd">        uniform knot vector of order *p* with *n* control points.</span>
 
 <span class="sd">        :param int p: Polynomial discretization order</span>
@@ -297,28 +424,96 @@
         <span class="n">basis</span> <span class="o">+=</span> <span class="n">t0</span>
         <span class="c1"># fetch evaluation points and solve interpolation problem</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-        <span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">controlpoints</span> <span class="o">=</span> <span class="n">splinalg</span><span class="o">.</span><span class="n">spsolve</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
 
         <span class="c1"># return new resampled curve</span>
         <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">controlpoints</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="Curve.error"><a class="viewcode-back" href="../../basic_classes.html#splipy.Curve.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Computes the L2 (squared and per knot span) and max error between</span>
+<span class="sd">        this curve and a target curve</span>
+
+<span class="sd">        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^2(t_1,t_2)}^2 = \\int_{t_1}^{t_2}</span>
+<span class="sd">            |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|^2 dt, \\quad \\forall \;\\text{knots}\;t_1 &lt; t_2</span>
+
+<span class="sd">        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\infty} = \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|</span>
+
+<span class="sd">        :param function target: callable function which takes as input a vector</span>
+<span class="sd">            of evaluation points t and gives as output a matrix x where</span>
+<span class="sd">            x[i,j] is component j evaluated at point t[i]</span>
+<span class="sd">        :return: L2 error per knot-span and the maximum error</span>
+<span class="sd">        :rtype:  tuple(list(float), float)</span>
+
+<span class="sd">        Examples:</span>
+
+<span class="sd">        .. code:: python</span>
+
+<span class="sd">            import numpy as np</span>
+
+<span class="sd">            def arclength_circle(t):</span>
+<span class="sd">                return np.array( [np.cos(t), np.sin(t)] ).T</span>
+
+<span class="sd">            crv = curve_factory.circle(r=1)</span>
+<span class="sd">            (err2, maxerr) = crv.error(arclength_circle)</span>
+<span class="sd">            print &#39;|| e ||_L2  = &#39;, np.sqrt(np.sum(err2))</span>
+<span class="sd">            print &#39;|| e ||_max = &#39;, maxerr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">knots</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">w</span><span class="p">)</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">err2</span>    <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">err_inf</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">t0</span><span class="p">,</span><span class="n">t1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span> <span class="c1"># for all knot spans</span>
+            <span class="n">tg</span>  <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">t1</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span><span class="o">+</span><span class="n">t0</span> <span class="c1"># evaluation points</span>
+            <span class="n">wg</span>  <span class="o">=</span>   <span class="n">w</span>  <span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">t1</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span>    <span class="c1"># integration weights</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">tg</span><span class="p">)</span> <span class="o">-</span> <span class="n">target</span><span class="p">(</span><span class="n">tg</span><span class="p">)</span>    <span class="c1"># [x-xh, y-yh, z-zh]</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">error</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># |x-xh|^2</span>
+            <span class="n">err2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">wg</span><span class="p">))</span>   <span class="c1"># integrate over domain</span>
+            <span class="n">err_inf</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">error</span><span class="p">)),</span> <span class="n">err_inf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">err2</span><span class="p">,</span> <span class="n">err_inf</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_derivative_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_derivative_spline</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 </pre></div>
 
+          </div>
+        </div>
       </div>
-      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
-      
-        <p>
-        <a class="uplink" href="../../index.html">Contents</a>
-        </p>
-
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
       </div>
-
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+        &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
     </div>
   </body>
 </html>
