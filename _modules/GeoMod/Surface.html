@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>GeoMod.Surface &mdash; SplineModeller 1.0.0 documentation</title>
+    <title>GeoMod.Surface &mdash; Splipy 1.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -24,12 +24,12 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="SplineModeller 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="Splipy 1.0.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>SplineModeller 1.0.0 documentation</span></a></h1>
+          <span>Splipy 1.0.0 documentation</span></a></h1>
         <h2 class="heading"><span>GeoMod.Surface</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -45,11 +45,10 @@
   <h1>Source code for GeoMod.Surface</h1><div class="highlight"><pre>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 
-<span class="kn">from</span> <span class="nn">GeoMod</span> <span class="kn">import</span> <span class="n">BSplineBasis</span>
+<span class="kn">from</span> <span class="nn">GeoMod</span> <span class="kn">import</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">BSplineBasis</span>
 <span class="kn">from</span> <span class="nn">GeoMod.SplineObject</span> <span class="kn">import</span> <span class="n">SplineObject</span>
-<span class="kn">from</span> <span class="nn">GeoMod.Utils</span> <span class="kn">import</span> <span class="n">ensure_listlike</span><span class="p">,</span> <span class="n">check_direction</span><span class="p">,</span> <span class="n">sections</span>
+<span class="kn">from</span> <span class="nn">GeoMod.Utils</span> <span class="kn">import</span> <span class="n">ensure_listlike</span>
 <span class="kn">from</span> <span class="nn">bisect</span> <span class="kn">import</span> <span class="n">bisect_left</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Surface&#39;</span><span class="p">]</span>
@@ -60,10 +59,7 @@
 
 <span class="sd">    Represents a surface: an object with a two-dimensional parameter space.&quot;&quot;&quot;</span>
 
-    <span class="n">_intended_pardim</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">_g2_type</span> <span class="o">=</span> <span class="mi">200</span>
-
-<div class="viewcode-block" id="Surface.__init__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basis1</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">basis2</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Surface.__init__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basis1</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">basis2</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">controlpoints</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rational</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__init__([basis1=None], [basis2=None], [controlpoints=None], [rational=False])</span>
 
 <span class="sd">        Construct a surface with the given basis and control points.</span>
@@ -78,9 +74,9 @@
 <span class="sd">            control points are interpreted as pre-multiplied with the weight,</span>
 <span class="sd">            which is the last coordinate)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Surface</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">([</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">],</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="n">rational</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Surface</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">([</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">],</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="n">rational</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Surface.normal"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.normal">[docs]</a>    <span class="k">def</span> <span class="nf">normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<div class="viewcode-block" id="Surface.evaluate_normal"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.evaluate_normal">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Evaluate the normal of the surface at given parametric values.</span>
 
 <span class="sd">        This is equal to the cross-product between tangents. The return value</span>
@@ -102,7 +98,7 @@
             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># single valued input u, fails on len(u)</span>
                 <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="p">(</span><span class="n">du</span><span class="p">,</span> <span class="n">dv</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tangent</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">du</span><span class="p">,</span> <span class="n">dv</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_tangent</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">du</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
             <span class="c1"># the cross product of the tangent is the normal</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">du</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -117,15 +113,96 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Normal evaluation only defined for 2D and 3D geometries&#39;</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="Surface.evaluate_tangent"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.evaluate_tangent">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_tangent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Evaluate the tangents of the surface at given parametric values.</span>
+
+<span class="sd">        This is equivalent to :func:`GeoMod.Surface.evaluate_derivative` with</span>
+<span class="sd">        ``d=(1,0)`` and ``d=(0,1)``.</span>
+
+<span class="sd">        :param u: Parametric coordinate(s) in the first direction</span>
+<span class="sd">        :type u: float or [float]</span>
+<span class="sd">        :param v: Parametric coordinate(s) in the second direction</span>
+<span class="sd">        :type v: float or [float]</span>
+<span class="sd">        :return: Two arrays *dX/du[i,j,k]* and *dX/dv[i,j,k]* of the tangent</span>
+<span class="sd">            component *xk* evaluated at *(u[i], v[j])*</span>
+<span class="sd">        :rtype: (numpy.array)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate_derivative</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_derivative</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="Surface.swap_parametrization"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.swap_parametrization">[docs]</a>    <span class="k">def</span> <span class="nf">swap_parametrization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Swaps the two surface parameter directions.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
 <div class="viewcode-block" id="Surface.edges"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.edges">[docs]</a>    <span class="k">def</span> <span class="nf">edges</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the four edge curves in (parametric) order: umin, umax, vmin, vmax</span>
+        <span class="sd">&quot;&quot;&quot;Return the four edge curves in (parametric) order: bottom, right, top, left.</span>
 
 <span class="sd">        :return: Edge curves</span>
 <span class="sd">        :rtype: (Curve)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+        <span class="c1"># ASSUMPTION: open knot vectors</span>
+        <span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">rat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span>
+        <span class="n">umin</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">)),</span> <span class="n">rat</span><span class="p">)</span>
+        <span class="n">umax</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">)),</span> <span class="n">rat</span><span class="p">)</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">dim</span><span class="p">)),</span> <span class="n">rat</span><span class="p">)</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">dim</span><span class="p">)),</span> <span class="n">rat</span><span class="p">)</span>
+        <span class="c1"># make the curves form a clockwise oriented closed loop around surface</span>
+        <span class="n">umax</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+        <span class="n">vmax</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">umax</span><span class="p">,</span> <span class="n">vmax</span><span class="p">,</span> <span class="n">umin</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Surface.split"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knots</span><span class="p">,</span> <span class="n">direction</span><span class="p">):</span>
+<div class="viewcode-block" id="Surface.corners"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.corners">[docs]</a>    <span class="k">def</span> <span class="nf">corners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the four corner control points in (parametric) counter-clockwise order starting from (umin,vmin)</span>
+
+<span class="sd">        :return: Corners</span>
+<span class="sd">        :rtype: (np.ndarray)</span>
+<span class="sd">        .. warning:: For rational splines, this will return the corners in projective coordinates, including weights.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,:]</span>
+        <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">,:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,:]</span>
+        <span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">,:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>
+        <span class="n">result</span><span class="p">[</span><span class="mi">3</span><span class="p">,:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span> <span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="Surface.raise_order"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.raise_order">[docs]</a>    <span class="k">def</span> <span class="nf">raise_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_u</span><span class="p">,</span> <span class="n">raise_v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Raise the order of the surface.</span>
+
+<span class="sd">        :param int raise_u: Number of degrees to increase in the first direction</span>
+<span class="sd">        :param int raise_v: Number of degrees to increase in the second direction</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># create the new basis</span>
+        <span class="n">newBasis1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">raise_order</span><span class="p">(</span><span class="n">raise_u</span><span class="p">)</span>
+        <span class="n">newBasis2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">raise_order</span><span class="p">(</span><span class="n">raise_v</span><span class="p">)</span>
+
+        <span class="c1"># set up an interpolation problem. This is in projective space, so no problems for rational cases</span>
+        <span class="n">interpolation_pts_u</span> <span class="o">=</span> <span class="n">newBasis1</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span>  <span class="c1"># parametric interpolation points u</span>
+        <span class="n">interpolation_pts_v</span> <span class="o">=</span> <span class="n">newBasis2</span><span class="o">.</span><span class="n">greville</span><span class="p">()</span>  <span class="c1"># parametric interpolation points v</span>
+        <span class="n">N_u_old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">interpolation_pts_u</span><span class="p">)</span>
+        <span class="n">N_u_new</span> <span class="o">=</span> <span class="n">newBasis1</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">interpolation_pts_u</span><span class="p">)</span>
+        <span class="n">N_v_old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">interpolation_pts_v</span><span class="p">)</span>
+        <span class="n">N_v_new</span> <span class="o">=</span> <span class="n">newBasis2</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">interpolation_pts_v</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">N_v_old</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">N_u_old</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># projective interpolation points (x,y,z,w)</span>
+        <span class="n">interpolation_pts_x</span> <span class="o">=</span> <span class="n">tmp</span>  <span class="c1"># 3D-tensor with elements (i,j,k) of component x[k] evaluated at u[i] v[j]</span>
+
+        <span class="c1"># solve the interpolation problem</span>
+        <span class="n">N_u_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">N_u_new</span><span class="p">)</span>
+        <span class="n">N_v_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span>
+            <span class="n">N_v_new</span>
+        <span class="p">)</span>  <span class="c1"># these are inverses of the 1D problems, and small compared to the total number of unknowns</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">N_v_inv</span><span class="p">,</span> <span class="n">interpolation_pts_x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">N_u_inv</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># update the basis and controlpoints of the surface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">newBasis1</span><span class="p">,</span> <span class="n">newBasis2</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Surface.split"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">knots</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Split a surface into two or more separate representations with C0</span>
 <span class="sd">        continuity between them.</span>
 
@@ -138,7 +215,8 @@
         <span class="c1"># for single-value input, wrap it into a list</span>
         <span class="n">knots</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span>
         <span class="c1"># error test input</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">direction</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;direction must be 0 or 1&#39;</span><span class="p">)</span>
 
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">()</span>
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
@@ -150,19 +228,6 @@
             <span class="k">if</span> <span class="n">continuity</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
                 <span class="n">continuity</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
             <span class="n">splitting_surf</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">([</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">direction</span><span class="p">)</span>
-
-        <span class="n">b</span> <span class="o">=</span> <span class="n">splitting_surf</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
-            <span class="n">splitting_surf</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">splitting_surf</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="o">-</span><span class="n">mu</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="n">b</span><span class="o">.</span><span class="n">periodic</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">splitting_surf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">direction</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">splitting_surf</span>
-
 
         <span class="c1"># everything is available now, just have to find the right index range</span>
         <span class="c1"># in the knot vector and controlpoints to store in each separate curve</span>
@@ -226,7 +291,7 @@
         <span class="n">N</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># establish uniform open knot vectors</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
-            <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
             <span class="n">basis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">knot</span><span class="p">))</span>
 
             <span class="c1"># make these span the same parametric domain as the old ones</span>
@@ -253,6 +318,49 @@
 
         <span class="c1"># return new resampled curve</span>
         <span class="k">return</span> <span class="n">Surface</span><span class="p">(</span><span class="n">basis</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">basis</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">cp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Surface.write_g2"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.write_g2">[docs]</a>    <span class="k">def</span> <span class="nf">write_g2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outfile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write the surface in GoTools format.</span>
+
+<span class="sd">        :param file-like outfile: The file to write to</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;200 1 0 0</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># surface header, gotools version 1.0.0</span>
+        <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">write_g2</span><span class="p">(</span><span class="n">outfile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">write_g2</span><span class="p">(</span><span class="n">outfile</span><span class="p">)</span>
+
+        <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">n3</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n3</span><span class="p">):</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%f</span><span class="s1"> &#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">])</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Surface.__len__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the number of control points (basis functions) for the surface.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Surface.__getitem__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the control point at a given index.</span>
+
+<span class="sd">        :rtype: numpy.array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">n1</span>
+        <span class="n">i2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="n">n1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">,</span> <span class="p">:]</span></div>
+
+<div class="viewcode-block" id="Surface.__setitem__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Surface.__setitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">newCP</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the control point at a given index.</span>
+
+<span class="sd">        :param int i: Index</span>
+<span class="sd">        :param numpy.array newCP: New control point</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">n1</span>
+        <span class="n">i2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="n">n1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">newCP</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
