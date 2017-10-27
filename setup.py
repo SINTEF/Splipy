@@ -19,6 +19,10 @@ setup(
         'numpy >= 1.9',
         'scipy >= 0.17',
     ],
+    extra_requires={
+        'FiniteElement': ["nutils>=2.0"],
+        'Images':        ["opencv-python>=3.3"],
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',
