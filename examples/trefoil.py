@@ -9,7 +9,7 @@ from sys import path
 path.append('../')
 
 from splipy import *
-from splipy.IO import *
+from splipy.io import *
 from numpy import pi, cos, sin
 import numpy as np
 import splipy.curve_factory   as curves
