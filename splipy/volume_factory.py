@@ -190,6 +190,9 @@ def edge_surfaces(*surfaces):
 
         return result
     elif len(surfaces) == 6:
+        if any([surf.rational for surf in surfaces]):
+            raise RuntimeError('edge_surfaces not supported for rational splines')
+
         # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
         umin = surfaces[0]
         umax = surfaces[1]

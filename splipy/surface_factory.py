@@ -280,6 +280,10 @@ def poisson_patch(bottom, right, top, left):
     from nutils import mesh, function as fn
     from nutils import _, log, library
 
+    # error test input
+    if left.rational or right.rational or top.rational or bottom.rational:
+        raise RuntimeError('poisson_patch not supported for rational splines')
+
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
     left.reverse()
@@ -333,6 +337,12 @@ def elasticity_patch(bottom, right, top, left):
     from nutils import mesh, function as fn
     from nutils import _, log, library
 
+    # error test input
+    if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
+        raise RuntimeError('elasticity_patch only supported for planar (2D) geometries')
+    if left.rational or right.rational or top.rational or bottom.rational:
+        raise RuntimeError('elasticity_patch not supported for rational splines')
+
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
     left.reverse()
@@ -340,6 +350,7 @@ def elasticity_patch(bottom, right, top, left):
     # in order to add spline surfaces, they need identical parametrization
     Curve.make_splines_identical(top, bottom)
     Curve.make_splines_identical(left, right)
+
 
     # create computational (nutils) mesh
     p1 = bottom.order(0)
@@ -382,6 +393,12 @@ def elasticity_patch(bottom, right, top, left):
 def finitestrain_patch(bottom, right, top, left):
     from nutils import mesh, function as fn
     from nutils import _, log, library
+
+    # error test input
+    if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
+        raise RuntimeError('finitestrain_patch only supported for planar (2D) geometries')
+    if left.rational or right.rational or top.rational or bottom.rational:
+        raise RuntimeError('finitestrain_patch not supported for rational splines')
 
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
