@@ -119,6 +119,7 @@ class BSplineBasis:
         """
         # for single-value input, wrap it into a list so it don't crash on the loop below
         t = ensure_listlike(t)
+        self.snap(t)
 
         p = self.order  # knot vector order
         n_all = len(self.knots) - p  # number of basis functions (without periodicity)
@@ -445,6 +446,23 @@ class BSplineBasis:
             return np.allclose( (self.knots-self.knots[0]) / dt,
                                 (bspline.knots-bspline.knots[0]) / dt2,
                                 atol=state.knot_tolerance)
+
+    def snap(self, t):
+        """  Snap evaluation points to knots if they are sufficiently close
+        as given in by state.state.knot_tolerance. This will modify the input vector t
+
+        :param t: evaluation points
+        :type  t: [float]
+        :return: none
+        """
+        n = len(self.knots)
+        for j in range(len(t)):
+            i = bisect_left(self.knots, t[j])
+            if i < n and abs(self.knots[i]-t[j]) < state.knot_tolerance:
+                t[j] = self.knots[i]
+            elif i > 0 and abs(self.knots[i-1]-t[j]) < state.knot_tolerance:
+                t[j] = self.knots[i-1]
+
 
     def clone(self):
         """Clone the object."""

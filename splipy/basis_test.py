@@ -228,5 +228,33 @@ class TestBasis(unittest.TestCase):
         self.assertAlmostEqual(c.knots[9], 7)
         self.assertAlmostEqual(c.knots[10], 8)
 
+    def test_snap(self):
+        b = BSplineBasis(3, [0,0,0, .123, np.pi, 3.5, 4,4,4])
+        t = [0,.123+1e-12, 3, 3.1, 3.14, 3.1415, 3.1415926, 3.500000000000002, 4+1e-12, 4+1e-2]
+        b.snap(t)
+        self.assertEqual(   t[0], b[0]) # 0
+        self.assertEqual(   t[1], b[3]) # 0.123
+        self.assertNotEqual(t[2], b[4]) # 3
+        self.assertNotEqual(t[3], b[4]) # 3.1
+        self.assertNotEqual(t[4], b[4]) # 3.14
+        self.assertNotEqual(t[5], b[4]) # 3.1415
+        self.assertNotEqual(t[6], b[4]) # 3.1415926
+        self.assertEqual(   t[7], b[5]) # 3.5
+        self.assertEqual(   t[8], b[6]) # 4.0
+        self.assertNotEqual(t[9], b[6]) # 4.01
+
+    def test_bug44(self):
+        # https://github.com/sintefmath/Splipy/issues/44
+        b = BSplineBasis(4, [ 0.        , 0.        , 0.        , 0.        , 0.01092385, 0.02200375,
+                              0.03316167, 0.04435861, 0.05526295, 0.0663331 , 0.07748615, 0.08868065,
+                              0.09989588, 0.11080936, 0.12188408, 0.13303942, 0.14423507, 0.15545087,
+                              0.16636463, 0.1774395 , 0.1885949 , 0.19979059, 0.2       , 0.2       ,
+                              0.2       , 0.2     ])
+        grvl = b.greville()
+        # last greville point is 0.20000000000000004, and technically outside domain [0,.2]
+        self.assertAlmostEqual(grvl[-1], 0.2)
+        # should snap to 0.2 and evaluate to 1 for the last function
+        self.assertAlmostEqual(b(grvl[-1])[-1,-1], 1.0)
+
 if __name__ == '__main__':
     unittest.main()
