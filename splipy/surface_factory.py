@@ -11,11 +11,6 @@ import inspect
 import numpy as np
 import os
 from os.path import dirname, realpath, join
-try:
-    from nutils import mesh, function as fn
-    from nutils import _, log, library
-except ImportError:
-    pass
 
 __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus', 'edge_curves',
            'thicken', 'sweep', 'loft', 'interpolate', 'least_square_fit', 'teapot']
@@ -282,6 +277,9 @@ def coons_patch(bottom, right, top, left):
 
 
 def poisson_patch(bottom, right, top, left):
+    from nutils import mesh, function as fn
+    from nutils import _, log, library
+
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
     left.reverse()
@@ -332,6 +330,9 @@ def poisson_patch(bottom, right, top, left):
 
 
 def elasticity_patch(bottom, right, top, left):
+    from nutils import mesh, function as fn
+    from nutils import _, log, library
+
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
     left.reverse()
@@ -379,6 +380,9 @@ def elasticity_patch(bottom, right, top, left):
 
 
 def finitestrain_patch(bottom, right, top, left):
+    from nutils import mesh, function as fn
+    from nutils import _, log, library
+
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
     left.reverse()
