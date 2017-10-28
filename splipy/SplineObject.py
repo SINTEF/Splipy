@@ -221,7 +221,7 @@ class SplineObject(object):
             W = non_derivative[..., -1]  # W
             Wd = result[..., -1]         # W'
             for i in range(self.dimension):
-                result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W;
+                result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W
             result = np.delete(result, self.dimension, self.pardim)
 
         # Squeeze the singleton dimensions if we only have one point
@@ -359,7 +359,7 @@ class SplineObject(object):
             speed = np.apply_along_axis(np.linalg.norm, -1, v)
             speed = np.reshape(speed, speed.shape +(1,))
 
-        return v / speed;
+        return v / speed
 
     def section(self, *args, **kwargs):
         """  Returns a section from the object. A section can be any sub-object of

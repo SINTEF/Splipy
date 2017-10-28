@@ -249,7 +249,7 @@ def image_convex_surface(filename):
     :rtype: :class:`splipy.Surface`
     """
     # generate boundary curve
-    crv = image_curves(filename);
+    crv = image_curves(filename)
 
     # error test input
     if len(crv) != 1:
@@ -285,5 +285,5 @@ def image_convex_surface(filename):
             del kinks[max_span_i]
         corners = kinks[0:4]
 
-    return surface_factory.edge_curves(crv.split(corners));
+    return surface_factory.edge_curves(crv.split(corners))
 
