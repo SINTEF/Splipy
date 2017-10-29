@@ -11,7 +11,7 @@ setup(
     maintainer='Kjetil Andre Johannessen',
     maintainer_email='kjetijo@gmail.com',
     license='GNU public license v3',
-    packages=['splipy', 'splipy.utils', 'splipy.IO'],
+    packages=['splipy', 'splipy.utils', 'splipy.io'],
     package_data={
         'splipy': ['templates/*.bpt'],
     },

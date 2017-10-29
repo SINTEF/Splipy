@@ -42,10 +42,10 @@ def sphere(r=1, center=(0,0,0), type='radial'):
     elif type == 'square':
         # based on the work of James E.Cobb: "Tiling the Sphere with Rational Bezier Patches"
         # University of Utah, July 11, 1988. UUCS-88-009
-        b = BSplineBasis(order=5);
-        sr2 = sqrt(2);
-        sr3 = sqrt(3);
-        sr6 = sqrt(6);
+        b = BSplineBasis(order=5)
+        sr2 = sqrt(2)
+        sr3 = sqrt(3)
+        sr6 = sqrt(6)
         cp = [[      -4*(sr3-1),       4*(1-sr3),      4*(1-sr3),   4*(3-sr3)  ], # row 0
               [           -sr2 ,     sr2*(sr3-4),    sr2*(sr3-4), sr2*(3*sr3-2)],
               [              0 ,  4./3*(1-2*sr3), 4./3*(1-2*sr3),4./3*(5-sr3)  ],
@@ -70,7 +70,7 @@ def sphere(r=1, center=(0,0,0), type='radial'):
               [           -sr2 ,    -sr2*(sr3-4),    sr2*(sr3-4), sr2*(3*sr3-2)],
               [              0 , -4./3*(1-2*sr3), 4./3*(1-2*sr3),4./3*(5-sr3)  ],
               [            sr2 ,    -sr2*(sr3-4),    sr2*(sr3-4), sr2*(3*sr3-2)],
-              [       4*(sr3-1),      -4*(1-sr3),      4*(1-sr3),   4*(3-sr3)  ]];
+              [       4*(sr3-1),      -4*(1-sr3),      4*(1-sr3),   4*(3-sr3)  ]]
         wmin = Surface(b,b,cp, rational=True)
         wmax = wmin.clone().mirror([0,0,1])
         vmax = wmin.clone().rotate(pi/2, [1,0,0])

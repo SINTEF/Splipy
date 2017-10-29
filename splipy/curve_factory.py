@@ -68,7 +68,7 @@ def polygon(*points, **keywords):
     if len(points) == 1:
         points = points[0]
 
-    knot = keywords.get('t', []);
+    knot = keywords.get('t', [])
     if len(knot) == 0: # establish knot vector based on eucledian length between points
         knot = [0, 0]
         prevPt = points[0]
@@ -560,7 +560,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
 
         import numpy as np
 
-        # gives a B-spline approximation to the circle with arclength parametrization;
+        # gives a B-spline approximation to the circle with arclength parametrization
         # unlike curve_factory.circle which is exact, but not arclength
         def arclength_circle(t):
             return np.array( [np.cos(t), np.sin(t)] ).T

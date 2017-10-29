@@ -7,7 +7,7 @@
 
 from sys import path
 path.append('../')
-from splipy.IO import *
+from splipy.io import *
 
 # G2 files are native GoTools (http://www.sintef.no/projectweb/geometry-toolkits/gotools/)
 
