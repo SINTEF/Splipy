@@ -174,17 +174,19 @@ def torus(minor_r=1, major_r=3, center=(0,0,0)):
     return revolve(circle) + center
 
 
-def edge_curves(*curves):
+def edge_curves(*curves, **kwargs):
     """  Create the surface defined by the region between the input curves.
 
     In case of four input curves, these must be given in an ordered directional
     closed loop around the resulting surface.
 
     :param [Curve] curves: Two or four edge curves
+    :param string type: The method used for interior computation ('coons', 'poisson', 'elasticity' or 'finitestrain')
     :return: The enclosed surface
     :rtype: Surface
     :raises ValueError: If the length of *curves* is not two or four
     """
+    type = kwargs.get('type', 'coons')
     if len(curves) == 1: # probably gives input as a list-like single variable
         curves = curves[0]
     if len(curves) == 2:
@@ -203,68 +205,298 @@ def edge_curves(*curves):
         # reorganize input curves so they form a directed loop around surface
         rtol = state.controlpoint_relative_tolerance
         atol = state.controlpoint_absolute_tolerance
-        curves = list(curves)
-        dim = np.max([c.dimension for c in curves])
-        rat = np.any([c.rational  for c in curves])
+        mycurves = [c.clone() for c in curves] # wrap into list and clone all since we're changing them
+        dim = np.max([c.dimension for c in mycurves])
+        rat = np.any([c.rational  for c in mycurves])
         for i in range(4):
-            if curves[i].dimension != dim:
-                tmp = curves[i].clone().set_dimension(dim)
-                curves[i] = tmp
-            if rat and not curves[i].rational:
-                tmp = curves[i].clone().force_rational()
-                curves[i] = tmp
-        if not (np.allclose(curves[0][-1], curves[1][0], rtol=rtol, atol=atol) and
-                np.allclose(curves[1][-1], curves[2][0], rtol=rtol, atol=atol) and
-                np.allclose(curves[2][-1], curves[3][0], rtol=rtol, atol=atol) and
-                np.allclose(curves[3][-1], curves[0][0], rtol=rtol, atol=atol)):
-            args = [curves[0]]
-            del curves[0]
+            for j in range(i+1,4):
+                Curve.make_splines_compatible(mycurves[i], mycurves[j])
+
+        if not (np.allclose(mycurves[0][-1], mycurves[1][0], rtol=rtol, atol=atol) and
+                np.allclose(mycurves[1][-1], mycurves[2][0], rtol=rtol, atol=atol) and
+                np.allclose(mycurves[2][-1], mycurves[3][0], rtol=rtol, atol=atol) and
+                np.allclose(mycurves[3][-1], mycurves[0][0], rtol=rtol, atol=atol)):
+            reorder = [mycurves[0]]
+            del mycurves[0]
             for j in range(3):
                 found_match = False
-                for i in range(len(curves)):
-                    if(np.allclose(args[j][-1], curves[i][0], rtol=rtol, atol=atol)):
-                        args.append(curves[i])
-                        del curves[i]
+                for i in range(len(mycurves)):
+                    if(np.allclose(reorder[j][-1], mycurves[i][0], rtol=rtol, atol=atol)):
+                        reorder.append(mycurves[i])
+                        del mycurves[i]
                         found_match = True
                         break
-                    elif(np.allclose(args[j][-1], curves[i][-1], rtol=rtol, atol=atol)):
-                        args.append(curves[i].clone().reverse())
-                        del curves[i]
+                    elif(np.allclose(reorder[j][-1], mycurves[i][-1], rtol=rtol, atol=atol)):
+                        reorder.append(mycurves[i].reverse())
+                        del mycurves[i]
                         found_match = True
                         break
                 if not found_match:
                     raise RuntimeError('Curves do not form a closed loop (end-points do not match)')
-            return edge_curves(args)
-        # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
-        bottom = curves[0]
-        right  = curves[1]
-        top    = curves[2].clone()
-        left   = curves[3].clone()  # gonna change these two, so make copies
-        top.reverse()
-        left.reverse()
-        # create linear interpolation between opposing sides
-        s1 = edge_curves(bottom, top)
-        s2 = edge_curves(left, right)
-        s2.swap()
-        # create (linear,linear) corner parametrization
-        linear = BSplineBasis(2)
-        rat = s1.rational  # using control-points from top/bottom, so need to know if these are rational
-        if rat:
-            bottom = bottom.clone().force_rational() # don't mess with the input curve, make clone
-            top.force_rational()                     # this is already a clone
-        s3 = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]], rat)
-
-        # in order to add spline surfaces, they need identical parametrization
-        Surface.make_splines_identical(s1, s2)
-        Surface.make_splines_identical(s1, s3)
-        Surface.make_splines_identical(s2, s3)
-
-        result = s1
-        result.controlpoints += s2.controlpoints
-        result.controlpoints -= s3.controlpoints
-        return result
+            mycurves = reorder
+        if type == 'coons':
+            return coons_patch(*mycurves)
+        elif type == 'poisson':
+            return poisson_patch(*mycurves)
+        elif type == 'elasticity':
+            return elasticity_patch(*mycurves)
+        elif type == 'finitestrain':
+            return finitestrain_patch(*mycurves)
+        else:
+            raise ValueError('Unknown type parameter')
     else:
         raise ValueError('Requires two or four input curves')
+
+
+def coons_patch(bottom, right, top, left):
+    # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
+    top.reverse()
+    left.reverse()
+
+    # create linear interpolation between opposing sides
+    s1 = edge_curves(bottom, top)
+    s2 = edge_curves(left, right)
+    s2.swap()
+    # create (linear,linear) corner parametrization
+    linear = BSplineBasis(2)
+    rat = s1.rational  # using control-points from top/bottom, so need to know if these are rational
+    if rat:
+        bottom = bottom.clone().force_rational() # don't mess with the input curve, make clone
+        top.force_rational()                     # this is already a clone
+    s3 = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]], rat)
+
+    # in order to add spline surfaces, they need identical parametrization
+    Surface.make_splines_identical(s1, s2)
+    Surface.make_splines_identical(s1, s3)
+    Surface.make_splines_identical(s2, s3)
+
+    result = s1
+    result.controlpoints += s2.controlpoints
+    result.controlpoints -= s3.controlpoints
+    return result
+
+
+def poisson_patch(bottom, right, top, left):
+    from nutils import mesh, function as fn
+    from nutils import _, log, library
+
+    # error test input
+    if left.rational or right.rational or top.rational or bottom.rational:
+        raise RuntimeError('poisson_patch not supported for rational splines')
+
+    # these are given as a oriented loop, so make all run in positive parametric direction
+    top.reverse()
+    left.reverse()
+
+    # in order to add spline surfaces, they need identical parametrization
+    Curve.make_splines_identical(top, bottom)
+    Curve.make_splines_identical(left, right)
+
+    # create computational (nutils) mesh
+    p1 = bottom.order(0)
+    p2 = left.order(0)
+    n1 = len(bottom)
+    n2 = len(left)
+    dim= left.dimension
+    k1 = bottom.knots(0)
+    k2 = left.knots(0)
+    m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
+    m2 = [left.order(0)   - left.continuity(k)   - 1 for k in k2]
+    domain, geom = mesh.rectilinear([k1, k2])
+    basis = domain.basis('bspline', [p1-1, p2-1], knotmultiplicities=[m1,m2])
+
+    # assemble system matrix
+    grad      = basis.grad(geom)
+    outer     = fn.outer(grad,grad)
+    integrand = outer.sum(-1)
+    matrix = domain.integrate(integrand, geometry=geom, ischeme='gauss'+str(max(p1,p2)+1))
+
+    # initalize variables
+    controlpoints = np.zeros((n1,n2,dim))
+    rhs           = np.zeros((n1*n2))
+    constraints = np.array([[np.nan]*n2]*n1)
+
+    # treat all dimensions independently
+    for d in range(dim):
+        # add boundary conditions
+        constraints[ 0, :] = left[  :,d]
+        constraints[-1, :] = right[ :,d]
+        constraints[ :, 0] = bottom[:,d]
+        constraints[ :,-1] = top[   :,d]
+
+        # solve system
+        lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints), solver='cg')
+
+        # wrap results into splipy datastructures
+        controlpoints[:,:,d] = np.reshape(lhs, (n1,n2), order='C')
+
+    return Surface(bottom.bases[0], left.bases[0], controlpoints, bottom.rational, raw=True)
+
+
+def elasticity_patch(bottom, right, top, left):
+    from nutils import mesh, function as fn
+    from nutils import _, log, library
+
+    # error test input
+    if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
+        raise RuntimeError('elasticity_patch only supported for planar (2D) geometries')
+    if left.rational or right.rational or top.rational or bottom.rational:
+        raise RuntimeError('elasticity_patch not supported for rational splines')
+
+    # these are given as a oriented loop, so make all run in positive parametric direction
+    top.reverse()
+    left.reverse()
+
+    # in order to add spline surfaces, they need identical parametrization
+    Curve.make_splines_identical(top, bottom)
+    Curve.make_splines_identical(left, right)
+
+
+    # create computational (nutils) mesh
+    p1 = bottom.order(0)
+    p2 = left.order(0)
+    n1 = len(bottom)
+    n2 = len(left)
+    dim= left.dimension
+    k1 = bottom.knots(0)
+    k2 = left.knots(0)
+    m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
+    m2 = [left.order(0)   - left.continuity(k)   - 1 for k in k2]
+    domain, geom = mesh.rectilinear([k1, k2])
+    basis = domain.basis('bspline', [p1-1, p2-1], knotmultiplicities=[m1,m2]).vector( 2 )
+
+    # assemble system matrix
+    stress    = library.Hooke(lmbda=1,mu=1)
+    integrand = fn.outer( basis.grad(geom), stress(basis.symgrad(geom)) ).sum([-2,-1])
+    matrix = domain.integrate(integrand, geometry=geom, ischeme='gauss'+str(max(p1,p2)+1))
+    rhs    = np.zeros((n1*n2*dim))
+
+    # add boundary conditions
+    constraints = np.array([[[np.nan]*n2]*n1]*dim)
+    for d in range(dim):
+        constraints[d, 0, :] = left[  :,d]
+        constraints[d,-1, :] = right[ :,d]
+        constraints[d, :, 0] = bottom[:,d]
+        constraints[d, :,-1] = top[   :,d]
+
+    # solve system
+    lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints, order='C'), solver='cg')
+
+    # rewrap results into splipy datastructures
+    controlpoints = np.reshape(lhs, (dim,n1,n2), order='C')
+    controlpoints = controlpoints.swapaxes(0,2)
+    controlpoints = controlpoints.swapaxes(0,1)
+
+    return Surface(bottom.bases[0], left.bases[0], controlpoints, bottom.rational, raw=True)
+
+
+def finitestrain_patch(bottom, right, top, left):
+    from nutils import mesh, function as fn
+    from nutils import _, log, library
+
+    # error test input
+    if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
+        raise RuntimeError('finitestrain_patch only supported for planar (2D) geometries')
+    if left.rational or right.rational or top.rational or bottom.rational:
+        raise RuntimeError('finitestrain_patch not supported for rational splines')
+
+    # these are given as a oriented loop, so make all run in positive parametric direction
+    top.reverse()
+    left.reverse()
+
+    # in order to add spline surfaces, they need identical parametrization
+    Curve.make_splines_identical(top, bottom)
+    Curve.make_splines_identical(left, right)
+
+    # create an initial mesh (correct corners) which we will morph into the right one
+    p1 = bottom.order(0)
+    p2 = left.order(0)
+    linear = BSplineBasis(2)
+    srf = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]])
+    srf.raise_order(p1-2, p2-2)
+    for k in bottom.knots(0, True)[p1:-p1]:
+        srf.insert_knot(k, 0)
+    for k in left.knots(0, True)[p2:-p2]:
+        srf.insert_knot(k, 1)
+
+    # create computational mesh
+    n1 = len(bottom)
+    n2 = len(left)
+    dim= left.dimension
+    k1 = bottom.knots(0)
+    k2 = left.knots(0)
+    m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
+    m2 = [left.order(0)   - left.continuity(k)   - 1 for k in k2]
+    domain, geom = mesh.rectilinear([k1, k2])
+    basis = domain.basis('bspline', [p1-1, p2-1], knotmultiplicities=[m1,m2]).vector( 2 )
+
+    # add total boundary conditions
+    # for hard problems these will be taken in steps and multiplied by dt every
+    # time (quasi-static iterations)
+    constraints = np.array([[[np.nan]*n2]*n1]*dim)
+    for d in range(dim):
+        constraints[d, 0, :] = (left[  :,d] - srf[ 0, :,d])
+        constraints[d,-1, :] = (right[ :,d] - srf[-1, :,d])
+        constraints[d, :, 0] = (bottom[:,d] - srf[ :, 0,d])
+        constraints[d, :,-1] = (top[   :,d] - srf[ :,-1,d])
+
+    # in order to iterate, we let t0=0 be current configuration and t1=1 our target configuration
+    # if solver divergeces (too large deformation), we will try with dt=0.5. If this still
+    # fails we will resort to dt=0.25 until a suitable small iterations size have been found
+    dt = 1
+    t0 = 0
+    t1 = 1
+    while t0 < 1:
+        dt = t1-t0
+
+        print(' ==== Quasi-static '+str(t0*100)+'-'+str(t1*100)+' % ====')
+
+        # initialize variables
+        geom0 = srf[:,:,:].swapaxes(0,1)
+        geom0 = np.ndarray.flatten(geom0, order='F')
+        disp = fn.asarray(np.zeros(2))
+
+        lhs = np.asarray(np.zeros(n1*n2*dim))
+
+        disp = basis.dot( lhs )
+        geom0= basis.dot(geom0)
+
+        geom = geom0 + disp
+        stress=library.Hooke(lmbda=1,mu=1)
+
+        # newton iteration to convergence
+        for istep in log.count( 'newton' ):
+
+            E = basis.symgrad(geom) - .5 * fn.add_T( ( basis.grad(geom)[:,:,:,_] * disp.grad(geom)[_,:,_,:] ).sum(1) )
+            F = .5 * fn.outer( disp.grad(geom), axis=1 ).sum(0)
+            A = fn.outer( basis.grad(geom), stress(E) ).sum([-2,-1])
+            B = ( basis.grad(geom) * stress(-F) ).sum([-2,-1])
+            matrix, rhs = domain.integrate( [ A, B ], geometry=geom, ischeme='gauss'+str(int(max(p1,p2)+1)) )
+
+            try:
+                # this is a thrice nested iteration setup:
+                # 1. We iterate (possibly) on boundary conditions, for large deformation, i.e. hard problems
+                # 2. We newton iterate to solve the non-linear differential equation with finite strain theory
+                # 3. We solve the linearized system of equations with GMRES iterations
+                lhs, info = matrix.solve( rhs, constrain=np.ndarray.flatten(dt*constraints, order='C'), lhs0=lhs, tol=1e-3, precon='spilu', info=True, maxiter=4)
+                if not info.niter: # no more GMRES iterations required, newton iteration have converged
+                    t0 += dt
+                    t1 += dt
+                    break
+            except AssertionError: # GMRES iterations diverge, newton iterations diverge, try a smaller step length 'dt'
+                t1 = (t1+t0)/2
+                break
+
+            # GMRES converge, update solution vector in newton iteration and continue
+            disp = basis.dot( lhs )
+            geom = geom0 + disp
+
+        if not info.niter: # newton iteration converged, update control points and try next iteration of boundary conditions
+            geom = lhs.reshape((n2,n1,dim), order='F')
+            srf[:,:,:] += geom.swapaxes(0,1)
+
+
+    return srf
 
 
 def thicken(curve, amount):
