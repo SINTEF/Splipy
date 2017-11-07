@@ -155,7 +155,7 @@ def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
     :return: The cylinder shell
     :rtype: Surface
     """
-    return extrude(CurveFactory.circle(r, center, axis), h*axis)
+    return extrude(CurveFactory.circle(r, center, axis), h*np.array(axis))
 
 
 def torus(minor_r=1, major_r=3, center=(0,0,0)):

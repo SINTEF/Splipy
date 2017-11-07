@@ -466,6 +466,15 @@ class TestSurfaceFactory(unittest.TestCase):
                 self.assertAlmostEqual(x[2], v)  # z coordinate should be linear
         self.assertAlmostEqual(surf.area(), 2*pi, places=3)
 
+        # cylinder with parameters
+        surf = SurfaceFactory.cylinder(r=2, h=5, center=(0,0,1), axis=(1,0,0))
+        for u in np.linspace(surf.start()[0], surf.end()[0], 7):
+            for v in np.linspace(surf.start()[1], surf.end()[1], 7):
+                x = surf(u, v)
+                self.assertAlmostEqual(x[1]**2+(x[2]-1)**2, 2.0**2) # distance to (z-1)=y=0
+                self.assertAlmostEqual(x[0], v*5)                   # x coordinate should be linear
+        self.assertAlmostEqual(surf.area(), 2*2*pi*5, places=3)
+
     def test_edge_curves(self):
         # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
         # mixes rational and non-rational curves with different parametrization spaces
@@ -603,6 +612,16 @@ class TestVolumeFactory(unittest.TestCase):
                         np.linalg.norm(x[:2], 2), u)  # (x,y) coordinates to z-axis
                     self.assertAlmostEqual(x[2], w)  # z coordinate should be linear
         self.assertAlmostEqual(vol.volume(), pi, places=3)
+
+        # cylinder with parameters
+        vol = VolumeFactory.cylinder(r=2, h=5, center=(0,0,1), axis=(1,0,0))
+        for u in np.linspace(vol.start()[0], vol.end()[0], 5):
+            for v in np.linspace(vol.start()[1], vol.end()[1], 5):
+                for w in np.linspace(vol.start()[2], vol.end()[2], 5):
+                    x = vol(u, v, w)
+                    self.assertAlmostEqual(x[1]**2+(x[2]-1)**2, u**2)
+                    self.assertAlmostEqual(x[0], w*5)
+        self.assertAlmostEqual(vol.volume(), 2*2*pi*5, places=3)
 
     def test_edge_surfaces(self):
         # test 3D surface vs 2D rational surface
