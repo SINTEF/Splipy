@@ -45,20 +45,118 @@ class G2(MasterIO):
         dim      = int(     next(self.fstream).strip())
         start    = np.array(next(self.fstream).split(' '), dtype=float)
         direction= np.array(next(self.fstream).split(' '), dtype=float)
-        finite   = bool(    next(self.fstream).strip())
+        finite   =          next(self.fstream).strip() != '0'
         param    = np.array(next(self.fstream).split(' '), dtype=float)
+        reverse  =          next(self.fstream).strip() != '0'
         d = np.array(direction)
         s = np.array(start)
         d /= np.linalg.norm(d)
         if not finite:
             param = [-state.unlimited, +state.unlimited]
 
-        return CurveFactory.line(s-d*param[0], s+d*param[1])
+        result = CurveFactory.line(s-d*param[0], s+d*param[1])
+        if reverse:
+            result.reverse()
+        return result
+
+
+#   def cone(self):
+#       dim      = int(     next(self.fstream).strip())
+#       r        = float(   next(self.fstream).strip())
+#       center   = np.array(next(self.fstream).split(' '), dtype=float)
+#       z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+#       x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+#       angle    = float(   next(self.fstream).strip())
+#       finite   =          next(self.fstream).strip() != '0'
+#       param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+#       if finite:
+#           param_v=np.array(next(self.fstream).split(' '), dtype=float)
+
+
+    def cylinder(self):
+        dim      = int(     next(self.fstream).strip())
+        r        = float(   next(self.fstream).strip())
+        center   = np.array(next(self.fstream).split(' '), dtype=float)
+        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        finite   =          next(self.fstream).strip() != '0'
+        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+        if finite:
+            param_v=np.array(next(self.fstream).split(' '), dtype=float)
+        else:
+            param_v=[-state.unlimited, 0]
+        swap     =          next(self.fstream).strip() != '0'
+
+        center = center-z_axis*param_v[0]
+        h      = param_v[1] - param_v[0]
+        result = SurfaceFactory.cylinder(r=r, center=center, xaxis=x_axis, axis=z_axis, h=h)
+        result.reparam(param_u, param_v)
+        if swap:
+            result.swap()
+        return result
+
+    def disc(self):
+        dim      = int(     next(self.fstream).strip())
+        center   = np.array(next(self.fstream).split(' '), dtype=float)
+        r        = float(   next(self.fstream).strip())
+        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        degen    =          next(self.fstream).strip() != '0'
+        angles   = [float(  next(self.fstream).strip()) for i in range(4)]
+        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+        param_v  = np.array(next(self.fstream).split(' '), dtype=float)
+        swap     =          next(self.fstream).strip() != '0'
+
+        if degen:
+            result = SurfaceFactory.disc(r=r, center=center, xaxis=x_axis, normal=z_axis, type='radial')
+        else:
+            if not(np.allclose(np.diff(angles), pi/2, atol=1e-10)):
+                raise RuntimeError('Unknown square parametrization of disc elementary surface')
+            result = SurfaceFactory.disc(r=r, center=center, xaxis=x_axis, normal=z_axis, type='square')
+        result.reparam(param_u, param_v)
+        if swap:
+            result.swap()
+        return result
+
+    def torus(self):
+        dim      = int(     next(self.fstream).strip())
+        r2       = float(   next(self.fstream).strip())
+        r1       = float(   next(self.fstream).strip())
+        center   = np.array(next(self.fstream).split(' '), dtype=float)
+        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        select_out=         next(self.fstream).strip() != '0' # I have no idea what this does :(
+        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+        param_v  = np.array(next(self.fstream).split(' '), dtype=float)
+        swap     =          next(self.fstream).strip() != '0'
+
+        result = SurfaceFactory.torus(minor_r=r1, major_r=r2, center=center, normal=z_axis, xaxis=x_axis)
+        result.reparam(param_u, param_v)
+        if(swap):
+            result.swap()
+        return result
+
+    def sphere(self):
+        dim      = int(     next(self.fstream).strip())
+        r        = float(   next(self.fstream).strip())
+        center   = np.array(next(self.fstream).split(' '), dtype=float)
+        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+        param_v  = np.array(next(self.fstream).split(' '), dtype=float)
+        swap     =          next(self.fstream).strip() != '0'
+
+        result = SurfaceFactory.sphere(r=r, center=center, xaxis=x_axis, zaxis=z_axis).swap()
+        if swap:
+            result.swap()
+        result.reparam(param_u, param_v)
+        return result
 
     g2_type = [100, 200, 700] # curve, surface, volume identifiers
     classes = [Curve, Surface, Volume]
 
-    g2_generators = {120:line, 130:circle, 140:ellipse}
+    g2_generators = {120:line, 130:circle, 140:ellipse,
+                     260:cylinder, 292:disc, 270:sphere, 290:torus} #, 280:cone
 
     def __init__(self, filename):
         if filename[-3:] != '.g2':
@@ -118,6 +216,7 @@ class G2(MasterIO):
 
             # if obj type is in factory methods (cicle, torus etc), create it now
             if objtype in G2.g2_generators:
+                print(objtype)
                 constructor = getattr(self, G2.g2_generators[objtype].__name__)
                 result.append( constructor() )
                 continue

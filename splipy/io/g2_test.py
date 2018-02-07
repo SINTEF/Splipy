@@ -100,6 +100,33 @@ class TestG2(unittest.TestCase):
         self.assertFalse(line.rational)
         self.assertTrue(np.allclose(line[0], [1,0,0]))
 
+    def test_read_elementary_surfaces(self):
+        with G2(THIS_DIR + '/test_geometries/elementary_surfaces.g2') as myfile:
+            my_surfaces = myfile.read()
+
+        self.assertEqual(len(my_surfaces), 4)
+
+        # check cylinder ( center=(1,0,0), x-axis=(0,1,0), radius=2)
+        cylinder = my_surfaces[0]
+        self.assertTrue(cylinder.rational)
+        self.assertTrue(np.allclose(cylinder[0,0], [1,2,0,1]))
+
+        # check sphere ( radius=1.5, center=(4,0,0), z-axis=(0,1,1))
+        sphere = my_surfaces[1]
+        self.assertTrue(sphere.rational)
+        self.assertTrue(np.allclose(sphere[0,-1], [4,3/sqrt(8),3/sqrt(8), 1])) # north pole
+
+        # check disc ( radius=2.5, center=(6,0,0), x-axis=(0,0,-1 ), normal=(1,0,0)
+        disc = my_surfaces[2]
+        self.assertTrue(disc.rational)
+        self.assertTrue(np.allclose(disc[ 0,0], [6,0,0,1]))    # center
+        self.assertTrue(np.allclose(disc[-1,0], [6,0,-2.5,1])) # center+x_axis
+
+        # check torus ( ...)
+        torus = my_surfaces[3]
+        self.assertTrue(torus.rational)
+
+
 
 
 if __name__ == '__main__':
