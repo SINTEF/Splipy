@@ -2,7 +2,7 @@
 
 """Handy utilities for creating curves."""
 
-from math import pi, cos, sin, sqrt, ceil
+from math import pi, cos, sin, sqrt, ceil, atan2
 from splipy.SplineObject import rotation_matrix
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry
@@ -120,13 +120,14 @@ def n_gon(n=5, r=1, center=(0,0,0), normal=(0,0,1)):
     result =  Curve(basis, cp)
     return flip_and_move_plane_geometry(result, center, normal)
 
-def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
+def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0', xaxis=(1,0,0)):
     """  Create a circle.
 
     :param float r: Radius
     :param array-like center: local origin
     :param array-like normal: local normal
     :param string type: The type of parametrization ('p2C0' or 'p4C1')
+    :param array-like xaxis: direction of sem, i.e. parametric start point t=0
     :return: A periodic, quadratic rational curve
     :rtype: Curve
     :raises ValueError: If radius is not positive
@@ -167,6 +168,18 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0'):
         result = Curve(BSplineBasis(5, knot, 1), controlpoints, True)
     else:
         raise ValueError('Unkown type: %s' %(type))
+
+    if xaxis != (1,0,0):
+        # rotate xaxis vector back to reference domain (r=1, around origin)
+        theta = atan2(normal[1], normal[0])
+        phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
+        R1 = rotation_matrix(-theta, (0,0,1))
+        R2 = rotation_matrix(-phi,   (0,1,0))
+        xaxis = np.array([xaxis])
+        xaxis = xaxis@R1@R2
+        # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
+        # treating it as such is the closest projection, which makes perfect sense
+        result.rotate(atan2(xaxis[0,1], xaxis[0,0]))
 
     result *= r
     return flip_and_move_plane_geometry(result, center, normal)

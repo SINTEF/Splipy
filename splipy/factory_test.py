@@ -129,6 +129,21 @@ class TestCurveFactory(unittest.TestCase):
         for k in c.knots(0):
             self.assertEqual(c.continuity(k), 1)
 
+        # test circle with different xaxis
+        c = CurveFactory.circle(xaxis=(1,1,0))
+        t = np.linspace(c.start(0), c.end(0), 5)
+        x = c.evaluate(t)
+        self.assertTrue(np.allclose(x[:,0]**2 + x[:,1]**2, 1.0**2))
+        self.assertTrue(np.allclose(x[0,:], [ 1/sqrt(2), 1/sqrt(2)]))
+        self.assertTrue(np.allclose(x[1,:], [-1/sqrt(2), 1/sqrt(2)]))
+
+        # test using all parameters (in x+y+z=1 plane)
+        c = CurveFactory.circle(r=sqrt(2), normal=(1,1,1), center=(1,0,0), xaxis=(-1,1,0))
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        self.assertTrue(np.allclose((x[:,0]-1)**2 + x[:,1]**2 + x[:,2]**2, 2.0))
+        self.assertTrue(np.allclose(c(  0 ), [ 0,1,0]))
+        self.assertTrue(np.allclose(c( pi ), [2,-1,0]))
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
