@@ -74,6 +74,33 @@ class TestG2(unittest.TestCase):
         # clean up after us
         os.remove('sphere.g2')
 
+    def test_read_elementary_curves(self):
+        with G2(THIS_DIR + '/test_geometries/elementary_curves.g2') as myfile:
+            my_curves = myfile.read()
+
+        self.assertEqual(len(my_curves), 3)
+
+        # check circle (r=3, center=(1,0,0), xaxis=(1,1,0)
+        circle = my_curves[0]
+        t = np.linspace(circle.start(), circle.end(), 25)
+        x = circle(t)
+        self.assertTrue(np.allclose((x[:,0]-1)**2 + x[:,1]**2 + x[:,2]**2, 3**2))
+        self.assertTrue(np.allclose(circle[0], [3/sqrt(2)+1,3/sqrt(2),0,1]))
+
+        # check ellipse (r1=3, r2=5, center=(1,0,0), xaxis(0,1,0)
+        ellipse = my_curves[1]
+        t = np.linspace(ellipse.start(), ellipse.end(), 25)
+        x = ellipse(t)
+        self.assertTrue(np.allclose(ellipse[0], [1,3,0,1]))
+        self.assertTrue(np.allclose(ellipse[2], [-4,0,0,1]))
+
+        # check line piece (p1=(1,0,0), direction=(6,1,0), length=4)
+        line = my_curves[2]
+        self.assertAlmostEqual(line.length(), 4)
+        self.assertFalse(line.rational)
+        self.assertTrue(np.allclose(line[0], [1,0,0]))
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -2,12 +2,63 @@ import numpy as np
 from itertools import chain, product
 from splipy import BSplineBasis, Curve, Surface, Volume, SplineObject
 from .master import MasterIO
+import splipy.surface_factory as SurfaceFactory
+import splipy.curve_factory   as CurveFactory
+import splipy.state as state
+from numpy import sqrt, pi
 
 
 class G2(MasterIO):
 
+    def circle(self):
+        dim   = int(     next(self.fstream).strip())
+        r     = float(   next(self.fstream).strip())
+        center= np.array(next(self.fstream).split(' '), dtype=float)
+        normal= np.array(next(self.fstream).split(' '), dtype=float)
+        xaxis = np.array(next(self.fstream).split(' '), dtype=float)
+        param = np.array(next(self.fstream).split(' '), dtype=float)
+        reverse =        next(self.fstream).strip() != '0'
+
+        result = CurveFactory.circle(r=r, center=center, normal=normal, xaxis=xaxis)
+        result.reparam(param)
+        if reverse:
+            result.reverse()
+        return result
+
+    def ellipse(self):
+        dim   = int(     next(self.fstream).strip())
+        r1    = float(   next(self.fstream).strip())
+        r2    = float(   next(self.fstream).strip())
+        center= np.array(next(self.fstream).split(' '), dtype=float)
+        normal= np.array(next(self.fstream).split(' '), dtype=float)
+        xaxis = np.array(next(self.fstream).split(' '), dtype=float)
+        param = np.array(next(self.fstream).split(' '), dtype=float)
+        reverse =        next(self.fstream).strip() != '0'
+
+        result = CurveFactory.ellipse(r1=r1, r2=r2, center=center, normal=normal, xaxis=xaxis)
+        result.reparam(param)
+        if reverse:
+            result.reverse()
+        return result
+
+    def line(self):
+        dim      = int(     next(self.fstream).strip())
+        start    = np.array(next(self.fstream).split(' '), dtype=float)
+        direction= np.array(next(self.fstream).split(' '), dtype=float)
+        finite   = bool(    next(self.fstream).strip())
+        param    = np.array(next(self.fstream).split(' '), dtype=float)
+        d = np.array(direction)
+        s = np.array(start)
+        d /= np.linalg.norm(d)
+        if not finite:
+            param = [-state.unlimited, +state.unlimited]
+
+        return CurveFactory.line(s-d*param[0], s+d*param[1])
+
     g2_type = [100, 200, 700] # curve, surface, volume identifiers
     classes = [Curve, Surface, Volume]
+
+    g2_generators = {120:line, 130:circle, 140:ellipse}
 
     def __init__(self, filename):
         if filename[-3:] != '.g2':
@@ -60,10 +111,18 @@ class G2(MasterIO):
             if not line:
                 continue
 
+            # read object type
             objtype, major, minor, patch = map(int, line.split(' '))
             if (major, minor, patch) != (1, 0, 0):
                 raise IOError('Unknown G2 format')
 
+            # if obj type is in factory methods (cicle, torus etc), create it now
+            if objtype in G2.g2_generators:
+                constructor = getattr(self, G2.g2_generators[objtype].__name__)
+                result.append( constructor() )
+                continue
+
+            # for "normal" splines (Curves, Surfaces, Volumes) create it now
             pardim = [i for i in range(len(G2.g2_type)) if G2.g2_type[i] == objtype]
             if not pardim:
                 raise IOError('Unknown G2 object type {}'.format(objtype))
