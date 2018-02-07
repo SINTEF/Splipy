@@ -30,7 +30,7 @@ def square(size=1, lower_left=(0,0)):
     return result
 
 
-def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
+def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial', xaxis=(1,0,0)):
     """  Create a circular disc. The *type* parameter distinguishes between
     different parametrizations.
 
@@ -38,15 +38,17 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
     :param array-like center: local origin
     :param array-like normal: local normal
     :param string type: The type of parametrization ('radial' or 'square')
+    :param array-like xaxis: direction of sem, i.e. parametric start point v=0
     :return: The disc
     :rtype: Surface
     """
     if type == 'radial':
-        c1 = CurveFactory.circle(r)
-        c2 = c1*0
+        c1 = CurveFactory.circle(r, center=center, normal=normal, xaxis=xaxis)
+        c2 = flip_and_move_plane_geometry(c1*0, center, normal)
         result = edge_curves(c2, c1)
         result.swap()
         result.reparam((0,r), (0,2*pi))
+        return result
     elif type == 'square':
         w = 1 / sqrt(2)
         cp = [[-r * w, -r * w, 1],
@@ -61,11 +63,9 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial'):
         basis1 = BSplineBasis(3)
         basis2 = BSplineBasis(3)
         result = Surface(basis1, basis2, cp, True)
+        return flip_and_move_plane_geometry(result, center, normal)
     else:
         raise ValueError('invalid type argument')
-
-    return flip_and_move_plane_geometry(result, center, normal)
-
 
 def sphere(r=1, center=(0,0,0)):
     """  Create a spherical shell.
@@ -145,17 +145,18 @@ def revolve(curve, theta=2 * pi, axis=[0,0,1]):
     return result
 
 
-def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
+def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0)):
     """  Create a cylinder shell with no top or bottom
 
     :param float r: Radius
     :param float h: Height
     :param array-like center: The center of the bottom circle
     :param array-like axis: Cylinder axis
+    :param array-like xaxis: direction of sem, i.e. parametric start point u=0
     :return: The cylinder shell
     :rtype: Surface
     """
-    return extrude(CurveFactory.circle(r, center, axis), h*np.array(axis))
+    return extrude(CurveFactory.circle(r, center, axis, xaxis=xaxis), h*np.array(axis))
 
 
 def torus(minor_r=1, major_r=3, center=(0,0,0)):
