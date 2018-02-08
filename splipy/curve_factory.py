@@ -176,7 +176,7 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0', xaxis=(1,0,0)):
         R1 = rotation_matrix(-theta, (0,0,1))
         R2 = rotation_matrix(-phi,   (0,1,0))
         xaxis = np.array([xaxis])
-        xaxis = xaxis@R1@R2
+        xaxis = xaxis.dot(R1).dot(R2)
         # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
         # treating it as such is the closest projection, which makes perfect sense
         result.rotate(atan2(xaxis[0,1], xaxis[0,0]))
