@@ -4,7 +4,7 @@
 
 from splipy import BSplineBasis, Curve, Surface
 from math import pi, sqrt, atan2
-from splipy.utils import flip_and_move_plane_geometry
+from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
 import splipy.curve_factory as CurveFactory
 import splipy.state as state
 import inspect
@@ -67,18 +67,23 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial', xaxis=(1,0,0)):
     else:
         raise ValueError('invalid type argument')
 
-def sphere(r=1, center=(0,0,0)):
+def sphere(r=1, center=(0,0,0), zaxis=(0,0,1), xaxis=(1,0,0)):
     """  Create a spherical shell.
 
     :param float r: Radius
     :param array-like center: Local origin of the sphere
+    :param array-like zaxis: direction of the north/south pole of the parametrization
+    :param array-like xaxis: direction of the longitudal sem
     :return: The spherical shell
     :rtype: Surface
     """
     circle = CurveFactory.circle_segment(pi, r)
     circle.rotate(-pi / 2)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
-    return revolve(circle) + center
+    result = revolve(circle)
+
+    result.rotate(rotate_local_x_axis(xaxis, zaxis))
+    return flip_and_move_plane_geometry(result, center, zaxis)
 
 
 def extrude(curve, amount):
@@ -159,12 +164,14 @@ def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0)):
     return extrude(CurveFactory.circle(r, center, axis, xaxis=xaxis), h*np.array(axis))
 
 
-def torus(minor_r=1, major_r=3, center=(0,0,0)):
+def torus(minor_r=1, major_r=3, center=(0,0,0), normal=(0,0,1), xaxis=(1,0,0)):
     """  Create a torus (doughnut) by revolving a circle of size *minor_r*
     around the *z* axis with radius *major_r*.
 
     :param float minor_r: The thickness of the torus (radius in the *xz* plane)
     :param float major_r: The size of the torus (radius in the *xy* plane)
+    :param array-like center: Local origin of the torus
+    :param array-like normal: Local origin of the torus
     :param array-like center: Local origin of the torus
     :return: A periodic torus
     :rtype: Surface
@@ -172,7 +179,10 @@ def torus(minor_r=1, major_r=3, center=(0,0,0)):
     circle = CurveFactory.circle(minor_r)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
     circle.translate((major_r, 0, 0))  # move into position to spin around z-axis
-    return revolve(circle) + center
+    result = revolve(circle)
+
+    result.rotate(rotate_local_x_axis(xaxis, normal))
+    return flip_and_move_plane_geometry(result, center, normal)
 
 
 def edge_curves(*curves, **kwargs):

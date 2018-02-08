@@ -10,6 +10,14 @@ try:
 except ImportError:
     from collections import Sized
 
+def rotation_matrix(theta, axis):
+    axis = axis / np.sqrt(np.dot(axis, axis))
+    a = np.cos(theta / 2)
+    b, c, d = -axis*np.sin(theta / 2)
+    return np.matrix([[a*a+b*b-c*c-d*d, 2*(b*c-a*d),     2*(b*d+a*c)],
+                      [2*(b*c+a*d),     a*a+c*c-b*b-d*d, 2*(c*d-a*b)],
+                      [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
+
 def sections(src_dim, tgt_dim):
     """Generate all boundary sections from a source dimension to a target
     dimension. For example, `sections(3,1)` generates all edges on a volume.
@@ -92,6 +100,18 @@ def ensure_listlike(x, dups=1):
         return [x] * dups
     except IndexError:
         return []
+
+def rotate_local_x_axis(xaxis=(1,0,0), normal=(0,0,1)):
+    # rotate xaxis vector back to reference domain (r=1, around origin)
+    theta = atan2(normal[1], normal[0])
+    phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
+    R1 = rotation_matrix(-theta, (0,0,1))
+    R2 = rotation_matrix(-phi,   (0,1,0))
+    xaxis = np.array([xaxis])
+    xaxis = xaxis.dot(R1).dot(R2)
+    # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
+    # treating it as such is the closest projection, which makes perfect sense
+    return atan2(xaxis[0,1], xaxis[0,0])
 
 def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
     """re-orients a planar geometry by moving it to a different location and

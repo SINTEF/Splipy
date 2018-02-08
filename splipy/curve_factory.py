@@ -5,7 +5,7 @@
 from math import pi, cos, sin, sqrt, ceil, atan2
 from splipy.SplineObject import rotation_matrix
 from splipy import Curve, BSplineBasis
-from splipy.utils import flip_and_move_plane_geometry
+from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
 from numpy.linalg import norm
 import splipy.state as state
 import scipy.sparse.linalg as splinalg
@@ -169,19 +169,26 @@ def circle(r=1, center=(0,0,0), normal=(0,0,1), type='p2C0', xaxis=(1,0,0)):
     else:
         raise ValueError('Unkown type: %s' %(type))
 
-    if xaxis != (1,0,0):
-        # rotate xaxis vector back to reference domain (r=1, around origin)
-        theta = atan2(normal[1], normal[0])
-        phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
-        R1 = rotation_matrix(-theta, (0,0,1))
-        R2 = rotation_matrix(-phi,   (0,1,0))
-        xaxis = np.array([xaxis])
-        xaxis = xaxis.dot(R1).dot(R2)
-        # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
-        # treating it as such is the closest projection, which makes perfect sense
-        result.rotate(atan2(xaxis[0,1], xaxis[0,0]))
-
     result *= r
+    result.rotate(rotate_local_x_axis(xaxis, normal))
+    return flip_and_move_plane_geometry(result, center, normal)
+
+def ellipse(r1=1, r2=1, center=(0,0,0), normal=(0,0,1), type='p2C0', xaxis=(1,0,0)):
+    """  Create an ellipse
+
+    :param float r1: Radius along xaxis
+    :param float r2: Radius orthogonal to xaxis
+    :param array-like center: local origin
+    :param array-like normal: local normal
+    :param string type: The type of parametrization ('p2C0' or 'p4C1')
+    :param array-like xaxis: direction of sem, i.e. parametric start point t=0
+    :return: A periodic, quadratic rational curve
+    :rtype: Curve
+    :raises ValueError: If radius is not positive
+    """
+    result = circle(type=type)
+    result *= [r1,r2,1]
+    result.rotate(rotate_local_x_axis(xaxis, normal))
     return flip_and_move_plane_geometry(result, center, normal)
 
 def circle_segment_from_three_points(x0, x1, x2):
