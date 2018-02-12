@@ -645,7 +645,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
         return crv
 
     # for all other curves, start with 4 knot spans
-    knot_vector = [t0,t0,t0] + [i/5.0*(t1-t0)+t0 for i in range(6)] + [t1,t1,t1]
+    knot_vector = [t0,t0,t0,t0] + [i/5.0*(t1-t0)+t0 for i in range(1,5)] + [t1,t1,t1,t1]
     b = BSplineBasis(4, knot_vector)
     t = b.greville()
     crv = interpolate(x(t), b, t)

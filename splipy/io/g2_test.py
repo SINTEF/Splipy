@@ -94,9 +94,9 @@ class TestG2(unittest.TestCase):
         self.assertTrue(np.allclose(ellipse[0], [1,3,0,1]))
         self.assertTrue(np.allclose(ellipse[2], [-4,0,0,1]))
 
-        # check line piece (p1=(1,0,0), direction=(6,1,0), length=4)
+        # check line piece (p1=(1,0,0), direction=(0,6,0), length=4 (times direction))
         line = my_curves[2]
-        self.assertAlmostEqual(line.length(), 4)
+        self.assertAlmostEqual(line.length(), 24)
         self.assertFalse(line.rational)
         self.assertTrue(np.allclose(line[0], [1,0,0]))
 
@@ -126,8 +126,17 @@ class TestG2(unittest.TestCase):
         torus = my_surfaces[3]
         self.assertTrue(torus.rational)
 
+    def test_from_step(self):
+        # quite large nasty g2 file which contains cylinders, planes, trimming etc
 
+        with G2(THIS_DIR + '/test_geometries/winglet_from_step.g2') as myfile:
+            my_surfaces = myfile.read()
+            trim_curves = myfile.trimming_curves
 
+        # we only test that we are able to parse this file. No claims as to the
+        # correctness of this parsing
+        self.assertEqual(len(my_surfaces), 19)
+        self.assertEqual(len(trim_curves), 122)
 
 if __name__ == '__main__':
     unittest.main()

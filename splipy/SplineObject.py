@@ -90,6 +90,7 @@ class SplineObject(object):
         :raises ValueError: If the parameters are outside the domain
         """
         for b, p in zip(self.bases, params):
+            b.snap(p)
             if b.periodic < 0:
                 if min(p) < b.start() or b.end() < max(p):
                     raise ValueError('Evaluation outside parametric domain')
