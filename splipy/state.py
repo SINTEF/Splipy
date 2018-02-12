@@ -5,21 +5,29 @@ import sys
 
 states = ['controlpoint_relative_tolerance',
           'controlpoint_absolute_tolerance',
+          'parametric_relative_tolerance',
+          'parametric_absolute_tolerance',
           'knot_tolerance',
           'unlimited']
 __all__ = states + ['state']
 
 
+controlpoint_absolute_tolerance = 1e-8
+"""Absolute tolerance used for matching control points."""
+
 controlpoint_relative_tolerance = 0.0
 """Relative tolerance used for matching control points."""
 
-controlpoint_absolute_tolerance = 1e-8
-"""Absolute tolerance used for matching control points."""
+parametric_absolute_tolerance = 1e-8
+"""Absolute tolerance used for matching parametric points."""
+
+parametric_relative_tolerance = 0.0
+"""Relative tolerance used for matching parametric points."""
 
 knot_tolerance = 1e-10
 """Absolute tolerance used for matching parametric values (knot vectors)."""
 
-unlimited = 1e-5
+unlimited = 1e4
 """Since splipy insists on finite parametric domains, we define 'unbounded' here"""
 
 

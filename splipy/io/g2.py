@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import chain, product
-from splipy import BSplineBasis, Curve, Surface, Volume, SplineObject
+from splipy import *
+from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
 from .master import MasterIO
 import splipy.surface_factory as SurfaceFactory
 import splipy.curve_factory   as CurveFactory
@@ -10,8 +11,14 @@ from numpy import sqrt, pi
 
 class G2(MasterIO):
 
+    def read_next_non_whitespace(self):
+        line = next(self.fstream).strip()
+        while not line:
+            line = next(self.fstream).strip()
+        return line
+
     def circle(self):
-        dim   = int(     next(self.fstream).strip())
+        dim   = int(     self.read_next_non_whitespace().strip())
         r     = float(   next(self.fstream).strip())
         center= np.array(next(self.fstream).split(' '), dtype=float)
         normal= np.array(next(self.fstream).split(' '), dtype=float)
@@ -26,7 +33,7 @@ class G2(MasterIO):
         return result
 
     def ellipse(self):
-        dim   = int(     next(self.fstream).strip())
+        dim   = int(     self.read_next_non_whitespace().strip())
         r1    = float(   next(self.fstream).strip())
         r2    = float(   next(self.fstream).strip())
         center= np.array(next(self.fstream).split(' '), dtype=float)
@@ -42,7 +49,7 @@ class G2(MasterIO):
         return result
 
     def line(self):
-        dim      = int(     next(self.fstream).strip())
+        dim      = int(     self.read_next_non_whitespace().strip())
         start    = np.array(next(self.fstream).split(' '), dtype=float)
         direction= np.array(next(self.fstream).split(' '), dtype=float)
         finite   =          next(self.fstream).strip() != '0'
@@ -50,18 +57,18 @@ class G2(MasterIO):
         reverse  =          next(self.fstream).strip() != '0'
         d = np.array(direction)
         s = np.array(start)
-        d /= np.linalg.norm(d)
+        # d /= np.linalg.norm(d)
         if not finite:
             param = [-state.unlimited, +state.unlimited]
 
-        result = CurveFactory.line(s-d*param[0], s+d*param[1])
+        result = CurveFactory.line(s+d*param[0], s+d*param[1])
         if reverse:
             result.reverse()
         return result
 
 
 #   def cone(self):
-#       dim      = int(     next(self.fstream).strip())
+#       dim      = int(     self.read_next_non_whitespace().strip())
 #       r        = float(   next(self.fstream).strip())
 #       center   = np.array(next(self.fstream).split(' '), dtype=float)
 #       z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
@@ -74,7 +81,7 @@ class G2(MasterIO):
 
 
     def cylinder(self):
-        dim      = int(     next(self.fstream).strip())
+        dim      = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(' '), dtype=float)
         z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
@@ -84,10 +91,10 @@ class G2(MasterIO):
         if finite:
             param_v=np.array(next(self.fstream).split(' '), dtype=float)
         else:
-            param_v=[-state.unlimited, 0]
+            param_v=[-state.unlimited, state.unlimited]
         swap     =          next(self.fstream).strip() != '0'
 
-        center = center-z_axis*param_v[0]
+        center = center + z_axis*param_v[0]
         h      = param_v[1] - param_v[0]
         result = SurfaceFactory.cylinder(r=r, center=center, xaxis=x_axis, axis=z_axis, h=h)
         result.reparam(param_u, param_v)
@@ -96,7 +103,7 @@ class G2(MasterIO):
         return result
 
     def disc(self):
-        dim      = int(     next(self.fstream).strip())
+        dim      = int(     self.read_next_non_whitespace().strip())
         center   = np.array(next(self.fstream).split(' '), dtype=float)
         r        = float(   next(self.fstream).strip())
         z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
@@ -118,8 +125,30 @@ class G2(MasterIO):
             result.swap()
         return result
 
+    def plane(self):
+        dim        = int(     self.read_next_non_whitespace().strip())
+        center     = np.array(next(self.fstream).split(' '), dtype=float)
+        normal     = np.array(next(self.fstream).split(' '), dtype=float)
+        x_axis     = np.array(next(self.fstream).split(' '), dtype=float)
+        finite     =          next(self.fstream).strip() != '0'
+        if finite:
+            param_u= np.array(next(self.fstream).split(' '), dtype=float)
+            param_v= np.array(next(self.fstream).split(' '), dtype=float)
+        else:
+            param_u= [-state.unlimited, +state.unlimited]
+            param_v= [-state.unlimited, +state.unlimited]
+        swap       =          next(self.fstream).strip() != '0'
+
+        result = Surface() * [param_u[1]-param_u[0], param_v[1]-param_v[0]] + [param_u[0],param_v[0]]
+        result.rotate(rotate_local_x_axis(x_axis, normal))
+        result = flip_and_move_plane_geometry(result,center,normal)
+        result.reparam(param_u, param_v)
+        if(swap):
+            result.swap()
+        return result
+
     def torus(self):
-        dim      = int(     next(self.fstream).strip())
+        dim      = int(     self.read_next_non_whitespace().strip())
         r2       = float(   next(self.fstream).strip())
         r1       = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(' '), dtype=float)
@@ -137,7 +166,7 @@ class G2(MasterIO):
         return result
 
     def sphere(self):
-        dim      = int(     next(self.fstream).strip())
+        dim      = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(' '), dtype=float)
         z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
@@ -152,16 +181,101 @@ class G2(MasterIO):
         result.reparam(param_u, param_v)
         return result
 
+    def splines(self, pardim):
+        cls    = G2.classes[pardim-1]
+
+        _, rational = self.read_next_non_whitespace().strip().split(' ')
+        rational = bool(int(rational))
+
+        bases = [self.read_basis() for _ in range(pardim)]
+        ncps = 1
+        for b in bases:
+            ncps *= b.num_functions()
+
+        cps = [tuple(map(float, next(self.fstream).split(' ')))
+               for _ in range(ncps)]
+
+        args = bases + [cps, rational]
+        return cls(*args)
+
+    def surface_of_linear_extrusion(self):
+        dim      = int(      self.read_next_non_whitespace().strip())
+        crv      = self.splines(1)
+        normal   = np.array(self.read_next_non_whitespace().split(' '), dtype=float)
+        finite   =          next(self.fstream).strip() != '0'
+        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+        if finite:
+            param_v=np.array(next(self.fstream).split(' '), dtype=float)
+        else:
+            param_v=[-state.unlimited, +state.unlimited]
+        swap     =          next(self.fstream).strip() != '0'
+
+        result = SurfaceFactory.extrude(crv + normal*param_v[0], normal*(param_v[1]-param_v[0]))
+        result.reparam(param_u, param_v)
+
+        if swap:
+            result.swap()
+        return result
+
+
+    def bounded_surface(self):
+        objtype = int( next(self.fstream).strip() )
+        # print(objtype)
+
+        # create the underlying surface which all trimming curves are to be applied
+        if objtype in G2.g2_generators:
+            constructor = getattr(self, G2.g2_generators[objtype].__name__)
+            surface = constructor()
+        elif objtype == 200:
+            surface = self.splines(2)
+        else:
+            raise IOError('Unsopported trimmed surface or malformed input file')
+
+        # for all trimming loops
+        numb_loops = int( self.read_next_non_whitespace() )
+        all_loops  = []
+        for i in range(numb_loops):
+
+            # for all cuve pieces of that loop
+            numb_crvs, space_epsilon = next(self.fstream).split(' ')
+            state.parametric_absolute_tolerance = float(space_epsilon)
+            one_loop = []
+            for j in range(int(numb_crvs)):
+
+                # read a physical and parametric representation of the same curve
+                _, parameter_curve_type, space_curve_type = map(int, self.read_next_non_whitespace().split(' '))
+                # print(parameter_curve_type)
+                two_curves = []
+                for crv_type in [parameter_curve_type, space_curve_type]:
+                    if crv_type in G2.g2_generators:
+                        constructor = getattr(self, G2.g2_generators[crv_type].__name__)
+                        crv = constructor()
+                    elif crv_type == 100:
+                        crv = self.splines(1)
+                    else:
+                        raise IOError('Unsopported trimming curve or malformed input file')
+                    two_curves.append(crv)
+
+                # only keep the parametric version (re-generate physical one if we need it)
+                one_loop.append(two_curves[0])
+                self.trimming_curves.append(two_curves[1])
+            # print(one_loop)
+            # print('---------------------------------------')
+            all_loops.append(one_loop)
+
+        return TrimmedSurface(surface.bases[0], surface.bases[1], surface.controlpoints, surface.rational, all_loops, raw=True)
+
     g2_type = [100, 200, 700] # curve, surface, volume identifiers
     classes = [Curve, Surface, Volume]
-
     g2_generators = {120:line, 130:circle, 140:ellipse,
-                     260:cylinder, 292:disc, 270:sphere, 290:torus} #, 280:cone
+                     260:cylinder, 292:disc, 270:sphere, 290:torus, 250:plane,
+                     210:bounded_surface, 261:surface_of_linear_extrusion} #, 280:cone
 
     def __init__(self, filename):
         if filename[-3:] != '.g2':
             filename += '.g2'
         self.filename = filename
+        self.trimming_curves = []
 
     def __enter__(self):
         return self
@@ -216,7 +330,6 @@ class G2(MasterIO):
 
             # if obj type is in factory methods (cicle, torus etc), create it now
             if objtype in G2.g2_generators:
-                print(objtype)
                 constructor = getattr(self, G2.g2_generators[objtype].__name__)
                 result.append( constructor() )
                 continue
@@ -226,21 +339,7 @@ class G2(MasterIO):
             if not pardim:
                 raise IOError('Unknown G2 object type {}'.format(objtype))
             pardim = pardim[0] + 1
-            cls    = G2.classes[pardim-1]
-
-            _, rational = next(self.fstream).strip().split(' ')
-            rational = bool(int(rational))
-
-            bases = [self.read_basis() for _ in range(pardim)]
-            ncps = 1
-            for b in bases:
-                ncps *= b.num_functions()
-
-            cps = [tuple(map(float, next(self.fstream).split(' ')))
-                   for _ in range(ncps)]
-
-            args = bases + [cps, rational]
-            result.append(cls(*args))
+            result.append(self.splines(pardim))
 
         return result
 
