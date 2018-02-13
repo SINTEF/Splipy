@@ -129,6 +129,21 @@ class TestCurveFactory(unittest.TestCase):
         for k in c.knots(0):
             self.assertEqual(c.continuity(k), 1)
 
+        # test circle with different xaxis
+        c = CurveFactory.circle(xaxis=(1,1,0))
+        t = np.linspace(c.start(0), c.end(0), 5)
+        x = c.evaluate(t)
+        self.assertTrue(np.allclose(x[:,0]**2 + x[:,1]**2, 1.0**2))
+        self.assertTrue(np.allclose(x[0,:], [ 1/sqrt(2), 1/sqrt(2)]))
+        self.assertTrue(np.allclose(x[1,:], [-1/sqrt(2), 1/sqrt(2)]))
+
+        # test using all parameters (in x+y+z=1 plane)
+        c = CurveFactory.circle(r=sqrt(2), normal=(1,1,1), center=(1,0,0), xaxis=(-1,1,0))
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        self.assertTrue(np.allclose((x[:,0]-1)**2 + x[:,1]**2 + x[:,2]**2, 2.0))
+        self.assertTrue(np.allclose(c(  0 ), [ 0,1,0]))
+        self.assertTrue(np.allclose(c( pi ), [2,-1,0]))
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
@@ -333,14 +348,10 @@ class TestSurfaceFactory(unittest.TestCase):
         # radial disc
         surf = SurfaceFactory.disc()
         x = surf.evaluate([0, 1], [0, pi / 4, pi / 2, pi])
-        self.assertAlmostEqual(x[0][0][0], 0)
-        self.assertAlmostEqual(x[0][0][1], 0)
-        self.assertAlmostEqual(x[1][0][0], 1)
-        self.assertAlmostEqual(x[1][0][1], 0)
-        self.assertAlmostEqual(x[1][1][0], 1 / sqrt(2))
-        self.assertAlmostEqual(x[1][1][1], 1 / sqrt(2))
-        self.assertAlmostEqual(x[1][2][0], 0)
-        self.assertAlmostEqual(x[1][2][1], 1)
+        self.assertTrue(np.allclose(x[0,0], [0,0]))
+        self.assertTrue(np.allclose(x[1,0], [1,0]))
+        self.assertTrue(np.allclose(x[1,1], [1/sqrt(2),1/sqrt(2)]))
+        self.assertTrue(np.allclose(x[1,2], [0,1]))
         self.assertAlmostEqual(surf.area(), pi, places=3)
 
         # radial disc of size different from 1
@@ -369,6 +380,16 @@ class TestSurfaceFactory(unittest.TestCase):
         for pt in np.array(x[:, -1, :]):  # vmax edge
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 3.0)  # check radius
         self.assertAlmostEqual(surf.area(), 3*3*pi, places=2)
+
+        # test xaxis
+        surf = SurfaceFactory.disc(r=3, xaxis=(0,1,0))
+        u = surf.end('u')
+        self.assertTrue(np.allclose(surf(u,0), [0,3]))
+
+        # test normal
+        surf = SurfaceFactory.disc(r=2, normal=(1,1,0), xaxis=(0,0,1))
+        u = surf.end('u')
+        self.assertTrue(np.allclose(surf(u,0), [0,0,2]))
 
     def test_revolve(self):
         # square torus
@@ -478,6 +499,10 @@ class TestSurfaceFactory(unittest.TestCase):
                 self.assertAlmostEqual(x[1]**2+(x[2]-1)**2, 2.0**2) # distance to (z-1)=y=0
                 self.assertAlmostEqual(x[0], v*5)                   # x coordinate should be linear
         self.assertAlmostEqual(surf.area(), 2*2*pi*5, places=3)
+
+        # test xaxis
+        surf = SurfaceFactory.cylinder(r=sqrt(2), xaxis=(1,1,0))
+        self.assertTrue(np.allclose(surf(0,0), [1,1,0]))
 
     def test_edge_curves(self):
         # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
@@ -667,6 +692,11 @@ class TestVolumeFactory(unittest.TestCase):
                     self.assertAlmostEqual(x[1]**2+(x[2]-1)**2, u**2)
                     self.assertAlmostEqual(x[0], w*5)
         self.assertAlmostEqual(vol.volume(), 2*2*pi*5, places=3)
+
+        # test xaxis
+        vol = VolumeFactory.cylinder(r=sqrt(2), xaxis=(1,1,0))
+        u = vol.end('u')
+        self.assertTrue(np.allclose(vol(u,0,0), [1,1,0]))
 
     def test_edge_surfaces(self):
         # test 3D surface vs 2D rational surface

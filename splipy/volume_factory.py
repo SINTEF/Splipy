@@ -127,17 +127,18 @@ def revolve(surf, theta=2 * pi):
     return Volume(surf.bases[0], surf.bases[1], path.bases[0], cp, True)
 
 
-def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1)):
+def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0)):
     """  Create a solid cylinder
 
     :param float r: Radius
     :param float h: Height
     :param array-like center: The center of the bottom circle
     :param array-like axis: Cylinder axis
+    :param array-like xaxis: direction of sem, i.e. parametric start point u=0
     :return: The cylinder
     :rtype: Volume
     """
-    return extrude(SurfaceFactory.disc(r, center, axis), h*np.array(axis))
+    return extrude(SurfaceFactory.disc(r, center, axis, xaxis=xaxis), h*np.array(axis))
 
 
 def extrude(surf, amount):

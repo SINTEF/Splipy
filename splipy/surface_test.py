@@ -476,6 +476,7 @@ class TestSurface(unittest.TestCase):
     def test_center(self):
         # make an ellipse at (2,1)
         surf = SurfaceFactory.disc(3)
+        print(surf)
         surf.scale((3,1))
         surf += (2,1)
         center = surf.center()
