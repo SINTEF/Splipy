@@ -7,7 +7,7 @@ from scipy.spatial import ConvexHull
 import numpy as np
 from math import pi
 
-__all__ = ['Surface']
+__all__ = ['TrimmedSurface']
 
 
 class TrimmedSurface(Surface):
@@ -92,12 +92,31 @@ class TrimmedSurface(Surface):
             self.convexhull.append(x[hull.vertices,:])
             # print(self.convexhull[-1])
 
+    def is_contained(self, u, v):
+        """ Returns a boolean mask if the input points are inside (True) or 
+        outside (False) of the trimming curves."""
+
+        raise NotImplementedError('This has yet to be implemented')
+
+        # do a quick test based on convex hull
+        self.__is_contained_coarse(u,v)
+        # for all points that are still undecided, do a fine-grained newton
+        # iteration approach
+        self.__is_contained_fine(u,v)
+
+        return False
+
     def __is_contained_fine(self, u, v):
+        """ Does a fine test based on parametric curve representation to see if
+        points are inside or outside trimming domain. Trimming curves are high-
+        polynomial representations, so figuring this out means newton iteration
+        to locate nearest point on curve and decide if this is inside or outside
+        domain."""
         return False
 
     def __is_contained_coarse(self, u, v):
         """ Does a course test based on control-grid to see if points are inside or
         outside domain. Inside control-grid means inside a trimming loop and outputs
-        False. Outside the *convex hull* of a contrl-grid means"""
+        False. Outside the *convex hull* of a control-grid means"""
         return False
 
