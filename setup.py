@@ -23,7 +23,7 @@ setup(
         'scipy >= 0.17',
     ],
     extra_requires={
-        'FiniteElement': ["nutils>=2.0"],
+        'FiniteElement': ["nutils>=3.0"],
         'Images':        ["opencv-python>=3.3"],
     },
     ext_modules=cythonize("splipy/basis_eval.pyx"),
