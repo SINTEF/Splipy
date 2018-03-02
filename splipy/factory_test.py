@@ -559,7 +559,7 @@ class TestSurfaceFactory(unittest.TestCase):
             srf = SurfaceFactory.edge_curves(crvs + (Curve(),)) # 5 input curves
 
     @unittest.skipIf(not has_nutils, "EdgeCurves with poisson solver requires nutils")
-    def test_edgecurves(self):
+    def test_edge_curves_poisson(self):
         # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
         # rebuild to avoid rational representations
         c1 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
@@ -570,7 +570,83 @@ class TestSurfaceFactory(unittest.TestCase):
         c4 = c4.rebuild(4,11)
 
         surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='poisson')
-        
+
+        # check right dimensions of output
+        self.assertEqual(surf.shape[0], 11) # 11 controlpoints in the circle segment
+        self.assertEqual(surf.shape[1], 13) # 11 controlpoints in c4, +2 for C0-knot in c1
+        self.assertEqual(surf.order(0), 3)
+        self.assertEqual(surf.order(1), 4)
+
+        # check symmetry: all interior points lie on the y=-x line
+        u = np.linspace(0,1,7)
+        pts = surf(u,0.5)
+        for x in pts[:,0,:]:
+            self.assertAlmostEqual(x[0], -x[1])
+
+        # check that c1 edge conforms to surface edge
+        u = np.linspace(0,1,7)
+        c1.reparam()
+        pts_surf = surf(u,0.0)
+        pts_c1   = c1(u)
+        for (xs,xc) in zip(pts_surf[:,0,:], pts_c1):
+            self.assertTrue(np.allclose(xs, xc))
+
+        # check that c2 edge conforms to surface edge
+        v = np.linspace(0,1,7)
+        c2.reparam()
+        pts_surf = surf(1.0,v)
+        pts_c2   = c2(v)
+        for (xs,xc) in zip(pts_surf[:,0,:], pts_c2):
+            self.assertTrue(np.allclose(xs, xc))
+
+    @unittest.skipIf(not has_nutils, "EdgeCurves with elasticity solver requires nutils")
+    def test_edge_curves_elasticity(self):
+        # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
+        # rebuild to avoid rational representations
+        c1 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c2 = Curve(BSplineBasis(2, [0, 0, 1, 2, 2]), [[0, 1], [-1, 1], [-1, 0]])
+        c3 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c3.rotate(pi)
+        c4 = Curve(BSplineBasis(2), [[0, -1], [1, 0]]).rebuild(3,10)
+        c4 = c4.rebuild(4,11)
+
+        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='elasticity')
+
+        # check right dimensions of output
+        self.assertEqual(surf.shape[0], 11) # 11 controlpoints in the circle segment
+        self.assertEqual(surf.shape[1], 13) # 11 controlpoints in c4, +2 for C0-knot in c1
+        self.assertEqual(surf.order(0), 3)
+        self.assertEqual(surf.order(1), 4)
+
+        # check that c1 edge conforms to surface edge
+        u = np.linspace(0,1,7)
+        c1.reparam()
+        pts_surf = surf(u,0.0)
+        pts_c1   = c1(u)
+        for (xs,xc) in zip(pts_surf[:,0,:], pts_c1):
+            self.assertTrue(np.allclose(xs, xc))
+
+        # check that c2 edge conforms to surface edge
+        v = np.linspace(0,1,7)
+        c2.reparam()
+        pts_surf = surf(1.0,v)
+        pts_c2   = c2(v)
+        for (xs,xc) in zip(pts_surf[:,0,:], pts_c2):
+            self.assertTrue(np.allclose(xs, xc))
+
+    @unittest.skipIf(not has_nutils, "EdgeCurves with finitestrain solver requires nutils")
+    def test_edge_curves_finitestrain(self):
+        # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
+        # rebuild to avoid rational representations
+        c1 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c2 = Curve(BSplineBasis(2, [0, 0, 1, 2, 2]), [[0, 1], [-1, 1], [-1, 0]])
+        c3 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c3.rotate(pi)
+        c4 = Curve(BSplineBasis(2), [[0, -1], [1, 0]]).rebuild(3,10)
+        c4 = c4.rebuild(4,11)
+
+        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='finitestrain')
+
         # check right dimensions of output
         self.assertEqual(surf.shape[0], 11) # 11 controlpoints in the circle segment
         self.assertEqual(surf.shape[1], 13) # 11 controlpoints in c4, +2 for C0-knot in c1
