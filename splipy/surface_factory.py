@@ -288,8 +288,12 @@ def coons_patch(bottom, right, top, left):
 
 
 def poisson_patch(bottom, right, top, left):
+    from nutils import version
+    if version != '3.0':
+        raise ImportError('Outdated nutils version detected, only v3.0 supported. Upgrade by \"pip install --upgrade nutils\"')
+
     from nutils import mesh, function as fn
-    from nutils import _, log, library
+    from nutils import _, log
 
     # error test input
     if left.rational or right.rational or top.rational or bottom.rational:
@@ -314,7 +318,7 @@ def poisson_patch(bottom, right, top, left):
     m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
     m2 = [left.order(0)   - left.continuity(k)   - 1 for k in k2]
     domain, geom = mesh.rectilinear([k1, k2])
-    basis = domain.basis('bspline', [p1-1, p2-1], knotmultiplicities=[m1,m2])
+    basis = domain.basis('spline', [p1-1, p2-1], knotmultiplicities=[m1,m2])
 
     # assemble system matrix
     grad      = basis.grad(geom)
@@ -336,7 +340,7 @@ def poisson_patch(bottom, right, top, left):
         constraints[ :,-1] = top[   :,d]
 
         # solve system
-        lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints), solver='cg')
+        lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints), solver='cg', tol=state.controlpoint_absolute_tolerance)
 
         # wrap results into splipy datastructures
         controlpoints[:,:,d] = np.reshape(lhs, (n1,n2), order='C')
@@ -345,8 +349,12 @@ def poisson_patch(bottom, right, top, left):
 
 
 def elasticity_patch(bottom, right, top, left):
-    from nutils import mesh, function as fn
-    from nutils import _, log, library
+    from nutils import version
+    if version != '3.0':
+        raise ImportError('Outdated nutils version detected, only v3.0 supported. Upgrade by \"pip install --upgrade nutils\"')
+
+    from nutils import mesh, function, solver
+    from nutils import _, log
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
@@ -362,7 +370,6 @@ def elasticity_patch(bottom, right, top, left):
     Curve.make_splines_identical(top, bottom)
     Curve.make_splines_identical(left, right)
 
-
     # create computational (nutils) mesh
     p1 = bottom.order(0)
     p2 = left.order(0)
@@ -374,12 +381,19 @@ def elasticity_patch(bottom, right, top, left):
     m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
     m2 = [left.order(0)   - left.continuity(k)   - 1 for k in k2]
     domain, geom = mesh.rectilinear([k1, k2])
-    basis = domain.basis('bspline', [p1-1, p2-1], knotmultiplicities=[m1,m2]).vector( 2 )
 
     # assemble system matrix
-    stress    = library.Hooke(lmbda=1,mu=1)
-    integrand = fn.outer( basis.grad(geom), stress(basis.symgrad(geom)) ).sum([-2,-1])
-    matrix = domain.integrate(integrand, geometry=geom, ischeme='gauss'+str(max(p1,p2)+1))
+    ns = function.Namespace()
+    ns.x = geom
+    ns.basis = domain.basis('spline', degree=[p1-1,p2-1], knotmultiplicities=[m1,m2]).vector(2)
+    ns.eye = np.array([[1,0],[0,1]])
+    ns.lmbda = 1
+    ns.mu = 1
+    ns.strain_nij = '(basis_ni,j + basis_nj,i) / 2'
+    ns.stress_nij = 'lmbda strain_nkk eye_ij + 2 mu strain_nij'
+
+    # construct matrix and right hand-side
+    matrix = domain.integrate(ns.eval_nm('strain_nij stress_mij'), geometry=ns.x, degree=[p1-1,p2-1])
     rhs    = np.zeros((n1*n2*dim))
 
     # add boundary conditions
@@ -391,7 +405,7 @@ def elasticity_patch(bottom, right, top, left):
         constraints[d, :,-1] = top[   :,d]
 
     # solve system
-    lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints, order='C'), solver='cg')
+    lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints, order='C'), solver='cg', tol=state.controlpoint_absolute_tolerance)
 
     # rewrap results into splipy datastructures
     controlpoints = np.reshape(lhs, (dim,n1,n2), order='C')
@@ -402,8 +416,12 @@ def elasticity_patch(bottom, right, top, left):
 
 
 def finitestrain_patch(bottom, right, top, left):
-    from nutils import mesh, function as fn
-    from nutils import _, log, library
+    from nutils import version
+    if version != '3.0':
+        raise ImportError('Outdated nutils version detected, only v3.0 supported. Upgrade by \"pip install --upgrade nutils\"')
+
+    from nutils import mesh, function
+    from nutils import _, log, solver
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
@@ -424,6 +442,7 @@ def finitestrain_patch(bottom, right, top, left):
     p2 = left.order(0)
     linear = BSplineBasis(2)
     srf = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]])
+    srf = Surface()
     srf.raise_order(p1-2, p2-2)
     for k in bottom.knots(0, True)[p1:-p1]:
         srf.insert_knot(k, 0)
@@ -439,7 +458,15 @@ def finitestrain_patch(bottom, right, top, left):
     m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
     m2 = [left.order(0)   - left.continuity(k)   - 1 for k in k2]
     domain, geom = mesh.rectilinear([k1, k2])
-    basis = domain.basis('bspline', [p1-1, p2-1], knotmultiplicities=[m1,m2]).vector( 2 )
+    ns = function.Namespace()
+    ns.basis = domain.basis('spline', [p1-1, p2-1], knotmultiplicities=[m1,m2]).vector( 2 )
+    ns.phi   = domain.basis('spline', [p1-1, p2-1], knotmultiplicities=[m1,m2])
+    ns.cp        = np.reshape(srf[:,:,:].swapaxes(0,1), (n1*n2, dim), order='F')
+    ns.x_i       = 'cp_ni phi_n'
+    ns.u_i       = 'basis_ki ?lhs_k'
+    ns.X_i       = 'x_i + u_i'
+    ns.lmbda     = 1
+    ns.mu        = 1
 
     # add total boundary conditions
     # for hard problems these will be taken in steps and multiplied by dt every
@@ -451,64 +478,29 @@ def finitestrain_patch(bottom, right, top, left):
         constraints[d, :, 0] = (bottom[:,d] - srf[ :, 0,d])
         constraints[d, :,-1] = (top[   :,d] - srf[ :,-1,d])
 
-    # in order to iterate, we let t0=0 be current configuration and t1=1 our target configuration
-    # if solver divergeces (too large deformation), we will try with dt=0.5. If this still
-    # fails we will resort to dt=0.25 until a suitable small iterations size have been found
-    dt = 1
-    t0 = 0
-    t1 = 1
-    while t0 < 1:
-        dt = t1-t0
+    # compute a first-guess to the displacement by solving a linear elasticity problem
+    ns.strain_ij = '.5 (u_i,j + u_j,i)'
+    ns.energy    = 'lmbda strain_ii strain_jj + 2 mu strain_ij strain_ij'
+    energy = domain.integral(ns.eval_('energy'), geometry=ns.x, degree=int(max(p1,p2)+1))
+    lhs0   = solver.optimize('lhs', energy,
+                             constrain=np.ndarray.flatten(constraints, order='C'),
+                             newtontol=state.controlpoint_absolute_tolerance)
 
-        print(' ==== Quasi-static '+str(t0*100)+'-'+str(t1*100)+' % ====')
+    # define the non-linear finite strain problem formulation
+    ns.strain_ij = '.5 (u_i,j + u_j,i + u_k,i u_k,j)'
+    ns.energy    = 'lmbda strain_ii strain_jj + 2 mu strain_ij strain_ij'
 
-        # initialize variables
-        geom0 = srf[:,:,:].swapaxes(0,1)
-        geom0 = np.ndarray.flatten(geom0, order='F')
-        disp = fn.asarray(np.zeros(2))
+    # compute the displacements based on finitestrain theory (costly function call!)
+    energy = domain.integral(ns.eval_('energy'), geometry=ns.x, degree=int(max(p1,p2)*2))
+    lhs0   = solver.optimize('lhs', energy, lhs0=lhs0,
+                             constrain=np.ndarray.flatten(constraints, order='C'),
+                             newtontol=state.controlpoint_absolute_tolerance)
 
-        lhs = np.asarray(np.zeros(n1*n2*dim))
-
-        disp = basis.dot( lhs )
-        geom0= basis.dot(geom0)
-
-        geom = geom0 + disp
-        stress=library.Hooke(lmbda=1,mu=1)
-
-        # newton iteration to convergence
-        for istep in log.count( 'newton' ):
-
-            E = basis.symgrad(geom) - .5 * fn.add_T( ( basis.grad(geom)[:,:,:,_] * disp.grad(geom)[_,:,_,:] ).sum(1) )
-            F = .5 * fn.outer( disp.grad(geom), axis=1 ).sum(0)
-            A = fn.outer( basis.grad(geom), stress(E) ).sum([-2,-1])
-            B = ( basis.grad(geom) * stress(-F) ).sum([-2,-1])
-            matrix, rhs = domain.integrate( [ A, B ], geometry=geom, ischeme='gauss'+str(int(max(p1,p2)+1)) )
-
-            try:
-                # this is a thrice nested iteration setup:
-                # 1. We iterate (possibly) on boundary conditions, for large deformation, i.e. hard problems
-                # 2. We newton iterate to solve the non-linear differential equation with finite strain theory
-                # 3. We solve the linearized system of equations with GMRES iterations
-                lhs, info = matrix.solve( rhs, constrain=np.ndarray.flatten(dt*constraints, order='C'), lhs0=lhs, tol=1e-3, precon='spilu', info=True, maxiter=4)
-                if not info.niter: # no more GMRES iterations required, newton iteration have converged
-                    t0 += dt
-                    t1 += dt
-                    break
-            except AssertionError: # GMRES iterations diverge, newton iterations diverge, try a smaller step length 'dt'
-                t1 = (t1+t0)/2
-                break
-
-            # GMRES converge, update solution vector in newton iteration and continue
-            disp = basis.dot( lhs )
-            geom = geom0 + disp
-
-        if not info.niter: # newton iteration converged, update control points and try next iteration of boundary conditions
-            geom = lhs.reshape((n2,n1,dim), order='F')
-            srf[:,:,:] += geom.swapaxes(0,1)
-
+    # store the results on a splipy object and return
+    geom   = lhs0.reshape((n2,n1,dim), order='F')
+    srf[:,:,:] += geom.swapaxes(0,1)
 
     return srf
-
 
 def thicken(curve, amount):
     """  Generate a surface by adding thickness to a curve.
