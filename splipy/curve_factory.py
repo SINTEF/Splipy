@@ -355,7 +355,7 @@ def least_square_fit(x, basis, t):
     N = basis.evaluate(t)
 
     # solve interpolation problem
-    controlpoints,_,_,_ = np.linalg.lstsq(N, x)
+    controlpoints,_,_,_ = np.linalg.lstsq(N, x, rcond=None)
 
     return Curve(basis, controlpoints)
 
