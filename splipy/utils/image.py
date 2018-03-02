@@ -6,6 +6,7 @@ from splipy import BSplineBasis, curve_factory, surface_factory
 from math import sqrt
 import numpy as np
 import sys
+import warnings
 
 def get_corners(X, L=50, R=30, D=15):
     """Detects corners of traced outlines using the SAM04 algorithm.
@@ -113,6 +114,7 @@ def image_curves(filename):
 
     # convert to greyscale image
     if cv2.__version__[0] == '2':
+        warnings.warn(FutureWarning('openCV v.2 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
         cv2.cvtColor(im, cv2.cv.CV_RGB2GRAY, imGrey)
     else:
         cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
@@ -122,6 +124,7 @@ def image_curves(filename):
 
     # find contour curves in image
     if cv2.__version__[0] == '2':
+        warnings.warn(FutureWarning('openCV v.2 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
         [contours, _]    = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     else:
         [_, contours, _] = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
@@ -212,6 +215,7 @@ def image_height(filename, N=[30,30], p=[4,4]):
 
     # convert to greyscale image
     if cv2.__version__[0] == '2':
+        warnings.warn(FutureWarning('openCV v.2 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
         cv2.cvtColor(im, cv2.cv.CV_RGB2GRAY, imGrey)
     else:
         cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
