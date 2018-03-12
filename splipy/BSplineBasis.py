@@ -5,6 +5,7 @@ import splipy.state as state
 from bisect import bisect_right, bisect_left
 import numpy as np
 import copy
+from splipy import basis_eval
 from scipy.sparse import csr_matrix
 
 __all__ = ['BSplineBasis']
@@ -119,65 +120,15 @@ class BSplineBasis:
         """
         # for single-value input, wrap it into a list so it don't crash on the loop below
         t = ensure_listlike(t)
-        self.snap(t)
+        t = np.array(t, dtype=np.float64)
+        basis_eval.snap(self.knots, t, state.knot_tolerance)
 
-        p = self.order  # knot vector order
-        n_all = len(self.knots) - p  # number of basis functions (without periodicity)
-        n = len(self.knots) - p - (self.periodic+1)  # number of basis functions (with periodicity)
-        m = len(t)
-        data    = np.zeros(m*p)
-        indices = np.zeros(m*p, dtype='int32')
-        indptr  = np.array(range(0,m*p+1,p), dtype='int32')
-        if p <= d: # requesting more derivatives than polymoial degree: return all zeros
-            return np.matrix(np.zeros((m,n)))
-        if self.periodic >= 0:
-            t = copy.deepcopy(t)
-            # Wrap periodic evaluation into domain
-            for i in range(len(t)):
-                if t[i] < self.start() or t[i] > self.end():
-                    t[i] = (t[i] - self.start()) % (self.end() - self.start()) + self.start()
-        for i in range(len(t)):
-            right = from_right
-            evalT = t[i]
-            # Special-case the endpoint, so the user doesn't need to
-            if abs(t[i] - self.end()) < state.knot_tolerance:
-                right = False
-            # Skip non-periodic evaluation points outside the domain
-            if t[i] < self.start() or t[i] > self.end():
-                continue
+        if self.order <= d: # requesting more derivatives than polymoial degree: return all zeros
+            return np.matrix(np.zeros((len(t), self.num_functions())))
 
-            # mu = index of last non-zero basis function
-            if right:
-                mu = bisect_right(self.knots, evalT)
-            else:
-                mu = bisect_left(self.knots, evalT)
-            mu = min(mu, n_all)
+        (data, size) = basis_eval.evaluate(self.knots, self.order, t, self.periodic, state.knot_tolerance, d, from_right)
 
-            M = np.zeros(p)  # temp storage to keep all the function evaluations
-            M[-1] = 1  # the last entry is a dummy-zero which is never used
-            for q in range(1, p-d):
-                for j in range(p - q - 1, p):
-                    k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
-                    if j != p-q-1:
-                        M[j] = M[j] * float(evalT - self.knots[k]) / (self.knots[k + q] - self.knots[k])
-
-                    if j != p-1:
-                        M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (self.knots[k + q + 1] - self.knots[k + 1])
-
-
-            for q in range(p-d, p):
-                for j in range(p - q - 1, p):
-                    k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
-                    if j != p-q-1:
-                        M[j] = M[j] * float(q) / (self.knots[k + q] - self.knots[k])
-                    if j != p-1:
-                        M[j] = M[j] - M[j + 1] * float(q) / (self.knots[k + q + 1] - self.knots[k + 1])
-
-
-            data[i*p:(i+1)*p]    = M
-            indices[i*p:(i+1)*p] = np.arange(mu-p, mu) % n
-
-        N = csr_matrix((data, indices, indptr), (m,n))
+        N = csr_matrix(data, size)
         if not sparse:
             N = N.todense()
         return N
