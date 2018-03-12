@@ -133,6 +133,83 @@ class BSplineBasis:
             N = N.todense()
         return N
 
+    def evaluate_old(self, t, d=0, from_right=True, sparse=False):
+        """  Evaluate all basis functions in a given set of points.
+        :param t: The parametric coordinate(s) in which to evaluate
+        :type t: float or [float]
+        :param int d: Number of derivatives to compute
+        :param bool from_right: True if evaluation should be done in the limit
+            from above
+        :param bool sparse: True if computed matrix should be returned as sparse
+        :return: A matrix *N[i,j]* of all basis functions *j* evaluated in all
+            points *i*
+        :rtype: numpy.array
+        """
+        # for single-value input, wrap it into a list so it don't crash on the loop below
+        t = ensure_listlike(t)
+        self.snap(t)
+
+        p = self.order  # knot vector order
+        n_all = len(self.knots) - p  # number of basis functions (without periodicity)
+        n = len(self.knots) - p - (self.periodic+1)  # number of basis functions (with periodicity)
+        m = len(t)
+        data    = np.zeros(m*p)
+        indices = np.zeros(m*p, dtype='int32')
+        indptr  = np.array(range(0,m*p+1,p), dtype='int32')
+        if p <= d: # requesting more derivatives than polymoial degree: return all zeros
+            return np.matrix(np.zeros((m,n)))
+        if self.periodic >= 0:
+            t = copy.deepcopy(t)
+            # Wrap periodic evaluation into domain
+            for i in range(len(t)):
+                if t[i] < self.start() or t[i] > self.end():
+                    t[i] = (t[i] - self.start()) % (self.end() - self.start()) + self.start()
+        for i in range(len(t)):
+            right = from_right
+            evalT = t[i]
+            # Special-case the endpoint, so the user doesn't need to
+            if abs(t[i] - self.end()) < state.knot_tolerance:
+                right = False
+            # Skip non-periodic evaluation points outside the domain
+            if t[i] < self.start() or t[i] > self.end():
+                continue
+
+            # mu = index of last non-zero basis function
+            if right:
+                mu = bisect_right(self.knots, evalT)
+            else:
+                mu = bisect_left(self.knots, evalT)
+            mu = min(mu, n_all)
+
+            M = np.zeros(p)  # temp storage to keep all the function evaluations
+            M[-1] = 1  # the last entry is a dummy-zero which is never used
+            for q in range(1, p-d):
+                for j in range(p - q - 1, p):
+                    k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
+                    if j != p-q-1:
+                        M[j] = M[j] * float(evalT - self.knots[k]) / (self.knots[k + q] - self.knots[k])
+
+                    if j != p-1:
+                        M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (self.knots[k + q + 1] - self.knots[k + 1])
+
+
+            for q in range(p-d, p):
+                for j in range(p - q - 1, p):
+                    k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
+                    if j != p-q-1:
+                        M[j] = M[j] * float(q) / (self.knots[k + q] - self.knots[k])
+                    if j != p-1:
+                        M[j] = M[j] - M[j + 1] * float(q) / (self.knots[k + q + 1] - self.knots[k + 1])
+
+
+            data[i*p:(i+1)*p]    = M
+            indices[i*p:(i+1)*p] = np.arange(mu-p, mu) % n
+
+        N = csr_matrix((data, indices, indptr), (m,n))
+        if not sparse:
+            N = N.todense()
+        return N
+
     def integrate(self, t0, t1):
         """  Integrate all basis functions over a given domain
 
