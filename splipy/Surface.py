@@ -31,31 +31,46 @@ class Surface(SplineObject):
         """
         super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
 
-    def normal(self, u, v, above=(True,True)):
+    def normal(self, u, v, above=(True,True), tensor=True):
         """  Evaluate the normal of the surface at given parametric values.
 
         This is equal to the cross-product between tangents. The return value
         is normalized.
+
+        If *tensor* is true, evaluation will take place on a tensor product
+        grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where
+        *ni* is the number of evaluation points in direction *i*, and *dim* is
+        the physical dimension of the object.
+
+        If *tensor* is false, there must be an equal number *n* of evaluation
+        points in all directions, and the return value will be an *n* × *dim*
+        array.
 
         :param u: Parametric coordinate(s) in the first direction
         :type u: float or [float]
         :param v: Parametric coordinate(s) in the second direction
         :type v: float or [float]
         :param (bool) above: Evaluation in the limit from above
-        :return: Normal array *X[i,j,k]* of component *xj* evaluated at *(u[i], v[j])*
+        :param tensor: Whether to evaluate on a tensor product grid
+        :type tensor: bool
+        :return: Normal array *X[i,j,k]* of component *xk* evaluated at *(u[i], v[j])*
         :rtype: numpy.array
         :raises RuntimeError: If the physical dimension is not 2 or 3
         """
+        if not tensor and len(u) != len(v):
+            raise ValueError('Parametes must have same length')
+
         if self.dimension == 2:
             try:
-                result = np.zeros((len(u), len(v), 3))
-                result[:, :, 2] = 1
+                shape = (len(u), len(v), 3) if tensor else (len(u), 3)
+                result = np.zeros(shape)
+                result[..., 2] = 1
                 return result
             except TypeError:  # single valued input u, fails on len(u)
                 return np.array([0, 0, 1])
         elif self.dimension == 3:
             # fetch the tangent vectors
-            (du, dv) = self.tangent(u, v, above=above)
+            (du, dv) = self.tangent(u, v, above=above, tensor=tensor)
 
             # compute normals
             normals = np.cross(du,dv)
