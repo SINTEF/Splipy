@@ -563,8 +563,22 @@ class TestSurface(unittest.TestCase):
         surf.swap()
         u    = np.linspace(surf.start(0),surf.end(0), 9)
         v    = np.linspace(surf.start(1),surf.end(1), 9)
+
+        xpts = surf(u,v,tensor=False)
+        npts = surf.normal(u,v,tensor=False)
+
+        self.assertEqual(npts.shape, (9,3))
+
+        # check that the normal is pointing out of the unit ball on a 9x9 evaluation grid
+        for (x,n) in zip(xpts, npts):
+            self.assertAlmostEqual(n[0], x[0])
+            self.assertAlmostEqual(n[1], x[1])
+            self.assertAlmostEqual(n[2], x[2])
+
         xpts = surf(u,v)
         npts = surf.normal(u,v)
+
+        self.assertEqual(npts.shape, (9,9,3))
 
         # check that the normal is pointing out of the unit ball on a 9x9 evaluation grid
         for (i,j) in zip(xpts, npts):
@@ -591,6 +605,13 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(n[1,4,0], 0.0)
         self.assertAlmostEqual(n[1,4,1], 0.0)
         self.assertAlmostEqual(n[1,4,2], 1.0)
+
+        n = s.normal([.25, .5, .75], [.3, .5, .9], tensor=False)
+        self.assertEqual(n.shape, (3,3))
+        for i in range(3):
+            for j in range(2):
+                self.assertAlmostEqual(n[i,j], 0.0)
+            self.assertAlmostEqual(n[i,2], 1.0)
 
         # test errors
         s = Surface(BSplineBasis(3), BSplineBasis(3), [[0]]*9) # 1D-surface
