@@ -223,7 +223,7 @@ class SplineObject(object):
             Wd = result[..., -1]         # W'
             for i in range(self.dimension):
                 result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W
-            result = np.delete(result, self.dimension, self.pardim)
+            result = np.delete(result, self.dimension, -1)
 
         # Squeeze the singleton dimensions if we only have one point
         if squeeze:
