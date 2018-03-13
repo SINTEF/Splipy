@@ -123,7 +123,7 @@ def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
         phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
         obj.rotate(phi,   (0,1,0))
         obj.rotate(theta, (0,0,1))
-    if not np.allclose(center, np.array([0,0,0])):
+    if not np.allclose(center, 0):
         obj.translate(center)
     return obj
 
