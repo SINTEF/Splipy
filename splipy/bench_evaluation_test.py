@@ -23,22 +23,22 @@ def evaluate_sparse(basis, nviz):
 n = 100
 p = 4
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-basis")
 def test_evaluate_old(benchmark):
     basis = BSplineBasis(p, [0]*(p-1) + list(range(n-p+2)) + [n-p+1]*(p-1))
     benchmark(evaluate_old, basis, 1000)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-basis")
 def test_evaluate_cython(benchmark):
     basis = BSplineBasis(p, [0]*(p-1) + list(range(n-p+2)) + [n-p+1]*(p-1))
     benchmark(evaluate_cython, basis, 1000)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-basis")
 def test_evaluate_dense(benchmark):
     basis = BSplineBasis(p, [0]*(p-1) + list(range(n-p+2)) + [n-p+1]*(p-1))
     benchmark(evaluate_dense, basis, 1000)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-basis")
 def test_evaluate_sparse(benchmark):
     basis = BSplineBasis(p, [0]*(p-1) + list(range(n-p+2)) + [n-p+1]*(p-1))
     benchmark(evaluate_sparse, basis, 1000)
