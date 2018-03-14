@@ -99,32 +99,32 @@ def test_move_operator(benchmark):
 
 
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-splineobject")
 def test_eval(benchmark):
     spline = get_spline('volume', 30, 3)
     benchmark(grid_evaluate, spline, 15)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-splineobject")
 def test_eval_rational(benchmark):
     spline = get_spline('volume', 30, 3, True)
     benchmark(grid_evaluate, spline, 15)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-splineobject")
 def test_deriv(benchmark):
     spline = get_spline('volume', 30, 3)
     benchmark(derivative_evaluate, spline, 15)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-splineobject")
 def test_deriv_rational(benchmark):
     spline = get_spline('volume', 30, 3, True)
     benchmark(derivative_evaluate, spline, 15)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-splineobject")
 def test_tangent(benchmark):
     spline = get_spline('volume', 30, 3)
     benchmark(tangent_evaluate, spline, 15)
 
-@pytest.mark.benchmark(group="evaluate")
+@pytest.mark.benchmark(group="evaluate-splineobject")
 def test_tangent_rational(benchmark):
     spline = get_spline('volume', 30, 3, True)
     benchmark(tangent_evaluate, spline, 15)
