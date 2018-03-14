@@ -27,6 +27,7 @@ This library requires numpy and scipy. E.g. on Ubuntu::
 
     pip install numpy
     pip install scipy
+    pip install cython
 
 **Optional**
 
@@ -41,7 +42,7 @@ To generate the documentation you will need Sphinx::
 And to run the tests you can use your favourite test runner, for example
 pytest::
 
-    pip install pytest
+    pip install pytest pytest-benchmark
 
 
 Installing
@@ -49,6 +50,7 @@ Installing
 
 To install, use::
 
+    python setup.py build_ext --inplace
     python setup.py install
 
 To generate a package, use::
@@ -70,7 +72,7 @@ Tests
 To run the tests, you can use your favourite test runner. For example, with
 pytest::
 
-    py.test splipy test_utils
+    py.test splipy test_utils --benchmark-skip
 
 Code analysis
 -------------

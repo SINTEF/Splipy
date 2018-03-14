@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from setuptools import setup
-from splipy import __version__
+from Cython.Build import cythonize
 
 setup(
     name='Splipy',
@@ -25,6 +25,7 @@ setup(
         'FiniteElement': ["nutils>=2.0"],
         'Images':        ["opencv-python>=3.3"],
     },
+    ext_modules=cythonize("splipy/basis_eval.pyx"),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',

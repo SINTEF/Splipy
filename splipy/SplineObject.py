@@ -75,6 +75,10 @@ class SplineObject(object):
             if len(controlpoints[0]) == 1:
                 controlpoints = [tuple(list(c) + [0.0]) for c in controlpoints]
 
+            # Add weight = 1 for identiy-mapping rational splines
+            if rational:
+                controlpoints = [tuple(list(c) + [1.0]) for c in controlpoints]
+
         self.controlpoints = np.array(controlpoints)
         self.dimension = self.controlpoints.shape[-1] - rational
         self.rational = rational
