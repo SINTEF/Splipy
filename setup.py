@@ -2,6 +2,7 @@
 
 from setuptools import setup
 from Cython.Build import cythonize
+import numpy as np
 
 setup(
     name='Splipy',
@@ -26,6 +27,7 @@ setup(
         'Images':        ["opencv-python>=3.3"],
     },
     ext_modules=cythonize("splipy/basis_eval.pyx"),
+    include_dirs=[np.get_include()],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',
