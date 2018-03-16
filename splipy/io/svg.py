@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from splipy import Curve, Surface, SplineObject, BSplineBasis
+import splipy.state as state
 import xml.etree.ElementTree as etree
 from xml.dom import minidom
 import numpy as np
@@ -217,15 +218,15 @@ class SVG(MasterIO):
     def read(self):
         tree = etree.parse(self.filename)
         root = tree.getroot()
-        self.width,_  = read_number_and_unit(root.attrib['width'])
-        self.height,_ = read_number_and_unit(root.attrib['height'])
+        # self.width,_  = read_number_and_unit(root.attrib['width'])
+        # self.height,_ = read_number_and_unit(root.attrib['height'])
         result = []
         for path in root.iter(SVG.namespace + 'path'):
             result.append(self.curve_from_path(path.attrib['d']))
         return result
 
     def curve_from_path(self, path):
-        # see http://www.w3schools.com/svg/svg_path.asp for documentation
+        # see https://www.w3schools.com/graphics/svg_path.asp for documentation
         # and also https://www.w3.org/TR/SVG/paths.html
 
         # figure out the largest polynomial order of this path
@@ -282,6 +283,36 @@ class SVG(MasterIO):
                 for cp in np_pts:
                     controlpoints.append(cp)
                 curve_piece = Curve(BSplineBasis(4, knot), controlpoints)
+            elif piece[0] == 's':
+                # smooth cubic spline, relative position
+                controlpoints = [startpoint]
+                knot = list(range(int(len(np_pts)/2)+1)) * 3
+                knot += [knot[0], knot[-1]]
+                knot.sort()
+                x0  = np.array(result[-1])
+                xn1 = np.array(result[-2])
+                controlpoints.append(2*x0 -xn1)
+                startpoint = controlpoints[-1]
+                for i, cp in enumerate(np_pts):
+                    if i % 2 == 0 and i>0:
+                        startpoint = controlpoints[-1]
+                        controlpoints.append(2*controlpoints[-1] - controlpoints[-2])
+                    controlpoints.append(cp + startpoint)
+                curve_piece = Curve(BSplineBasis(4, knot), controlpoints)
+            elif piece[0] == 'S':
+                # smooth cubic spline, absolute position
+                controlpoints = [startpoint]
+                knot = list(range(int(len(np_pts)/2)+1)) * 3
+                knot += [knot[0], knot[-1]]
+                knot.sort()
+                x0  = np.array(result[-1])
+                xn1 = np.array(result[-2])
+                controlpoints.append(2*x0 -xn1)
+                for cp in np_pts:
+                    if i % 2 == 0 and i>0:
+                        controlpoints.append(2*controlpoints[-1] - controlpoints[-2])
+                    controlpoints.append(cp)
+                curve_piece = Curve(BSplineBasis(4, knot), controlpoints)
             elif piece[0] == 'q':
                 # quadratic spline, relatively positioned
                 controlpoints = [startpoint]
@@ -322,16 +353,20 @@ class SVG(MasterIO):
                 curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
             elif piece[0] == 'z' or piece[0] == 'Z':
                 # periodic curve
-                curve_piece = Curve(BSplineBasis(2), [startpoint, result[0]])
-                result.append(curve_piece.make_periodic(0))
+                # curve_piece = Curve(BSplineBasis(2), [startpoint, result[0]])
+                # curve_piece.reparam([0, curve_piece.length()])
+                # result.append(curve_piece).make_periodic(0)
+                result.make_periodic(0)
                 continue
             else:
                 raise RuntimeError('Unknown path parameter:' + piece)
 
-            if result is None:
-                result = curve_piece
-            else:
-                result.append(curve_piece)
+            if(curve_piece.length()>state.controlpoint_absolute_tolerance):
+                curve_piece.reparam([0, curve_piece.length()])
+                if result is None:
+                    result = curve_piece
+                else:
+                    result.append(curve_piece)
             startpoint = controlpoints[-1]
 
         # invert y-values since these are image coordinates
