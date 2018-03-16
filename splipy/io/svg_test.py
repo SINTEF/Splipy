@@ -66,6 +66,21 @@ class TestSVG(unittest.TestCase):
         self.assertTrue(os.path.isfile('output.svg'))
         os.remove('output.svg')
 
+    def test_read_github(self):
+        with SVG(THIS_DIR + '/test_geometries/github.svg') as myfile:
+            crv = myfile.read()
+        self.assertEqual(len(crv), 1)
+        crv = crv[0]
+        self.assertEqual(crv.order(0), 4)
+        self.assertEqual(len(crv), 76)
+
+    def test_read_california(self):
+        with SVG(THIS_DIR + '/test_geometries/california.svg') as myfile:
+            crv = myfile.read()
+        self.assertEqual(len(crv), 1)
+        crv = crv[0]
+        self.assertEqual(crv.order(0), 4)
+        self.assertEqual(len(crv), 307)
 
 if __name__ == '__main__':
     unittest.main()
