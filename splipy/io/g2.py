@@ -20,10 +20,10 @@ class G2(MasterIO):
     def circle(self):
         dim   = int(     self.read_next_non_whitespace().strip())
         r     = float(   next(self.fstream).strip())
-        center= np.array(next(self.fstream).split(' '), dtype=float)
-        normal= np.array(next(self.fstream).split(' '), dtype=float)
-        xaxis = np.array(next(self.fstream).split(' '), dtype=float)
-        param = np.array(next(self.fstream).split(' '), dtype=float)
+        center= np.array(next(self.fstream).split(), dtype=float)
+        normal= np.array(next(self.fstream).split(), dtype=float)
+        xaxis = np.array(next(self.fstream).split(), dtype=float)
+        param = np.array(next(self.fstream).split(), dtype=float)
         reverse =        next(self.fstream).strip() != '0'
 
         result = CurveFactory.circle(r=r, center=center, normal=normal, xaxis=xaxis)
@@ -36,10 +36,10 @@ class G2(MasterIO):
         dim   = int(     self.read_next_non_whitespace().strip())
         r1    = float(   next(self.fstream).strip())
         r2    = float(   next(self.fstream).strip())
-        center= np.array(next(self.fstream).split(' '), dtype=float)
-        normal= np.array(next(self.fstream).split(' '), dtype=float)
-        xaxis = np.array(next(self.fstream).split(' '), dtype=float)
-        param = np.array(next(self.fstream).split(' '), dtype=float)
+        center= np.array(next(self.fstream).split(), dtype=float)
+        normal= np.array(next(self.fstream).split(), dtype=float)
+        xaxis = np.array(next(self.fstream).split(), dtype=float)
+        param = np.array(next(self.fstream).split(), dtype=float)
         reverse =        next(self.fstream).strip() != '0'
 
         result = CurveFactory.ellipse(r1=r1, r2=r2, center=center, normal=normal, xaxis=xaxis)
@@ -50,10 +50,10 @@ class G2(MasterIO):
 
     def line(self):
         dim      = int(     self.read_next_non_whitespace().strip())
-        start    = np.array(next(self.fstream).split(' '), dtype=float)
-        direction= np.array(next(self.fstream).split(' '), dtype=float)
+        start    = np.array(next(self.fstream).split(), dtype=float)
+        direction= np.array(next(self.fstream).split(), dtype=float)
         finite   =          next(self.fstream).strip() != '0'
-        param    = np.array(next(self.fstream).split(' '), dtype=float)
+        param    = np.array(next(self.fstream).split(), dtype=float)
         reverse  =          next(self.fstream).strip() != '0'
         d = np.array(direction)
         s = np.array(start)
@@ -83,13 +83,13 @@ class G2(MasterIO):
     def cylinder(self):
         dim      = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
-        center   = np.array(next(self.fstream).split(' '), dtype=float)
-        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
-        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        center   = np.array(next(self.fstream).split(), dtype=float)
+        z_axis   = np.array(next(self.fstream).split(), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(), dtype=float)
         finite   =          next(self.fstream).strip() != '0'
-        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+        param_u  = np.array(next(self.fstream).split(), dtype=float)
         if finite:
-            param_v=np.array(next(self.fstream).split(' '), dtype=float)
+            param_v=np.array(next(self.fstream).split(), dtype=float)
         else:
             param_v=[-state.unlimited, state.unlimited]
         swap     =          next(self.fstream).strip() != '0'
@@ -104,14 +104,14 @@ class G2(MasterIO):
 
     def disc(self):
         dim      = int(     self.read_next_non_whitespace().strip())
-        center   = np.array(next(self.fstream).split(' '), dtype=float)
+        center   = np.array(next(self.fstream).split(), dtype=float)
         r        = float(   next(self.fstream).strip())
-        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
-        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        z_axis   = np.array(next(self.fstream).split(), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(), dtype=float)
         degen    =          next(self.fstream).strip() != '0'
         angles   = [float(  next(self.fstream).strip()) for i in range(4)]
-        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
-        param_v  = np.array(next(self.fstream).split(' '), dtype=float)
+        param_u  = np.array(next(self.fstream).split(), dtype=float)
+        param_v  = np.array(next(self.fstream).split(), dtype=float)
         swap     =          next(self.fstream).strip() != '0'
 
         if degen:
@@ -127,13 +127,13 @@ class G2(MasterIO):
 
     def plane(self):
         dim        = int(     self.read_next_non_whitespace().strip())
-        center     = np.array(next(self.fstream).split(' '), dtype=float)
-        normal     = np.array(next(self.fstream).split(' '), dtype=float)
-        x_axis     = np.array(next(self.fstream).split(' '), dtype=float)
+        center     = np.array(next(self.fstream).split(), dtype=float)
+        normal     = np.array(next(self.fstream).split(), dtype=float)
+        x_axis     = np.array(next(self.fstream).split(), dtype=float)
         finite     =          next(self.fstream).strip() != '0'
         if finite:
-            param_u= np.array(next(self.fstream).split(' '), dtype=float)
-            param_v= np.array(next(self.fstream).split(' '), dtype=float)
+            param_u= np.array(next(self.fstream).split(), dtype=float)
+            param_v= np.array(next(self.fstream).split(), dtype=float)
         else:
             param_u= [-state.unlimited, +state.unlimited]
             param_v= [-state.unlimited, +state.unlimited]
@@ -151,12 +151,12 @@ class G2(MasterIO):
         dim      = int(     self.read_next_non_whitespace().strip())
         r2       = float(   next(self.fstream).strip())
         r1       = float(   next(self.fstream).strip())
-        center   = np.array(next(self.fstream).split(' '), dtype=float)
-        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
-        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
+        center   = np.array(next(self.fstream).split(), dtype=float)
+        z_axis   = np.array(next(self.fstream).split(), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(), dtype=float)
         select_out=         next(self.fstream).strip() != '0' # I have no idea what this does :(
-        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
-        param_v  = np.array(next(self.fstream).split(' '), dtype=float)
+        param_u  = np.array(next(self.fstream).split(), dtype=float)
+        param_v  = np.array(next(self.fstream).split(), dtype=float)
         swap     =          next(self.fstream).strip() != '0'
 
         result = SurfaceFactory.torus(minor_r=r1, major_r=r2, center=center, normal=z_axis, xaxis=x_axis)
@@ -168,11 +168,11 @@ class G2(MasterIO):
     def sphere(self):
         dim      = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
-        center   = np.array(next(self.fstream).split(' '), dtype=float)
-        z_axis   = np.array(next(self.fstream).split(' '), dtype=float)
-        x_axis   = np.array(next(self.fstream).split(' '), dtype=float)
-        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
-        param_v  = np.array(next(self.fstream).split(' '), dtype=float)
+        center   = np.array(next(self.fstream).split(), dtype=float)
+        z_axis   = np.array(next(self.fstream).split(), dtype=float)
+        x_axis   = np.array(next(self.fstream).split(), dtype=float)
+        param_u  = np.array(next(self.fstream).split(), dtype=float)
+        param_v  = np.array(next(self.fstream).split(), dtype=float)
         swap     =          next(self.fstream).strip() != '0'
 
         result = SurfaceFactory.sphere(r=r, center=center, xaxis=x_axis, zaxis=z_axis).swap()
@@ -184,7 +184,7 @@ class G2(MasterIO):
     def splines(self, pardim):
         cls    = G2.classes[pardim-1]
 
-        _, rational = self.read_next_non_whitespace().strip().split(' ')
+        _, rational = self.read_next_non_whitespace().strip().split()
         rational = bool(int(rational))
 
         bases = [self.read_basis() for _ in range(pardim)]
@@ -192,7 +192,7 @@ class G2(MasterIO):
         for b in bases:
             ncps *= b.num_functions()
 
-        cps = [tuple(map(float, next(self.fstream).split(' ')))
+        cps = [tuple(map(float, next(self.fstream).split()))
                for _ in range(ncps)]
 
         args = bases + [cps, rational]
@@ -201,11 +201,11 @@ class G2(MasterIO):
     def surface_of_linear_extrusion(self):
         dim      = int(      self.read_next_non_whitespace().strip())
         crv      = self.splines(1)
-        normal   = np.array(self.read_next_non_whitespace().split(' '), dtype=float)
+        normal   = np.array(self.read_next_non_whitespace().split(), dtype=float)
         finite   =          next(self.fstream).strip() != '0'
-        param_u  = np.array(next(self.fstream).split(' '), dtype=float)
+        param_u  = np.array(next(self.fstream).split(), dtype=float)
         if finite:
-            param_v=np.array(next(self.fstream).split(' '), dtype=float)
+            param_v=np.array(next(self.fstream).split(), dtype=float)
         else:
             param_v=[-state.unlimited, +state.unlimited]
         swap     =          next(self.fstream).strip() != '0'
@@ -237,13 +237,13 @@ class G2(MasterIO):
         for i in range(numb_loops):
 
             # for all cuve pieces of that loop
-            numb_crvs, space_epsilon = next(self.fstream).split(' ')
+            numb_crvs, space_epsilon = next(self.fstream).split()
             state.parametric_absolute_tolerance = float(space_epsilon)
             one_loop = []
             for j in range(int(numb_crvs)):
 
                 # read a physical and parametric representation of the same curve
-                _, parameter_curve_type, space_curve_type = map(int, self.read_next_non_whitespace().split(' '))
+                _, parameter_curve_type, space_curve_type = map(int, self.read_next_non_whitespace().split())
                 # print(parameter_curve_type)
                 two_curves = []
                 for crv_type in [parameter_curve_type, space_curve_type]:
@@ -324,7 +324,7 @@ class G2(MasterIO):
                 continue
 
             # read object type
-            objtype, major, minor, patch = map(int, line.split(' '))
+            objtype, major, minor, patch = map(int, line.split())
             if (major, minor, patch) != (1, 0, 0):
                 raise IOError('Unknown G2 format')
 
@@ -344,8 +344,8 @@ class G2(MasterIO):
         return result
 
     def read_basis(self):
-        ncps, order = map(int, next(self.fstream).split(' '))
-        kts = list(map(float, next(self.fstream).split(' ')))
+        ncps, order = map(int, next(self.fstream).split())
+        kts = list(map(float, next(self.fstream).split()))
         return BSplineBasis(order, kts, -1)
 
     def __exit__(self, exc_type, exc_value, traceback):
