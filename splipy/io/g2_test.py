@@ -37,6 +37,12 @@ class TestG2(unittest.TestCase):
         # clean up after us
         os.remove('teapot.g2')
 
+    def test_read_doublespaced(self):
+        with G2(THIS_DIR + '/test_geometries/lshape.g2') as myfile: # controlpoints are separated by two spaces
+            one_surf = myfile.read()
+        self.assertEqual(len(one_surf), 1)
+        self.assertEqual(one_surf[0].shape[0], 3)
+        self.assertEqual(one_surf[0].shape[1], 2)
 
     def test_write_and_read_surface(self):
         # write disc to file and test if its there
