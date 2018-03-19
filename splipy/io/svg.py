@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from splipy import Curve, Surface, SplineObject, BSplineBasis
+import splipy.curve_factory as curve_factory
 import splipy.state as state
 import xml.etree.ElementTree as etree
 from xml.dom import minidom
@@ -240,14 +241,16 @@ class SVG(MasterIO):
 
         # each 'piece' is an operator (M,C,Q,L etc) and accomponying list of argument points
         for piece in re.findall('[a-zA-Z][^a-zA-Z]*', path):
+            print(piece)
 
             # if not single-letter command (i.e. 'z')
             if len(piece)>1:
                 # points is a (string-)list of (x,y)-coordinates for the given operator
                 points = re.findall('-?\d+\.?\d*', piece[1:])
 
-                # convert string-list to a list of numpy arrays (of size 2)
-                np_pts = np.reshape(np.array(points).astype('float'), (int(len(points)/2),2))
+                if piece[0] != 'A' and piece[0] != 'a':
+                    # convert string-list to a list of numpy arrays (of size 2)
+                    np_pts = np.reshape(np.array(points).astype('float'), (int(len(points)/2),2))
 
             if piece[0] == 'm' or piece[0] == 'M':
                 # I really hope it always start with a move command (think it does)
@@ -351,6 +354,43 @@ class SVG(MasterIO):
                 for cp in np_pts:
                     controlpoints.append(cp)
                 curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
+            elif piece[0] == 'A' or piece[0] == 'a':
+                np_pts = np.reshape(np.array(points).astype('float'), (int(len(points))))
+                rx              = float(points[0])
+                ry              = float(points[1])
+                x_axis_rotation = float(points[2])
+                large_arc_flag  = (points[3] != '0')
+                sweep_flag      = (points[4] != '0')
+                xend            = np.array([float(points[5]), float(points[6]) ])
+                if piece[0] == 'a':
+                    xend += startpoint
+
+                R = np.array([[ np.cos(x_axis_rotation), np.sin(x_axis_rotation)],
+                              [-np.sin(x_axis_rotation), np.cos(x_axis_rotation)]])
+                xp = np.linalg.solve(R, (startpoint - xend)/2)
+                if sweep_flag == large_arc_flag:
+                    cprime = -(np.sqrt(abs(rx**2*ry**2 - rx**2*xp[1]**2 - ry**2*xp[0]**2) /
+                                       (rx**2*xp[1]**2 + ry**2*xp[0]**2)) *
+                                       np.array([rx*xp[1]/ry, -ry*xp[0]/rx]))
+                else:
+                    cprime = +(np.sqrt(abs(rx**2*ry**2 - rx**2*xp[1]**2 - ry**2*xp[0]**2) /
+                                       (rx**2*xp[1]**2 + ry**2*xp[0]**2)) *
+                                       np.array([rx*xp[1]/ry, -ry*xp[0]/rx]))
+                center = np.linalg.solve(R.T, cprime) + (startpoint+xend)/2
+                def arccos(vec1, vec2):
+                    return (np.sign(vec1[0]*vec2[1] - vec1[1]*vec2[0]) *
+                            np.arccos(vec1.dot(vec2)/np.linalg.norm(vec1)/np.linalg.norm(vec2)))
+                tmp1 = np.divide( xp - cprime, [rx,ry])
+                tmp2 = np.divide(-xp - cprime, [rx,ry])
+                theta1 = arccos(np.array([1,0]), tmp1)
+                delta_t= arccos(tmp1, tmp2) % (2*np.pi)
+                if not sweep_flag and delta_t > 0:
+                    delta_t -= 2*np.pi
+                elif sweep_flag and delta_t < 0:
+                    delta_t += 2*np.pi
+                curve_piece = (curve_factory.circle_segment(delta_t)*[rx,ry]).rotate(theta1) + center
+                # curve_piece = curve_factory.circle_segment(delta_t)
+
             elif piece[0] == 'z' or piece[0] == 'Z':
                 # periodic curve
                 # curve_piece = Curve(BSplineBasis(2), [startpoint, result[0]])
@@ -367,8 +407,9 @@ class SVG(MasterIO):
                     result = curve_piece
                 else:
                     result.append(curve_piece)
-            startpoint = controlpoints[-1]
+            startpoint = result[-1,:2] # disregard rational weight (if any)
 
         # invert y-values since these are image coordinates
-        result[:,1] = self.height - result[:,1]
+        result *= [1,-1]
+        result += [0, self.height]
         return result
