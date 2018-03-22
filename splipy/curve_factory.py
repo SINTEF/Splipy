@@ -611,6 +611,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
     .. code:: python
 
         import numpy as np
+        import splipy.curve_factory as curve_factory
 
         # gives a B-spline approximation to the circle with arclength parametrization
         # unlike curve_factory.circle which is exact, but not arclength
@@ -622,7 +623,6 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
         # approximates a difficult function with wild behaviour around t=0, but
         # this is overcome by a higher knot density around this point
         def one_over_t(t):
-            t = np.array(t)
             eps = 1e-8 # to avoid 1/0 we add a small epsilon
             return np.array( [t, 1.0/(t+eps)] ).T
         crv = curve_factory.fit(one_over_t, 0, 1, rtol=1e-6)
@@ -637,7 +637,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
     """
 
     b = BSplineBasis(4, [t0,t0,t0,t0, t1,t1,t1,t1])
-    t = b.greville()
+    t = np.array(b.greville())
     crv = interpolate(x(t), b, t)
     (err2, maxerr) = crv.error(x)
     # polynomial input (which can be exactly represented) only use one knot span
@@ -647,7 +647,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
     # for all other curves, start with 4 knot spans
     knot_vector = [t0,t0,t0,t0] + [i/5.0*(t1-t0)+t0 for i in range(1,5)] + [t1,t1,t1,t1]
     b = BSplineBasis(4, knot_vector)
-    t = b.greville()
+    t = np.array(b.greville())
     crv = interpolate(x(t), b, t)
     (err2, maxerr) = crv.error(x)
     # this is technically false since we need the length of the target function *x*
