@@ -134,6 +134,22 @@ class Curve(SplineObject):
         dx    = self.derivative(t, d=1, above=above)
         ddx   = self.derivative(t, d=2, above=above)
 
+        # in case of vanishing acceleration, colinear velocity and acceleration,
+        # such as linear curves we guess an appropriate binbormal (multiple choice available)
+        if len(dx.shape) == 1:
+            if np.allclose(ddx, 0):
+                if np.allclose(dx[:2], 0): # dx = [0,0,1]
+                    ddx = np.array([1,0,0])
+                else:
+                    ddx = np.array([0,0,1])
+        else:
+            for i in range(ddx.shape[0]):
+                if np.allclose(ddx[i,:], 0):
+                    if np.allclose(dx[i,:2], 0): # dx = [0,0,1]
+                        ddx[i,:] = np.array([1,0,0])
+                    else:
+                        ddx[i,:] = np.array([0,0,1])
+
         result = np.cross(dx, ddx)
 
         # in case of single value input t, return vector instead of matrix
