@@ -533,11 +533,6 @@ def thicken(curve, amount):
     #  * width given by function input
     #     could produce wild behaviour. Original discretization might not
     #     produce a satisfactory result
-    #  * 3D tube geometries:
-    #     unimplemented as of now. Would like to see the three points above
-    #     resolved before this is implemented. Rough idea is to compute the
-    #     acceleration and binormal vectors to the curve and sketch out a
-    #     circle in the plane defined by these two vectors
 
     curve = curve.clone()  # clone input curve, throw away input reference
     t = curve.bases[0].greville()
@@ -595,7 +590,7 @@ def thicken(curve, amount):
         return edge_curves(right, left)
 
     else:  # dimension=3, we will create a surrounding tube
-        raise NotImplementedError('Currently only 2D supported. See comments in source code')
+        return sweep(curve, CurveFactory.circle(r=amount))
 
 def sweep(path, shape):
     """  Generate a surface by sweeping a shape along a path
