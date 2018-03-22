@@ -703,6 +703,16 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertTupleEqual(s.bounding_box()[0], ( 0.0, 1.0))
         self.assertTupleEqual(s.bounding_box()[1], (-1.0, 1.0))
 
+        # test 3D geometry
+        c = Curve()
+        c.set_dimension(3)
+        s = SurfaceFactory.thicken(c, 1) # cylinder along x-axis with h=1, r=1
+        for u in np.linspace(s.start(0), s.end(0), 5):
+            for v in np.linspace(s.start(1), s.end(1), 5):
+                x = s(u, v)
+                self.assertAlmostEqual(x[1]**2+x[2]**2, 1.0**2) # distance to x-axis
+                self.assertAlmostEqual(x[0], u)                 # x coordinate should be linear
+
     def test_interpolate(self):
         t = np.linspace(0, 1, 7)
         V,U = np.meshgrid(t,t)
