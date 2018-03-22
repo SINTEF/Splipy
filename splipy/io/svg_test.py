@@ -82,5 +82,16 @@ class TestSVG(unittest.TestCase):
         self.assertEqual(crv.order(0), 4)
         self.assertEqual(len(crv), 307)
 
+    def test_read_isengard(self):
+        with SVG(THIS_DIR + '/test_geometries/isengard.svg') as myfile:
+            crv = myfile.read()
+        self.assertEqual(len(crv), 9)
+        for i in range(9):
+            bb = crv[i].bounding_box()
+            self.assertGreater(bb[0][0],  -1)
+            self.assertLess(   bb[0][1], 201)
+            self.assertGreater(bb[1][0],  -1)
+            self.assertLess(   bb[1][1], 221)
+
 if __name__ == '__main__':
     unittest.main()

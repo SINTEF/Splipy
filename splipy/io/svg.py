@@ -10,8 +10,9 @@ import re
 from .master import MasterIO
 
 def read_number_and_unit(mystring):
+    unit = ''
     try:
-        for i in range(1, len(mystring)):
+        for i in range(1, len(mystring)+1):
             number=float(mystring[:i])
     except ValueError:
         unit=mystring[i-1:]
@@ -219,12 +220,57 @@ class SVG(MasterIO):
     def read(self):
         tree = etree.parse(self.filename)
         root = tree.getroot()
-        # self.width,_  = read_number_and_unit(root.attrib['width'])
-        # self.height,_ = read_number_and_unit(root.attrib['height'])
+        parent_map = dict((c, p) for p in tree.getiterator() for c in p)
+        if 'width' in root.attrib:
+            self.width,_  = read_number_and_unit(root.attrib['width'])
+            self.height,_ = read_number_and_unit(root.attrib['height'])
         result = []
         for path in root.iter(SVG.namespace + 'path'):
-            result.append(self.curve_from_path(path.attrib['d']))
+            crv = self.curve_from_path(path.attrib['d'])
+            parent = path
+            while parent != root:
+                if 'transform' in parent.attrib:
+                    self.transform(crv, parent.attrib['transform'])
+                parent = parent_map[parent]
+
+            # invert y-values since these are image coordinates
+            crv *= [1,-1]
+            crv += [0, self.height]
+            result.append(crv)
         return result
+
+    def transform(self, curve, operation):
+        # intended input operation string: 'translate(-10,-20) scale(2) rotate(45) translate(5,10)'
+        all_operations = re.findall('[^\)]*\)', operation.lower())
+        all_operations.reverse()
+        for one_operation in all_operations:
+            parts = re.search('([a-z]*)\w*\((.*)\)', one_operation.strip())
+            func = parts.group(1)
+            args = [float(d) for d in parts.group(2).split(',')]
+            if func == 'translate':
+                if len(args)==1:
+                    args.append(0)
+                curve += args
+            elif func == 'scale':
+                if len(args)==1:
+                    args.append(args[0])
+                curve *= args
+            elif func == 'rotate':
+                curve.rotate(-args[0]/360*2*np.pi)
+            elif func == 'matrix':
+                M = np.matrix([[args[0], args[2], args[4]],
+                               [args[1], args[3], args[5]],
+                               [      0,       0,      1]])
+                n = len(curve)
+                if not curve.rational:
+                    cp = np.matrix(np.ones((n, 3)))  # pad with weights=1
+                    cp[:, :-1] = np.reshape(curve.controlpoints, (n, 2))
+                    cp = cp * M.T
+                    curve.controlpoints = np.reshape(np.array(cp[:,:-1]), curve.controlpoints.shape)
+                else:
+                    cp = np.matrix(np.reshape(curve.controlpoints, (n, 3)))
+                    cp = cp * M.T
+                    curve.controlpoints = np.reshape(np.array(cp), curve.controlpoints.shape)
 
     def curve_from_path(self, path):
         # see https://www.w3schools.com/graphics/svg_path.asp for documentation
@@ -241,7 +287,6 @@ class SVG(MasterIO):
 
         # each 'piece' is an operator (M,C,Q,L etc) and accomponying list of argument points
         for piece in re.findall('[a-zA-Z][^a-zA-Z]*', path):
-            print(piece)
 
             # if not single-letter command (i.e. 'z')
             if len(piece)>1:
@@ -409,7 +454,4 @@ class SVG(MasterIO):
                     result.append(curve_piece)
             startpoint = result[-1,:2] # disregard rational weight (if any)
 
-        # invert y-values since these are image coordinates
-        result *= [1,-1]
-        result += [0, self.height]
         return result
