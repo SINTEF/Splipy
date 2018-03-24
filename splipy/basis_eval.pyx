@@ -49,7 +49,7 @@ def evaluate(np.ndarray[np.float_t, ndim=1] knots_in,
     :return: Two tuples of all arguments to the scipy sparse csr_matrix
     """
 
-    # wrap everything into c-type datastructures for optimized performence
+    # wrap everything into c-type datastructures for optimized performance
     cdef np.float_t[:] knots = knots_in
     cdef unsigned int n_all  = len(knots) - p  # number of basis functions (without periodicity)
     cdef unsigned int n      = len(knots) - p - (periodic+1)  # number of basis functions (with periodicity)
@@ -131,7 +131,7 @@ def snap(np.ndarray[np.float_t, ndim=1] knots_in,
     :param eval_t_in:    The parametric coordinate(s) in which to evaluate
     :param tolerance_in: Knot tolerance for detecting end-point-evaluations
     """
-    # wrap everything into c-type datastructures for optimized performence
+    # wrap everything into c-type datastructures for optimized performance
     cdef unsigned int i,j
     cdef unsigned int  n     = len(knots_in)
     cdef np.float_t[:] t     = eval_t_in

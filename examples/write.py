@@ -14,7 +14,7 @@ import splipy.surface_factory as surfaces
 torus = surfaces.torus(minor_r=1, major_r=4)
 
 
-# STL files are tesselated linear triangles. View with i.e. meshlab
+# STL files are tessellated linear triangles. View with i.e. meshlab
 with STL('torus.stl') as my_file:
     my_file.write(torus, n=(50, 150)) # specify resolution of 50x150 evaluation pts
 

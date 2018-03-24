@@ -214,7 +214,7 @@ def ellipse(r1=1, r2=1, center=(0,0,0), normal=(0,0,1), type='p2C0', xaxis=(1,0,
         xaxis = xaxis.dot(R1).dot(R2)
         xaxis = np.squeeze(xaxis)
     result *= [r1,r2,1]
-    # this is REALLY wierd (numpy bug?) since I can't reshape the xaxis from
+    # this is REALLY weird (numpy bug?) since I can't reshape the xaxis from
     # the vector-matrix-matrix product above back to 1D vector no matter how hard
     # I try.
     if len(xaxis.shape)==1:
@@ -226,7 +226,7 @@ def ellipse(r1=1, r2=1, center=(0,0,0), normal=(0,0,1), type='p2C0', xaxis=(1,0,
 def circle_segment_from_three_points(x0, x1, x2):
     """circle_segment_from_three_points(x0, x1, x2)
 
-    Create a circle segment going from the point x0 to x2 throught x1
+    Create a circle segment going from the point x0 to x2 through x1
 
     :param vector-like x0: The start point (2D or 3D point)
     :param vector-like x1: An intermediate point (2D or 3D)
@@ -270,7 +270,7 @@ def circle_segment_from_three_points(x0, x1, x2):
 
 
 def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
-    """  Create a circle segment starting paralell to the rotated x-axis.
+    """  Create a circle segment starting parallel to the rotated x-axis.
 
     :param float theta: Angle in radians
     :param float r: Radius

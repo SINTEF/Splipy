@@ -68,7 +68,7 @@ class TrimmedSurface(Surface):
             # don't know if we really need the error test for boundary loops, but
             # I'll just leave it in, because I wrote i and kind of like it
 
-            # get all controlpoints for all the curves, make sure dont to double-
+            # get all controlpoints for all the curves, make sure not to double-
             # count the end and start of subsequent curve-pieces
             x = np.vstack([curve[1:,:2] for curve in loop])
             # compute vectors between the control points (velocity approximation?)
