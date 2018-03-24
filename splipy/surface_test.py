@@ -70,7 +70,7 @@ class TestSurface(unittest.TestCase):
         # t^2   = sum t2s_i * N_i(t)
         # ts_i  = sum_{j=i+1}^{i+p}   t_j / p
         # t2s_i = sum_{j=i+1}^{i+p-1} sum_{k=j+1}^{i+p} t_j*t_k / (p 2)
-        # (p 2) = binomial coefficent
+        # (p 2) = binomial coefficient
 
         # creating the mapping:
         #   x(u,v) = u^2*v + u(1-v)
@@ -124,7 +124,7 @@ class TestSurface(unittest.TestCase):
         # t^2   = sum t2s_i * N_i(t)
         # ts_i  = sum_{j=i+1}^{i+p}   t_j / p
         # t2s_i = sum_{j=i+1}^{i+p-1} sum_{k=j+1}^{i+p} t_j*t_k / (p 2)
-        # (p 2) = binomial coefficent
+        # (p 2) = binomial coefficient
 
         # creating the mapping:
         #   x(u,v) = u^2*v + u(1-v)

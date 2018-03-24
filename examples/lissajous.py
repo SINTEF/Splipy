@@ -43,7 +43,7 @@ def lissajous(a, b, d):
 # crv = lissajous(60, 44, pi/2);
 crv = lissajous(3, 4, pi/2);
 
-# evalute the curve at n points
+# evaluate the curve at n points
 n = 3000
 t = np.linspace(crv.start(0), crv.end(0), n);
 x = crv(t)
