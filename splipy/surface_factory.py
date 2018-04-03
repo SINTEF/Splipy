@@ -326,7 +326,7 @@ def poisson_patch(bottom, right, top, left):
     integrand = outer.sum(-1)
     matrix = domain.integrate(integrand, geometry=geom, ischeme='gauss'+str(max(p1,p2)+1))
 
-    # initalize variables
+    # initialize variables
     controlpoints = np.zeros((n1,n2,dim))
     rhs           = np.zeros((n1*n2))
     constraints = np.array([[np.nan]*n2]*n1)
@@ -527,7 +527,7 @@ def thicken(curve, amount):
     #  * choice of discretization:
     #     the offset curve is computed from the velocity (tangent) which is of
     #     one continuity less than the original curve. In particular C1
-    #     quadratic curves will get very noticable C0-kinks in them. Currently
+    #     quadratic curves will get very noticeable C0-kinks in them. Currently
     #     this is completely ignored and we keep the high continuity of the
     #     original curve.
     #  * width given by function input
