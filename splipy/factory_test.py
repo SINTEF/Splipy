@@ -171,6 +171,13 @@ class TestCurveFactory(unittest.TestCase):
         for pt in np.array(x):
             self.assertAlmostEqual(np.linalg.norm(pt, 2), 7.0)  # check radius=7
 
+        # negative theta
+        c = CurveFactory.circle_segment(-pi/2)
+        self.assertEqual(c.rational, True)
+        self.assertTrue(np.allclose(c(0),     [1,0]))
+        self.assertTrue(np.allclose(c(-pi/4), [1/sqrt(2),-1/sqrt(2)]))
+        self.assertTrue(np.allclose(c(-pi/2), [0,-1]))
+
         # boundary case with one knot span circle segment
         c = CurveFactory.circle_segment(2 * pi / 3)
         self.assertEqual(c.dimension, 2)
