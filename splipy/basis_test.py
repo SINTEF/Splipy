@@ -258,5 +258,20 @@ class TestBasis(unittest.TestCase):
         # should snap to 0.2 and evaluate to 1 for the last function
         self.assertAlmostEqual(b(grvl[-1])[-1,-1], 1.0)
 
+    def test_periodic_boundary_evaluation(self):
+        # Issue #66: "From left evaluations crash on periodic basis"
+        b = BSplineBasis(3, [0,0,0,1,2,3,4,4,4])
+        x = b.evaluate(t=0, from_right=False)
+        self.assertAlmostEqual(x[0,0], 0.0)
+
+        x = b.evaluate(t=0, from_right=True)
+        self.assertAlmostEqual(x[0,0], 1.0)
+
+        b = BSplineBasis(3, [-1,0,0,1,2,3,4,4,5], periodic=0)
+        x = b.evaluate(t=0, d=1, from_right=False)
+        self.assertAlmostEqual(x[0, 0],  2.0)
+        self.assertAlmostEqual(x[0,-1], -2.0)
+
+
 if __name__ == '__main__':
     unittest.main()
