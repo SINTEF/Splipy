@@ -105,7 +105,7 @@ def extrude(curve, amount):
     return Surface(curve.bases[0], BSplineBasis(2), cp, curve.rational)
 
 
-def revolve(curve, theta=2 * pi, axis=[0,0,1]):
+def revolve(curve, theta=2 * pi, axis=(0,0,1)):
     """  Revolve a surface by sweeping a curve in a rotational fashion around
     the *z* axis.
 
