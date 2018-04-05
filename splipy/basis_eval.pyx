@@ -72,6 +72,8 @@ def evaluate(np.ndarray[np.float_t, ndim=1] knots_in,
         for i in range(len(t)):
             if t[i] < start or t[i] > end:
                 t[i] = (t[i] - start) % (end - start) + start
+            if abs(t[i] - start) < tol and not from_right:
+                t[i] = end
     for i in range(len(t)):
         right = from_right
         evalT = t[i]
@@ -79,7 +81,7 @@ def evaluate(np.ndarray[np.float_t, ndim=1] knots_in,
         if abs(t[i] - end) < tol:
             right = False
         # Skip non-periodic evaluation points outside the domain
-        if t[i] < start or t[i] > end:
+        if t[i] < start or t[i] > end or (abs(t[i]-start) < tol and not right):
             continue
 
         # mu = index of last non-zero basis function
