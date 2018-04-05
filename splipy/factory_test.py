@@ -675,6 +675,17 @@ class TestSurfaceFactory(unittest.TestCase):
         for (xs,xc) in zip(pts_surf[:,0,:], pts_c2):
             self.assertTrue(np.allclose(xs, xc))
 
+    @unittest.skipIf(not has_nutils, "EdgeCurves with finitestrain solver requires nutils")
+    def test_edge_curves_finitestrain_lshape(self):
+        # Create an L-shape geometry with an interior 270-degree angle at the origin (u=1, v=.5)
+        c1 = CurveFactory.polygon([[-1, 1], [-1,-1], [1,-1]])
+        c2 = CurveFactory.polygon([[ 1,-1], [ 1, 0]])
+        c3 = CurveFactory.polygon([[ 1, 0], [ 0, 0], [0, 1]])
+        c4 = CurveFactory.polygon([[ 0, 1], [-1, 1]])
+        c1.refine(2).raise_order(1)
+        c2.refine(2).raise_order(1)
+        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='finitestrain')
+
     def test_thicken(self):
         c = Curve()                       # 2D curve from (0,0) to (1,0)
         s = SurfaceFactory.thicken(c, .5) # extend to y=[-.5, .5]
