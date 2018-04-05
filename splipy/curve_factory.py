@@ -290,7 +290,7 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
         return circle(r, center, normal)
 
     # build knot vector
-    knot_spans = int(ceil(theta / (2 * pi / 3)))
+    knot_spans = int(ceil(abs(theta) / (2 * pi / 3)))
     knot = [0]
     for i in range(knot_spans + 1):
         knot += [i] * 2
@@ -310,7 +310,11 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
         cp += [[x, y, w]]
         t += dt
 
-    result = Curve(BSplineBasis(3, knot), cp, True)
+    if theta < 0:
+        cp.reverse()
+        result = Curve(BSplineBasis(3, np.flip(knot,0)), cp, True)
+    else:
+        result = Curve(BSplineBasis(3, knot), cp, True)
     return flip_and_move_plane_geometry(result, center, normal)
 
 def interpolate(x, basis, t=None):
