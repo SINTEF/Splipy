@@ -4,6 +4,7 @@
 
 from math import pi, sqrt
 import numpy as np
+from math import pi, sqrt, atan2
 from splipy import Surface, Volume, BSplineBasis
 import splipy.curve_factory as CurveFactory
 import splipy.surface_factory as SurfaceFactory
@@ -99,32 +100,44 @@ def sphere(r=1, center=(0,0,0), type='radial'):
         raise ValueError('invalid type argument')
 
 
-def revolve(surf, theta=2 * pi):
+def revolve(surf, theta=2 * pi, axis=(0,0,1)):
     """  Revolve a volume by sweeping a surface in a rotational fashion around
-    the *z* axis.
+    an axis.
 
     :param Surface surf: Surface to revolve
     :param float theta: Angle to revolve, in radians
+    :param array-like axis: Axis of rotation
     :return: The revolved surface
     :rtype: Volume
     """
     surf = surf.clone()  # clone input surface, throw away old reference
     surf.set_dimension(3)  # add z-components (if not already present)
     surf.force_rational()  # add weight (if not already present)
-    n = len(surf)  # number of control points of the surface
+
+    # align axis with the z-axis
+    normal_theta = atan2(axis[1], axis[0])
+    normal_phi   = atan2(sqrt(axis[0]**2 + axis[1]**2), axis[2])
+    surf.rotate(-normal_theta, [0,0,1])
+    surf.rotate(-normal_phi,   [0,1,0])
+
     path = CurveFactory.circle_segment(theta=theta)
-    m = len(path)
+    n = len(surf)  # number of control points of the surface
+    m = len(path)  # number of control points of the sweep
 
     cp = np.zeros((m * n, 4))
 
-    dt = (path.knots(0)[1] - path.knots(0)[0]) / 2.0
+    dt = np.sign(theta)*(path.knots(0)[1] - path.knots(0)[0]) / 2.0
     for i in range(m):
         weight = path[i,-1]
         cp[i * n:(i + 1) * n, :] = np.reshape(surf.controlpoints.transpose(1, 0, 2), (n, 4))
         cp[i * n:(i + 1) * n, 2] *= weight
         cp[i * n:(i + 1) * n, 3] *= weight
         surf.rotate(dt)
-    return Volume(surf.bases[0], surf.bases[1], path.bases[0], cp, True)
+    result = Volume(surf.bases[0], surf.bases[1], path.bases[0], cp, True)
+    # rotate it back again
+    result.rotate(normal_phi,   [0,1,0])
+    result.rotate(normal_theta, [0,0,1])
+    return result
 
 
 def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0)):
