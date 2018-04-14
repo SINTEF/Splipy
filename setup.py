@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
-from Cython.Build import cythonize
-import numpy as np
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
+# import numpy as np
+
+class CustomBuildExtCommand(build_ext):
+
+    def run(self):
+        import numpy as np
+        self.include_dirs.append(np.get_include())
+        build_ext.run(self)
 
 with open('PyPI_text.md') as f:
     long_description = f.read()
@@ -22,6 +29,7 @@ setup(
     package_data={
         'splipy': ['templates/*.bpt'],
     },
+    setup_requires=['numpy >= 1.9'],
     install_requires=[
         'numpy >= 1.9',
         'scipy >= 0.17',
@@ -30,8 +38,8 @@ setup(
         'FiniteElement': ["nutils>=3.0"],
         'Images':        ["opencv-python>=3.3"],
     },
-    ext_modules=cythonize("splipy/basis_eval.pyx"),
-    include_dirs=[np.get_include()],
+    cmdclass={'build_ext': CustomBuildExtCommand},
+    ext_modules=[Extension('splipy.basis_eval', ['splipy/basis_eval.c'])],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',
