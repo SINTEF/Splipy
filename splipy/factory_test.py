@@ -684,7 +684,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
     @unittest.skipIf(not has_nutils, "EdgeCurves with finitestrain solver requires nutils")
     def test_edge_curves_finitestrain_lshape(self):
-        # Create an L-shape geometry with an interior 270-degree angle at the origin (u=1, v=.5)
+        # Create an L-shape geometry with an interior 270-degree angle at the origin (u=.5, v=1)
         c1 = CurveFactory.polygon([[-1, 1], [-1,-1], [1,-1]])
         c2 = CurveFactory.polygon([[ 1,-1], [ 1, 0]])
         c3 = CurveFactory.polygon([[ 1, 0], [ 0, 0], [0, 1]])
@@ -692,6 +692,12 @@ class TestSurfaceFactory(unittest.TestCase):
         c1.refine(2).raise_order(1)
         c2.refine(2).raise_order(1)
         surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='finitestrain')
+        # the quickest way to check for self-intersecting geometry here is that
+        # the normal is pointing the wrong way: down z-axis instead of up
+        surf.reparam().set_dimension(3)
+        self.assertTrue(surf.normal(0.5, 0.98)[2] > 0.0)
+        # also check that no controlpoints leak away into the first quadrant
+        self.assertFalse(np.any(np.logical_and(surf[:,:,0] > 0, surf[:,:,1] > 0)))
 
     def test_thicken(self):
         c = Curve()                       # 2D curve from (0,0) to (1,0)
