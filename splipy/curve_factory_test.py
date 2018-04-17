@@ -66,7 +66,7 @@ class TestCurveFactory(unittest.TestCase):
         self.assertEqual(len(c),      5)
         self.assertEqual(c.order(0),  2)
         self.assertEqual(c.dimension, 2)
-        self.assertAlmostEqual(np.linalg.norm(expected_knots - actual_knots), 0.0)
+        self.assertAlmostEqual(norm(expected_knots - actual_knots), 0.0)
 
         c = CurveFactory.polygon([0,0], [1,0], [0,1], [-1,0], relative=True)
         self.assertEqual(len(c), 4)
@@ -85,7 +85,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt), 1.0)  # check radius=1
         # test evaluation at key points
         pt = c.evaluate(0)  # evaluate at 0
         self.assertAlmostEqual(pt[0], 1.0)
@@ -106,7 +106,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0) - 3, c.end(0) + 2, 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt, 2), 3.0)  # check radius=3
+            self.assertAlmostEqual(norm(pt, 2), 3.0)  # check radius=3
         self.assertAlmostEqual(c.length(), 6*pi, places=3)
 
         # circle not at origin
@@ -115,7 +115,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt-[1,0,0], 2), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt-[1,0,0], 2), 1.0)  # check radius=1
             self.assertAlmostEqual(pt[0]+pt[1]+pt[2] - 1, 0.0) # in plane x+y+z=1
         self.assertAlmostEqual(c.length(), 2*pi, places=3)
 
@@ -157,7 +157,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt, 2), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt, 2), 1.0)  # check radius=1
 
         # radius 7 circle segment
         c = CurveFactory.circle_segment(pi * 1.87, 7)
@@ -167,7 +167,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt, 2), 7.0)  # check radius=7
+            self.assertAlmostEqual(norm(pt, 2), 7.0)  # check radius=7
 
         # negative theta
         c = CurveFactory.circle_segment(-pi/2)
@@ -186,7 +186,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt, 2), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt, 2), 1.0)  # check radius=1
 
         # boundary case with full circle
         c = CurveFactory.circle_segment(2 * pi)
@@ -198,7 +198,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt, 2), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt, 2), 1.0)  # check radius=1
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
@@ -216,7 +216,7 @@ class TestCurveFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 2)
         self.assertTrue(c.rational)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt), 1.0)  # check radius=1
         self.assertTrue(np.allclose(c[0],  [1,0,1]))         # check endpoints
         self.assertTrue(np.allclose(c[-1], [0,1,1]))
 
@@ -227,7 +227,7 @@ class TestCurveFactory(unittest.TestCase):
         self.assertEqual(c.dimension, 3)
         self.assertTrue(c.rational)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt), 1.0)  # check radius=1
         self.assertTrue(np.allclose(x[:,0], x[:,1]))         # check x=y plane
         self.assertTrue(np.allclose(c[-1], [0,0,1,1]))       # check endpoints
 
@@ -236,7 +236,7 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt), 1.0)  # check radius=1
         self.assertTrue(np.allclose(x[:,0], x[:,1]))         # check x=y plane
         self.assertTrue(np.allclose(c[-1], [0,0,1,1]))       # check endpoints
 
@@ -245,9 +245,33 @@ class TestCurveFactory(unittest.TestCase):
         t = np.linspace(c.start(0), c.end(0), 25)
         x = c.evaluate(t)
         for pt in np.array(x):
-            self.assertAlmostEqual(np.linalg.norm(pt-np.array([1,0,0])), 1.0)  # check radius=1
+            self.assertAlmostEqual(norm(pt-np.array([1,0,0])), 1.0)  # check radius=1
         self.assertTrue(np.allclose(x[:,0]-1, x[:,1]))       # check (x-1)=y plane
         self.assertTrue(np.allclose(c[-1], [1,0,1,1]))       # check endpoints
+
+        # theta > pi
+        c = CurveFactory.circle_segment_from_three_points([4,0], [0,4], [0,-4])
+        self.assertTrue(np.allclose(c[0],  [4, 0, 1])) # check startpoint
+        self.assertTrue(np.allclose(c[-1], [0,-4, 1])) # check endpoint
+        t = (c.start(0)+c.end(0))/2.0
+        self.assertTrue(np.allclose(c(t), [-2*sqrt(2),2*sqrt(2)])) # midpoint evaluation
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        for pt in np.array(x):
+            self.assertAlmostEqual(norm(pt), 4.0)  # check radius=4
+
+        # theta > pi in x=3/4 y plane (r=5), center=(4,3,0)
+        c = CurveFactory.circle_segment_from_three_points([4,3,-5], [8,6,0], [0,0,0])
+        self.assertTrue(np.allclose(c[0],  [4, 3,-5, 1])) # check startpoint
+        self.assertTrue(np.allclose(c[-1], [0, 0, 0, 1])) # check endpoint
+        t = np.linspace(c.start(0), c.end(0), 25)
+        x = c.evaluate(t)
+        for pt in np.array(x):
+            self.assertAlmostEqual(norm(pt-np.array([4,3,0])), 5.0)  # check radius=5
+        # check plane normal
+        self.assertTrue(np.allclose(c.binormal(0),  [ 3.0/5,-4.0/5, 0]))
+        self.assertTrue(np.allclose(c.binormal(.5), [ 3.0/5,-4.0/5, 0])) 
+
 
     def test_cubic_curve(self):
         t = np.linspace(0,1,80)  # interpolation points
