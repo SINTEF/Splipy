@@ -248,34 +248,36 @@ def circle_segment_from_three_points(x0, x1, x2):
                    np.dot(pt2,pt2) - np.dot(pt0,pt0),
                    np.dot(normal,pt0)])
     center = np.linalg.solve(A,b)
-    radius = np.linalg.norm(pt2-center)
-    v1 = pt2-center
-    v2 = pt0-center
-    len_v1 = np.linalg.norm(v1)
-    len_v2 = np.linalg.norm(v2)
-    theta  = np.arccos(np.dot(v1,v2) / len_v1 / len_v2)
+    radius = norm(pt2-center)
+    v2 = pt2-center
+    v1 = pt1-center
+    v0 = pt0-center
+    w0 = pt0-pt2
+    w1 = pt1-pt2
+    w2 = np.cross(w0, w1)
+    normal = np.cross(v0,v2)
+    len_v2 = norm(v2)
+    len_v0 = norm(v0)
+    theta  = np.arccos(np.dot(v2,v0) / len_v2 / len_v0)
+    if not np.all([np.sign(i)==np.sign(j) or abs(i-j) < state.controlpoint_absolute_tolerance for (i,j) in zip(w2,normal)]):
+        theta = 2*pi - theta
+        normal = -normal
 
-    # create control points, rational weights and knot vector
-    w =  cos(theta/2)
-    R = rotation_matrix(theta/2, -normal)
-    pt1 = np.dot(R,pt0-center)/w + center
-    cp = np.vstack((pt0, w*pt1, pt2))
-    cp = np.hstack((cp, np.array([[1],[w],[1]])))
-    knot = [0,0,0,theta,theta,theta]
+    result = circle_segment(theta, radius, center, np.cross(v0,v1), v0)
 
-    result = Curve(BSplineBasis(3, knot), cp, True)
     # spit out 2D curve if all input points were 2D, otherwise return 3D
     result.set_dimension(np.max([len(x0), len(x1), len(x2)]))
     return result
 
 
-def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
+def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1), xaxis=(1,0,0)):
     """  Create a circle segment starting parallel to the rotated x-axis.
 
     :param float theta: Angle in radians
     :param float r: Radius
     :param array-like center: circle segment center
     :param array-like normal: normal vector to the plane that contains circle
+    :param array-like xaxis: direction of the parametric start point t=0
     :return: A quadratic rational curve
     :rtype: Curve
     :raises ValueError: If radius is not positive
@@ -315,6 +317,7 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1)):
         result = Curve(BSplineBasis(3, np.flip(knot,0)), cp, True)
     else:
         result = Curve(BSplineBasis(3, knot), cp, True)
+    result.rotate(rotate_local_x_axis(xaxis, normal))
     return flip_and_move_plane_geometry(result, center, normal)
 
 def interpolate(x, basis, t=None):
@@ -394,14 +397,14 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
         x = np.append(x, [x[0,:]], axis=0)
         if t is not None:
             # augment interpolation knot by euclidian distance to end
-            t = list(t) + [t[-1] + np.linalg.norm(np.array(x[0,:])- np.array(x[-2,:]))]
+            t = list(t) + [t[-1] + norm(np.array(x[0,:])- np.array(x[-2,:]))]
 
     n = len(x)
     if t is None:
         t = [0.0]
         for (x0,x1) in zip(x[:-1,:], x[1:,:]):
             # eucledian distance between two consecutive points
-            dist = np.linalg.norm(np.array(x1)-np.array(x0))
+            dist = norm(np.array(x1)-np.array(x0))
             t.append(t[-1]+dist)
 
     # modify knot vector for chosen boundary conditions
