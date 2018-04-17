@@ -440,9 +440,9 @@ def finitestrain_patch(bottom, right, top, left):
     # create an initial mesh (correct corners) which we will morph into the right one
     p1 = bottom.order(0)
     p2 = left.order(0)
+    p  = int(max(p1,p2))
     linear = BSplineBasis(2)
     srf = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]])
-    srf = Surface()
     srf.raise_order(p1-2, p2-2)
     for k in bottom.knots(0, True)[p1:-p1]:
         srf.insert_knot(k, 0)
@@ -461,10 +461,9 @@ def finitestrain_patch(bottom, right, top, left):
     ns = function.Namespace()
     ns.basis = domain.basis('spline', [p1-1, p2-1], knotmultiplicities=[m1,m2]).vector( 2 )
     ns.phi   = domain.basis('spline', [p1-1, p2-1], knotmultiplicities=[m1,m2])
+    ns.eye       = np.array([[1,0],[0,1]])
     ns.cp        = np.reshape(srf[:,:,:].swapaxes(0,1), (n1*n2, dim), order='F')
     ns.x_i       = 'cp_ni phi_n'
-    ns.u_i       = 'basis_ki ?lhs_k'
-    ns.X_i       = 'x_i + u_i'
     ns.lmbda     = 1
     ns.mu        = 1
 
@@ -478,28 +477,37 @@ def finitestrain_patch(bottom, right, top, left):
         constraints[d, :, 0] = (bottom[:,d] - srf[ :, 0,d])
         constraints[d, :,-1] = (top[   :,d] - srf[ :,-1,d])
 
-    # compute a first-guess to the displacement by solving a linear elasticity problem
-    ns.strain_ij = '.5 (u_i,j + u_j,i)'
-    ns.energy    = 'lmbda strain_ii strain_jj + 2 mu strain_ij strain_ij'
-    energy = domain.integral(ns.eval_('energy'), geometry=ns.x, degree=int(max(p1,p2)+1))
-    lhs0   = solver.optimize('lhs', energy,
-                             constrain=np.ndarray.flatten(constraints, order='C'),
-                             newtontol=state.controlpoint_absolute_tolerance)
+    # in order to iterate, we let t0=0 be current configuration and t1=1 our target configuration
+    # if solver divergeces (too large deformation), we will try with dt=0.5. If this still
+    # fails we will resort to dt=0.25 until a suitable small iterations size have been found
+    dt = 1
+    t0 = 0
+    t1 = 1
+    while t0 < 1:
+        dt = t1-t0
+        print(' ==== Quasi-static '+str(t0*100)+'-'+str(t1*100)+' % ====')
 
-    # define the non-linear finite strain problem formulation
-    ns.strain_ij = '.5 (u_i,j + u_j,i + u_k,i u_k,j)'
-    ns.energy    = 'lmbda strain_ii strain_jj + 2 mu strain_ij strain_ij'
+        # define the non-linear finite strain problem formulation
+        ns.cp        = np.reshape(srf[:,:,:].swapaxes(0,1), (n1*n2, dim), order='F')
+        ns.x_i       = 'cp_ni phi_n'   # geometric mapping (reference geometry)
+        ns.u_i       = 'basis_ki ?w_k' # displacement (unknown coefficients w_k)
+        ns.X_i       = 'x_i + u_i'     # displaced geometry
+        ns.strain_ij = '.5 (u_i,j + u_j,i + u_k,i u_k,j)'
+        ns.stress_ij = 'lmbda strain_kk eye_ij + 2 mu strain_ij'
 
-    # compute the displacements based on finitestrain theory (costly function call!)
-    energy = domain.integral(ns.eval_('energy'), geometry=ns.x, degree=int(max(p1,p2)*2))
-    lhs0   = solver.optimize('lhs', energy, lhs0=lhs0,
-                             constrain=np.ndarray.flatten(constraints, order='C'),
-                             newtontol=state.controlpoint_absolute_tolerance)
+        try:
+            residual = domain.integral(ns.eval_n('stress_ij basis_ni,j'), geometry=ns.X, degree=2*p)
+            cons = np.ndarray.flatten(constraints*dt, order='C')
+            lhs = solver.newton('w', residual, constrain=cons).solve(
+                                tol=state.controlpoint_absolute_tolerance, maxiter=8)
 
-    # store the results on a splipy object and return
-    geom   = lhs0.reshape((n2,n1,dim), order='F')
-    srf[:,:,:] += geom.swapaxes(0,1)
-
+            # store the results on a splipy object and continue
+            geom   = lhs.reshape((n2,n1,dim), order='F')
+            srf[:,:,:] += geom.swapaxes(0,1)
+            t0 += dt
+            t1 = 1
+        except solver.ModelError: # newton method fail to converge, try a smaller step length 'dt'
+            t1 = (t1+t0)/2
     return srf
 
 def thicken(curve, amount):
