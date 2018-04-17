@@ -107,6 +107,8 @@ def rotate_local_x_axis(xaxis=(1,0,0), normal=(0,0,1)):
     phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
     R1 = rotation_matrix(-theta, (0,0,1))
     R2 = rotation_matrix(-phi,   (0,1,0))
+    if len(xaxis) != 3: # typically 2D geometries
+        xaxis = [xaxis[0], xaxis[1], 0]
     xaxis = np.array([xaxis])
     xaxis = xaxis.dot(R1).dot(R2)
     # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
