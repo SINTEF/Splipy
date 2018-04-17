@@ -348,5 +348,36 @@ class TestCurveFactory(unittest.TestCase):
         self.assertTrue(np.allclose(crv(1), [1,0]))
         self.assertTrue(crv.order(0), 4)
 
+    def test_ellipse(self):
+        # test (x/1)^2 + (y/5)^2 = 1
+        c = CurveFactory.ellipse(1,5)
+        t = np.linspace(c.start(0), c.end(0), 25)
+        for pt in c.evaluate(t):
+            x,y = pt
+            self.assertAlmostEqual((x/1)**2 + (y/5)**2, 1)
+
+        # test (x-.3/1)^2 + (y-6/5)^2 = 1
+        c = CurveFactory.ellipse(1,5, center=(.3, 6))
+        t = np.linspace(c.start(0), c.end(0), 25)
+        for pt in c.evaluate(t):
+            x,y = pt
+            self.assertAlmostEqual(((x-.3)/1)**2 + ((y-6)/5)**2, 1)
+
+        # test ellipse along x=y axis
+        c = CurveFactory.ellipse(1,2, xaxis=(1,1))
+        t = np.linspace(c.start(0), c.end(0), 25)
+        for pt in c.evaluate(t):
+            x,y = pt
+            s = 1/sqrt(2)
+            self.assertAlmostEqual(((s*x + s*y)/1)**2 + ((s*x - s*y)/2)**2, 1)
+
+        # test ellipse in 3D
+        c = CurveFactory.ellipse(1,2, normal=(0,1,0), xaxis=(1,0,1))
+        t = np.linspace(c.start(0), c.end(0), 25)
+        for pt in c.evaluate(t):
+            x,y,z = pt
+            s = 1/sqrt(2)
+            self.assertAlmostEqual(((s*x + s*z)/1)**2 + ((s*x - s*z)/2)**2, 1)
+
 if __name__ == '__main__':
     unittest.main()
