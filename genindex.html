@@ -1,35 +1,23 @@
 
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Index &#8212; Splipy 1.1.0 documentation</title>
-    
+    <title>Index &#8212; Splipy 1.2.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head>
-  <body role="document">
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -39,7 +27,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -72,6 +60,7 @@
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="_">_</h2>
@@ -97,6 +86,8 @@
         <li><a href="basic_classes.html#splipy.Surface.__init__">(splipy.Surface method)</a>
 </li>
         <li><a href="basic_classes.html#splipy.Volume.__init__">(splipy.Volume method)</a>
+</li>
+        <li><a href="io.html#splipy.io.master.MasterIO.__init__">(splipy.io.master.MasterIO method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -176,6 +167,8 @@
       <li><a href="factories.html#splipy.curve_factory.circle">circle() (in module splipy.curve_factory)</a>
 </li>
       <li><a href="factories.html#splipy.curve_factory.circle_segment">circle_segment() (in module splipy.curve_factory)</a>
+</li>
+      <li><a href="factories.html#splipy.curve_factory.circle_segment_from_three_points">circle_segment_from_three_points() (in module splipy.curve_factory)</a>
 </li>
       <li><a href="basic_classes.html#splipy.BSplineBasis.clone">clone() (splipy.BSplineBasis method)</a>
 
@@ -263,6 +256,8 @@
         <li><a href="basic_classes.html#splipy.Volume.edges">(splipy.Volume method)</a>
 </li>
       </ul></li>
+      <li><a href="factories.html#splipy.curve_factory.ellipse">ellipse() (in module splipy.curve_factory)</a>
+</li>
       <li><a href="basic_classes.html#splipy.BSplineBasis.end">end() (splipy.BSplineBasis method)</a>
 
       <ul>
@@ -279,22 +274,24 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="basic_classes.html#splipy.Curve.error">error() (splipy.Curve method)</a>
 </li>
-      <li><a href="basic_classes.html#Curve.evaluate">evaluate() (Curve method)</a>
+      <li><a href="basic_classes.html#splipy.BSplineBasis.evaluate">evaluate() (splipy.BSplineBasis method)</a>
 
       <ul>
-        <li><a href="basic_classes.html#Surface.evaluate">(Surface method)</a>
-</li>
-        <li><a href="basic_classes.html#Volume.evaluate">(Volume method)</a>
-</li>
-        <li><a href="basic_classes.html#splipy.BSplineBasis.evaluate">(splipy.BSplineBasis method)</a>
+        <li><a href="basic_classes.html#splipy.Curve.evaluate">(splipy.Curve method)</a>
 </li>
         <li><a href="basic_classes.html#splipy.SplineObject.evaluate">(splipy.SplineObject method)</a>
 </li>
+        <li><a href="basic_classes.html#splipy.Surface.evaluate">(splipy.Surface method)</a>
+</li>
+        <li><a href="basic_classes.html#splipy.Volume.evaluate">(splipy.Volume method)</a>
+</li>
       </ul></li>
-      <li><a href="basic_classes.html#Surface.evalute_derivative">evalute_derivative() (Surface method)</a>
+      <li><a href="basic_classes.html#splipy.BSplineBasis.evaluate_old">evaluate_old() (splipy.BSplineBasis method)</a>
+</li>
+      <li><a href="basic_classes.html#splipy.Surface.evalute_derivative">evalute_derivative() (splipy.Surface method)</a>
 
       <ul>
-        <li><a href="basic_classes.html#Volume.evalute_derivative">(Volume method)</a>
+        <li><a href="basic_classes.html#splipy.Volume.evalute_derivative">(splipy.Volume method)</a>
 </li>
       </ul></li>
       <li><a href="factories.html#splipy.surface_factory.extrude">extrude() (in module splipy.surface_factory)</a>
@@ -481,29 +478,31 @@
         <li><a href="basic_classes.html#splipy.Volume.make_periodic">(splipy.Volume method)</a>
 </li>
       </ul></li>
-      <li><a href="basic_classes.html#splipy.Curve.make_splines_compatible">make_splines_compatible() (splipy.Curve method)</a>
+      <li><a href="basic_classes.html#splipy.Curve.make_splines_compatible">make_splines_compatible() (splipy.Curve class method)</a>
 
       <ul>
         <li><a href="basic_classes.html#splipy.SplineObject.make_splines_compatible">(splipy.SplineObject class method)</a>
 </li>
-        <li><a href="basic_classes.html#splipy.Surface.make_splines_compatible">(splipy.Surface method)</a>
+        <li><a href="basic_classes.html#splipy.Surface.make_splines_compatible">(splipy.Surface class method)</a>
 </li>
-        <li><a href="basic_classes.html#splipy.Volume.make_splines_compatible">(splipy.Volume method)</a>
+        <li><a href="basic_classes.html#splipy.Volume.make_splines_compatible">(splipy.Volume class method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="basic_classes.html#splipy.Curve.make_splines_identical">make_splines_identical() (splipy.Curve method)</a>
+      <li><a href="basic_classes.html#splipy.Curve.make_splines_identical">make_splines_identical() (splipy.Curve class method)</a>
 
       <ul>
         <li><a href="basic_classes.html#splipy.SplineObject.make_splines_identical">(splipy.SplineObject class method)</a>
 </li>
-        <li><a href="basic_classes.html#splipy.Surface.make_splines_identical">(splipy.Surface method)</a>
+        <li><a href="basic_classes.html#splipy.Surface.make_splines_identical">(splipy.Surface class method)</a>
 </li>
-        <li><a href="basic_classes.html#splipy.Volume.make_splines_identical">(splipy.Volume method)</a>
+        <li><a href="basic_classes.html#splipy.Volume.make_splines_identical">(splipy.Volume class method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="factories.html#splipy.curve_factory.manipulate">manipulate() (in module splipy.curve_factory)</a>
+</li>
+      <li><a href="io.html#splipy.io.master.MasterIO">MasterIO (class in splipy.io.master)</a>
 </li>
       <li><a href="basic_classes.html#splipy.BSplineBasis.matches">matches() (splipy.BSplineBasis method)</a>
 </li>
@@ -615,6 +614,8 @@
         <li><a href="basic_classes.html#splipy.Volume.raise_order">(splipy.Volume method)</a>
 </li>
       </ul></li>
+      <li><a href="io.html#splipy.io.master.MasterIO.read">read() (splipy.io.master.MasterIO method)</a>
+</li>
       <li><a href="basic_classes.html#splipy.Curve.rebuild">rebuild() (splipy.Curve method)</a>
 
       <ul>
@@ -735,16 +736,18 @@
       </ul></li>
       <li><a href="utils.html#splipy.utils.smooth.smooth">smooth() (in module splipy.utils.smooth)</a>
 </li>
+      <li><a href="basic_classes.html#splipy.BSplineBasis.snap">snap() (splipy.BSplineBasis method)</a>
+</li>
       <li><a href="factories.html#splipy.surface_factory.sphere">sphere() (in module splipy.surface_factory)</a>
 
       <ul>
         <li><a href="factories.html#splipy.volume_factory.sphere">(in module splipy.volume_factory)</a>
 </li>
       </ul></li>
-      <li><a href="basic_classes.html#splipy.SplineObject">SplineObject (class in splipy)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="basic_classes.html#splipy.SplineObject">SplineObject (class in splipy)</a>
+</li>
       <li><a href="factories.html#module-splipy.curve_factory">splipy.curve_factory (module)</a>
 </li>
       <li><a href="factories.html#module-splipy.surface_factory">splipy.surface_factory (module)</a>
@@ -854,6 +857,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="io.html#splipy.io.master.MasterIO.write">write() (splipy.io.master.MasterIO method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 
 
           </div>
@@ -861,17 +872,16 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-
-   
-
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -887,12 +897,12 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
     </div>
   </body>
 </html>

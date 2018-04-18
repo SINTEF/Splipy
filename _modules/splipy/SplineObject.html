@@ -1,34 +1,22 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>splipy.SplineObject &#8212; Splipy 1.1.0 documentation</title>
-    
+    <title>splipy.SplineObject &#8212; Splipy 1.2.0 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '1.1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
-  </head>
-  <body role="document">
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -38,7 +26,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.2.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -126,14 +114,18 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">controlpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">controlpoints</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">controlpoints</span><span class="p">]</span>
 
+            <span class="c1"># Add weight = 1 for identiy-mapping rational splines</span>
+            <span class="k">if</span> <span class="n">rational</span><span class="p">:</span>
+                <span class="n">controlpoints</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">controlpoints</span><span class="p">]</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">controlpoints</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">rational</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rational</span> <span class="o">=</span> <span class="n">rational</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
             <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">)</span>
-            <span class="n">ncomps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">+</span> <span class="n">rational</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">ncomps</span><span class="o">=</span><span class="n">ncomps</span><span class="p">)</span></div>
+            <span class="n">ncomps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">+</span> <span class="n">rational</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">ncomps</span><span class="o">=</span><span class="n">ncomps</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Check whether the given evaluation parameters are valid.</span>
@@ -141,6 +133,7 @@
 <span class="sd">        :raises ValueError: If the parameters are outside the domain</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">snap</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">b</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="ow">or</span> <span class="n">b</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Evaluation outside parametric domain&#39;</span><span class="p">)</span>
@@ -191,8 +184,8 @@
         <span class="c1"># Squeeze the singleton dimensions if we only have one point</span>
         <span class="k">if</span> <span class="n">squeeze</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">result</span></div>
+</div>
+        <span class="k">return</span> <span class="n">result</span>
 
 <div class="viewcode-block" id="SplineObject.derivative"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.derivative">[docs]</a>    <span class="k">def</span> <span class="nf">derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Evaluate the derivative of the object at the given parametric values.</span>
@@ -272,14 +265,14 @@
             <span class="n">W</span> <span class="o">=</span> <span class="n">non_derivative</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># W</span>
             <span class="n">Wd</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>         <span class="c1"># W&#39;</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
-                <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">W</span> <span class="o">-</span> <span class="n">non_derivative</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Wd</span> <span class="o">/</span> <span class="n">W</span> <span class="o">/</span> <span class="n">W</span><span class="p">;</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
+                <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">W</span> <span class="o">-</span> <span class="n">non_derivative</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Wd</span> <span class="o">/</span> <span class="n">W</span> <span class="o">/</span> <span class="n">W</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="c1"># Squeeze the singleton dimensions if we only have one point</span>
         <span class="k">if</span> <span class="n">squeeze</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">result</span></div>
+</div>
+        <span class="k">return</span> <span class="n">result</span>
 
 <div class="viewcode-block" id="SplineObject.get_derivative_spline"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.get_derivative_spline">[docs]</a>    <span class="k">def</span> <span class="nf">get_derivative_spline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Compute the controlpoints associated with the derivative spline object</span>
@@ -346,8 +339,8 @@
             <span class="n">constructor</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
             <span class="c1"># return derivative object</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">derivative_cps</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">derivative_cps</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span></div>
+            <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SplineObject.tangent"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.tangent">[docs]</a>    <span class="k">def</span> <span class="nf">tangent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -409,8 +402,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
             <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="n">speed</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
-
-        <span class="k">return</span> <span class="n">v</span> <span class="o">/</span> <span class="n">speed</span><span class="p">;</span></div>
+</div>
+        <span class="k">return</span> <span class="n">v</span> <span class="o">/</span> <span class="n">speed</span>
 
 <div class="viewcode-block" id="SplineObject.section"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.section">[docs]</a>    <span class="k">def</span> <span class="nf">section</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Returns a section from the object. A section can be any sub-object of</span>
@@ -459,8 +452,8 @@
             <span class="k">if</span> <span class="n">classes</span><span class="p">:</span>
                 <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
                 <span class="k">return</span> <span class="n">classes</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">SplineObject</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">]</span></div>
+            <span class="k">return</span> <span class="n">SplineObject</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">slices</span><span class="p">]</span>
 
 <div class="viewcode-block" id="SplineObject.set_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.set_order">[docs]</a>    <span class="k">def</span> <span class="nf">set_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">order</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Set the polynomial order of the object. If only one argument is</span>
@@ -475,8 +468,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">new</span> <span class="o">&gt;=</span> <span class="n">old</span> <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">())):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot lower order using set_order&quot;</span><span class="p">)</span>
 
-        <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span><span class="n">new</span> <span class="o">-</span> <span class="n">old</span> <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">())]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_order</span><span class="p">(</span><span class="o">*</span><span class="n">diff</span><span class="p">)</span></div>
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span><span class="n">new</span> <span class="o">-</span> <span class="n">old</span> <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">())]</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_order</span><span class="p">(</span><span class="o">*</span><span class="n">diff</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SplineObject.raise_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.raise_order">[docs]</a>    <span class="k">def</span> <span class="nf">raise_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">raises</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Raise the polynomial order of the object. If only one argument is</span>
@@ -512,8 +505,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">result</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="n">new_bases</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.lower_order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.lower_order">[docs]</a>    <span class="k">def</span> <span class="nf">lower_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">lowers</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Lower the polynomial order of the object. If only one argument is</span>
@@ -551,8 +544,8 @@
         <span class="n">constructor</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="c1"># return approximated object</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="n">new_bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_controlpts</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">new_bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_controlpts</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SplineObject.start"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Return the start of the parametric domain.</span>
@@ -566,8 +559,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
 <div class="viewcode-block" id="SplineObject.end"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Return the end of the parametric domain.</span>
@@ -580,8 +573,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">end</span><span class="p">()</span></div>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
 
 <div class="viewcode-block" id="SplineObject.order"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.order">[docs]</a>    <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Return polynomial order (degree + 1).</span>
@@ -595,8 +588,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">order</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">order</span></div>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">order</span>
 
 <div class="viewcode-block" id="SplineObject.knots"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.knots">[docs]</a>    <span class="k">def</span> <span class="nf">knots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Return knots vector</span>
@@ -613,8 +606,8 @@
         <span class="n">getter</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;knots&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">with_multiplicities</span> <span class="k">else</span> <span class="n">methodcaller</span><span class="p">(</span><span class="s1">&#39;knot_spans&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">getter</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">getter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">])</span></div>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">getter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">])</span>
 
 <div class="viewcode-block" id="SplineObject.reverse"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.reverse">[docs]</a>    <span class="k">def</span> <span class="nf">reverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Swap the direction of a parameter by making it go in the reverse</span>
@@ -634,8 +627,8 @@
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
         <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">direction</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.swap"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.swap">[docs]</a>    <span class="k">def</span> <span class="nf">swap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dir1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dir2</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Swaps two parameter directions.</span>
@@ -660,8 +653,8 @@
 
         <span class="c1"># Swap knot vectors</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">dir1</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.insert_knot"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.insert_knot">[docs]</a>    <span class="k">def</span> <span class="nf">insert_knot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knot</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Insert a new knot into the spline.</span>
@@ -684,8 +677,8 @@
             <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">*</span> <span class="n">C</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">direction</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">transpose_fix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">,</span> <span class="n">direction</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.refine"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.refine">[docs]</a>    <span class="k">def</span> <span class="nf">refine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ns</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Enrich the spline space by inserting knots into each existing knot</span>
@@ -724,8 +717,8 @@
             <span class="k">for</span> <span class="p">(</span><span class="n">k0</span><span class="p">,</span> <span class="n">k1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
                 <span class="n">new_knots</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">k0</span><span class="p">,</span> <span class="n">k1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">(</span><span class="n">new_knots</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.reparam"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.reparam">[docs]</a>    <span class="k">def</span> <span class="nf">reparam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Redefine the parametric domain. This function accepts two calling</span>
@@ -757,8 +750,8 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">reparam</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.translate"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.translate">[docs]</a>    <span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Translate (i.e. move) the object by a given distance.</span>
@@ -802,8 +795,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.scale"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.scale">[docs]</a>    <span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Scale, or magnify the object by a given amount.</span>
@@ -840,8 +833,8 @@
 
         <span class="c1"># store results</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.rotate"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.rotate">[docs]</a>    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">normal</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>
         <span class="sd">&quot;&quot;&quot;  Rotate the object around an axis.</span>
@@ -886,8 +879,8 @@
 
         <span class="c1"># store results</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.mirror"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">normal</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Mirror the object around a plane through the origin.</span>
@@ -931,8 +924,8 @@
 
         <span class="c1"># store results</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.project"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.project">[docs]</a>    <span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plane</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Projects the geometry onto a plane or axis.</span>
@@ -951,8 +944,8 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">keep</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.bounding_box"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.bounding_box">[docs]</a>    <span class="k">def</span> <span class="nf">bounding_box</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Gets the bounding box of a spline object, computed from the</span>
@@ -969,15 +962,15 @@
         <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]),</span>
-                           <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])))</span>
-        <span class="k">return</span> <span class="n">result</span></div>
+                           <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])))</span></div>
+        <span class="k">return</span> <span class="n">result</span>
 
 <div class="viewcode-block" id="SplineObject.center"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.center">[docs]</a>    <span class="k">def</span> <span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Gets the center of the domain</span>
-<span class="sd">        </span>
+
 <span class="sd">        For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where</span>
 
-<span class="sd">        .. math:: \\tilde{x} = \\frac{1}{L} \int_{t_0}^{t_1} x(t) \; dt </span>
+<span class="sd">        .. math:: \\tilde{x} = \\frac{1}{L} \int_{t_0}^{t_1} x(t) \; dt</span>
 
 <span class="sd">        and :math:`L=t_1-t_0` is the length of the parametric domain :math:`[t_0,t_1]`.</span>
 
@@ -1012,8 +1005,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">:</span>
             <span class="n">result</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/=</span> <span class="n">result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">result</span></div>
+</div>
+        <span class="k">return</span> <span class="n">result</span>
 
 <div class="viewcode-block" id="SplineObject.corners"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.corners">[docs]</a>    <span class="k">def</span> <span class="nf">corners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Return the corner control points.</span>
@@ -1034,8 +1027,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">args</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sections</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
-            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">args</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">order</span> <span class="o">==</span> <span class="s1">&#39;F&#39;</span> <span class="k">else</span> <span class="n">args</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">result</span></div>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">args</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">order</span> <span class="o">==</span> <span class="s1">&#39;F&#39;</span> <span class="k">else</span> <span class="n">args</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">result</span>
 
 <div class="viewcode-block" id="SplineObject.lower_periodic"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.lower_periodic">[docs]</a>    <span class="k">def</span> <span class="nf">lower_periodic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">periodic</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Sets the periodicity of the spline object in the given direction,</span>
@@ -1056,8 +1049,8 @@
             <span class="n">b</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">periodic</span> <span class="o">&gt;</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot raise periodicity&#39;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.set_dimension"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.set_dimension">[docs]</a>    <span class="k">def</span> <span class="nf">set_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_dim</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Sets the physical dimension of the object. If increased, the new</span>
@@ -1075,14 +1068,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">dim</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="n">new_dim</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.periodic"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.periodic">[docs]</a>    <span class="k">def</span> <span class="nf">periodic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns true if the spline object is periodic in the given parametric direction&quot;&quot;&quot;</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">check_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span>
 
 <div class="viewcode-block" id="SplineObject.force_rational"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.force_rational">[docs]</a>    <span class="k">def</span> <span class="nf">force_rational</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Force a rational representation of the object.</span>
@@ -1096,8 +1089,8 @@
             <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">pardim</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rational</span> <span class="o">=</span> <span class="mi">1</span>
-
-        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="SplineObject.split"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knots</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Split an object into two or more separate representations with C0</span>
@@ -1175,8 +1168,8 @@
         <span class="n">cp</span> <span class="o">=</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span> <span class="n">cp_slice</span> <span class="p">]</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">bases</span> <span class="o">+</span> <span class="p">[</span><span class="n">cp</span><span class="p">,</span> <span class="n">splitting_obj</span><span class="o">.</span><span class="n">rational</span><span class="p">]</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spline_object</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="n">results</span></div>
+</div>
+        <span class="k">return</span> <span class="n">results</span>
 
 <div class="viewcode-block" id="SplineObject.make_periodic"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.make_periodic">[docs]</a>    <span class="k">def</span> <span class="nf">make_periodic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">continuity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;  Make the spline object periodic in a given parametric direction.</span>
@@ -1227,8 +1220,8 @@
 
         <span class="c1"># search for the right subclass constructor, i.e. Volume, Surface or Curve</span>
         <span class="n">constructor</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SplineObject</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">_intended_pardim</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)]</span>
-        <span class="n">constructor</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="n">constructor</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">pardim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1238,10 +1231,10 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
 
 <div class="viewcode-block" id="SplineObject.clone"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.clone">[docs]</a>    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Clone the object.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+        <span class="sd">&quot;&quot;&quot;Clone the object.&quot;&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-    <span class="n">__call__</span> <span class="o">=</span> <span class="n">evaluate</span>
+    <span class="fm">__call__</span> <span class="o">=</span> <span class="n">evaluate</span>
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the number of control points (basis functions) for the object.&quot;&quot;&quot;</span>
@@ -1343,8 +1336,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="n">__ifloordiv__</span> <span class="o">=</span> <span class="n">__itruediv__</span>  <span class="c1"># integer division (should not distinguish)</span>
-    <span class="n">__idiv__</span> <span class="o">=</span> <span class="n">__itruediv__</span>  <span class="c1"># python2 compatibility</span>
+    <span class="fm">__ifloordiv__</span> <span class="o">=</span> <span class="fm">__itruediv__</span>  <span class="c1"># integer division (should not distinguish)</span>
+    <span class="n">__idiv__</span> <span class="o">=</span> <span class="fm">__itruediv__</span>  <span class="c1"># python2 compatibility</span>
 
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -1372,8 +1365,8 @@
         <span class="n">new_obj</span> <span class="o">/=</span> <span class="n">x</span>
         <span class="k">return</span> <span class="n">new_obj</span>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="SplineObject.make_splines_compatible"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.make_splines_compatible">[docs]</a>    <span class="k">def</span> <span class="nf">make_splines_compatible</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spline1</span><span class="p">,</span> <span class="n">spline2</span><span class="p">):</span>
+<div class="viewcode-block" id="SplineObject.make_splines_compatible"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.make_splines_compatible">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_splines_compatible</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">spline1</span><span class="p">,</span> <span class="n">spline2</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Ensure that two splines are compatible.</span>
 
 <span class="sd">        This will manipulate one or both to ensure that they are both rational</span>
@@ -1391,11 +1384,11 @@
         <span class="c1"># make both in the same geometric space</span>
         <span class="k">if</span> <span class="n">spline1</span><span class="o">.</span><span class="n">dimension</span> <span class="o">&gt;</span> <span class="n">spline2</span><span class="o">.</span><span class="n">dimension</span><span class="p">:</span>
             <span class="n">spline2</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="n">spline1</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">spline1</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="n">spline2</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span></div>
+        <span class="k">else</span><span class="p">:</span></div>
+            <span class="n">spline1</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="n">spline2</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="SplineObject.make_splines_identical"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.make_splines_identical">[docs]</a>    <span class="k">def</span> <span class="nf">make_splines_identical</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spline1</span><span class="p">,</span> <span class="n">spline2</span><span class="p">):</span>
+<div class="viewcode-block" id="SplineObject.make_splines_identical"><a class="viewcode-back" href="../../basic_classes.html#splipy.SplineObject.make_splines_identical">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_splines_identical</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">spline1</span><span class="p">,</span> <span class="n">spline2</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Ensure that two splines have identical discretization.</span>
 
 <span class="sd">        This will first make them compatible (see</span>
@@ -1445,8 +1438,8 @@
                 <span class="n">c1</span> <span class="o">=</span> <span class="n">b1</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
                 <span class="n">c2</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">c1</span> <span class="o">&gt;</span> <span class="n">c2</span><span class="p">:</span>
-                    <span class="n">m</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">c1</span><span class="o">-</span><span class="n">c2</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">c2</span><span class="p">)</span> <span class="c1"># c1=np.inf if knot does not exist</span>
-                    <span class="n">spline1</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">([</span><span class="n">k</span><span class="p">]</span><span class="o">*</span><span class="n">m</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">i</span><span class="p">)</span></div></div>
+                    <span class="n">m</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">c1</span><span class="o">-</span><span class="n">c2</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">c2</span><span class="p">)</span> <span class="c1"># c1=np.inf if knot does not exist</span></div></div>
+                    <span class="n">spline1</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">([</span><span class="n">k</span><span class="p">]</span><span class="o">*</span><span class="n">m</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
 
 </pre></div>
 
@@ -1457,12 +1450,14 @@
         <div class="sphinxsidebarwrapper">
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -1478,13 +1473,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Splipy 1.2.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
     </div>
   </body>
 </html>

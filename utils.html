@@ -1,34 +1,22 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Utilities &#8212; Splipy 1.1.0 documentation</title>
-    
+    <title>Utilities &#8212; Splipy 1.2.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head>
-  <body role="document">
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -38,7 +26,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -62,8 +50,8 @@ points.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>pts</strong> (<em>numpy.array</em>) &#8211; A set of points</li>
-<li><strong>normalize</strong> (<em>bool</em>) &#8211; Whether to normalize the parametrization</li>
+<li><strong>pts</strong> (<em>numpy.array</em>) – A set of points</li>
+<li><strong>normalize</strong> (<em>bool</em>) – Whether to normalize the parametrization</li>
 </ul>
 </td>
 </tr>
@@ -85,7 +73,7 @@ points.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><code class="xref py py-class docutils literal"><span class="pre">splipy.Curve</span></code></a>) &#8211; The curve</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Curve</span></code></a>) – The curve</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The curve points</td>
 </tr>
@@ -111,11 +99,11 @@ number of corners or fewer corners.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>X</strong> (<em>numpy.array</em>) &#8211; A traced outline forming a discrete closed curve
+<li><strong>X</strong> (<em>numpy.array</em>) – A traced outline forming a discrete closed curve
 (size <em>n</em> × 2)</li>
-<li><strong>L</strong> (<em>float</em>) &#8211; Controls the scale at which corners are measured.</li>
-<li><strong>R</strong> (<em>float</em>) &#8211; Controls how close corners can appear.</li>
-<li><strong>D</strong> (<em>float</em>) &#8211; The lower bound for the corner metric. Corner candidates
+<li><strong>L</strong> (<em>float</em>) – Controls the scale at which corners are measured.</li>
+<li><strong>R</strong> (<em>float</em>) – Controls how close corners can appear.</li>
+<li><strong>D</strong> (<em>float</em>) – The lower bound for the corner metric. Corner candidates
 with lower metric than this are rejected.</li>
 </ul>
 </td>
@@ -141,11 +129,11 @@ will be used to create the surface by Coons Patch.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) &#8211; Name of image file to read</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – Name of image file to read</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">B-spline surface</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><code class="xref py py-class docutils literal"><span class="pre">splipy.Surface</span></code></a></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Surface</span></code></a></td>
 </tr>
 </tbody>
 </table>
@@ -160,11 +148,11 @@ mask image.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) &#8211; Name of image file to read</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – Name of image file to read</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">All curves generated by tracing the black/white edges</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">[<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><code class="xref py py-class docutils literal"><span class="pre">splipy.Curve</span></code></a>]</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">[<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Curve</span></code></a>]</td>
 </tr>
 </tbody>
 </table>
@@ -180,16 +168,16 @@ grayscale image.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>filename</strong> (<em>str</em>) &#8211; Name of image file to read</li>
-<li><strong>N</strong> (<em></em><em>(</em><em>int</em><em>,</em><em>int</em><em>)</em><em></em>) &#8211; Number of controlpoints in u-direction</li>
-<li><strong>p</strong> (<em></em><em>(</em><em>int</em><em>,</em><em>int</em><em>)</em><em></em>) &#8211; Polynomial order (degree+1)</li>
+<li><strong>filename</strong> (<em>str</em>) – Name of image file to read</li>
+<li><strong>N</strong> (<em>(</em><em>int</em><em>,</em><em>int</em><em>)</em>) – Number of controlpoints in u-direction</li>
+<li><strong>p</strong> (<em>(</em><em>int</em><em>,</em><em>int</em><em>)</em>) – Polynomial order (degree+1)</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Normalized (all values between 0 and 1) heightmap approximation</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><code class="xref py py-class docutils literal"><span class="pre">splipy.Surface</span></code></a></p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Surface</span></code></a></p>
 </td>
 </tr>
 </tbody>
@@ -210,10 +198,10 @@ arctan function.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal"><span class="pre">splipy.SplineObject</span></code></a>) &#8211; The object to refine</li>
-<li><strong>S</strong> (<em>float</em>) &#8211; The slope of the arctan function.</li>
-<li><strong>n</strong> (<em>int</em>) &#8211; The number of knots to insert</li>
-<li><strong>direction</strong> &#8211; The direction to refine in</li>
+<li><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>) – The object to refine</li>
+<li><strong>S</strong> (<em>float</em>) – The slope of the arctan function.</li>
+<li><strong>n</strong> (<em>int</em>) – The number of knots to insert</li>
+<li><strong>direction</strong> – The direction to refine in</li>
 </ul>
 </td>
 </tr>
@@ -230,11 +218,11 @@ arctan function.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal"><span class="pre">splipy.SplineObject</span></code></a>) &#8211; The object to refine</li>
-<li><strong>alpha</strong> (<em>float</em>) &#8211; The length ratio between two sequential knot segments</li>
-<li><strong>n</strong> (<em>int</em>) &#8211; The number of knots to insert</li>
-<li><strong>direction</strong> &#8211; The direction to refine in</li>
-<li><strong>reverse</strong> (<em>bool</em>) &#8211; Set to <cite>True</cite> to refine towards the other end</li>
+<li><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>) – The object to refine</li>
+<li><strong>alpha</strong> (<em>float</em>) – The length ratio between two sequential knot segments</li>
+<li><strong>n</strong> (<em>int</em>) – The number of knots to insert</li>
+<li><strong>direction</strong> – The direction to refine in</li>
+<li><strong>reverse</strong> (<em>bool</em>) – Set to <cite>True</cite> to refine towards the other end</li>
 </ul>
 </td>
 </tr>
@@ -255,15 +243,15 @@ direction, or a single integer for uniform sudivision.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>objs</strong> &#8211; Objects to split</li>
-<li><strong>n</strong> (<em>int</em><em> or </em><em></em><em>[</em><em>int</em><em>]</em><em></em>) &#8211; Number of subdivisions to perform</li>
+<li><strong>objs</strong> – Objects to split</li>
+<li><strong>n</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – Number of subdivisions to perform</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">New objects</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">[<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal"><span class="pre">splipy.SplineObject</span></code></a>]</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">[<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>]</p>
 </td>
 </tr>
 </tbody>
@@ -284,7 +272,7 @@ are kept unchanged, and any rational weights are kept unchanged.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal"><span class="pre">splipy.SplineObject</span></code></a>) &#8211; The object to smooth</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>) – The object to smooth</td>
 </tr>
 </tbody>
 </table>
@@ -319,12 +307,14 @@ are kept unchanged, and any rational weights are kept unchanged.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -340,12 +330,12 @@ are kept unchanged, and any rational weights are kept unchanged.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.1.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
     </div>
   </body>
 </html>
