@@ -441,7 +441,7 @@ def finitestrain_patch(bottom, right, top, left):
     # create an initial mesh (correct corners) which we will morph into the right one
     p1 = bottom.order(0)
     p2 = left.order(0)
-    p  = int(max(p1,p2))
+    p  = max(p1,p2)
     linear = BSplineBasis(2)
     srf = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]])
     srf.raise_order(p1-2, p2-2)
