@@ -1,22 +1,34 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Factories &#8212; Splipy 1.2.0 documentation</title>
+    
+    <title>Factories &#8212; Splipy 1.1.0 documentation</title>
+    
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head><body>
+  </head>
+  <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -26,7 +38,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -44,7 +56,7 @@
 <dt id="splipy.curve_factory.Boundary">
 <em class="property">class </em><code class="descclassname">splipy.curve_factory.</code><code class="descname">Boundary</code><a class="reference internal" href="_modules/splipy/curve_factory.html#Boundary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.Boundary" title="Permalink to this definition">¶</a></dt>
 <dd><p>Enumeration representing different boundary conditions used in
-<a class="reference internal" href="#splipy.curve_factory.interpolate" title="splipy.curve_factory.interpolate"><code class="xref py py-func docutils literal notranslate"><span class="pre">interpolate()</span></code></a>.</p>
+<a class="reference internal" href="#splipy.curve_factory.interpolate" title="splipy.curve_factory.interpolate"><code class="xref py py-func docutils literal"><span class="pre">interpolate()</span></code></a>.</p>
 <dl class="attribute">
 <dt id="splipy.curve_factory.Boundary.FREE">
 <code class="descname">FREE</code><em class="property"> = 1</em><a class="headerlink" href="#splipy.curve_factory.Boundary.FREE" title="Permalink to this definition">¶</a></dt>
@@ -92,9 +104,9 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>a</strong> (<em>array-like</em>) – Start point</li>
-<li><strong>b</strong> (<em>array-like</em>) – End point</li>
-<li><strong>relative</strong> (<em>bool</em>) – Whether <em>b</em> is relative to <em>a</em></li>
+<li><strong>a</strong> (<em>array-like</em>) &#8211; Start point</li>
+<li><strong>b</strong> (<em>array-like</em>) &#8211; End point</li>
+<li><strong>relative</strong> (<em>bool</em>) &#8211; Whether <em>b</em> is relative to <em>a</em></li>
 </ul>
 </td>
 </tr>
@@ -117,10 +129,9 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>points</strong> (<em>[</em><em>array-like</em><em>]</em>) – The points to interpolate</li>
-<li><strong>relative</strong> (<em>bool</em>) – If controlpoints are interpreted as relative to the
+<li><strong>points</strong> (<em></em><em>[</em><em>array-like</em><em>]</em><em></em>) &#8211; The points to interpolate</li>
+<li><strong>relative</strong> (<em>bool</em>) &#8211; If controlpoints are interpreted as relative to the 
 previous one</li>
-<li><strong>t</strong> (<em>[</em><em>float</em><em>]</em>) – specify parametric interpolation points (the knot vector)</li>
 </ul>
 </td>
 </tr>
@@ -143,10 +154,10 @@ previous one</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>n</strong> (<em>int</em>) – Number of sides and vertices</li>
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>center</strong> (<em>array-like</em>) – local origin</li>
-<li><strong>normal</strong> (<em>array-like</em>) – local normal</li>
+<li><strong>n</strong> (<em>int</em>) &#8211; Number of sides and vertices</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; local origin</li>
+<li><strong>normal</strong> (<em>array-like</em>) &#8211; local normal</li>
 </ul>
 </td>
 </tr>
@@ -157,8 +168,8 @@ previous one</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><strong>ValueError</strong> – If radius is not positive</li>
-<li><strong>ValueError</strong> – If <em>n</em> &lt; 3</li>
+<li><strong>ValueError</strong> &#8211; If radius is not positive</li>
+<li><strong>ValueError</strong> &#8211; If <em>n</em> &lt; 3</li>
 </ul>
 </td>
 </tr>
@@ -168,18 +179,17 @@ previous one</li>
 
 <dl class="function">
 <dt id="splipy.curve_factory.circle">
-<code class="descclassname">splipy.curve_factory.</code><code class="descname">circle</code><span class="sig-paren">(</span><em>r=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>normal=(0</em>, <em>0</em>, <em>1)</em>, <em>type='p2C0'</em>, <em>xaxis=(1</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#circle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.circle" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.curve_factory.</code><code class="descname">circle</code><span class="sig-paren">(</span><em>r=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>normal=(0</em>, <em>0</em>, <em>1)</em>, <em>type='p2C0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#circle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.circle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a circle.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>center</strong> (<em>array-like</em>) – local origin</li>
-<li><strong>normal</strong> (<em>array-like</em>) – local normal</li>
-<li><strong>type</strong> (<em>string</em>) – The type of parametrization (‘p2C0’ or ‘p4C1’)</li>
-<li><strong>xaxis</strong> (<em>array-like</em>) – direction of sem, i.e. parametric start point t=0</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; local origin</li>
+<li><strong>normal</strong> (<em>array-like</em>) &#8211; local normal</li>
+<li><strong>type</strong> (<em>string</em>) &#8211; The type of parametrization (&#8216;p2C0&#8217; or &#8216;p4C1&#8217;)</li>
 </ul>
 </td>
 </tr>
@@ -189,60 +199,7 @@ previous one</li>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – If radius is not positive</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="splipy.curve_factory.ellipse">
-<code class="descclassname">splipy.curve_factory.</code><code class="descname">ellipse</code><span class="sig-paren">(</span><em>r1=1</em>, <em>r2=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>normal=(0</em>, <em>0</em>, <em>1)</em>, <em>type='p2C0'</em>, <em>xaxis=(1</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#ellipse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.ellipse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create an ellipse</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r1</strong> (<em>float</em>) – Radius along xaxis</li>
-<li><strong>r2</strong> (<em>float</em>) – Radius orthogonal to xaxis</li>
-<li><strong>center</strong> (<em>array-like</em>) – local origin</li>
-<li><strong>normal</strong> (<em>array-like</em>) – local normal</li>
-<li><strong>type</strong> (<em>string</em>) – The type of parametrization (‘p2C0’ or ‘p4C1’)</li>
-<li><strong>xaxis</strong> (<em>array-like</em>) – direction of sem, i.e. parametric start point t=0</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A periodic, quadratic rational curve</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – If radius is not positive</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="splipy.curve_factory.circle_segment_from_three_points">
-<code class="descclassname">splipy.curve_factory.</code><code class="descname">circle_segment_from_three_points</code><span class="sig-paren">(</span><em>x0</em>, <em>x1</em>, <em>x2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#circle_segment_from_three_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.circle_segment_from_three_points" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a circle segment going from the point x0 to x2 through x1</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x0</strong> (<em>vector-like</em>) – The start point (2D or 3D point)</li>
-<li><strong>x1</strong> (<em>vector-like</em>) – An intermediate point (2D or 3D)</li>
-<li><strong>x2</strong> (<em>vector-like</em>) – The end point (2D or 3D)</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve">Curve</a></p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; If radius is not positive</p>
 </td>
 </tr>
 </tbody>
@@ -252,16 +209,16 @@ previous one</li>
 <dl class="function">
 <dt id="splipy.curve_factory.circle_segment">
 <code class="descclassname">splipy.curve_factory.</code><code class="descname">circle_segment</code><span class="sig-paren">(</span><em>theta</em>, <em>r=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>normal=(0</em>, <em>0</em>, <em>1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#circle_segment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.circle_segment" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a circle segment starting parallel to the rotated x-axis.</p>
+<dd><p>Create a circle segment starting paralell to the rotated x-axis.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>theta</strong> (<em>float</em>) – Angle in radians</li>
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>center</strong> (<em>array-like</em>) – circle segment center</li>
-<li><strong>normal</strong> (<em>array-like</em>) – normal vector to the plane that contains circle</li>
+<li><strong>theta</strong> (<em>float</em>) &#8211; Angle in radians</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; circle segment center</li>
+<li><strong>normal</strong> (<em>array-like</em>) &#8211; normal vector to the plane that contains circle</li>
 </ul>
 </td>
 </tr>
@@ -272,8 +229,8 @@ previous one</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><strong>ValueError</strong> – If radius is not positive</li>
-<li><strong>ValueError</strong> – If theta is not in the range <em>[-2pi, 2pi]</em></li>
+<li><strong>ValueError</strong> &#8211; If radius is not positive</li>
+<li><strong>ValueError</strong> &#8211; If theta is not in the range <em>[-2pi, 2pi]</em></li>
 </ul>
 </td>
 </tr>
@@ -290,10 +247,10 @@ previous one</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>matrix-like</em>) – Matrix <em>X[i,j]</em> of interpolation points <em>xi</em> with
+<li><strong>x</strong> (<em>matrix-like</em>) &#8211; Matrix <em>X[i,j]</em> of interpolation points <em>xi</em> with
 components <em>j</em></li>
-<li><strong>basis</strong> (<a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a>) – Basis on which to interpolate</li>
-<li><strong>t</strong> (<em>array-like</em>) – parametric values at interpolation points; defaults to
+<li><strong>basis</strong> (<a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a>) &#8211; Basis on which to interpolate</li>
+<li><strong>t</strong> (<em>array-like</em>) &#8211; parametric values at interpolation points; defaults to
 Greville points if not provided</li>
 </ul>
 </td>
@@ -317,11 +274,11 @@ Greville points if not provided</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>matrix-like</em>) – Matrix <em>X[i,j]</em> of interpolation points <em>xi</em> with
+<li><strong>x</strong> (<em>matrix-like</em>) &#8211; Matrix <em>X[i,j]</em> of interpolation points <em>xi</em> with
 components <em>j</em>. The number of points must be equal to or larger than
 the number of basis functions in <em>basis</em></li>
-<li><strong>basis</strong> (<a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a>) – Basis on which to interpolate</li>
-<li><strong>t</strong> (<em>array-like</em>) – parametric values at evaluation points</li>
+<li><strong>basis</strong> (<a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a>) &#8211; Basis on which to interpolate</li>
+<li><strong>t</strong> (<em>array-like</em>) &#8211; parametric values at evaluation points</li>
 </ul>
 </td>
 </tr>
@@ -339,7 +296,7 @@ the number of basis functions in <em>basis</em></li>
 <dt id="splipy.curve_factory.cubic_curve">
 <code class="descclassname">splipy.curve_factory.</code><code class="descname">cubic_curve</code><span class="sig-paren">(</span><em>x</em>, <em>boundary=1</em>, <em>t=None</em>, <em>tangents=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/curve_factory.html#cubic_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.curve_factory.cubic_curve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform cubic spline interpolation on a provided basis.</p>
-<p>The valid boundary conditions are enumerated in <a class="reference internal" href="#splipy.curve_factory.Boundary" title="splipy.curve_factory.Boundary"><code class="xref py py-class docutils literal notranslate"><span class="pre">Boundary</span></code></a>. The
+<p>The valid boundary conditions are enumerated in <a class="reference internal" href="#splipy.curve_factory.Boundary" title="splipy.curve_factory.Boundary"><code class="xref py py-class docutils literal"><span class="pre">Boundary</span></code></a>. The
 meaning of the <cite>tangents</cite> parameter depends on the specified boundary
 condition:</p>
 <ul class="simple">
@@ -352,12 +309,12 @@ condition:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>matrix-like</em>) – Matrix <em>X[i,j]</em> of interpolation points <em>x_i</em> with
+<li><strong>x</strong> (<em>matrix-like</em>) &#8211; Matrix <em>X[i,j]</em> of interpolation points <em>x_i</em> with
 components <em>j</em></li>
-<li><strong>boundary</strong> (<em>int</em>) – Any value from <a class="reference internal" href="#splipy.curve_factory.Boundary" title="splipy.curve_factory.Boundary"><code class="xref py py-class docutils literal notranslate"><span class="pre">Boundary</span></code></a>.</li>
-<li><strong>t</strong> (<em>array-like</em>) – parametric values at interpolation points, defaults
+<li><strong>boundary</strong> (<em>int</em>) &#8211; Any value from <a class="reference internal" href="#splipy.curve_factory.Boundary" title="splipy.curve_factory.Boundary"><code class="xref py py-class docutils literal"><span class="pre">Boundary</span></code></a>.</li>
+<li><strong>t</strong> (<em>array-like</em>) &#8211; parametric values at interpolation points, defaults
 to Euclidean distance between evaluation points</li>
-<li><strong>tangents</strong> (<em>matrix-like</em>) – Tangent information according to the boundary
+<li><strong>tangents</strong> (<em>matrix-like</em>) &#8211; Tangent information according to the boundary
 conditions.</li>
 </ul>
 </td>
@@ -381,12 +338,12 @@ conditions.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>pts</strong> (<em>[</em><em>array-like</em><em>]</em>) – list of control-points. In addition to a starting
+<li><strong>pts</strong> (<em></em><em>[</em><em>array-like</em><em>]</em><em></em>) &#8211; list of control-points. In addition to a starting
 point we need three points per bezier interval for cubic splines and
 two points for quadratic splines</li>
-<li><strong>quadratic</strong> (<em>bool</em>) – True if a quadratic spline is to be returned, False
+<li><strong>quadratic</strong> (<em>bool</em>) &#8211; True if a quadratic spline is to be returned, False
 if a cubic spline is to be returned</li>
-<li><strong>relative</strong> (<em>bool</em>) – If controlpoints are interpreted as relative to the
+<li><strong>relative</strong> (<em>bool</em>) &#8211; If controlpoints are interpreted as relative to the 
 previous one</li>
 </ul>
 </td>
@@ -414,9 +371,9 @@ previous one</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>normalized</strong> – If velocity and acceleration terms should be normalized
+<li><strong>normalized</strong> &#8211; If velocity and acceleration terms should be normalized
 to have length 1</li>
-<li><strong>vectorized</strong> – True if <em>f</em> is expressed in terms of vectorized
+<li><strong>vectorized</strong> &#8211; True if <em>f</em> is expressed in terms of vectorized
 operations. The method is sped up whenever this is used.</li>
 </ul>
 </td>
@@ -424,10 +381,10 @@ operations. The method is sped up whenever this is used.</li>
 </tbody>
 </table>
 <p>Examples:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">scale_by_two</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">scale_by_two</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span>
 
-<span class="n">new_curve</span> <span class="o">=</span> <span class="n">manipulate</span><span class="p">(</span><span class="n">old_curve</span><span class="p">,</span> <span class="n">scale_by_two</span><span class="p">)</span>
+<span class="n">new_curve</span> <span class="o">=</span> <span class="n">manipulate</span><span class="p">(</span><span class="n">old_curve</span><span class="p">,</span> <span class="n">scale_by_two</span><span class="p">)</span> 
 <span class="n">new_curve</span> <span class="o">=</span> <span class="n">old_curve</span> <span class="o">*</span> <span class="mi">2</span> <span class="c1"># will give the same result</span>
 
 <span class="k">def</span> <span class="nf">move_3_to_right</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
@@ -462,15 +419,15 @@ knot vector with as optimized knot locations as possible.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>function</em>) – callable function which takes as input a vector of evaluation
+<li><strong>x</strong> (<em>function</em>) &#8211; callable function which takes as input a vector of evaluation
 points t and gives as output a matrix x where x[i,j] is component j evaluated
 at point t[i]</li>
-<li><strong>t0</strong> (<em>float</em>) – start of parametric domain</li>
-<li><strong>t1</strong> (<em>float</em>) – end of parametric domain</li>
-<li><strong>rtol</strong> (<em>float</em>) – relative tolerance for stopping criterium. It is defined
+<li><strong>t0</strong> (<em>float</em>) &#8211; start of parametric domain</li>
+<li><strong>t1</strong> (<em>float</em>) &#8211; end of parametric domain</li>
+<li><strong>rtol</strong> (<em>float</em>) &#8211; relative tolerance for stopping criterium. It is defined
 to be ||e||_L2 / D, where D is the length of the curve and ||e||_L2 is the
 L2-error (see Curve.error)</li>
-<li><strong>atol</strong> (<em>float</em>) – absolute tolerance for stopping criterium. It is defined to
+<li><strong>atol</strong> (<em>float</em>) &#8211; absolute tolerance for stopping criterium. It is defined to
 be the maximal distance between the curve approximation and the exact curve</li>
 </ul>
 </td>
@@ -481,10 +438,9 @@ be the maximal distance between the curve approximation and the exact curve</li>
 </tbody>
 </table>
 <p>Examples:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">splipy.curve_factory</span> <span class="k">as</span> <span class="nn">curve_factory</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="c1"># gives a B-spline approximation to the circle with arclength parametrization</span>
+<span class="c1"># gives a B-spline approximation to the circle with arclength parametrization;</span>
 <span class="c1"># unlike curve_factory.circle which is exact, but not arclength</span>
 <span class="k">def</span> <span class="nf">arclength_circle</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="p">)</span><span class="o">.</span><span class="n">T</span>
@@ -494,9 +450,10 @@ be the maximal distance between the curve approximation and the exact curve</li>
 <span class="c1"># approximates a difficult function with wild behaviour around t=0, but</span>
 <span class="c1"># this is overcome by a higher knot density around this point</span>
 <span class="k">def</span> <span class="nf">one_over_t</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
-    <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-8</span> <span class="c1"># to avoid 1/0 we add a small epsilon</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">8</span> <span class="c1"># to avoid 1/0 we add a small epsilon</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">t</span><span class="o">+</span><span class="n">eps</span><span class="p">)]</span> <span class="p">)</span><span class="o">.</span><span class="n">T</span>
-<span class="n">crv</span> <span class="o">=</span> <span class="n">curve_factory</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">one_over_t</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+<span class="n">crv</span> <span class="o">=</span> <span class="n">curve_factory</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">one_over_t</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span>
 <span class="nb">print</span> <span class="n">crv</span> <span class="c1"># first knot span is ~1e-9, last knot is ~1e-1</span>
 
 <span class="c1"># one can specify the target curve in terms of existing Curve objects</span>
@@ -522,8 +479,8 @@ be the maximal distance between the curve approximation and the exact curve</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>size</strong> (<em>float</em>) – Size(s), either a single scalar or a tuple of scalars per axis</li>
-<li><strong>lower_left</strong> (<em>array-like</em>) – local origin, the lower left corner of the square</li>
+<li><strong>size</strong> (<em>float</em>) &#8211; Size(s), either a single scalar or a tuple of scalars per axis</li>
+<li><strong>lower_left</strong> (<em>array-like</em>) &#8211; local origin, the lower left corner of the square</li>
 </ul>
 </td>
 </tr>
@@ -539,7 +496,7 @@ be the maximal distance between the curve approximation and the exact curve</li>
 
 <dl class="function">
 <dt id="splipy.surface_factory.disc">
-<code class="descclassname">splipy.surface_factory.</code><code class="descname">disc</code><span class="sig-paren">(</span><em>r=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>normal=(0</em>, <em>0</em>, <em>1)</em>, <em>type='radial'</em>, <em>xaxis=(1</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#disc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.disc" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">disc</code><span class="sig-paren">(</span><em>r=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>normal=(0</em>, <em>0</em>, <em>1)</em>, <em>type='radial'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#disc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.disc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a circular disc. The <em>type</em> parameter distinguishes between
 different parametrizations.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -547,11 +504,10 @@ different parametrizations.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>center</strong> (<em>array-like</em>) – local origin</li>
-<li><strong>normal</strong> (<em>array-like</em>) – local normal</li>
-<li><strong>type</strong> (<em>string</em>) – The type of parametrization (‘radial’ or ‘square’)</li>
-<li><strong>xaxis</strong> (<em>array-like</em>) – direction of sem, i.e. parametric start point v=0</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; local origin</li>
+<li><strong>normal</strong> (<em>array-like</em>) &#8211; local normal</li>
+<li><strong>type</strong> (<em>string</em>) &#8211; The type of parametrization (&#8216;radial&#8217; or &#8216;square&#8217;)</li>
 </ul>
 </td>
 </tr>
@@ -567,17 +523,15 @@ different parametrizations.</p>
 
 <dl class="function">
 <dt id="splipy.surface_factory.sphere">
-<code class="descclassname">splipy.surface_factory.</code><code class="descname">sphere</code><span class="sig-paren">(</span><em>r=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>zaxis=(0</em>, <em>0</em>, <em>1)</em>, <em>xaxis=(1</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#sphere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.sphere" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">sphere</code><span class="sig-paren">(</span><em>r=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#sphere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.sphere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a spherical shell.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>center</strong> (<em>array-like</em>) – Local origin of the sphere</li>
-<li><strong>zaxis</strong> (<em>array-like</em>) – direction of the north/south pole of the parametrization</li>
-<li><strong>xaxis</strong> (<em>array-like</em>) – direction of the longitudal sem</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; Local origin of the sphere</li>
 </ul>
 </td>
 </tr>
@@ -600,8 +554,8 @@ different parametrizations.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) – Curve to extrude</li>
-<li><strong>amount</strong> (<em>array-like</em>) – 3-component vector of sweeping amount and
+<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; Curve to extrude</li>
+<li><strong>amount</strong> (<em>array-like</em>) &#8211; 3-component vector of sweeping amount and
 direction</li>
 </ul>
 </td>
@@ -618,7 +572,7 @@ direction</li>
 
 <dl class="function">
 <dt id="splipy.surface_factory.revolve">
-<code class="descclassname">splipy.surface_factory.</code><code class="descname">revolve</code><span class="sig-paren">(</span><em>curve</em>, <em>theta=6.283185307179586</em>, <em>axis=(0</em>, <em>0</em>, <em>1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#revolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.revolve" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">revolve</code><span class="sig-paren">(</span><em>curve, theta=6.283185307179586, axis=[0, 0, 1]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#revolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.revolve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Revolve a surface by sweeping a curve in a rotational fashion around
 the <em>z</em> axis.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -626,9 +580,9 @@ the <em>z</em> axis.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) – Curve to revolve</li>
-<li><strong>theta</strong> (<em>float</em>) – Angle to revolve, in radians</li>
-<li><strong>axis</strong> (<em>array-like</em>) – Axis of rotation</li>
+<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; Curve to revolve</li>
+<li><strong>theta</strong> (<em>float</em>) &#8211; Angle to revolve, in radians</li>
+<li><strong>axis</strong> (<em>array-like</em>) &#8211; Axis of rotation</li>
 </ul>
 </td>
 </tr>
@@ -644,18 +598,17 @@ the <em>z</em> axis.</p>
 
 <dl class="function">
 <dt id="splipy.surface_factory.cylinder">
-<code class="descclassname">splipy.surface_factory.</code><code class="descname">cylinder</code><span class="sig-paren">(</span><em>r=1</em>, <em>h=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>axis=(0</em>, <em>0</em>, <em>1)</em>, <em>xaxis=(1</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#cylinder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.cylinder" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">cylinder</code><span class="sig-paren">(</span><em>r=1</em>, <em>h=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>axis=(0</em>, <em>0</em>, <em>1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#cylinder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.cylinder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a cylinder shell with no top or bottom</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>h</strong> (<em>float</em>) – Height</li>
-<li><strong>center</strong> (<em>array-like</em>) – The center of the bottom circle</li>
-<li><strong>axis</strong> (<em>array-like</em>) – Cylinder axis</li>
-<li><strong>xaxis</strong> (<em>array-like</em>) – direction of sem, i.e. parametric start point u=0</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>h</strong> (<em>float</em>) &#8211; Height</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; The center of the bottom circle</li>
+<li><strong>axis</strong> (<em>array-like</em>) &#8211; Cylinder axis</li>
 </ul>
 </td>
 </tr>
@@ -671,7 +624,7 @@ the <em>z</em> axis.</p>
 
 <dl class="function">
 <dt id="splipy.surface_factory.torus">
-<code class="descclassname">splipy.surface_factory.</code><code class="descname">torus</code><span class="sig-paren">(</span><em>minor_r=1</em>, <em>major_r=3</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>normal=(0</em>, <em>0</em>, <em>1)</em>, <em>xaxis=(1</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#torus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.torus" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">torus</code><span class="sig-paren">(</span><em>minor_r=1</em>, <em>major_r=3</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#torus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.torus" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a torus (doughnut) by revolving a circle of size <em>minor_r</em>
 around the <em>z</em> axis with radius <em>major_r</em>.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -679,11 +632,9 @@ around the <em>z</em> axis with radius <em>major_r</em>.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>minor_r</strong> (<em>float</em>) – The thickness of the torus (radius in the <em>xz</em> plane)</li>
-<li><strong>major_r</strong> (<em>float</em>) – The size of the torus (radius in the <em>xy</em> plane)</li>
-<li><strong>center</strong> (<em>array-like</em>) – Local origin of the torus</li>
-<li><strong>normal</strong> (<em>array-like</em>) – Local origin of the torus</li>
-<li><strong>center</strong> – Local origin of the torus</li>
+<li><strong>minor_r</strong> (<em>float</em>) &#8211; The thickness of the torus (radius in the <em>xz</em> plane)</li>
+<li><strong>major_r</strong> (<em>float</em>) &#8211; The size of the torus (radius in the <em>xy</em> plane)</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; Local origin of the torus</li>
 </ul>
 </td>
 </tr>
@@ -699,7 +650,7 @@ around the <em>z</em> axis with radius <em>major_r</em>.</p>
 
 <dl class="function">
 <dt id="splipy.surface_factory.edge_curves">
-<code class="descclassname">splipy.surface_factory.</code><code class="descname">edge_curves</code><span class="sig-paren">(</span><em>*curves</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#edge_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.edge_curves" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.surface_factory.</code><code class="descname">edge_curves</code><span class="sig-paren">(</span><em>*curves</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/surface_factory.html#edge_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.surface_factory.edge_curves" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the surface defined by the region between the input curves.</p>
 <p>In case of four input curves, these must be given in an ordered directional
 closed loop around the resulting surface.</p>
@@ -707,20 +658,13 @@ closed loop around the resulting surface.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>curves</strong> (<em>[</em><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a><em>]</em>) – Two or four edge curves</li>
-<li><strong>type</strong> (<em>string</em>) – The method used for interior computation (‘coons’, ‘poisson’, ‘elasticity’ or ‘finitestrain’)</li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>curves</strong> (<em></em><em>[</em><a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a><em>]</em><em></em>) &#8211; Two or four edge curves</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The enclosed surface</p>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The enclosed surface</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></p>
-</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface">Surface</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – If the length of <em>curves</em> is not two or four</p>
-</td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; If the length of <em>curves</em> is not two or four</td>
 </tr>
 </tbody>
 </table>
@@ -733,7 +677,7 @@ closed loop around the resulting surface.</p>
 <ul class="simple">
 <li>For 2D curves this will generate a 2D planar surface with the curve
 through the center.</li>
-<li>For 3D curves this will generate a surface “tube” which is open at both
+<li>For 3D curves this will generate a surface &#8220;tube&#8221; which is open at both
 ends (that is, for a straight line it will generate a cylinder shell).</li>
 </ul>
 <p>The resulting surface is an approximation generated by interpolating at the
@@ -744,8 +688,8 @@ It does not check for self-intersecting geometries.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) – The generating curve</li>
-<li><strong>amount</strong> – The amount of thickness, either constant or variable (if
+<li><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; The generating curve</li>
+<li><strong>amount</strong> &#8211; The amount of thickness, either constant or variable (if
 variable, the function must accept parameters named <em>x</em>, <em>y</em>, <em>z</em> and/or <em>t</em>)</li>
 </ul>
 </td>
@@ -766,7 +710,7 @@ variable, the function must accept parameters named <em>x</em>, <em>y</em>, <em>
 <dd><p>Generate a surface by sweeping a shape along a path</p>
 <p>The resulting surface is an approximation generated by interpolating at the
 Greville points. It is generated by sweeping a shape curve along a path.</p>
-<p>The <em>shape</em> object has to be contained in the ‘xy’ plane (preferably centered
+<p>The <em>shape</em> object has to be contained in the &#8216;xy&#8217; plane (preferably centered
 around the origin) as its x-coordinate is extruded in the normal direction,
 and its y-coordinate in the binormal direction of the <em>path</em> curve.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -774,8 +718,8 @@ and its y-coordinate in the binormal direction of the <em>path</em> curve.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>path</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) – The path to drag <em>shape</em> along</li>
-<li><strong>shape</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) – The shape to be dragged out to a surface</li>
+<li><strong>path</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; The path to drag <em>shape</em> along</li>
+<li><strong>shape</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><em>Curve</em></a>) &#8211; The shape to be dragged out to a surface</li>
 </ul>
 </td>
 </tr>
@@ -801,9 +745,9 @@ tensor. In both cases the last index is the physical coordinates.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>numpy.ndarray</em>) – Grid of interpolation points</li>
-<li><strong>bases</strong> (<em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em>) – The basis to interpolate on</li>
-<li><strong>u</strong> (<em>[</em><em>array-like</em><em>]</em>) – Parametric interpolation points, defaults to
+<li><strong>x</strong> (<em>numpy.ndarray</em>) &#8211; Grid of interpolation points</li>
+<li><strong>bases</strong> (<em></em><em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em><em></em>) &#8211; The basis to interpolate on</li>
+<li><strong>u</strong> (<em></em><em>[</em><em>array-like</em><em>]</em><em></em>) &#8211; Parametric interpolation points, defaults to
 Greville points of the basis</li>
 </ul>
 </td>
@@ -831,9 +775,9 @@ tensor. In both cases the last index is the physical coordinates.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>numpy.ndarray</em>) – Grid of evaluation points</li>
-<li><strong>bases</strong> (<em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em>) – Basis on which to interpolate</li>
-<li><strong>u</strong> (<em>[</em><em>array-like</em><em>]</em>) – Parametric values at evaluation points</li>
+<li><strong>x</strong> (<em>numpy.ndarray</em>) &#8211; Grid of evaluation points</li>
+<li><strong>bases</strong> (<em></em><em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em><em></em>) &#8211; Basis on which to interpolate</li>
+<li><strong>u</strong> (<em></em><em>[</em><em>array-like</em><em>]</em><em></em>) &#8211; Parametric values at evaluation points</li>
 </ul>
 </td>
 </tr>
@@ -879,8 +823,8 @@ perfect-match multipatch modeling.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>size</strong> (<em>float</em>) – Size(s), either a single scalar or a tuple of scalars per axis</li>
-<li><strong>lower_left</strong> (<em>array-like</em>) – local origin, the lower bottom left corner of the cube</li>
+<li><strong>size</strong> (<em>float</em>) &#8211; Size(s), either a single scalar or a tuple of scalars per axis</li>
+<li><strong>lower_left</strong> (<em>array-like</em>) &#8211; local origin, the lower bottom left corner of the cube</li>
 </ul>
 </td>
 </tr>
@@ -903,9 +847,9 @@ perfect-match multipatch modeling.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>center</strong> (<em>array-like</em>) – Local origin of the sphere</li>
-<li><strong>type</strong> (<em>string</em>) – The type of parametrization (‘radial’ or ‘square’)</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; Local origin of the sphere</li>
+<li><strong>type</strong> (<em>string</em>) &#8211; The type of parametrization (&#8216;radial&#8217; or &#8216;square&#8217;)</li>
 </ul>
 </td>
 </tr>
@@ -921,17 +865,16 @@ perfect-match multipatch modeling.</p>
 
 <dl class="function">
 <dt id="splipy.volume_factory.revolve">
-<code class="descclassname">splipy.volume_factory.</code><code class="descname">revolve</code><span class="sig-paren">(</span><em>surf</em>, <em>theta=6.283185307179586</em>, <em>axis=(0</em>, <em>0</em>, <em>1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#revolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.revolve" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">revolve</code><span class="sig-paren">(</span><em>surf</em>, <em>theta=6.283185307179586</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#revolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.revolve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Revolve a volume by sweeping a surface in a rotational fashion around
-an axis.</p>
+the <em>z</em> axis.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>surf</strong> (<a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a>) – Surface to revolve</li>
-<li><strong>theta</strong> (<em>float</em>) – Angle to revolve, in radians</li>
-<li><strong>axis</strong> (<em>array-like</em>) – Axis of rotation</li>
+<li><strong>surf</strong> (<a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a>) &#8211; Surface to revolve</li>
+<li><strong>theta</strong> (<em>float</em>) &#8211; Angle to revolve, in radians</li>
 </ul>
 </td>
 </tr>
@@ -947,18 +890,17 @@ an axis.</p>
 
 <dl class="function">
 <dt id="splipy.volume_factory.cylinder">
-<code class="descclassname">splipy.volume_factory.</code><code class="descname">cylinder</code><span class="sig-paren">(</span><em>r=1</em>, <em>h=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>axis=(0</em>, <em>0</em>, <em>1)</em>, <em>xaxis=(1</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#cylinder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.cylinder" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">splipy.volume_factory.</code><code class="descname">cylinder</code><span class="sig-paren">(</span><em>r=1</em>, <em>h=1</em>, <em>center=(0</em>, <em>0</em>, <em>0)</em>, <em>axis=(0</em>, <em>0</em>, <em>1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/volume_factory.html#cylinder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.volume_factory.cylinder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a solid cylinder</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r</strong> (<em>float</em>) – Radius</li>
-<li><strong>h</strong> (<em>float</em>) – Height</li>
-<li><strong>center</strong> (<em>array-like</em>) – The center of the bottom circle</li>
-<li><strong>axis</strong> (<em>array-like</em>) – Cylinder axis</li>
-<li><strong>xaxis</strong> (<em>array-like</em>) – direction of sem, i.e. parametric start point u=0</li>
+<li><strong>r</strong> (<em>float</em>) &#8211; Radius</li>
+<li><strong>h</strong> (<em>float</em>) &#8211; Height</li>
+<li><strong>center</strong> (<em>array-like</em>) &#8211; The center of the bottom circle</li>
+<li><strong>axis</strong> (<em>array-like</em>) &#8211; Cylinder axis</li>
 </ul>
 </td>
 </tr>
@@ -981,8 +923,8 @@ an axis.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>surf</strong> (<a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a>) – Surface to extrude</li>
-<li><strong>amount</strong> (<em>array-like</em>) – 3-component vector of sweeping amount and direction</li>
+<li><strong>surf</strong> (<a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a>) &#8211; Surface to extrude</li>
+<li><strong>amount</strong> (<em>array-like</em>) &#8211; 3-component vector of sweeping amount and direction</li>
 </ul>
 </td>
 </tr>
@@ -1007,13 +949,13 @@ same directions.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>surfaces</strong> (<em>[</em><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a><em>]</em>) – Two or six edge surfaces</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>surfaces</strong> (<em></em><em>[</em><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><em>Surface</em></a><em>]</em><em></em>) &#8211; Two or six edge surfaces</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The enclosed volume</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Volume" title="splipy.Volume">Volume</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> – If the length of <em>surfaces</em> is not two or six</td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; If the length of <em>surfaces</em> is not two or six</td>
 </tr>
 </tbody>
 </table>
@@ -1031,9 +973,9 @@ tensor. In both cases the last index is the physical coordinates.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>numpy.ndarray</em>) – Grid of interpolation points</li>
-<li><strong>bases</strong> (<em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em>) – The basis to interpolate on</li>
-<li><strong>u</strong> (<em>[</em><em>array-like</em><em>]</em>) – Parametric interpolation points, defaults to
+<li><strong>x</strong> (<em>numpy.ndarray</em>) &#8211; Grid of interpolation points</li>
+<li><strong>bases</strong> (<em></em><em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em><em></em>) &#8211; The basis to interpolate on</li>
+<li><strong>u</strong> (<em></em><em>[</em><em>array-like</em><em>]</em><em></em>) &#8211; Parametric interpolation points, defaults to
 Greville points of the basis</li>
 </ul>
 </td>
@@ -1061,9 +1003,9 @@ tensor. In both cases the last index is the physical coordinates.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>numpy.ndarray</em>) – Grid of evaluation points</li>
-<li><strong>bases</strong> (<em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em>) – Basis on which to interpolate</li>
-<li><strong>u</strong> (<em>[</em><em>array-like</em><em>]</em>) – Parametric values at evaluation points</li>
+<li><strong>x</strong> (<em>numpy.ndarray</em>) &#8211; Grid of evaluation points</li>
+<li><strong>bases</strong> (<em></em><em>[</em><a class="reference internal" href="basic_classes.html#splipy.BSplineBasis" title="splipy.BSplineBasis"><em>BSplineBasis</em></a><em>]</em><em></em>) &#8211; Basis on which to interpolate</li>
+<li><strong>u</strong> (<em></em><em>[</em><em>array-like</em><em>]</em><em></em>) &#8211; Parametric values at evaluation points</li>
 </ul>
 </td>
 </tr>
@@ -1105,14 +1047,12 @@ tensor. In both cases the last index is the physical coordinates.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
-    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -1128,12 +1068,12 @@ tensor. In both cases the last index is the physical coordinates.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
     </div>
   </body>
 </html>
