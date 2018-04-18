@@ -1,0 +1,350 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>GeoMod.ControlPointOperations &mdash; GeoModeler 0.8.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.8.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="GeoModeler 0.8.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>GeoModeler 0.8.0 documentation</span></a></h1>
+        <h2 class="heading"><span>GeoMod.ControlPointOperations</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for GeoMod.ControlPointOperations</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ControlPointOperations&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">get_rotation_matrix</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+    <span class="n">axis</span> <span class="o">=</span> <span class="n">axis</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">axis</span><span class="p">))</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="n">axis</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span><span class="n">a</span><span class="o">*</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="o">*</span><span class="n">b</span><span class="o">-</span><span class="n">c</span><span class="o">*</span><span class="n">c</span><span class="o">-</span><span class="n">d</span><span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="n">c</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">d</span><span class="p">),</span>     <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="n">d</span><span class="o">+</span><span class="n">a</span><span class="o">*</span><span class="n">c</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="n">c</span><span class="o">+</span><span class="n">a</span><span class="o">*</span><span class="n">d</span><span class="p">),</span>     <span class="n">a</span><span class="o">*</span><span class="n">a</span><span class="o">+</span><span class="n">c</span><span class="o">*</span><span class="n">c</span><span class="o">-</span><span class="n">b</span><span class="o">*</span><span class="n">b</span><span class="o">-</span><span class="n">d</span><span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">d</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="n">d</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">c</span><span class="p">),</span>     <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">d</span><span class="o">+</span><span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="p">),</span>     <span class="n">a</span><span class="o">*</span><span class="n">a</span><span class="o">+</span><span class="n">d</span><span class="o">*</span><span class="n">d</span><span class="o">-</span><span class="n">b</span><span class="o">*</span><span class="n">b</span><span class="o">-</span><span class="n">c</span><span class="o">*</span><span class="n">c</span><span class="p">]])</span>
+
+
+<span class="k">class</span> <span class="nc">ControlPointOperations</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Translate, i.e. move a B-spline object a given distance</span>
+<span class="sd">        @param x: The direction and amount to move</span>
+<span class="sd">        @type  x: Point_like</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 3D rational example: create a 4x4 translation matrix</span>
+        <span class="c1">#</span>
+        <span class="c1">#  |xw|      |  1   0   0  x1 |   |xw|</span>
+        <span class="c1">#  |yw|   =  |  0   1   0  x2 | * |yw|</span>
+        <span class="c1">#  |zw|      |  0   0   1  x3 |   |zw|</span>
+        <span class="c1">#  | w|_new  |  0   0   0   1 |   | w|_old</span>
+        <span class="c1">#</span>
+        <span class="c1">#  PS: we even need a rational representation for non-rational splines</span>
+        <span class="c1">#      in order to formulate translation as a matrix-matrix product</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="n">rat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># number of control points</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">dim</span><span class="p">:</span>  <span class="c1"># typical case: requesting movement in z-direction for 2D geometries</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+
+        <span class="c1"># set up the translation matrix</span>
+        <span class="n">translation_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+            <span class="n">translation_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># wrap out the controlpoints to a matrix (down from n-D tensor)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">:</span>
+            <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>  <span class="c1"># pad with weights=1</span>
+            <span class="n">cp</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">+</span> <span class="n">rat</span><span class="p">)))</span>
+
+        <span class="c1"># do the actual scaling by matrix-matrix multiplication</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">cp</span> <span class="o">*</span> <span class="n">translation_matrix</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># right-mult, so we need transpose</span>
+
+        <span class="c1"># store results</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Scale, or magnify a B-spline object a given amount</span>
+<span class="sd">        @param ax: Scaling factors, possible different in each direction</span>
+<span class="sd">        @type  ax: Point_like or Float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 3D rational example: create a 4x4 scaling matrix</span>
+        <span class="c1">#</span>
+        <span class="c1">#  |xw|      |  sx    0    0   0 |   |xw|</span>
+        <span class="c1">#  |yw|   =  |   0   sy    0   0 | * |yw|</span>
+        <span class="c1">#  |zw|      |   0    0   sz   0 |   |zw|</span>
+        <span class="c1">#  | w|_new  |   0    0    0   1 |   | w|_old</span>
+        <span class="c1">#</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="n">rat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># number of control points</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">]</span>
+
+        <span class="c1"># set up the scaling matrix</span>
+        <span class="n">scale_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="n">rat</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+            <span class="n">scale_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># wrap out the controlpoints to a matrix (down from n-D tensor)</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">+</span> <span class="n">rat</span><span class="p">)))</span>
+
+        <span class="c1"># do the actual scaling by matrix-matrix multiplication</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">cp</span> <span class="o">*</span> <span class="n">scale_matrix</span>
+
+        <span class="c1"># store results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">normal</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;Rotate a B-spline object around an axis</span>
+<span class="sd">        @param theta:  Angle to rotate, as measured in radians</span>
+<span class="sd">        @type  theta:  Float</span>
+<span class="sd">        @param normal: The normal axis (if 3D) to rotate object around</span>
+<span class="sd">        @type  normal: Point_like</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 2D rational example: create a 3x3 rotation matrix</span>
+        <span class="c1">#</span>
+        <span class="c1">#  |xw|     | cos(t)  -sin(t)   0 |   |xw|</span>
+        <span class="c1">#  |yw|   = | sin(t)   cos(t)   0 | * |yw|</span>
+        <span class="c1">#  | w|_new |   0        0      1 |   | w|_old</span>
+        <span class="c1">#</span>
+
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="n">rat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># number of control points</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">normal</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">normal</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>  <span class="c1"># rotating a 2D geometry out of the xy-plane</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_dimension</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+            <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+
+        <span class="c1"># set up the rotation matrix</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)],</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)]</span>
+                           <span class="p">])</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># we do right-multiplication, so we need a transpose</span>
+        <span class="k">elif</span> <span class="n">dim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">normal</span><span class="p">)</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="n">get_rotation_matrix</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;rotation undefined for geometries other than 2D and 3D&#39;</span><span class="p">)</span>
+
+        <span class="n">rotation_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="n">rat</span><span class="p">))</span>
+        <span class="n">rotation_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">R</span>
+
+        <span class="c1"># wrap out the controlpoints to a matrix (down from n-D tensor)</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">+</span> <span class="n">rat</span><span class="p">)))</span>
+
+        <span class="c1"># do the actual rotation by matrix-matrix multiplication</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">cp</span> <span class="o">*</span> <span class="n">rotation_matrix</span>
+
+        <span class="c1"># store results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">normal</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Mirror a B-spline object around a plane through the origin</span>
+<span class="sd">        @param normal: The plane normal to mirror about</span>
+<span class="sd">        @type  normal: Point_like</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 3D rational example: create a 4x4 reflection matrix</span>
+        <span class="c1">#</span>
+        <span class="c1">#  normal = [a,b,c]</span>
+        <span class="c1">#</span>
+        <span class="c1">#  |xw|     |  1-2a^2   -2ab    -2ac   0 |   |xw|</span>
+        <span class="c1">#  |yw|   = |   -2ab   1-2b^2   -2bc   0 | * |yw|</span>
+        <span class="c1">#  |zw|   = |   -2ac    -2bc   1-2c^2  0 | * |zw|</span>
+        <span class="c1">#  | w|_new |    0       0         0   1 |   | w|_old</span>
+        <span class="c1">#</span>
+        <span class="c1">#  PS: A reflection about a line is not a linear transformation; it is</span>
+        <span class="c1">#      an affine transformation.</span>
+
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="n">rat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># number of control points</span>
+
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;reflection undefined for geometries other than 3D&#39;</span><span class="p">)</span>
+
+        <span class="c1"># fixup the input normal to right form</span>
+        <span class="n">normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">normal</span><span class="p">)</span>
+        <span class="n">normal</span> <span class="o">=</span> <span class="n">normal</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">normal</span><span class="p">,</span> <span class="n">normal</span><span class="p">))</span>  <span class="c1"># normalize it</span>
+
+        <span class="c1"># set up the reflection matrix</span>
+        <span class="n">reflection_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="n">rat</span><span class="p">))</span>
+        <span class="n">reflection_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">dim</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">normal</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span>
+
+        <span class="c1"># wrap out the controlpoints to a matrix (down from n-D tensor)</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">+</span> <span class="n">rat</span><span class="p">)))</span>
+
+        <span class="c1"># do the actual rotation by matrix-matrix multiplication</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">cp</span> <span class="o">*</span> <span class="n">reflection_matrix</span>
+
+        <span class="c1"># store results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plane</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Projects geometry onto a plane or axis. project(&#39;xy&#39;) will project it</span>
+<span class="sd">        onto the xy-plane, by setting all z-components to 0. project(&#39;y&#39;) will</span>
+<span class="sd">        project it onto the y-axis by setting all x and z coordinates to 0.</span>
+<span class="sd">        @param plane: Any combination of &#39;x&#39;, &#39;y&#39; and/or &#39;z&#39;</span>
+<span class="sd">        @type  plane: String</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="p">[</span><span class="bp">False</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">plane</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s1">&#39;x&#39;</span> <span class="ow">or</span> <span class="n">s</span> <span class="o">==</span> <span class="s1">&#39;X&#39;</span><span class="p">:</span>
+                <span class="n">keep</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s1">&#39;y&#39;</span> <span class="ow">or</span> <span class="n">s</span> <span class="o">==</span> <span class="s1">&#39;Y&#39;</span><span class="p">:</span>
+                <span class="n">keep</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s1">&#39;z&#39;</span> <span class="ow">or</span> <span class="n">s</span> <span class="o">==</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span>
+                <span class="n">keep</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">keep</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">bounding_box</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the bounding box of a B-spline computed off the control-point values.</span>
+<span class="sd">        Might be inaccurate for rational splines with wild weight values</span>
+<span class="sd">        @return: List of minimum and maximum values, sorted as xmin,xmax,ymin,ymax,...</span>
+<span class="sd">        @rtype : list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]))</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">set_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_dim</span><span class="p">):</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+        <span class="n">pardim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># 1=Curve, 2=Surface, 3=Volume</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">while</span> <span class="n">new_dim</span> <span class="o">&gt;</span> <span class="n">dim</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">pardim</span><span class="p">)</span>
+            <span class="n">dim</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">new_dim</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">pardim</span><span class="p">)</span>
+            <span class="n">dim</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="n">new_dim</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">force_rational</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Force a rational representation by including weights of all value 1&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">:</span>
+            <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">pardim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># 1=Curve, 2=Surface, 3=Volume</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">pardim</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rational</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__isub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>  <span class="c1"># can&#39;t do -x if x is a list, so we rewrap it here</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__imul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__itruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="n">__ifloordiv__</span> <span class="o">=</span> <span class="n">__itruediv__</span>  <span class="c1"># integer division (should not distinguish)</span>
+    <span class="n">__idiv__</span> <span class="o">=</span> <span class="n">__itruediv__</span>  <span class="c1"># python2 compatibility</span>
+
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">new_obj</span> <span class="o">+=</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">new_obj</span>
+
+    <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">new_obj</span> <span class="o">-=</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">new_obj</span>
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">new_obj</span> <span class="o">*=</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">new_obj</span>
+
+    <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">new_obj</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">new_obj</span> <span class="o">/=</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">new_obj</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>GeoMod.CurveFactory &mdash; Splipy 1.0.0 documentation</title>
+    <title>GeoMod.CurveFactory &mdash; GeoModeler 0.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '0.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +24,12 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Splipy 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="GeoModeler 0.8.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>Splipy 1.0.0 documentation</span></a></h1>
+          <span>GeoModeler 0.8.0 documentation</span></a></h1>
         <h2 class="heading"><span>GeoMod.CurveFactory</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -66,7 +66,9 @@
 
 
 <div class="viewcode-block" id="polygon"><a class="viewcode-back" href="../../factories.html#GeoMod.CurveFactory.polygon">[docs]</a><span class="k">def</span> <span class="nf">polygon</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a linear interpolation between input points.</span>
+    <span class="sd">&quot;&quot;&quot;polygon(points...)</span>
+
+<span class="sd">    Create a linear interpolation between input points.</span>
 
 <span class="sd">    :param [point-like] points: The points to interpolate</span>
 <span class="sd">    :return: Linear curve through the input points</span>
@@ -78,11 +80,11 @@
     <span class="c1"># establish knot vector based on eucledian length between points</span>
     <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
     <span class="n">prevPt</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">dist</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">prevPt</span><span class="p">,</span> <span class="n">pt</span><span class="p">):</span>  <span class="c1"># loop over (x,y) and maybe z-coordinate</span>
             <span class="n">dist</span> <span class="o">+=</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
-        <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+        <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
         <span class="n">prevPt</span> <span class="o">=</span> <span class="n">pt</span>
     <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 

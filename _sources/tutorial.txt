@@ -2,25 +2,25 @@
 Tutorial
 ========
 
-Typically, in Splipy, you make geometries by building curves from points,
+Typically, in GeoModeler, you make geometries by building curves from points,
 surfaces from curves, and volumes from surfaces. Let us look at some easy
 examples.
 
 
-Hello, Splipy
-=============
+Hello, GeoModeler
+=================
 
 .. code:: python
 
    from math import pi
-   import splipy.curve_factory as cf
-   from splipy.io import G2
+   import GeoMod.CurveFactory as cf
 
    line = cf.line((0,0), (-3,2))
    arc = cf.circle_segment(pi/4)
 
-   with G2('tutorial.g2') as f:
-       f.write([line, arc])
+   with open('tutorial.g2', 'w') as f:
+       line.write_g2(f)
+       arc.write_g2(f)
 
 This creates two *curves*, a straight line from the origin to the point (--3, 2)
 and a circle segment covering one eight of the unit circle. The straight line
@@ -39,7 +39,7 @@ From now on, we will omit the output code.
 
 .. code:: python
 
-   import splipy.surface_factory as sf
+   import GeoMod.SurfaceFactory as sf
 
    surface = sf.edge_curves(line, arc)
 
@@ -72,7 +72,7 @@ Let us turn this surface into a volume by revolving it around the *z* axis.
 
 .. code:: python
 
-   import splipy.volume_factory as vf
+   import GeoMod.VolumeFactory as vf
 
    volume = vf.revolve(surface)
 

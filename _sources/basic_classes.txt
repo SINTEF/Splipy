@@ -6,7 +6,7 @@ Basic classes
 BSplineBasis
 ============
 
-.. autoclass:: splipy.BSplineBasis
+.. autoclass:: GeoMod.BSplineBasis
    :members:
    :special-members: __init__, __len__, __getitem__
    :inherited-members:
@@ -15,7 +15,7 @@ BSplineBasis
 SplineObject
 ============
 
-.. autoclass:: splipy.SplineObject
+.. autoclass:: GeoMod.SplineObject
    :members:
    :special-members: __init__
 
@@ -23,7 +23,7 @@ SplineObject
 Curve
 =====
 
-.. autoclass:: splipy.Curve
+.. autoclass:: GeoMod.Curve
    :members:
    :special-members: __init__, __len__, __getitem__, __setitem__
    :exclude-members: evaluate
@@ -49,7 +49,7 @@ Curve
 Surface
 =======
 
-.. autoclass:: splipy.Surface
+.. autoclass:: GeoMod.Surface
    :members:
    :special-members: __init__, __len__, __getitem__, __setitem__
    :exclude-members: evaluate, evaluate_derivative
@@ -97,7 +97,7 @@ Surface
 Volume
 ======
 
-.. autoclass:: splipy.Volume
+.. autoclass:: GeoMod.Volume
    :members:
    :special-members: __init__, __len__, __getitem__, __setitem__
    :exclude-members: evaluate, evaluate_derivative

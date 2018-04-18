@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>GeoMod.Curve &mdash; Splipy 1.0.0 documentation</title>
+    <title>GeoMod.Curve &mdash; GeoModeler 0.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '0.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +24,12 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Splipy 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="GeoModeler 0.8.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>Splipy 1.0.0 documentation</span></a></h1>
+          <span>GeoModeler 0.8.0 documentation</span></a></h1>
         <h2 class="heading"><span>GeoMod.Curve</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -49,6 +49,7 @@
 <span class="kn">from</span> <span class="nn">GeoMod.SplineObject</span> <span class="kn">import</span> <span class="n">SplineObject</span>
 <span class="kn">from</span> <span class="nn">GeoMod.Utils</span> <span class="kn">import</span> <span class="n">ensure_listlike</span>
 <span class="kn">from</span> <span class="nn">bisect</span> <span class="kn">import</span> <span class="n">bisect_left</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Curve&#39;</span><span class="p">]</span>
@@ -75,21 +76,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">([</span><span class="n">basis</span><span class="p">],</span> <span class="n">controlpoints</span><span class="p">,</span> <span class="n">rational</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Curve.evaluate_tangent"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.evaluate_tangent">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_tangent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Evaluate the tangent of the curve at given parametric values.</span>
-
-<span class="sd">        This is equivalent to :func:`GeoMod.Curve.evaluate_derivative` with the</span>
-<span class="sd">        default value of *d* = 1.</span>
-
-<span class="sd">        :param t: Parametric coordinate(s) in which to evaluate</span>
-<span class="sd">        :type t: float or [float]</span>
-<span class="sd">        :return: Tangent matrix *X[i,j]* of component *xj&#39;(t)* evaluated at *t(i)*</span>
-<span class="sd">        :rtype: numpy.array</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Curve.evaluate_derivative"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.evaluate_derivative">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;evaluate_derivative(u, [d=1])</span>
+<div class="viewcode-block" id="Curve.derivative"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.derivative">[docs]</a>    <span class="k">def</span> <span class="nf">derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;derivative(u, [d=1])</span>
 
 <span class="sd">        Evaluate the derivative of the curve at the given parametric values.</span>
 
@@ -106,7 +94,7 @@
 <span class="sd">        :rtype: numpy.array</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rational</span> <span class="ow">or</span> <span class="n">d</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
 
         <span class="n">t</span> <span class="o">=</span> <span class="n">ensure_listlike</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
         <span class="n">dN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
@@ -130,14 +118,15 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="Curve.raise_order"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.raise_order">[docs]</a>    <span class="k">def</span> <span class="nf">raise_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Raise the order of the curve.</span>
+        <span class="sd">&quot;&quot;&quot;Raise the polynomial order of the curve.</span>
 
-<span class="sd">        :param int amount: Number of degrees to increase</span>
+<span class="sd">        :param int amount: Number of times to raise the order</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">amount</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Raise order requires a non-negative parameter&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">amount</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span>
+
         <span class="c1"># create the new basis</span>
         <span class="n">newBasis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">raise_order</span><span class="p">(</span><span class="n">amount</span><span class="p">)</span>
 
@@ -183,8 +172,8 @@
         <span class="n">p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
 
         <span class="c1"># build new knot vector by merging the two existing ones</span>
-        <span class="n">old_knot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">with_multiplicities</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">add_knot</span> <span class="o">=</span> <span class="n">extending_curve</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">with_multiplicities</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">old_knot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">add_knot</span> <span class="o">=</span> <span class="n">extending_curve</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">with_multiplicities</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="c1"># make sure that the new one starts where the old one stops</span>
         <span class="n">add_knot</span> <span class="o">-=</span> <span class="n">add_knot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">add_knot</span> <span class="o">+=</span> <span class="n">old_knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -200,7 +189,7 @@
         <span class="n">new_controlpoints</span><span class="p">[</span><span class="n">n1</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">extending_curve</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:]</span>
 
         <span class="c1"># update basis and controlpoints</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">basis</span> <span class="o">=</span> <span class="p">[</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">new_knot</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">new_knot</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">new_controlpoints</span>
 
         <span class="k">return</span> <span class="bp">self</span></div>
@@ -210,7 +199,7 @@
 <span class="sd">        return p-1-m, where m is the knot multiplicity and inf between knots&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">continuity</span><span class="p">(</span><span class="n">knot</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Curve.split"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knots</span><span class="p">):</span>
+<div class="viewcode-block" id="Curve.split"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knots</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Split a curve into two or more separate representations with C0</span>
 <span class="sd">        continuity between them.</span>
 
@@ -231,6 +220,19 @@
             <span class="k">if</span> <span class="n">continuity</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
                 <span class="n">continuity</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>
             <span class="n">splitting_curve</span><span class="o">.</span><span class="n">insert_knot</span><span class="p">([</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">continuity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">b</span> <span class="o">=</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
+            <span class="n">splitting_curve</span><span class="o">.</span><span class="n">controlpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">splitting_curve</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">,</span> <span class="o">-</span><span class="n">mu</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="n">b</span><span class="o">.</span><span class="n">periodic</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">periodic</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">splitting_curve</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">splitting_curve</span>
+
 
         <span class="c1"># everything is available now, just have to find the right index range</span>
         <span class="c1"># in the knot vector and controlpoints to store in each separate curve</span>
@@ -263,7 +265,7 @@
 <span class="sd">        :rtype: Curve</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># establish uniform open knot vector</span>
-        <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span> <span class="o">+</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span>
+        <span class="n">knot</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span>
         <span class="n">basis</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">knot</span><span class="p">)</span>
         <span class="c1"># set parametric range of the new basis to be the same as the old one</span>
         <span class="n">basis</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
@@ -284,35 +286,19 @@
 
 <span class="sd">        :param file-like outfile: The file to write to</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic</span><span class="p">():</span>
+            <span class="n">crv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">())</span>
+            <span class="n">crv</span><span class="o">.</span><span class="n">write_g2</span><span class="p">(</span><span class="n">outfile</span><span class="p">)</span>
+            <span class="k">return</span>
         <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;100 1 0 0</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># surface header, gotools version 1.0.0</span>
         <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rational</span><span class="p">)))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">write_g2</span><span class="p">(</span><span class="n">outfile</span><span class="p">)</span>
 
         <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n1</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">periodic</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)):</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n2</span><span class="p">):</span>
                 <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%f</span><span class="s1"> &#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
             <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Curve.__len__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the number of control points (basis functions) for the curve.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">num_functions</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Curve.__getitem__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the control point at a given index.</span>
-
-<span class="sd">        :rtype: numpy.array</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span></div>
-
-<div class="viewcode-block" id="Curve.__setitem__"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.Curve.__setitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">newCP</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set the control point at a given index.</span>
-
-<span class="sd">        :param int i: Index</span>
-<span class="sd">        :param numpy.array newCP: New control point</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">newCP</span>
-        <span class="k">return</span> <span class="bp">self</span></div>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controlpoints</span><span class="p">)</span></div>

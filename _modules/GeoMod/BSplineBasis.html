@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>GeoMod.BSplineBasis &mdash; Splipy 1.0.0 documentation</title>
+    <title>GeoMod.BSplineBasis &mdash; GeoModeler 0.8.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '0.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +24,12 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Splipy 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="GeoModeler 0.8.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
-          <span>Splipy 1.0.0 documentation</span></a></h1>
+          <span>GeoModeler 0.8.0 documentation</span></a></h1>
         <h2 class="heading"><span>GeoMod.BSplineBasis</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -87,17 +87,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">knots</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
-        <span class="n">p</span>          <span class="o">=</span> <span class="n">order</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">periodic</span> <span class="o">=</span> <span class="n">periodic</span>
 
         <span class="c1"># error test input</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">order</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;knot vector has too few elements&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">order</span><span class="o">+</span><span class="n">periodic</span><span class="p">):</span>
+        <span class="n">p</span>          <span class="o">=</span> <span class="n">order</span>
+        <span class="n">k</span>          <span class="o">=</span> <span class="n">periodic</span>
+        <span class="n">n</span>          <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid spline order&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">*</span><span class="n">p</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;knot vector has too few elements&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">periodic</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">periodic</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">abs</span><span class="p">((</span><span class="n">knots</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="n">periodic</span> <span class="o">+</span> <span class="n">i</span> <span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="n">periodic</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">i</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">((</span><span class="n">knots</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="n">k</span> <span class="o">+</span> <span class="n">i</span> <span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">i</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;periodic knot vector is mis-matching at the start/end&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">knots</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
@@ -284,6 +286,12 @@
 <span class="sd">            between knots.</span>
 <span class="sd">        :rtype: int or float</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">knot</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="ow">or</span> <span class="n">knot</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">():</span>
+                <span class="n">knot</span> <span class="o">=</span> <span class="p">(</span><span class="n">knot</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">())</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">())</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">knot</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">knot</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;out of range&#39;</span><span class="p">)</span>
+
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">knot</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">mu</span><span class="p">]</span> <span class="o">-</span> <span class="n">knot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
@@ -345,7 +353,10 @@
 <span class="sd">        :rtype: numpy.array</span>
 <span class="sd">        :raises ValueError: If the new knot is outside the domain</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">new_knot</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">new_knot</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">new_knot</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="ow">or</span> <span class="n">new_knot</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">():</span>
+                <span class="n">new_knot</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_knot</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">())</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">())</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">new_knot</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">new_knot</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;new_knot out of range&#39;</span><span class="p">)</span>
         <span class="c1"># mu is the index of last non-zero (old) basis function</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">,</span> <span class="n">new_knot</span><span class="p">)</span>
@@ -386,6 +397,23 @@
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="o">+</span><span class="n">r</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">k0</span> <span class="o">-</span> <span class="p">(</span><span class="n">k1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">m</span><span class="o">-</span><span class="n">p</span><span class="o">-</span><span class="n">r</span><span class="o">-</span><span class="mi">1</span><span class="o">+</span><span class="n">i</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">C</span></div>
+
+<div class="viewcode-block" id="BSplineBasis.roll"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.BSplineBasis.roll">[docs]</a>    <span class="k">def</span> <span class="nf">roll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_start</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;rotate a periodic knot vector by setting a new starting index.</span>
+
+<span class="sd">        :param int new_start: The index of to the new first knot</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span>  <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;roll only applicable for periodic knot vectors&quot;</span><span class="p">)</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodic</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">)</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">left</span>  <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">new_start</span><span class="p">,</span> <span class="n">n</span><span class="o">-</span><span class="n">p</span><span class="o">-</span><span class="n">k</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">len_left</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">stop</span> <span class="o">-</span> <span class="n">left</span><span class="o">.</span><span class="n">start</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="o">-</span><span class="n">len_left</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[:</span><span class="n">len_left</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">len_left</span><span class="p">:])</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">left</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">knots</span><span class="p">[</span><span class="n">right</span><span class="p">]</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="BSplineBasis.write_g2"><a class="viewcode-back" href="../../basic_classes.html#GeoMod.BSplineBasis.write_g2">[docs]</a>    <span class="k">def</span> <span class="nf">write_g2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outfile</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write the basis in GoTools format.</span>

@@ -3,22 +3,22 @@ Factories
 =========
 
 
-Curves
-======
+CurveFactory
+============
 
-.. automodule:: splipy.curve_factory
+.. automodule:: GeoMod.CurveFactory
    :members:
 
 
-Surfaces
-========
+SurfaceFactory
+==============
 
-.. automodule:: splipy.surface_factory
+.. automodule:: GeoMod.SurfaceFactory
    :members:
 
 
-Volumes
-=======
+VolumeFactory
+=============
 
-.. automodule:: splipy.volume_factory
+.. automodule:: GeoMod.VolumeFactory
    :members:
