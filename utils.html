@@ -1,0 +1,341 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Utilities &#8212; Splipy 1.2.0 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="utilities">
+<h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-splipy.utils.curve">
+<span id="curves"></span><h2>Curves<a class="headerlink" href="#module-splipy.utils.curve" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of various curve utilities</p>
+<dl class="function">
+<dt id="splipy.utils.curve.curve_length_parametrization">
+<code class="descclassname">splipy.utils.curve.</code><code class="descname">curve_length_parametrization</code><span class="sig-paren">(</span><em>pts</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/curve.html#curve_length_parametrization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.curve.curve_length_parametrization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate knots corresponding to a curvelength parametrization of a set of
+points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>pts</strong> (<em>numpy.array</em>) – A set of points</li>
+<li><strong>normalize</strong> (<em>bool</em>) – Whether to normalize the parametrization</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The parametrization</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">[float]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.utils.curve.get_curve_points">
+<code class="descclassname">splipy.utils.curve.</code><code class="descname">get_curve_points</code><span class="sig-paren">(</span><em>curve</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/curve.html#get_curve_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.curve.get_curve_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the curve in all its knots.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>curve</strong> (<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Curve</span></code></a>) – The curve</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The curve points</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">numpy.array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-splipy.utils.image">
+<span id="images"></span><h2>Images<a class="headerlink" href="#module-splipy.utils.image" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of image based mesh generation.</p>
+<dl class="function">
+<dt id="splipy.utils.image.get_corners">
+<code class="descclassname">splipy.utils.image.</code><code class="descname">get_corners</code><span class="sig-paren">(</span><em>X</em>, <em>L=50</em>, <em>R=30</em>, <em>D=15</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/image.html#get_corners"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.image.get_corners" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detects corners of traced outlines using the SAM04 algorithm.</p>
+<p>The outline is assumed to constitute a discrete closed curve where each
+point is included just once. Increasing <cite>D</cite> and <cite>R</cite> will give the same
+number of corners or fewer corners.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>numpy.array</em>) – A traced outline forming a discrete closed curve
+(size <em>n</em> × 2)</li>
+<li><strong>L</strong> (<em>float</em>) – Controls the scale at which corners are measured.</li>
+<li><strong>R</strong> (<em>float</em>) – Controls how close corners can appear.</li>
+<li><strong>D</strong> (<em>float</em>) – The lower bound for the corner metric. Corner candidates
+with lower metric than this are rejected.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The indices of X that consitute corner points</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.utils.image.image_convex_surface">
+<code class="descclassname">splipy.utils.image.</code><code class="descname">image_convex_surface</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/image.html#image_convex_surface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.image.image_convex_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a single B-spline surface corresponding to convex black domain
+of a black/white mask image. The algorithm traces the boundary and searches
+for 4 natural corner points. It will then generate 4 boundary curves which
+will be used to create the surface by Coons Patch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – Name of image file to read</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">B-spline surface</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Surface</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.utils.image.image_curves">
+<code class="descclassname">splipy.utils.image.</code><code class="descname">image_curves</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/image.html#image_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.image.image_curves" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate B-spline curves corresponding to the edges in a black/white
+mask image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – Name of image file to read</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">All curves generated by tracing the black/white edges</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">[<a class="reference internal" href="basic_classes.html#splipy.Curve" title="splipy.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Curve</span></code></a>]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.utils.image.image_height">
+<code class="descclassname">splipy.utils.image.</code><code class="descname">image_height</code><span class="sig-paren">(</span><em>filename, N=[30, 30], p=[4, 4]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/image.html#image_height"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.image.image_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a B-spline surface approximation given by the heightmap in a
+grayscale image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – Name of image file to read</li>
+<li><strong>N</strong> (<em>(</em><em>int</em><em>,</em><em>int</em><em>)</em>) – Number of controlpoints in u-direction</li>
+<li><strong>p</strong> (<em>(</em><em>int</em><em>,</em><em>int</em><em>)</em>) – Polynomial order (degree+1)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Normalized (all values between 0 and 1) heightmap approximation</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="basic_classes.html#splipy.Surface" title="splipy.Surface"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.Surface</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-splipy.utils.refinement">
+<span id="refinement"></span><h2>Refinement<a class="headerlink" href="#module-splipy.utils.refinement" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of various refinement schemes.</p>
+<dl class="function">
+<dt id="splipy.utils.refinement.edge_refine">
+<code class="descclassname">splipy.utils.refinement.</code><code class="descname">edge_refine</code><span class="sig-paren">(</span><em>obj</em>, <em>S</em>, <em>n</em><span class="optional">[</span>, <em>direction=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/refinement.html#edge_refine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.refinement.edge_refine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refine an object towards both edges in a direction, by sampling an
+arctan function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>) – The object to refine</li>
+<li><strong>S</strong> (<em>float</em>) – The slope of the arctan function.</li>
+<li><strong>n</strong> (<em>int</em>) – The number of knots to insert</li>
+<li><strong>direction</strong> – The direction to refine in</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.utils.refinement.geometric_refine">
+<code class="descclassname">splipy.utils.refinement.</code><code class="descname">geometric_refine</code><span class="sig-paren">(</span><em>obj</em>, <em>alpha</em>, <em>n</em><span class="optional">[</span>, <em>direction=0</em><span class="optional">]</span><span class="optional">[</span>, <em>reverse=False</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/refinement.html#geometric_refine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.refinement.geometric_refine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refine a spline object by making a geometric distribution of element sizes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>) – The object to refine</li>
+<li><strong>alpha</strong> (<em>float</em>) – The length ratio between two sequential knot segments</li>
+<li><strong>n</strong> (<em>int</em>) – The number of knots to insert</li>
+<li><strong>direction</strong> – The direction to refine in</li>
+<li><strong>reverse</strong> (<em>bool</em>) – Set to <cite>True</cite> to refine towards the other end</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="splipy.utils.refinement.subdivide">
+<code class="descclassname">splipy.utils.refinement.</code><code class="descname">subdivide</code><span class="sig-paren">(</span><em>objs</em>, <em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/refinement.html#subdivide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.refinement.subdivide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subdivide a list of objects by splitting them up along existing knot
+lines. The resulting partition will roughly the same number of elements on
+all pieces. By splitting along <em>n</em> lines, we generate <em>n</em> + 1 new blocks.</p>
+<p>The number of subdivisions can be a list of integers: one for each
+direction, or a single integer for uniform sudivision.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>objs</strong> – Objects to split</li>
+<li><strong>n</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – Number of subdivisions to perform</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">New objects</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">[<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-splipy.utils.smooth">
+<span id="smoothing"></span><h2>Smoothing<a class="headerlink" href="#module-splipy.utils.smooth" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of various smoothing operations on a per-controlpoint level.</p>
+<dl class="function">
+<dt id="splipy.utils.smooth.smooth">
+<code class="descclassname">splipy.utils.smooth.</code><code class="descname">smooth</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/splipy/utils/smooth.html#smooth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#splipy.utils.smooth.smooth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smooth an object by setting the interior control points to the average of
+itself and all neighbours (e.g. 9 for surfaces, 27 for volumes). The edges
+are kept unchanged, and any rational weights are kept unchanged.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<a class="reference internal" href="basic_classes.html#splipy.SplineObject" title="splipy.SplineObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">splipy.SplineObject</span></code></a>) – The object to smooth</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Utilities</a><ul>
+<li><a class="reference internal" href="#module-splipy.utils.curve">Curves</a></li>
+<li><a class="reference internal" href="#module-splipy.utils.image">Images</a></li>
+<li><a class="reference internal" href="#module-splipy.utils.refinement">Refinement</a></li>
+<li><a class="reference internal" href="#module-splipy.utils.smooth">Smoothing</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/utils.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Splipy 1.2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>
