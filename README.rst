@@ -65,6 +65,12 @@ To generate the documentation, run in the `doc` folder::
 
     make html
 
+To push generated docs online on the ``gh-pages`` branch, run the helper script::
+
+    python push_documentation.py [remote]
+
+where ``remote`` is the name of the remote to push to. If not given, it will be asked.
+
 
 Tests
 -----
