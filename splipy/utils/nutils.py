@@ -10,12 +10,13 @@ def splipy_to_nutils(spline):
     """ Return controlpoints according to nutils ordering """
     n = len(spline)
     dim = spline.dimension
-    if(type(spline) == Curve):
+    if isinstance(spline, Curve):
         return np.reshape(spline[:,:]                  , (n, dim), order='F')
-    elif(type(spline) == Surface):
+    elif isinstance(spline, Surface):
         return np.reshape(spline[:,:,:].swapaxes(0,1)  , (n, dim), order='F')
-    elif(type(spline) == Volume):
+    elif isinstance(spline, Volume):
         return np.reshape(spline[:,:,:,:].swapaxes(0,2), (n, dim), order='F')
+    raise RuntimeError('Non-spline argument detected')
 
 def multiplicities(spline):
     """  Returns the multiplicity of the knots at all knot values as a 2D array for
