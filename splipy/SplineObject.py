@@ -6,7 +6,7 @@ from operator import attrgetter, methodcaller
 from itertools import chain, product
 from bisect import bisect_left
 from splipy import BSplineBasis
-from splipy.utils import reshape, rotation_matrix, is_singleton, ensure_listlike, check_direction
+from splipy.utils import reshape, rotation_matrix, is_singleton, ensure_listlike, check_direction, ensure_flatlist
 
 __all__ = ['SplineObject']
 
