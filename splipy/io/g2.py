@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import chain, product
-from splipy import *
+from splipy import Curve, Surface, Volume, SplineObject
 from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
 from .master import MasterIO
 import splipy.surface_factory as SurfaceFactory
