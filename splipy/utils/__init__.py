@@ -157,3 +157,11 @@ def reshape(cps, newshape, order='C', ncomps=None):
         spec = list(range(len(newshape)))[::-1] + [len(newshape)]
         cps = cps.transpose(spec)
     return cps
+
+__all__ = ['nutils',
+           'refinement',
+           'image',
+           'NACA',
+           'curve',
+           'smooth']
+

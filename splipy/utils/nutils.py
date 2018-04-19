@@ -6,7 +6,7 @@ from splipy import Curve, Surface, Volume
 import numpy as np
 
 
-def splipy_to_nutils(spline):
+def controlpoints(spline):
     """ Return controlpoints according to nutils ordering """
     n = len(spline)
     dim = spline.dimension
@@ -26,4 +26,14 @@ def multiplicities(spline):
 def degree(spline):
     """ Returns polynomial degree (splipy order - 1) for all parametric directions """
     return [p-1 for p in spline.order()]
+
+def splipy_to_nutils(spline):
+    """ Returns nutils domain and geometry object for spline mapping given by the argument """
+    from nutils import mesh, function
+    domain, geom = mesh.rectilinear(spline.knots())
+    cp    = controlpoints(spline)
+    basis = domain.basis('spline', degree=degree(spline), knotmultiplicities=multiplicities(spline))
+    geom  = function.matmat(basis, cp)
+    #TODO: add correct behaviour for rational and/or periodic geometries
+    return domain, geom
 

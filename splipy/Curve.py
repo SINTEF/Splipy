@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from splipy import BSplineBasis
-from splipy.SplineObject import SplineObject
+from splipy import SplineObject
 from splipy.utils import ensure_listlike, is_singleton
 from itertools import chain
 from bisect import bisect_left, bisect_right
