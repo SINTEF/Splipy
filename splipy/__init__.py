@@ -19,4 +19,5 @@ __all__ = ['BSplineBasis',
            'curve_factory',
            'surface_factory',
            'volume_factory',
-           'utils']
+           'utils',
+           'io']
