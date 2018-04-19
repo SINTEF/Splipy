@@ -651,7 +651,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
         knot_vector.sort()
         b = BSplineBasis(4, knot_vector)
         # do interpolation and return result
-        t = b.greville()
+        t = np.array(b.greville())
         crv = interpolate(x(t), b, t)
         (err2, maxerr) = crv.error(x)
         length = crv.length()
