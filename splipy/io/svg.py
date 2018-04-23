@@ -296,7 +296,7 @@ class SVG(MasterIO):
                 # points is a (string-)list of (x,y)-coordinates for the given operator
                 points = re.findall('-?\d+\.?\d*', piece[1:])
 
-                if piece[0] != 'A' and piece[0] != 'a':
+                if piece[0].lower() != 'a' and piece[0].lower() != 'v' and piece[0].lower() != 'h':
                     # convert string-list to a list of numpy arrays (of size 2)
                     np_pts = np.reshape(np.array(points).astype('float'), (int(len(points)/2),2))
 
@@ -359,7 +359,7 @@ class SVG(MasterIO):
                 x0  = np.array(last_curve[-1])
                 xn1 = np.array(last_curve[-2])
                 controlpoints.append(2*x0 -xn1)
-                for cp in np_pts:
+                for i,cp in enumerate(np_pts):
                     if i % 2 == 0 and i>0:
                         controlpoints.append(2*controlpoints[-1] - controlpoints[-2])
                     controlpoints.append(cp)
@@ -401,6 +401,48 @@ class SVG(MasterIO):
                 knot.sort()
                 for cp in np_pts:
                     controlpoints.append(cp)
+                curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
+            elif piece[0] == 'h':
+                # horizontal piece, relatively positioned
+                np_pts = np.array(points).astype('float')
+                controlpoints = [startpoint]
+                knot = list(range(len(np_pts)+1))
+                knot += [knot[0], knot[-1]]
+                knot.sort()
+                for cp in np_pts:
+                    startpoint = controlpoints[-1]
+                    controlpoints.append(np.array([cp, 0]) + startpoint)
+                curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
+            elif piece[0] == 'H':
+                # horizontal piece, absolute position
+                np_pts = np.array(points).astype('float')
+                controlpoints = [startpoint]
+                knot = list(range(len(np_pts)+1))
+                knot += [knot[0], knot[-1]]
+                knot.sort()
+                for cp in np_pts:
+                    controlpoints.append([cp, startpoint[1]])
+                curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
+            elif piece[0] == 'v':
+                # vertical piece, relatively positioned
+                np_pts = np.array(points).astype('float')
+                controlpoints = [startpoint]
+                knot = list(range(len(np_pts)+1))
+                knot += [knot[0], knot[-1]]
+                knot.sort()
+                for cp in np_pts:
+                    startpoint = controlpoints[-1]
+                    controlpoints.append(np.array([0, cp]) + startpoint)
+                curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
+            elif piece[0] == 'V':
+                # vertical piece, absolute position
+                np_pts = np.array(points).astype('float')
+                controlpoints = [startpoint]
+                knot = list(range(len(np_pts)+1))
+                knot += [knot[0], knot[-1]]
+                knot.sort()
+                for cp in np_pts:
+                    controlpoints.append([startpoint[0], cp])
                 curve_piece = Curve(BSplineBasis(2, knot), controlpoints)
             elif piece[0] == 'A' or piece[0] == 'a':
                 np_pts = np.reshape(np.array(points).astype('float'), (int(len(points))))
