@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from splipy import *
-from splipy.io import *
+from splipy.io import G2
 import splipy.surface_factory as SurfaceFactory
 import splipy.volume_factory as VolumeFactory
 import numpy as np
@@ -91,7 +90,7 @@ class TestG2(unittest.TestCase):
         t = np.linspace(circle.start(0), circle.end(0), 25)
         x = circle(t)
         self.assertTrue(np.allclose((x[:,0]-1)**2 + x[:,1]**2 + x[:,2]**2, 3**2))
-        self.assertTrue(np.allclose(circle[0], [3/sqrt(2)+1,3/sqrt(2),0,1]))
+        self.assertTrue(np.allclose(circle[0], [3/np.sqrt(2)+1,3/np.sqrt(2),0,1]))
 
         # check ellipse (r1=3, r2=5, center=(1,0,0), xaxis(0,1,0)
         ellipse = my_curves[1]
@@ -120,7 +119,7 @@ class TestG2(unittest.TestCase):
         # check sphere ( radius=1.5, center=(4,0,0), z-axis=(0,1,1))
         sphere = my_surfaces[1]
         self.assertTrue(sphere.rational)
-        self.assertTrue(np.allclose(sphere[0,-1], [4,3/sqrt(8),3/sqrt(8), 1])) # north pole
+        self.assertTrue(np.allclose(sphere[0,-1], [4,3/np.sqrt(8),3/np.sqrt(8), 1])) # north pole
 
         # check disc ( radius=2.5, center=(6,0,0), x-axis=(0,0,-1 ), normal=(1,0,0)
         disc = my_surfaces[2]
