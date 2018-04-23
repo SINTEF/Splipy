@@ -226,17 +226,19 @@ class SVG(MasterIO):
             self.height,_ = read_number_and_unit(root.attrib['height'])
         result = []
         for path in root.iter(SVG.namespace + 'path'):
-            crv = self.curve_from_path(path.attrib['d'])
+            crvs = self.curves_from_path(path.attrib['d'])
             parent = path
             while parent != root:
                 if 'transform' in parent.attrib:
-                    self.transform(crv, parent.attrib['transform'])
+                    for crv in crvs:
+                        self.transform(crv, parent.attrib['transform'])
                 parent = parent_map[parent]
 
             # invert y-values since these are image coordinates
-            crv *= [1,-1]
-            crv += [0, self.height]
-            result.append(crv)
+            for crv in crvs:
+                crv *= [1,-1]
+                crv += [0, self.height]
+                result.append(crv)
         return result
 
     def transform(self, curve, operation):
@@ -272,7 +274,7 @@ class SVG(MasterIO):
                     cp = cp * M.T
                     curve.controlpoints = np.reshape(np.array(cp), curve.controlpoints.shape)
 
-    def curve_from_path(self, path):
+    def curves_from_path(self, path):
         # see https://www.w3schools.com/graphics/svg_path.asp for documentation
         # and also https://www.w3.org/TR/SVG/paths.html
 
@@ -283,7 +285,8 @@ class SVG(MasterIO):
             order = 3
         else:
             order = 2
-        result = None
+        last_curve = None
+        result = []
 
         # each 'piece' is an operator (M,C,Q,L etc) and accomponying list of argument points
         for piece in re.findall('[a-zA-Z][^a-zA-Z]*', path):
@@ -337,8 +340,8 @@ class SVG(MasterIO):
                 knot = list(range(int(len(np_pts)/2)+1)) * 3
                 knot += [knot[0], knot[-1]]
                 knot.sort()
-                x0  = np.array(result[-1])
-                xn1 = np.array(result[-2])
+                x0  = np.array(last_curve[-1])
+                xn1 = np.array(last_curve[-2])
                 controlpoints.append(2*x0 -xn1)
                 startpoint = controlpoints[-1]
                 for i, cp in enumerate(np_pts):
@@ -353,8 +356,8 @@ class SVG(MasterIO):
                 knot = list(range(int(len(np_pts)/2)+1)) * 3
                 knot += [knot[0], knot[-1]]
                 knot.sort()
-                x0  = np.array(result[-1])
-                xn1 = np.array(result[-2])
+                x0  = np.array(last_curve[-1])
+                xn1 = np.array(last_curve[-2])
                 controlpoints.append(2*x0 -xn1)
                 for cp in np_pts:
                     if i % 2 == 0 and i>0:
@@ -438,20 +441,24 @@ class SVG(MasterIO):
 
             elif piece[0] == 'z' or piece[0] == 'Z':
                 # periodic curve
-                # curve_piece = Curve(BSplineBasis(2), [startpoint, result[0]])
+                # curve_piece = Curve(BSplineBasis(2), [startpoint, last_curve[0]])
                 # curve_piece.reparam([0, curve_piece.length()])
-                # result.append(curve_piece).make_periodic(0)
-                result.make_periodic(0)
+                # last_curve.append(curve_piece).make_periodic(0)
+                last_curve.make_periodic(0)
+                result.append(last_curve)
+                last_curve = None
                 continue
             else:
                 raise RuntimeError('Unknown path parameter:' + piece)
 
             if(curve_piece.length()>state.controlpoint_absolute_tolerance):
                 curve_piece.reparam([0, curve_piece.length()])
-                if result is None:
-                    result = curve_piece
+                if last_curve is None:
+                    last_curve = curve_piece
                 else:
-                    result.append(curve_piece)
-            startpoint = result[-1,:2] # disregard rational weight (if any)
+                    last_curve.append(curve_piece)
+            startpoint = last_curve[-1,:2] # disregard rational weight (if any)
 
+        if last_curve is not None:
+            result.append(last_curve)
         return result

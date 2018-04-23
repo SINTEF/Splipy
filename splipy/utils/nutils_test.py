@@ -11,13 +11,13 @@ class TestNutilsUtils(unittest.TestCase):
     def test_surface(self):
         surf = Surface()
         expected = np.array([[0,0], [0,1], [1,0], [1,1]])
-        self.assertTrue(np.allclose(splipy_to_nutils(surf), expected))
+        self.assertTrue(np.allclose(controlpoints(surf), expected))
 
     def test_volume(self):
         vol = Volume()
         expected = np.array([[0,0,0], [0,0,1], [0,1,0], [0,1,1],
                              [1,0,0], [1,0,1], [1,1,0], [1,1,1]])
-        self.assertTrue(np.allclose(splipy_to_nutils(vol), expected))
+        self.assertTrue(np.allclose(controlpoints(vol), expected))
 
     def test_multiplicity(self):
         surf = Surface()

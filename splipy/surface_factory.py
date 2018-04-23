@@ -5,7 +5,7 @@
 from splipy import BSplineBasis, Curve, Surface
 from math import pi, sqrt, atan2
 from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from splipy.utils.nutils import splipy_to_nutils, multiplicities, degree
+from splipy.utils.nutils import controlpoints, multiplicities, degree
 import splipy.curve_factory as CurveFactory
 import splipy.state as state
 import inspect
@@ -459,7 +459,7 @@ def finitestrain_patch(bottom, right, top, left):
     ns.basis = domain.basis('spline', degree(srf), knotmultiplicities=multiplicities(srf)).vector( 2 )
     ns.phi   = domain.basis('spline', degree(srf), knotmultiplicities=multiplicities(srf))
     ns.eye       = np.array([[1,0],[0,1]])
-    ns.cp        = splipy_to_nutils(srf)
+    ns.cp        = controlpoints(srf)
     ns.x_i       = 'cp_ni phi_n'
     ns.lmbda     = 1
     ns.mu        = 1
