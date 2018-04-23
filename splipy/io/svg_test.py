@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from splipy import *
-from splipy.io import *
+from splipy.io import SVG
 import splipy.curve_factory as CurveFactory
 import splipy.surface_factory as SurfaceFactory
 import numpy as np
