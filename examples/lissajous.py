@@ -11,9 +11,8 @@
 
 from sys import path
 path.append('../')
-from splipy import *
+from splipy import curve_factory
 from fractions import gcd
-import splipy.curve_factory as curves
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -34,7 +33,7 @@ def lissajous(a, b, d):
   x = np.array([np.sin(a*t + d), np.sin(b*t)])
 
   # do a cubic curve interpolation with periodic boundary conditions
-  return curves.cubic_curve(x.T, curves.Boundary.PERIODIC)
+  return curve_factory.cubic_curve(x.T, curve_factory.Boundary.PERIODIC)
 
 
 ### main program ###
@@ -54,7 +53,7 @@ lines = []
 frames = 100        # number of frames in animation
 fps    = n / frames # logical error if fps is not an integer
 for i in range(frames):
-    j = range(i*fps, min((i+1)*fps+1, n-1))
+    j = np.arange(int(i*fps), int(min((i+1)*fps+1, n-1)))
     l, = plt.plot(x[j,0], x[j,1], color=[1,1,1])
     lines.append(l)
 plt.axis('equal')
@@ -71,9 +70,9 @@ def animate(i):
         lines[i-m].set_color([1.0,1.0,1.0])
         lines[i-m].set_zorder(i-m);
 
-    
+
 # create and show the animation
-ani = animation.FuncAnimation(fig, animate, np.arange(0,2*n/fps), interval=10)
+ani = animation.FuncAnimation(fig, animate, np.arange(0,int(2*n/fps)), interval=10)
 plt.show()
 
 # save results as an animated gif for web display (PS: this function call is slow)
