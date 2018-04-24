@@ -47,6 +47,7 @@ Miscellaneous utilities can be found in the :doc:`utils` module.
    splipy.utils.image
    splipy.utils.refinement
    splipy.utils.smooth
+   splipy.utils.nutils
 
 For input and output, please refer to :doc:`io`.
 
