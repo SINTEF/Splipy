@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
-from Cython.Build import cythonize
 import numpy as np
 
 with open('PyPI_text.md') as f:
@@ -30,7 +29,6 @@ setup(
         'FiniteElement': ["nutils>=3.0"],
         'Images':        ["opencv-python>=3.3"],
     },
-    ext_modules=cythonize("splipy/basis_eval.pyx"),
     include_dirs=[np.get_include()],
     classifiers=[
         'Development Status :: 4 - Beta',

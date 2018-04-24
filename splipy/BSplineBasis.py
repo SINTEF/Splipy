@@ -5,7 +5,6 @@ import splipy.state as state
 from bisect import bisect_right, bisect_left
 import numpy as np
 import copy
-from splipy import basis_eval
 from scipy.sparse import csr_matrix
 
 __all__ = ['BSplineBasis']
@@ -107,34 +106,6 @@ class BSplineBasis:
 
     def evaluate(self, t, d=0, from_right=True, sparse=False):
         """  Evaluate all basis functions in a given set of points.
-
-        :param t: The parametric coordinate(s) in which to evaluate
-        :type t: float or [float]
-        :param int d: Number of derivatives to compute
-        :param bool from_right: True if evaluation should be done in the limit
-            from above
-        :param bool sparse: True if computed matrix should be returned as sparse
-        :return: A matrix *N[i,j]* of all basis functions *j* evaluated in all
-            points *i*
-        :rtype: numpy.array
-        """
-        # for single-value input, wrap it into a list so it don't crash on the loop below
-        t = ensure_listlike(t)
-        t = np.array(t, dtype=np.float64)
-        basis_eval.snap(self.knots, t, state.knot_tolerance)
-
-        if self.order <= d: # requesting more derivatives than polymoial degree: return all zeros
-            return np.matrix(np.zeros((len(t), self.num_functions())))
-
-        (data, size) = basis_eval.evaluate(self.knots, self.order, t, self.periodic, state.knot_tolerance, d, from_right)
-
-        N = csr_matrix(data, size)
-        if not sparse:
-            N = N.todense()
-        return N
-
-    def evaluate_old(self, t, d=0, from_right=True, sparse=False):
-        """  Evaluate all basis functions in a given set of points.
         :param t: The parametric coordinate(s) in which to evaluate
         :type t: float or [float]
         :param int d: Number of derivatives to compute
@@ -164,6 +135,8 @@ class BSplineBasis:
             for i in range(len(t)):
                 if t[i] < self.start() or t[i] > self.end():
                     t[i] = (t[i] - self.start()) % (self.end() - self.start()) + self.start()
+                if abs(t[i] - self.start()) < state.knot_tolerance and not from_right:
+                    t[i] = self.end()
         for i in range(len(t)):
             right = from_right
             evalT = t[i]
@@ -171,7 +144,7 @@ class BSplineBasis:
             if abs(t[i] - self.end()) < state.knot_tolerance:
                 right = False
             # Skip non-periodic evaluation points outside the domain
-            if t[i] < self.start() or t[i] > self.end():
+            if t[i] < self.start() or t[i] > self.end() or (abs(t[i]-self.start()) < state.knot_tolerance and not right):
                 continue
 
             # mu = index of last non-zero basis function
