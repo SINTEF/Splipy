@@ -1137,7 +1137,7 @@ class SplineObject(object):
             continuity = basis.order - 2
         if not -1 <= continuity <= basis.order - 2:
             raise ValueError('Illegal continuity for basis of order {}: {}'.format(
-                continuity, order
+                continuity, basis.order
             ))
         if continuity == -1:
             raise ValueError(
