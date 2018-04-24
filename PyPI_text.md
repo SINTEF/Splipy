@@ -1,5 +1,5 @@
 
-# ![Splipy Logo](images/logo_small.svg) SpliPy
+# ![Splipy Logo](https://github.com/sintefmath/Splipy/tree/master/images/logo_small.svg) SpliPy
 
 This repository contains the SpliPy packages. SpliPy is a pure python library
 for the creation, evaluation and manipulation of B-spline and NURBS geometries.
@@ -28,14 +28,14 @@ SpliPy allows for the generation of parametric curves, surfaces and volumes in t
 * Structured Point Cloud Interpolation
 * Least Square Fit
 
-![Revolve](images/revolve.png)
   **Revolve**
+![Revolve](https://github.com/sintefmath/Splipy/tree/master/images/revolve.png)
 
-![Sweep](images/sweep.png)
 **Sweep**
+![Sweep](https://github.com/sintefmath/Splipy/tree/master/images/sweep.png)
 
-![Loft](images/loft.png)
 **Loft**
+![Loft](https://github.com/sintefmath/Splipy/tree/master/images/loft.png)
 
 ### Volume operations
 * Revolve
@@ -162,6 +162,6 @@ with STL('torus.stl') as my_file:
     my_file.write(my_torus, n=(50, 150)) # specify resolution of 50x150 evaluation pts
 ```
 
-![Torus](images/torus.png)
+**Torus tesselation as viewed in Meshlab**
+![Torus](https://github.com/sintefmath/Splipy/tree/master/images/torus.png)
 
-** Torus tesselation as viewed in Meshlab**
