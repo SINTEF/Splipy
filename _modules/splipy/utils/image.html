@@ -1,34 +1,22 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>splipy.utils.image &#8212; Splipy 1.1.0 documentation</title>
-    
+    <title>splipy.utils.image &#8212; Splipy 1.3.1 documentation</title>
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '1.1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
-  </head>
-  <body role="document">
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -38,7 +26,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Splipy 1.3.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -51,17 +39,13 @@
   <h1>Source code for splipy.utils.image</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 
-<span class="n">__doc__</span> <span class="o">=</span> <span class="s1">&#39;Implementation of image based mesh generation.&#39;</span>
+<span class="vm">__doc__</span> <span class="o">=</span> <span class="s1">&#39;Implementation of image based mesh generation.&#39;</span>
 
 <span class="kn">from</span> <span class="nn">splipy</span> <span class="k">import</span> <span class="n">BSplineBasis</span><span class="p">,</span> <span class="n">curve_factory</span><span class="p">,</span> <span class="n">surface_factory</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">sqrt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">cv2</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="k">pass</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <div class="viewcode-block" id="get_corners"><a class="viewcode-back" href="../../../utils.html#splipy.utils.image.get_corners">[docs]</a><span class="k">def</span> <span class="nf">get_corners</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Detects corners of traced outlines using the SAM04 algorithm.</span>
@@ -147,8 +131,8 @@
     <span class="n">remove</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">remove</span><span class="p">:</span>
         <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">j</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">C</span></div>
+</div>
+    <span class="k">return</span> <span class="n">C</span>
 
 
 <div class="viewcode-block" id="image_curves"><a class="viewcode-back" href="../../../utils.html#splipy.utils.image.image_curves">[docs]</a><span class="k">def</span> <span class="nf">image_curves</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
@@ -159,6 +143,8 @@
 <span class="sd">    :return: All curves generated by tracing the black/white edges</span>
 <span class="sd">    :rtype: [:class:`splipy.Curve`]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">cv2</span>
+
     <span class="n">im</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 
     <span class="c1"># initialize image holders</span>
@@ -167,6 +153,7 @@
 
     <span class="c1"># convert to greyscale image</span>
     <span class="k">if</span> <span class="n">cv2</span><span class="o">.</span><span class="n">__version__</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="ne">FutureWarning</span><span class="p">(</span><span class="s1">&#39;openCV v.2 will eventually be discontinued. Please update your version: </span><span class="se">\&quot;</span><span class="s1">pip install opencv-python --upgrade</span><span class="se">\&quot;</span><span class="s1">&#39;</span><span class="p">))</span>
         <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">CV_RGB2GRAY</span><span class="p">,</span> <span class="n">imGrey</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_RGB2GRAY</span><span class="p">,</span> <span class="n">imGrey</span><span class="p">)</span>
@@ -176,6 +163,7 @@
 
     <span class="c1"># find contour curves in image</span>
     <span class="k">if</span> <span class="n">cv2</span><span class="o">.</span><span class="n">__version__</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="ne">FutureWarning</span><span class="p">(</span><span class="s1">&#39;openCV v.2 will eventually be discontinued. Please update your version: </span><span class="se">\&quot;</span><span class="s1">pip install opencv-python --upgrade</span><span class="se">\&quot;</span><span class="s1">&#39;</span><span class="p">))</span>
         <span class="p">[</span><span class="n">contours</span><span class="p">,</span> <span class="n">_</span><span class="p">]</span>    <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findContours</span><span class="p">(</span><span class="n">imBlack</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">RETR_LIST</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CHAIN_APPROX_NONE</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="p">[</span><span class="n">_</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">_</span><span class="p">]</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findContours</span><span class="p">(</span><span class="n">imBlack</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">RETR_LIST</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CHAIN_APPROX_NONE</span><span class="p">)</span>
@@ -207,7 +195,7 @@
 
         <span class="c1"># start off with a uniform(ish) knot vector</span>
         <span class="n">knot</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">nStart</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">90</span><span class="p">))</span>
+        <span class="n">nStart</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="o">//</span><span class="mi">10</span><span class="p">,</span> <span class="mi">90</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nStart</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
             <span class="n">knot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mf">1.0</span><span class="o">*</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">nStart</span><span class="p">))</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">corners</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
@@ -231,7 +219,7 @@
         <span class="c1"># make it span [0,1] instead of [0,n-1]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">knot</span><span class="p">)):</span>
             <span class="n">knot</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        
+
         <span class="c1"># make it periodic since these are all closed curves</span>
         <span class="n">knot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="o">-=</span> <span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span>
         <span class="n">knot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">knot</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>  <span class="o">-</span> <span class="n">knot</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -240,8 +228,8 @@
 
         <span class="n">c</span> <span class="o">=</span> <span class="n">curve_factory</span><span class="o">.</span><span class="n">least_square_fit</span><span class="p">(</span><span class="n">pts</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">parpt</span><span class="p">)</span>
         <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">result</span></div>
+</div>
+    <span class="k">return</span> <span class="n">result</span>
 
 <div class="viewcode-block" id="image_height"><a class="viewcode-back" href="../../../utils.html#splipy.utils.image.image_height">[docs]</a><span class="k">def</span> <span class="nf">image_height</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span><span class="mi">30</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">]):</span>
     <span class="sd">&quot;&quot;&quot;Generate a B-spline surface approximation given by the heightmap in a</span>
@@ -253,6 +241,9 @@
 <span class="sd">    :return: Normalized (all values between 0 and 1) heightmap approximation</span>
 <span class="sd">    :rtype: :class:`splipy.Surface`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">cv2</span>
+
     <span class="n">im</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 
     <span class="n">width</span>  <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
@@ -263,6 +254,7 @@
 
     <span class="c1"># convert to greyscale image</span>
     <span class="k">if</span> <span class="n">cv2</span><span class="o">.</span><span class="n">__version__</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="ne">FutureWarning</span><span class="p">(</span><span class="s1">&#39;openCV v.2 will eventually be discontinued. Please update your version: </span><span class="se">\&quot;</span><span class="s1">pip install opencv-python --upgrade</span><span class="se">\&quot;</span><span class="s1">&#39;</span><span class="p">))</span>
         <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">CV_RGB2GRAY</span><span class="p">,</span> <span class="n">imGrey</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_RGB2GRAY</span><span class="p">,</span> <span class="n">imGrey</span><span class="p">)</span>
@@ -286,8 +278,8 @@
 
     <span class="n">basis1</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">knot1</span><span class="p">)</span>
     <span class="n">basis2</span> <span class="o">=</span> <span class="n">BSplineBasis</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">knot2</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">surface_factory</span><span class="o">.</span><span class="n">least_square_fit</span><span class="p">(</span><span class="n">pts</span><span class="p">,[</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">],</span> <span class="p">[</span><span class="n">u</span><span class="p">,</span><span class="n">v</span><span class="p">])</span></div>
+</div>
+    <span class="k">return</span> <span class="n">surface_factory</span><span class="o">.</span><span class="n">least_square_fit</span><span class="p">(</span><span class="n">pts</span><span class="p">,[</span><span class="n">basis1</span><span class="p">,</span> <span class="n">basis2</span><span class="p">],</span> <span class="p">[</span><span class="n">u</span><span class="p">,</span><span class="n">v</span><span class="p">])</span>
 
 <div class="viewcode-block" id="image_convex_surface"><a class="viewcode-back" href="../../../utils.html#splipy.utils.image.image_convex_surface">[docs]</a><span class="k">def</span> <span class="nf">image_convex_surface</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generate a single B-spline surface corresponding to convex black domain</span>
@@ -300,7 +292,7 @@
 <span class="sd">    :rtype: :class:`splipy.Surface`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># generate boundary curve</span>
-    <span class="n">crv</span> <span class="o">=</span> <span class="n">image_curves</span><span class="p">(</span><span class="n">filename</span><span class="p">);</span>
+    <span class="n">crv</span> <span class="o">=</span> <span class="n">image_curves</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 
     <span class="c1"># error test input</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">crv</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -325,7 +317,7 @@
             <span class="n">corners</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">kinks</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="n">kinks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">kinks</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">],</span> <span class="n">kinks</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">corners</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">kinks</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="p">[(</span><span class="n">kinks</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="n">kinks</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span>
-    
+
     <span class="k">else</span><span class="p">:</span>
         <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">kinks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
             <span class="n">max_span</span>   <span class="o">=</span> <span class="mi">0</span>
@@ -335,8 +327,8 @@
                 <span class="n">max_span_i</span> <span class="o">=</span> <span class="n">i</span>
             <span class="k">del</span> <span class="n">kinks</span><span class="p">[</span><span class="n">max_span_i</span><span class="p">]</span>
         <span class="n">corners</span> <span class="o">=</span> <span class="n">kinks</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">surface_factory</span><span class="o">.</span><span class="n">edge_curves</span><span class="p">(</span><span class="n">crv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">corners</span><span class="p">));</span></div>
+</div>
+    <span class="k">return</span> <span class="n">surface_factory</span><span class="o">.</span><span class="n">edge_curves</span><span class="p">(</span><span class="n">crv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">corners</span><span class="p">))</span>
 
 </pre></div>
 
@@ -347,12 +339,14 @@
         <div class="sphinxsidebarwrapper">
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -368,13 +362,13 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Splipy 1.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Splipy 1.3.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Arne Morten Kvarving, Kjetil Andre Johannessen, Eivind Fonn.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
     </div>
   </body>
 </html>

@@ -29,3 +29,10 @@ Smoothing
 
 .. automodule:: splipy.utils.smooth
    :members:
+
+
+Nutils
+=========
+
+.. automodule:: splipy.utils.nutils
+   :members:

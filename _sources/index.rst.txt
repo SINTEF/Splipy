@@ -39,7 +39,7 @@ modules. Please see :doc:`factories` for more information.
    splipy.surface_factory
    splipy.volume_factory
 
-Miscellaneous utilities can be found in the ``splipy.utils`` module.
+Miscellaneous utilities can be found in the :doc:`utils` module.
 
 .. autosummary::
 
@@ -47,6 +47,7 @@ Miscellaneous utilities can be found in the ``splipy.utils`` module.
    splipy.utils.image
    splipy.utils.refinement
    splipy.utils.smooth
+   splipy.utils.nutils
 
 For input and output, please refer to :doc:`io`.
 
