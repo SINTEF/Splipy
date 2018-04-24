@@ -8,7 +8,7 @@ with open('PyPI_text.md') as f:
 
 setup(
     name='Splipy',
-    version='1.3.0',
+    version='1.3.1',
     description='Spline modelling library for Python',
     long_description_content_type='text/markdown',
     long_description=long_description,
