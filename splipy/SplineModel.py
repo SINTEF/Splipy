@@ -280,6 +280,7 @@ class TopologicalNode(object):
         self.higher_nodes = {}
         self.owner = None
 
+        self.name = None
         self.cell_numbers = None
         self.cp_numbers = None
 
@@ -407,6 +408,14 @@ class NodeView(object):
     @property
     def pardim(self):
         return self.node.pardim
+
+    @property
+    def name(self):
+        return self.node.name
+
+    @name.setter
+    def name(self, value):
+        self.node.name = value
 
     def section(self, *args, **kwargs):
         """Return a section. See :func:`splipy.SplineObject.section` for more details
@@ -590,8 +599,16 @@ class SplineModel(object):
     def __getitem__(self, obj):
         return self.catalogue[obj]
 
-    def boundary(self):
-        return [node for node in self.catalogue.nodes(self.pardim-1) if len(node.higher_nodes[self.pardim])==1]
+    def boundary(self, name=None):
+        for node in self.catalogue.nodes(self.pardim-1):
+            if len(node.higher_nodes[self.pardim]) == 1 and (name is None or name == node.name):
+                yield node
+
+    def assign_boundary(self, name):
+        """Give a name to all unnamed boundary nodes."""
+        for node in self.boundary():
+            if node.name is None:
+                node.name = name
 
     def _validate(self, objs):
         if any(p.dimension != self.dimension for p in objs):
