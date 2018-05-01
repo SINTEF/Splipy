@@ -13,6 +13,13 @@ except ImportError:
     from collections import MutableMapping
 
 
+def _section_to_index(section):
+    """Replace all `None` in `section` with `slice(None)`, so that it
+    works as a numpy array indexing tuple.
+    """
+    return tuple(slice(None) if s is None else s for s in section)
+
+
 class VertexDict(MutableMapping):
     """A dictionary where the keys are numpy arrays, and where equality
     is computed in an approximate sense for floating point numbers.
@@ -181,6 +188,12 @@ class Orientation(object):
 
         return Orientation(perm, flip)
 
+    def map_array(self, array):
+        """Map an array in the mapped system to the reference system."""
+        array = array.transpose(*self.perm)
+        flips = tuple(slice(None, None, -1) if f else slice(None) for f in self.flip)
+        return array[flips]
+
     def map_section(self, section):
         """Map a section in the mapped system to the reference system.
 
@@ -267,6 +280,9 @@ class TopologicalNode(object):
         self.higher_nodes = {}
         self.owner = None
 
+        self.cell_numbers = None
+        self.cp_numbers = None
+
         for dim_nodes in self.lower_nodes:
             for node in dim_nodes:
                 node.assign_higher(self)
@@ -314,6 +330,61 @@ class TopologicalNode(object):
             for child in self.lower_nodes[-1]:
                 if child.owner is self or child.owner is None:
                     child._transfer_ownership(new_owner)
+
+    def generate_cp_numbers(self, start=0):
+        """Generate a control point numbering starting at `start`. Return the next unused index."""
+        assert self.owner is None
+
+        # Initialize a number array
+        shape = self.obj.shape
+        numbers = np.empty(shape, dtype=int)
+        numbers[:] = 0
+
+        # Flag control points owned by other top-level objects with -1
+        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+            if node.owner is not self:
+                numbers[_section_to_index(section)] = -1
+
+        # Fill in control point numbers for the ones we do own
+        mask = np.where(numbers != -1)
+        nowned = len(mask[0])
+        numbers[mask] = np.arange(start, start + nowned, dtype=int)
+
+        # This method takes care of communicating results to children
+        self.assign_cp_numbers(numbers)
+        return start + nowned
+
+    def assign_cp_numbers(self, numbers):
+        """Directly assign control point numbers."""
+        self.cp_numbers = numbers
+
+        # Control point numbers for owned children must be communicated to them
+        if self.pardim > 0:
+            for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+                if node.owner is self or node.owner is self.owner:
+                    # Since this runs in a direct line of ownership, we don't need to be concerned with
+                    # orientations not matching up.
+                    node.assign_cp_numbers(numbers[_section_to_index(section)])
+
+    def read_cp_numbers(self):
+        """Read control point numbers for unowned control points from child nodes."""
+        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+            if node.owner is not self:
+                # The two sections may not agree on orientation, so we fix this here.
+                ori = Orientation.compute(self.obj.section(*section), node.obj)
+                self.cp_numbers[_section_to_index(section)] = ori.map_array(node.cp_numbers)
+
+        assert (self.cp_numbers != -1).all()
+
+    def generate_cell_numbers(self, start=0):
+        """Generate a cell numbering starting at `start`. Return the next unused index."""
+        assert self.owner is None
+
+        # Cells are never shared between top-level objects, so no need to worry about ownership here
+        shape = [len(kvec) - 1 for kvec in self.obj.knots()]
+        nelems = np.prod(shape)
+        self.cell_numbers = np.reshape(np.arange(start, start + nelems, dtype=int), shape)
+        return start + nelems
 
 
 class NodeView(object):
@@ -531,6 +602,18 @@ class SplineModel(object):
     def _generate(self, objs):
         for p in objs:
             self.catalogue.add(p)
+
+    def generate_cp_numbers(self):
+        index = 0
+        for node in self.catalogue.top_nodes():
+            index = node.generate_cp_numbers(index)
+        for node in self.catalogue.top_nodes():
+            node.read_cp_numbers()
+
+    def generate_cell_numbers(self):
+        index = 0
+        for node in self.catalogue.top_nodes():
+            index = node.generate_cell_numbers(index)
 
     def summary(self):
         c = self.catalogue
