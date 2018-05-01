@@ -483,6 +483,7 @@ class ObjectCatalogue(object):
         return self.lookup(obj, add=True)
 
     __call__ = add
+    __getitem__ = lookup
 
     def top_nodes(self):
         """Return all nodes of the highest parametric dimension."""
@@ -507,14 +508,16 @@ class SplineModel(object):
         self.dimension = dimension
 
         self.catalogue = ObjectCatalogue(pardim)
-        self.add_patches(objs)
+        self.add(objs)
 
-    def add_patch(self, obj):
-        self.add_patches([obj])
+    def add(self, obj):
+        if isinstance(obj, SplineObject):
+            obj = [obj]
+        self._validate(obj)
+        self._generate(obj)
 
-    def add_patches(self, objs):
-        self._validate(objs)
-        self._generate(objs)
+    def __getitem__(self, obj):
+        return self.catalogue[obj]
 
     def boundary(self):
         return [node for node in self.catalogue.nodes(self.pardim-1) if len(node.higher_nodes[self.pardim])==1]
@@ -527,7 +530,7 @@ class SplineModel(object):
 
     def _generate(self, objs):
         for p in objs:
-            self.catalogue(p)
+            self.catalogue.add(p)
 
     def summary(self):
         c = self.catalogue
