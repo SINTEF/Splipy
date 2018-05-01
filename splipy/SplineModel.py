@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from splipy import *
-from splipy.utils import sections
+from splipy.utils import sections, uniquify
 import splipy.state as state
 import numpy as np
-from collections import Counter
+from collections import Counter, OrderedDict
 from itertools import chain, product, permutations
 
 try:
@@ -256,7 +256,7 @@ class TopologicalNode(object):
       `TopologicalNode` objects. `lower_nodes[d]` is a list of all connected
       node objects with dimension `d`.
     - higher_nodes: A dictionary of higher-order connections to other
-      `TopologicalNode` objects. `higher_nodes[d]` is a set of all connected
+      `TopologicalNode` objects. `higher_nodes[d]` is a list of all connected
       node objects with dimension `d`.
     - owner: A top-level `TopologicalNode` object that "owns" this node.
 
@@ -300,7 +300,7 @@ class TopologicalNode(object):
 
     def assign_higher(self, node):
         """Add a link to a node of higher dimension."""
-        self.higher_nodes.setdefault(node.pardim, set()).add(node)
+        self.higher_nodes.setdefault(node.pardim, list()).append(node)
 
     def view(self, other_obj=None):
         """Return a `NodeView` object of this node.
@@ -481,7 +481,7 @@ class ObjectCatalogue(object):
         self.pardim = pardim
 
         # Internal mapping from tuples of lower-order nodes to lists of nodes
-        self.internal = {}
+        self.internal = OrderedDict()
 
         # Each catalogue has a catalogue of lower dimension
         # For points, we use a VertexDict
@@ -573,8 +573,8 @@ class ObjectCatalogue(object):
         """Return all nodes of a given parametric dimension."""
         if self.pardim == pardim:
             if self.pardim > 0:
-                return set(chain.from_iterable(self.internal.values()))
-            return set(self.lower.values())
+                return list(uniquify(chain.from_iterable(self.internal.values())))
+            return list(uniquify(self.lower.values()))
         return self.lower.nodes(pardim)
 
 

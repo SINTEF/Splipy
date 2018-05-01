@@ -158,6 +158,15 @@ def reshape(cps, newshape, order='C', ncomps=None):
         cps = cps.transpose(spec)
     return cps
 
+def uniquify(iterator):
+    """Iterates over all elements in `iterator`, removing duplicates."""
+    seen = set()
+    for i in iterator:
+        if i in seen:
+            continue
+        seen.add(i)
+        yield i
+
 __all__ = ['nutils',
            'refinement',
            'image',
