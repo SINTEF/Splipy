@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from splipy import *
-from splipy.utils import *
+from splipy.utils import sections
 import splipy.state as state
 import numpy as np
 from collections import Counter
@@ -15,7 +15,7 @@ except ImportError:
 
 class VertexDict(MutableMapping):
     """A dictionary where the keys are numpy arrays, and where equality
-    computed in an a pproximate sense for floating point numbers.
+    is computed in an approximate sense for floating point numbers.
 
     All keys must have the same dimensions.
     """
@@ -245,6 +245,7 @@ class TopologicalNode(object):
     - higher_nodes: A dictionary of higher-order connections to other
       `TopologicalNode` objects. `higher_nodes[d]` is a set of all connected
       node objects with dimension `d`.
+    - owner: A top-level `TopologicalNode` object that "owns" this node.
 
     .. note:: Connections to lower order nodes are `ordered` corresponding to
         the natural ordering of sections (see :func:`splipy.Utils.sections`).
@@ -264,10 +265,17 @@ class TopologicalNode(object):
         self.obj = obj
         self.lower_nodes = lower_nodes
         self.higher_nodes = {}
+        self.owner = None
 
         for dim_nodes in self.lower_nodes:
             for node in dim_nodes:
                 node.assign_higher(self)
+
+        # Take ownership of lower nodes that are unaccounted for
+        if self.pardim > 0:
+            for node in lower_nodes[-1]:
+                if node.owner is None:
+                    node._transfer_ownership(self)
 
     @property
     def pardim(self):
@@ -292,6 +300,20 @@ class TopologicalNode(object):
         else:
             orientation = Orientation.compute(self.obj)
         return NodeView(self, orientation)
+
+    def _transfer_ownership(self, new_owner):
+        """Transfers ownership of this node to a new owner. This operation is
+        transitive, so all child nodes owned by this node, or who are
+        owner-less will also be transferred.
+
+        :param TopologicalNode new_owner: The new owner
+        """
+        self.owner = new_owner
+
+        if self.pardim > 0:
+            for child in self.lower_nodes[-1]:
+                if child.owner is self or child.owner is None:
+                    child._transfer_ownership(new_owner)
 
 
 class NodeView(object):
