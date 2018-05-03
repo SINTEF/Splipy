@@ -298,6 +298,10 @@ class TopologicalNode(object):
     def pardim(self):
         return self.obj.pardim
 
+    @property
+    def nhigher(self):
+        return len(self.higher_nodes[self.pardim + 1])
+
     def assign_higher(self, node):
         """Add a link to a node of higher dimension."""
         self.higher_nodes.setdefault(node.pardim, list()).append(node)
@@ -601,7 +605,7 @@ class SplineModel(object):
 
     def boundary(self, name=None):
         for node in self.catalogue.nodes(self.pardim-1):
-            if len(node.higher_nodes[self.pardim]) == 1 and (name is None or name == node.name):
+            if node.nhigher == 1 and (name is None or name == node.name):
                 yield node
 
     def assign_boundary(self, name):
