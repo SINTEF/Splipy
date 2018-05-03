@@ -624,6 +624,7 @@ class SplineModel(object):
         index = 0
         for node in self.catalogue.top_nodes():
             index = node.generate_cp_numbers(index)
+        self.ncps = index
         for node in self.catalogue.top_nodes():
             node.read_cp_numbers()
 
@@ -631,6 +632,15 @@ class SplineModel(object):
         index = 0
         for node in self.catalogue.top_nodes():
             index = node.generate_cell_numbers(index)
+        self.ncells = index
+
+    def cps(self):
+        cps = np.zeros((self.ncps, self.dimension))
+        for node in self.catalogue.top_nodes():
+            indices = node.cp_numbers.reshape(-1)
+            values = node.obj.controlpoints.reshape(-1, self.dimension)
+            cps[indices] = values
+        return cps
 
     def summary(self):
         c = self.catalogue
