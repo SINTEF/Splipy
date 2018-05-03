@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from splipy import *
-from splipy.utils import sections, uniquify
+from splipy.utils import check_section, sections, section_from_index, uniquify
 import splipy.state as state
 import numpy as np
 from collections import Counter, OrderedDict
-from itertools import chain, product, permutations
+from itertools import chain, product, permutations, islice
 
 try:
     from collections.abc import MutableMapping
@@ -18,6 +18,9 @@ def _section_to_index(section):
     works as a numpy array indexing tuple.
     """
     return tuple(slice(None) if s is None else s for s in section)
+
+
+face_t = np.dtype([('nodes', int, (4,)), ('owner', int, ()), ('neighbor', int, ()), ('name', object, ())])
 
 
 class VertexDict(MutableMapping):
@@ -391,6 +394,87 @@ class TopologicalNode(object):
         self.cell_numbers = np.reshape(np.arange(start, start + nelems, dtype=int), shape)
         return start + nelems
 
+    def faces(self):
+        """Return all faces owned by this node, as a list of numpy arrays with dtype `face_t`."""
+        assert self.pardim == 3
+        assert self.obj.order() == (2,2,2)
+        shape = [len(kvec) - 1 for kvec in self.obj.knots()]
+        ncells = np.prod(shape)
+        retval = []
+
+        def mkindex(dim, z, a, b):
+            rval = [a, b] if dim != 1 else [b, a]
+            rval.insert(dim, z)
+            return tuple(rval)
+
+        lower = iter(self.lower_nodes[-1])
+        for d in range(self.pardim):
+            # Number of faces in one "slice"
+            nperslice = ncells // shape[d]
+
+            # First, get all internal faces in this direction
+            # The owner (lowest cell index) is guaranteed to be toward the lower end
+            # TODO: We assume a right-hand coordinate system here
+            nfaces = ncells - nperslice
+            faces = np.empty((nfaces,), dtype=face_t)
+            faces['nodes'][:,0] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[:-1])].flatten()
+            faces['nodes'][:,1] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:],  np.s_[:-1])].flatten()
+            faces['nodes'][:,2] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:],  np.s_[1:])].flatten()
+            faces['nodes'][:,3] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[1:])].flatten()
+            faces['owner'] = self.cell_numbers[mkindex(d, np.s_[:-1], np.s_[:], np.s_[:])].flatten()
+            faces['neighbor'] = self.cell_numbers[mkindex(d, np.s_[1:],  np.s_[:], np.s_[:])].flatten()
+            retval.append(faces)
+
+            # Go through the two boundaries
+            for bdnode, bdindex in zip(islice(lower, 2), (0, -1)):
+                assert bdnode.nhigher in {1, 2}
+
+                # Faces on an interface are only returned from the owner
+                if bdnode.owner is not self:
+                    continue
+
+                faces = np.empty((nperslice,), dtype=face_t)
+                faces['nodes'][:,0] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[:-1])].flatten()
+                faces['nodes'][:,1] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[:-1])].flatten()
+                faces['nodes'][:,2] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[1:])].flatten()
+                faces['nodes'][:,3] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[1:])].flatten()
+                faces['owner'] = self.cell_numbers[mkindex(d, bdindex, np.s_[:], np.s_[:])].flatten()
+                faces['name'] = bdnode.name
+
+                # If we're on the left boundary, the face normal must point in the other direction
+                # NOTE: We copy when swapping here, since we are swapping values which are views into
+                # a mutable array!
+                if bdindex == 0:
+                    faces['nodes'][:,1], faces['nodes'][:,3] = (
+                        faces['nodes'][:,3].copy(), faces['nodes'][:,1].copy()
+                    )
+
+                # If there's a neighbor on the interface we need neighbouring cell numbers
+                if bdnode.nhigher == 1:
+                    faces['neighbor'] = -1
+                else:
+                    neighbor = next(c for c in bdnode.higher_nodes[3] if c is not self)
+
+                    # Find out which face the interface is as numbered from the neighbor's perspective
+                    nb_index = neighbor.lower_nodes[2].index(bdnode)
+
+                    # Get the spline object on that interface as oriented from the neighbor's perspective
+                    nb_sec = section_from_index(3, 2, nb_index)
+                    nb_obj = neighbor.obj.section(*nb_sec)
+
+                    # Compute the relative orientation
+                    ori = Orientation.compute(bdnode.obj, nb_obj)
+
+                    # Get the neighbor cell numbers from the neighbor's perspective, and map them to our system
+                    cellidxs = neighbor.cell_numbers[_section_to_index(nb_sec)]
+                    faces['neighbor'] = ori.map_array(cellidxs).flatten()
+
+                retval.append(faces)
+
+        for faces in retval:
+            assert ((faces['owner'] < faces['neighbor']) | (faces['neighbor'] == -1)).all()
+        return retval
+
 
 class NodeView(object):
     """A `NodeView` object refers to a *view* to a point in the topological graph.
@@ -645,6 +729,11 @@ class SplineModel(object):
             values = node.obj.controlpoints.reshape(-1, self.dimension)
             cps[indices] = values
         return cps
+
+    def faces(self):
+        assert self.pardim == 3
+        faces = list(chain.from_iterable(node.faces() for node in self.catalogue.top_nodes()))
+        return np.hstack(faces)
 
     def summary(self):
         c = self.catalogue
