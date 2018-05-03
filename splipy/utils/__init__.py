@@ -41,7 +41,7 @@ def section_from_index(src_dim, tgt_dim, i):
 
     See :func:`splipy.Utils.sections` for more information.
     """
-    for j, s in sections(src_dim, tgt_dim):
+    for j, s in enumerate(sections(src_dim, tgt_dim)):
         if i == j:
             return s
 
