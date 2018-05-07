@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from splipy import *
-from splipy.utils import *
+from splipy import SplineObject
+from splipy.utils import check_section, sections, section_from_index, uniquify
 import splipy.state as state
 import numpy as np
-from collections import Counter
-from itertools import chain, product, permutations
+from collections import Counter, OrderedDict
+from itertools import chain, product, permutations, islice
 
 try:
     from collections.abc import MutableMapping
@@ -13,9 +13,19 @@ except ImportError:
     from collections import MutableMapping
 
 
+def _section_to_index(section):
+    """Replace all `None` in `section` with `slice(None)`, so that it
+    works as a numpy array indexing tuple.
+    """
+    return tuple(slice(None) if s is None else s for s in section)
+
+
+face_t = np.dtype([('nodes', int, (4,)), ('owner', int, ()), ('neighbor', int, ()), ('name', object, ())])
+
+
 class VertexDict(MutableMapping):
     """A dictionary where the keys are numpy arrays, and where equality
-    computed in an a pproximate sense for floating point numbers.
+    is computed in an approximate sense for floating point numbers.
 
     All keys must have the same dimensions.
     """
@@ -181,6 +191,12 @@ class Orientation(object):
 
         return Orientation(perm, flip)
 
+    def map_array(self, array):
+        """Map an array in the mapped system to the reference system."""
+        array = array.transpose(*self.perm)
+        flips = tuple(slice(None, None, -1) if f else slice(None) for f in self.flip)
+        return array[flips]
+
     def map_section(self, section):
         """Map a section in the mapped system to the reference system.
 
@@ -243,8 +259,9 @@ class TopologicalNode(object):
       `TopologicalNode` objects. `lower_nodes[d]` is a list of all connected
       node objects with dimension `d`.
     - higher_nodes: A dictionary of higher-order connections to other
-      `TopologicalNode` objects. `higher_nodes[d]` is a set of all connected
+      `TopologicalNode` objects. `higher_nodes[d]` is a list of all connected
       node objects with dimension `d`.
+    - owner: A top-level `TopologicalNode` object that "owns" this node.
 
     .. note:: Connections to lower order nodes are `ordered` corresponding to
         the natural ordering of sections (see :func:`splipy.Utils.sections`).
@@ -264,18 +281,33 @@ class TopologicalNode(object):
         self.obj = obj
         self.lower_nodes = lower_nodes
         self.higher_nodes = {}
+        self.owner = None
+
+        self.name = None
+        self.cell_numbers = None
+        self.cp_numbers = None
 
         for dim_nodes in self.lower_nodes:
             for node in dim_nodes:
                 node.assign_higher(self)
 
+        # Take ownership of lower nodes that are unaccounted for
+        if self.pardim > 0:
+            for node in lower_nodes[-1]:
+                if node.owner is None:
+                    node._transfer_ownership(self)
+
     @property
     def pardim(self):
         return self.obj.pardim
 
+    @property
+    def nhigher(self):
+        return len(self.higher_nodes[self.pardim + 1])
+
     def assign_higher(self, node):
         """Add a link to a node of higher dimension."""
-        self.higher_nodes.setdefault(node.pardim, set()).add(node)
+        self.higher_nodes.setdefault(node.pardim, list()).append(node)
 
     def view(self, other_obj=None):
         """Return a `NodeView` object of this node.
@@ -292,6 +324,156 @@ class TopologicalNode(object):
         else:
             orientation = Orientation.compute(self.obj)
         return NodeView(self, orientation)
+
+    def _transfer_ownership(self, new_owner):
+        """Transfers ownership of this node to a new owner. This operation is
+        transitive, so all child nodes owned by this node, or who are
+        owner-less will also be transferred.
+
+        :param TopologicalNode new_owner: The new owner
+        """
+        self.owner = new_owner
+
+        if self.pardim > 0:
+            for child in self.lower_nodes[-1]:
+                if child.owner is self or child.owner is None:
+                    child._transfer_ownership(new_owner)
+
+    def generate_cp_numbers(self, start=0):
+        """Generate a control point numbering starting at `start`. Return the next unused index."""
+        assert self.owner is None
+
+        # Initialize a number array
+        shape = self.obj.shape
+        numbers = np.empty(shape, dtype=int)
+        numbers[:] = 0
+
+        # Flag control points owned by other top-level objects with -1
+        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+            if node.owner is not self:
+                numbers[_section_to_index(section)] = -1
+
+        # Fill in control point numbers for the ones we do own
+        mask = np.where(numbers != -1)
+        nowned = len(mask[0])
+        numbers[mask] = np.arange(start, start + nowned, dtype=int)
+
+        # This method takes care of communicating results to children
+        self.assign_cp_numbers(numbers)
+        return start + nowned
+
+    def assign_cp_numbers(self, numbers):
+        """Directly assign control point numbers."""
+        self.cp_numbers = numbers
+
+        # Control point numbers for owned children must be communicated to them
+        if self.pardim > 0:
+            for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+                if node.owner is self or node.owner is self.owner:
+                    # Since this runs in a direct line of ownership, we don't need to be concerned with
+                    # orientations not matching up.
+                    node.assign_cp_numbers(numbers[_section_to_index(section)])
+
+    def read_cp_numbers(self):
+        """Read control point numbers for unowned control points from child nodes."""
+        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+            if node.owner is not self:
+                # The two sections may not agree on orientation, so we fix this here.
+                ori = Orientation.compute(self.obj.section(*section), node.obj)
+                self.cp_numbers[_section_to_index(section)] = ori.map_array(node.cp_numbers)
+
+        assert (self.cp_numbers != -1).all()
+
+    def generate_cell_numbers(self, start=0):
+        """Generate a cell numbering starting at `start`. Return the next unused index."""
+        assert self.owner is None
+
+        # Cells are never shared between top-level objects, so no need to worry about ownership here
+        shape = [len(kvec) - 1 for kvec in self.obj.knots()]
+        nelems = np.prod(shape)
+        self.cell_numbers = np.reshape(np.arange(start, start + nelems, dtype=int), shape)
+        return start + nelems
+
+    def faces(self):
+        """Return all faces owned by this node, as a list of numpy arrays with dtype `face_t`."""
+        assert self.pardim == 3
+        assert self.obj.order() == (2,2,2)
+        shape = [len(kvec) - 1 for kvec in self.obj.knots()]
+        ncells = np.prod(shape)
+        retval = []
+
+        def mkindex(dim, z, a, b):
+            rval = [a, b] if dim != 1 else [b, a]
+            rval.insert(dim, z)
+            return tuple(rval)
+
+        lower = iter(self.lower_nodes[-1])
+        for d in range(self.pardim):
+            # Number of faces in one "slice"
+            nperslice = ncells // shape[d]
+
+            # First, get all internal faces in this direction
+            # The owner (lowest cell index) is guaranteed to be toward the lower end
+            # TODO: We assume a right-hand coordinate system here
+            nfaces = ncells - nperslice
+            faces = np.empty((nfaces,), dtype=face_t)
+            faces['nodes'][:,0] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[:-1])].flatten()
+            faces['nodes'][:,1] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:],  np.s_[:-1])].flatten()
+            faces['nodes'][:,2] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:],  np.s_[1:])].flatten()
+            faces['nodes'][:,3] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[1:])].flatten()
+            faces['owner'] = self.cell_numbers[mkindex(d, np.s_[:-1], np.s_[:], np.s_[:])].flatten()
+            faces['neighbor'] = self.cell_numbers[mkindex(d, np.s_[1:],  np.s_[:], np.s_[:])].flatten()
+            retval.append(faces)
+
+            # Go through the two boundaries
+            for bdnode, bdindex in zip(islice(lower, 2), (0, -1)):
+                assert bdnode.nhigher in {1, 2}
+
+                # Faces on an interface are only returned from the owner
+                if bdnode.owner is not self:
+                    continue
+
+                faces = np.empty((nperslice,), dtype=face_t)
+                faces['nodes'][:,0] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[:-1])].flatten()
+                faces['nodes'][:,1] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[:-1])].flatten()
+                faces['nodes'][:,2] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[1:])].flatten()
+                faces['nodes'][:,3] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[1:])].flatten()
+                faces['owner'] = self.cell_numbers[mkindex(d, bdindex, np.s_[:], np.s_[:])].flatten()
+                faces['name'] = bdnode.name
+
+                # If we're on the left boundary, the face normal must point in the other direction
+                # NOTE: We copy when swapping here, since we are swapping values which are views into
+                # a mutable array!
+                if bdindex == 0:
+                    faces['nodes'][:,1], faces['nodes'][:,3] = (
+                        faces['nodes'][:,3].copy(), faces['nodes'][:,1].copy()
+                    )
+
+                # If there's a neighbor on the interface we need neighbouring cell numbers
+                if bdnode.nhigher == 1:
+                    faces['neighbor'] = -1
+                else:
+                    neighbor = next(c for c in bdnode.higher_nodes[3] if c is not self)
+
+                    # Find out which face the interface is as numbered from the neighbor's perspective
+                    nb_index = neighbor.lower_nodes[2].index(bdnode)
+
+                    # Get the spline object on that interface as oriented from the neighbor's perspective
+                    nb_sec = section_from_index(3, 2, nb_index)
+                    nb_obj = neighbor.obj.section(*nb_sec)
+
+                    # Compute the relative orientation
+                    ori = Orientation.compute(bdnode.obj, nb_obj)
+
+                    # Get the neighbor cell numbers from the neighbor's perspective, and map them to our system
+                    cellidxs = neighbor.cell_numbers[_section_to_index(nb_sec)]
+                    faces['neighbor'] = ori.map_array(cellidxs).flatten()
+
+                retval.append(faces)
+
+        for faces in retval:
+            assert ((faces['owner'] < faces['neighbor']) | (faces['neighbor'] == -1)).all()
+        return retval
 
 
 class NodeView(object):
@@ -314,6 +496,14 @@ class NodeView(object):
     @property
     def pardim(self):
         return self.node.pardim
+
+    @property
+    def name(self):
+        return self.node.name
+
+    @name.setter
+    def name(self, value):
+        self.node.name = value
 
     def section(self, *args, **kwargs):
         """Return a section. See :func:`splipy.SplineObject.section` for more details
@@ -379,7 +569,7 @@ class ObjectCatalogue(object):
         self.pardim = pardim
 
         # Internal mapping from tuples of lower-order nodes to lists of nodes
-        self.internal = {}
+        self.internal = OrderedDict()
 
         # Each catalogue has a catalogue of lower dimension
         # For points, we use a VertexDict
@@ -461,6 +651,7 @@ class ObjectCatalogue(object):
         return self.lookup(obj, add=True)
 
     __call__ = add
+    __getitem__ = lookup
 
     def top_nodes(self):
         """Return all nodes of the highest parametric dimension."""
@@ -470,8 +661,8 @@ class ObjectCatalogue(object):
         """Return all nodes of a given parametric dimension."""
         if self.pardim == pardim:
             if self.pardim > 0:
-                return set(chain.from_iterable(self.internal.values()))
-            return set(self.lower.values())
+                return list(uniquify(chain.from_iterable(self.internal.values())))
+            return list(uniquify(self.lower.values()))
         return self.lower.nodes(pardim)
 
 
@@ -485,17 +676,27 @@ class SplineModel(object):
         self.dimension = dimension
 
         self.catalogue = ObjectCatalogue(pardim)
-        self.add_patches(objs)
+        self.add(objs)
 
-    def add_patch(self, obj):
-        self.add_patches([obj])
+    def add(self, obj):
+        if isinstance(obj, SplineObject):
+            obj = [obj]
+        self._validate(obj)
+        self._generate(obj)
 
-    def add_patches(self, objs):
-        self._validate(objs)
-        self._generate(objs)
+    def __getitem__(self, obj):
+        return self.catalogue[obj]
 
-    def boundary(self):
-        return [node for node in self.catalogue.nodes(self.pardim-1) if len(node.higher_nodes[self.pardim])==1]
+    def boundary(self, name=None):
+        for node in self.catalogue.nodes(self.pardim-1):
+            if node.nhigher == 1 and (name is None or name == node.name):
+                yield node
+
+    def assign_boundary(self, name):
+        """Give a name to all unnamed boundary nodes."""
+        for node in self.boundary():
+            if node.name is None:
+                node.name = name
 
     def _validate(self, objs):
         if any(p.dimension != self.dimension for p in objs):
@@ -505,7 +706,34 @@ class SplineModel(object):
 
     def _generate(self, objs):
         for p in objs:
-            self.catalogue(p)
+            self.catalogue.add(p)
+
+    def generate_cp_numbers(self):
+        index = 0
+        for node in self.catalogue.top_nodes():
+            index = node.generate_cp_numbers(index)
+        self.ncps = index
+        for node in self.catalogue.top_nodes():
+            node.read_cp_numbers()
+
+    def generate_cell_numbers(self):
+        index = 0
+        for node in self.catalogue.top_nodes():
+            index = node.generate_cell_numbers(index)
+        self.ncells = index
+
+    def cps(self):
+        cps = np.zeros((self.ncps, self.dimension))
+        for node in self.catalogue.top_nodes():
+            indices = node.cp_numbers.reshape(-1)
+            values = node.obj.controlpoints.reshape(-1, self.dimension)
+            cps[indices] = values
+        return cps
+
+    def faces(self):
+        assert self.pardim == 3
+        faces = list(chain.from_iterable(node.faces() for node in self.catalogue.top_nodes()))
+        return np.hstack(faces)
 
     def summary(self):
         c = self.catalogue

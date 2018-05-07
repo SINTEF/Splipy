@@ -41,7 +41,7 @@ def section_from_index(src_dim, tgt_dim, i):
 
     See :func:`splipy.Utils.sections` for more information.
     """
-    for j, s in sections(src_dim, tgt_dim):
+    for j, s in enumerate(sections(src_dim, tgt_dim)):
         if i == j:
             return s
 
@@ -157,6 +157,15 @@ def reshape(cps, newshape, order='C', ncomps=None):
         spec = list(range(len(newshape)))[::-1] + [len(newshape)]
         cps = cps.transpose(spec)
     return cps
+
+def uniquify(iterator):
+    """Iterates over all elements in `iterator`, removing duplicates."""
+    seen = set()
+    for i in iterator:
+        if i in seen:
+            continue
+        seen.add(i)
+        yield i
 
 __all__ = [
     'nutils', 'refinement', 'image', 'NACA', 'curve', 'smooth',
