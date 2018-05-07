@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from splipy import *
+from splipy import SplineObject
 from splipy.utils import check_section, sections, section_from_index, uniquify
 import splipy.state as state
 import numpy as np
