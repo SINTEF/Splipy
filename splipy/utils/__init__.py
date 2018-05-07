@@ -167,10 +167,10 @@ def uniquify(iterator):
         seen.add(i)
         yield i
 
-__all__ = ['nutils',
-           'refinement',
-           'image',
-           'NACA',
-           'curve',
-           'smooth']
-
+__all__ = [
+    'nutils', 'refinement', 'image', 'NACA', 'curve', 'smooth',
+    'rotation_matrix', 'sections', 'section_from_index', 'section_to_index',
+    'check_section', 'check_direction', 'ensure_flatlist', 'is_singleton',
+    'ensure_listlike', 'rotate_local_x_axis', 'flip_and_move_plane_geometry',
+    'reshape',
+]
