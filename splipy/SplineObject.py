@@ -978,7 +978,7 @@ class SplineObject(object):
         .. warning:: For rational splines, this will return the corners in
             projective coordinates, including weights.
         """
-        result = np.zeros((2**self.pardim, self.dimension))
+        result = np.zeros((2**self.pardim, self.dimension + int(self.rational)))
         for i, args in enumerate(sections(self.pardim, 0)):
             result[i,:] = self.section(*(args[::-1] if order == 'F' else args))
         return result
