@@ -161,4 +161,5 @@ class STL(MasterIO):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.writer.close()
+        self.writer.fp.close()
 
