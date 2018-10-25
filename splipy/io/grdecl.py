@@ -1,5 +1,5 @@
 import numpy as np
-from itertools import islice
+from itertools import islice, product, chain
 from splipy import Curve, Surface, Volume, SplineObject, BSplineBasis
 from splipy import curve_factory, surface_factory, volume_factory
 from .master import MasterIO
@@ -7,84 +7,103 @@ import re
 import warnings
 from scipy.spatial import Delaunay
 from scipy.spatial.qhull import QhullError
+from tqdm import tqdm
 
-class box(object):
+
+class Box(object):
 
     def __init__(self, x):
         self.x = x
 
-class disconnected_box_mesh(object):
 
-    def __init__(self, n):
+class DiscontBoxMesh(object):
+
+    def __init__(self, n, coord, zcorn):
+        nx, ny, nz = n
+
+        X  = np.empty(n + 1, dtype=object)
+        Xz = np.zeros((nx + 1, ny + 1, 2 * nz, 3))
+        cells = np.empty(n, dtype=object)
+
+        for i, j, k in product(range(nx), range(ny), range(nz)):
+            x = []
+            for k0, j0, i0 in product(range(2), repeat=3):
+                # Interpolate to find the x,y values of this point
+                zmin, zmax = coord[i+i0, j+j0, :, 2]
+                z  = zcorn[2*i+i0, 2*j+j0, 2*k+k0]
+                t = (z - zmax) / (zmin - zmax)
+                point = coord[i+i0, j+j0, 0] * t + coord[i+i0, j+j0, 1] * (1 - t)
+                x.append(point)
+
+                if X[i+i0,j+j0,k+k0] is None:
+                    X[i+i0,j+j0,k+k0] = [point]
+                else:
+                    X[i+i0,j+j0,k+k0].append(point)
+                Xz[i+i0,j+j0,2*k+k0,:] = point
+
+            cells[i,j,k] = Box(x)
+
+        self.X = X
+        self.Xz = Xz
         self.n = n
-        self.cells = []
 
-    def populate(self, coord, zcorn):
-        # self.X = [[[[None]]*(self.n[2]+1)]*(self.n[1]+1)]*(self.n[0]+1)
-        self.X  = np.empty(self.n+1, dtype=object)
-        self.Xz = np.zeros((self.n[0]+1, self.n[1]+1, 2*self.n[2], 3))
-        # print(self.X.shape)
-        for i in range(self.n[0]):
-            self.cells.append([[]])
-            for j in range(self.n[1]):
-                self.cells[i].append([])
-                for k in range(self.n[2]):
-                    x = []
-                    for k0 in range(2):
-                        for j0 in range(2):
-                            for i0 in range(2):
-                                z0 = coord[i+i0, j+j0, 0, 2]
-                                z1 = coord[i+i0, j+j0, 1, 2]
-                                z  = zcorn[2*i+i0, 2*j+j0, 2*k+k0]
-                                t  = (z-z1) / (z0-z1)
-                                dx = coord[i+i0, j+j0, 1, :2] - coord[i+i0, j+j0, 0, :2]
-                                xy = coord[i+i0, j+j0, 0, :2] + dx*t
-                                x.append(np.array([xy[0], xy[1], z]))
-                                if self.X[i+i0,j+j0,k+k0] == None:
-                                    self.X[i+i0,j+j0,k+k0] = [x[-1]]
-                                else:
-                                    self.X[i+i0,j+j0,k+k0].append(x[-1])
-                                self.Xz[i+i0,j+j0,2*k+k0,:] = x[-1]
-                    self.cells[i][j].append(box(x))
-        self.X = np.array(self.X)
+        def hull_or_none(x):
+            try:
+                return Delaunay(x)
+            except QhullError:
+                return None
 
-        # print('Building convex hulls for searching')
-        # self.hull    = [[[Delaunay(mycell.x) for mycell in heights] for heights in columns] for columns in self.cells]
-        # self.ij_hull = [[Delaunay(np.reshape(coord[i:i+2,j:j+2,:,:], (8,3))) for j in range(self.n[1])] for i in range(self.n[0])]
-        self.hull    = [[[]]]
-        self.ij_hull =  [[]]
-        for i in range(self.n[0]):
-            self.hull.append([[]])
-            self.ij_hull.append([])
-            for j in range(self.n[1]):
-                self.hull[i].append([])
-                for k in range(self.n[2]):
-                    try:
-                        self.hull[i][j].append(Delaunay(self.cells[i][j][k].x))
-                    except QhullError: # degenerate volume
-                        self.hull[i][j].append(None)
-                self.ij_hull[i].append(Delaunay(np.reshape(coord[i:i+2,j:j+2,:,:], (8,3))))
+        self.plane_hull = np.array([
+            [Delaunay(np.reshape(coord[i:i+2, j:j+2, :, :], (8,3))) for j in range(ny)]
+            for i in range(nx)
+        ], dtype=object)
 
-    def cell_at(self, x):
-        i,j = np.where(np.array([[hull.find_simplex(x) for hull in columns] for columns in self.ij_hull]) >= 0)
-        i,j = i[0], j[0]
-        k   = np.where(np.array([ hull.find_simplex(x) if hull is not None else -1 for hull in self.hull[i][j]]) >= 0)
-        return (i,j,k[0][0])
+        self.hull = np.array([
+            [[hull_or_none(cell.x) for cell in cell_tower] for cell_tower in cells_tmp]
+            for cells_tmp in cells
+        ], dtype=object)
+
+    def cell_at(self, x, guess=None):
+        # First, find the 'tower' containing x
+        check = -1
+        if guess is not None:
+            i, j, _ = guess
+            check = self.plane_hull[i,j].find_simplex(x)
+        if check >= -1:
+            for (i, j), hull in np.ndenumerate(self.plane_hull):
+                check = hull.find_simplex(x)
+                if check >= 0: break
+
+        assert check >= 0
+
+        # Find the correct cell in the 'tower'
+        check = -1
+        if guess is not None:
+            _, _, k = guess
+            check = self.hull[i,j,k].find_simplex(x)
+        if check >= -1:
+            for k, hull in enumerate(self.hull[i,j]):
+                if hull is None: continue
+                check = hull.find_simplex(x)
+                if check >= 0: break
+
+        assert check >= -1
+        return i, j, k
 
     def get_c0_avg(self):
+        """Compute best-approximation vertices for a continuous mesh by averaging the location of all
+        corners that 'should' coincide.
+        """
         return np.array([[[np.mean(k,axis=0) for k in j] for j in i] for i in self.X])
 
     def get_discontinuous_all(self):
-        ans = []
-        for k in range(self.n[2]+1):
-            for j in range(self.n[1]+1):
-                for i in range(self.n[0]+1):
-                    while len(self.X[i][j][k])>0:
-                        ans.append(self.X[i][j][k].pop())
-        return ans
+        """Return a list of vertices suitable for a fully discontinuous mesh."""
+        return list(chain.from_iterable(xs[::-1] for xs in self.X.T.flat))
 
     def get_discontinuous_z(self):
+        """Return a list of vertices suitable for a mixed continuity mesh."""
         return self.Xz
+
 
 class GRDECL(MasterIO):
 
@@ -99,146 +118,144 @@ class GRDECL(MasterIO):
         self.line_number = 0
         return self
 
-    def readline(self):
-        self.line_number += 1
-        return self.fstream.readline()
-
-    def specgrid(self):
-        args = self.readline()
-        args = args.strip().split()
+    def read_specgrid(self):
+        args = next(self.fstream).strip().split()
         return np.array(args[:3], dtype=np.int32)
 
-    def coord(self):
-        n = (self.n[0]+1, self.n[1]+1,2,3)
-        ans = np.zeros(n)
-        for j in range(self.n[1]+1):
-            for i in range(self.n[0]+1):
-                args = self.readline().split()
-                ans[i,j,0,:] = np.array(args[:3], dtype=np.float64)
-                ans[i,j,1,:] = np.array(args[3:], dtype=np.float64)
+    def read_coord(self):
+        nx, ny = self.n[:2]
+        ans = np.zeros((nx + 1, ny + 1, 2, 3))
+        for j, i in product(range(ny+1), range(nx+1)):
+            args = next(self.fstream).split()
+            ans[i,j,0,:] = np.array(args[:3], dtype=np.float64)
+            ans[i,j,1,:] = np.array(args[3:], dtype=np.float64)
         return ans
 
-    def zcorn(self):
+    def read_zcorn(self):
         ntot = np.prod(self.n)*8
-        ans  = np.zeros(self.n*2)
         numbers = []
         while len(numbers) < ntot:
-            numbers += self.readline().split()
-        # this tripple nested for loops can probably be exchanged by a numpy
-        # reshape-call
-        n = 0
-        for k in range(2*self.n[2]):
-            for j in range(2*self.n[1]):
-                for i in range(2*self.n[0]):
-                    ans[i,j,k] = float(numbers[n])
-                    n += 1
-        return ans
+            numbers += next(self.fstream).split()
+        return np.reshape(np.array(numbers, dtype=np.float64), self.n*2, order='F')
 
     def cell_property(self, dtype=np.float64):
         ntot = np.prod(self.n)
         numbers = []
         while len(numbers) < ntot:
-            numbers += self.readline().split()
+            numbers += next(self.fstream).split()
         return np.array(numbers, dtype=dtype)
 
     def read(self):
-        line = self.readline()
-        while not line == '':
+        for line in self.fstream:
             line = line.strip().lower()
-            if   line == 'specgrid': self.n      = self.specgrid()
-            elif line == 'coord':    self.coord  = self.coord()
-            elif line == 'zcorn':    self.zcorn  = self.zcorn()
-            elif line == 'actnum':   self.attribute['actnum'] = self.cell_property(np.int32)
-            elif line == 'permx':    self.attribute['permx']  = self.cell_property()
-            elif line == 'permy':    self.attribute['permy']  = self.cell_property()
-            elif line == 'permz':    self.attribute['permz']  = self.cell_property()
-            elif line == 'poro':     self.attribute['poro']   = self.cell_property()
-            elif line == 'satnum':   self.attribute['satnum'] = self.cell_property(np.int32)
-            elif line == 'rho':      self.attribute['rho']    = self.cell_property()
-            elif line == 'grid':     pass # this signals the start of interesting stuff
-            elif line == '/':        pass # end read dataset
-            elif line == '' :        pass # endline
-            elif line[:2] == '--' :  pass # comment line
-            elif not re.match('[0-9]',line[0]):
-                # k = self.line_number
-                warnings.showwarning('Unkown keyword "{}" encountered in file'.format(line.split()[0]), SyntaxWarning, self.filename, self.line_number, line=[])
+            if line == 'specgrid':
+                self.n = self.read_specgrid()
+            elif line == 'coord':
+                self.coord = self.read_coord()
+            elif line == 'zcorn':
+                self.zcorn = self.read_zcorn()
+            elif line in {'actnum', 'permx', 'permy', 'permz', 'poro', 'satnum', 'rho'}:
+                dtype = np.int32 if line in {'actnum', 'satnum'} else np.float64
+                self.attribute[line] = self.cell_property(dtype)
+            elif line in {'grid', '/', ''} or line.startswith('--'):
+                pass
+            elif not re.match('[0-9]', line[0]):
+                warnings.showwarning(
+                    'Unkown keyword "{}" encountered in file'.format(line.split()[0]),
+                    SyntaxWarning, self.filename, self.line_number, line=[],
+                )
             else:
                 pass # silently skip large number blocks
-            line = self.readline()
 
-        self.raw = disconnected_box_mesh(self.n)
-        self.raw.populate(self.coord, self.zcorn)
+        self.raw = DiscontBoxMesh(self.n, self.coord, self.zcorn)
 
-        # create the C0-mesh
+        nx, ny, nz = self.n
+
+        # Create the C0-mesh
         X = self.raw.get_c0_avg()
-        # print(X.shape)
-        # print(X)
-        b1 = BSplineBasis(2, [0]+[i/self.n[0] for i in range(self.n[0]+1)]+[1])
-        b2 = BSplineBasis(2, [0]+[i/self.n[1] for i in range(self.n[1]+1)]+[1])
-        b3 = BSplineBasis(2, [0]+[i/self.n[2] for i in range(self.n[2]+1)]+[1])
-        c0_vol = volume_factory.interpolate(X, [b1,b2,b3])
+        b1 = BSplineBasis(2, [0] + [i/nx for i in range(nx+1)] + [1])
+        b2 = BSplineBasis(2, [0] + [i/ny for i in range(ny+1)] + [1])
+        b3 = BSplineBasis(2, [0] + [i/nz for i in range(nz+1)] + [1])
+        self.c0_vol = volume_factory.interpolate(X, [b1, b2, b3])
 
-        # create the C^{-1} mesh
+        # Create the C^{-1} mesh
         Xm1 = self.raw.get_discontinuous_all()
         b1 = BSplineBasis(2, sorted(list(range(self.n[0]+1))*2))
         b2 = BSplineBasis(2, sorted(list(range(self.n[1]+1))*2))
         b3 = BSplineBasis(2, sorted(list(range(self.n[2]+1))*2))
-        discont_vol = Volume(b1,b2,b3, Xm1)
+        discont_vol = Volume(b1, b2, b3, Xm1)
 
-        # create mixed discontinuity mesh: C^0, C^0, C^{-1}
+        # Create mixed discontinuity mesh: C^0, C^0, C^{-1}
         Xz = self.raw.get_discontinuous_z()
         b1 = BSplineBasis(2, sorted(list(range(self.n[0]+1))+[0,self.n[0]]))
         b2 = BSplineBasis(2, sorted(list(range(self.n[1]+1))+[0,self.n[1]]))
         b3 = BSplineBasis(2, sorted(list(range(self.n[2]+1))*2))
-        self.true_vol = Volume(b1,b2,b3, Xz, raw=True)
+        self.true_vol = Volume(b1, b2, b3, Xz, raw=True)
 
-        return self.true_vol, discont_vol, c0_vol
+        return self.true_vol, discont_vol, self.c0_vol
 
-    def texture(self, p, n):
-        # set the dimensions of geometry and texture map
+    def texture(self, p, n, method='full'):
+        # Set the dimensions of geometry and texture map
         ngeom    = np.floor(self.n / (p-1))
         ntexture = np.floor(self.n * n)
-        ngeom    = ngeom.astype(   np.int32)
+        ngeom    = ngeom.astype(np.int32)
         ntexture = ntexture.astype(np.int32)
 
-        # create the geometry
-        b1 = BSplineBasis(p, [0]*(p-1)+[i/ngeom[0] for i in range(ngeom[0]+1)]+[1]*(p-1))
-        b2 = BSplineBasis(p, [0]*(p-1)+[i/ngeom[1] for i in range(ngeom[1]+1)]+[1]*(p-1))
-        b3 = BSplineBasis(p, [0]*(p-1)+[i/ngeom[2] for i in range(ngeom[2]+1)]+[1]*(p-1))
+        # Create the geometry
+        ngx, ngy, ngz = ngeom
+        b1 = BSplineBasis(p, [0]*(p-1) + [i/ngx for i in range(ngx+1)] + [1]*(p-1))
+        b2 = BSplineBasis(p, [0]*(p-1) + [i/ngy for i in range(ngy+1)] + [1]*(p-1))
+        b3 = BSplineBasis(p, [0]*(p-1) + [i/ngz for i in range(ngz+1)] + [1]*(p-1))
+
+        nx, ny, nz = self.n
         l2_fit = surface_factory.least_square_fit
-        v,u = np.linspace(0,1,self.n[1]+1), np.linspace(0,1,self.n[0]+1)
-        w   = sorted(list(np.linspace(0,1,self.n[2]-1, endpoint=False))*2+[0,1])
-        X = self.true_vol[:,:, 0,:].squeeze()
-        bottom = l2_fit(self.true_vol[:,:, 0,:].squeeze(), [b1,b2], [u, v])
-        top    = l2_fit(self.true_vol[:,:,-1,:].squeeze(), [b1,b2], [u, v])
-        left   = l2_fit(self.true_vol[ 0,:,:,:].squeeze(), [b2,b3], [v, w])
-        right  = l2_fit(self.true_vol[-1,:,:,:].squeeze(), [b2,b3], [v, w])
-        front  = l2_fit(self.true_vol[:, 0,:,:].squeeze(), [b1,b3], [u, w])
-        back   = l2_fit(self.true_vol[:,-1,:,:].squeeze(), [b1,b3], [u, w])
-        volume = volume_factory.edge_surfaces([left, right, front, back, bottom, top])
-        # volume = volume_factory.edge_surfaces([bottom, top])
-        # volume.raise_order(0,0,p-2)
-        # volume.refine(0,0,ngeom[2]-1)
+        u, v, w = np.linspace(0, 1, nx+1), np.linspace(0, 1, ny+1), np.linspace(0, 1, nz+1)
 
-        return [volume]
-        # return [top, bottom, front, back, left, right]
+        if method == 'full':
+            bottom = l2_fit(self.c0_vol[:,:, 0,:].squeeze(), [b1, b2], [u, v])
+            top    = l2_fit(self.c0_vol[:,:,-1,:].squeeze(), [b1, b2], [u, v])
+            left   = l2_fit(self.c0_vol[ 0,:,:,:].squeeze(), [b2, b3], [v, w])
+            right  = l2_fit(self.c0_vol[-1,:,:,:].squeeze(), [b2, b3], [v, w])
+            front  = l2_fit(self.c0_vol[:, 0,:,:].squeeze(), [b1, b3], [u, w])
+            back   = l2_fit(self.c0_vol[:,-1,:,:].squeeze(), [b1, b3], [u, w])
+            volume = volume_factory.edge_surfaces([left, right, front, back, bottom, top])
 
+        elif method == 'z':
+            bottom = l2_fit(self.c0_vol[:,:, 0,:].squeeze(), [b1, b2], [u, v])
+            top    = l2_fit(self.c0_vol[:,:,-1,:].squeeze(), [b1, b2], [u, v])
+            volume = volume_factory.edge_surfaces([bottom, top])
+            volume.set_order(p)
+            volume.refine(ngx - 1, direction='w')
+
+        # Point-to-cell mapping
+        # TODO: Optimize more
+        u = [np.linspace(0,1,n) for n in ntexture]
+        points = volume(*u).reshape(-1, 3)
+        cellids = np.zeros(points.shape[:-1], dtype=int)
+        cell = None
+        for ptid, point in enumerate(tqdm(points, desc='Inverse mapping')):
+            i, j, k = cell = self.raw.cell_at(point, guess=cell)
+            cellid = i*ny*nz + j*nz + k
+            cellids[ptid] = cellid
+
+        cellids = cellids.reshape(tuple(len(param) for param in u))
 
         all_textures = {}
         for name in self.attribute:
-            one_texture = np.zeros(ntexture)
-            u = [np.linspace(0,1,n) for n in ntexture]
-            x = volume(*u)
-            x = np.reshape(x, [np.prod(ntexture),3])
-            for I in range(np.prod(ntexture)):
-                print(x[I,:])
-                i,j,k = self.raw.cell_at(x[I,:])
-                J = i*self.n[1]*self.n[2] + j*self.n[2] + k
-                one_texture[I] = self.attribute[name][J]
-            all_textures[name] = one_texture
+            data = self.attribute[name][cellids]
+
+            # TODO: This flattens the image if it happens to be 3D (or higher...)
+            # do we need a way to communicate the structure back to the caller?
+            data = data.reshape(-1, data.shape[-1])
+
+            # TODO: This normalizes the image,
+            # but we need a way to communicate the ranges back to the caller
+            a, b = min(data.flat), max(data.flat)
+            data = ((data - a) / (b - a) * 255).astype(np.uint8)
+
+            all_textures[name] = data
+
         return volume, all_textures
-
-
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.fstream.close()
