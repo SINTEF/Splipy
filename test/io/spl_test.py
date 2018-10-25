@@ -91,3 +91,6 @@ class TestSPL(unittest.TestCase):
              -2.5000000000000000e-01,
              -2.5000000000000000e-01,
              -2.5000000000000000e-01])
+
+if __name__ == '__main__':
+    unittest.main()
