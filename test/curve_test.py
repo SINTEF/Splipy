@@ -379,6 +379,8 @@ class TestCurve(unittest.TestCase):
             return 6*(1-x)**2*x**2/(x**3 - 6*x**2 + 6*x - 2)**2
         def expect_derivative_2(x):
             return -12*x*(x**5 - 3*x**4 + 2*x**3 + 4*x**2 - 6*x + 2)/(x**3 - 6*x**2 + 6*x - 2)**3
+        def expect_derivative_3(x):
+            return 12*(3*x**8 - 12*x**7 + 10*x**6 + 48*x**5 - 156*x**4 + 176*x**3 - 72*x**2 + 4)/(x**3 - 6*x**2 + 6*x - 2)**4
 
         # insert a few more knots to spice things up
         crv.insert_knot([.2, .71])
@@ -390,6 +392,10 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(crv.derivative(0.22, 2)[0], expect_derivative_2(0.22))
         self.assertAlmostEqual(crv.derivative(0.22, 2)[1], 0)
         self.assertAlmostEqual(crv.derivative(0.86, 2)[0], expect_derivative_2(0.86))
+
+        self.assertAlmostEqual(crv.derivative(0.22, 3)[0], expect_derivative_3(0.22))
+        self.assertAlmostEqual(crv.derivative(0.22, 3)[1], 0)
+        self.assertAlmostEqual(crv.derivative(0.86, 3)[0], expect_derivative_3(0.86))
 
     def test_tangent_and_normal(self):
         crv = CurveFactory.circle()
