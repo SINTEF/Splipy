@@ -87,24 +87,35 @@ class Curve(SplineObject):
         :return: Derivative array
         :rtype: numpy.array
         """
-        if not self.rational or d != 2:
+        if not is_singleton(d):
+            d = d[0]
+        if not self.rational or d < 2 or d > 3:
             return super(Curve, self).derivative(t, d=d, above=above, tensor=tensor)
 
         t = ensure_listlike(t)
-        dN = self.bases[0].evaluate(t, d, above)
-        result = np.array(dN @ self.controlpoints)
+        result = np.zeros((len(t), self.dimension))
 
-        d2 = result
+        d2 = np.array(self.bases[0].evaluate(t, 2, above) @ self.controlpoints)
         d1 = np.array(self.bases[0].evaluate(t, 1, above) @ self.controlpoints)
         d0 = np.array(self.bases[0].evaluate(t) @ self.controlpoints)
-        W = d0[:, -1]   # W(t)
+        W  = d0[:, -1]  # W(t)
         W1 = d1[:, -1]  # W'(t)
         W2 = d2[:, -1]  # W''(t)
-        for i in range(self.dimension):
-            result[:, i] = (d2[:, i] * W * W - 2 * W1 *
-                            (d1[:, i] * W - d0[:, i] * W1) - d0[:, i] * W2 * W) / W / W / W
-
-        result = np.delete(result, self.dimension, 1)  # remove the weight column
+        if d == 2:
+            for i in range(self.dimension):
+                result[:, i] = (d2[:, i] * W * W - 2 * W1 *
+                               (d1[:, i] * W - d0[:, i] * W1) - d0[:, i] * W2 * W) / W / W / W
+        if d == 3:
+            d3 = np.array(self.bases[0].evaluate(t, 3, above) @ self.controlpoints)
+            W3 = d3[:,-1]    # W'''(t)
+            W6 = W*W*W*W*W*W # W^6
+            for i in range(self.dimension):
+                H  =  d1[:,i]*W                           - d0[:,i]*W1
+                H1 =  d2[:,i]*W                           - d0[:,i]*W2
+                H2 =  d3[:,i]*W + d2[:,i]*W1 - d1[:,i]*W2 - d0[:,i]*W3
+                G  =  H1*W - 2*H*W1
+                G1 =  H2*W - 2*H*W2 - H1*W1
+                result[:, i] = (G1*W - 3*G*W1) /W/W/W/W
 
         if result.shape[0] == 1:  # in case of single value input t, return vector instead of matrix
             result = np.array(result[0, :]).reshape(self.dimension)
