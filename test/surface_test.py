@@ -161,6 +161,52 @@ class TestSurface(unittest.TestCase):
         with self.assertRaises(ValueError):
             val = surf.derivative(.5, +10)  # evalaute outside parametric domain
 
+    def test_rational_derivative(self):
+        # testing the parametrization x(u,v) = [.5*u^3*(1-v)^3 / ((1-v)^3*(1-u)^3 + .5*u^3*(1-v)^3), 0]
+        # dx/du   =  (6*u^2*(u - 1)^2)/(u^3 - 6*u^2 + 6*u - 2)^2
+        # d2x/du2 =  -(12*u*(u^5 - 3*u^4 + 2*u^3 + 4*u^2 - 6*u + 2))/(u^3 - 6*u^2 + 6*u - 2)^3
+        # d3x/du3 =  (12*(3*u^8 - 12*u^7 + 10*u^6 + 48*u^5 - 156*u^4 + 176*u^3 - 72*u^2 + 4))/(u^3 - 6*u^2 + 6*u - 2)^4
+        # dx/dv   =  0
+        controlpoints = [[ 0,0, 1],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [.5,0,.5],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0],
+                         [ 0,0, 0]]
+        basis = BSplineBasis(4)
+        surf = Surface(basis, basis, controlpoints, rational=True)
+        def expect_derivative(u,v):
+            return (6*u**2*(u - 1)**2)/(u**3 - 6*u**2 + 6*u - 2)**2
+        def expect_derivative_2(x):
+            return -(12*u*(u**5 - 3*u**4 + 2*u**3 + 4*u**2 - 6*u + 2))/(u**3 - 6*u**2 + 6*u - 2)**3
+        def expect_derivative_3(x):
+            return (12*(3*u**8 - 12*u**7 + 10*u**6 + 48*u**5 - 156*u**4 + 176*u**3 - 72*u**2 + 4))/(u**3 - 6*u**2 + 6*u - 2)**4
+
+        # insert a few more knots to spice things up
+        surf.insert_knot([.3, .51],     0)
+        surf.insert_knot([.41,.53,.92], 1)
+
+        # test first derivatives
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1,0))[0], expect_derivative(0.32, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1,0))[1], 0)
+        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(1,0))[0], expect_derivative(0.71, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(1,0))[0], expect_derivative(0.71, 0.62))
+
+        # test second derivatives
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(2,0))[0], expect_derivative_2(0.32, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(2,0))[0], expect_derivative_2(0.71, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(2,0))[0], expect_derivative_2(0.71, 0.62))
+
     def test_raise_order(self):
         # more or less random 2D surface with p=[2,2] and n=[4,3]
         controlpoints = [[0, 0], [-1, 1], [0, 2], [1, -1], [1, 0], [1, 1], [2, 1], [2, 2], [2, 3],
