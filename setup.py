@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
-import numpy as np
+# import numpy as np
 
 with open('PyPI_text.md') as f:
     long_description = f.read()
@@ -29,7 +29,7 @@ setup(
         'FiniteElement': ["nutils>=3.0"],
         'Images':        ["opencv-python>=3.3"],
     },
-    include_dirs=[np.get_include()],
+    # include_dirs=[np.get_include()],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',
