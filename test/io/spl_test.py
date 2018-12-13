@@ -10,7 +10,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 class TestSPL(unittest.TestCase):
 
     def test_read(self):
-        with SPL(THIS_DIR + '/test_geometries/ibeam.spl') as myfile:
+        with SPL(THIS_DIR + '/geometries/ibeam.spl') as myfile:
             vol = myfile.read()[0]
 
         self.assertEqual(vol.pardim, 3)

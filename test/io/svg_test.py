@@ -12,7 +12,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 class TestSVG(unittest.TestCase):
 
     def test_read_linear(self):
-        with SVG(THIS_DIR + '/test_geometries/linear_curve.svg') as myfile:
+        with SVG(THIS_DIR + '/geometries/linear_curve.svg') as myfile:
             crv = myfile.read()
         self.assertEqual(len(crv), 1)
         crv = crv[0]
@@ -21,7 +21,7 @@ class TestSVG(unittest.TestCase):
 
 
     def test_read_cubic(self):
-        with SVG(THIS_DIR + '/test_geometries/cubic_curve.svg') as myfile:
+        with SVG(THIS_DIR + '/geometries/cubic_curve.svg') as myfile:
             crv = myfile.read()
         self.assertEqual(len(crv), 1)
         crv = crv[0]
@@ -30,7 +30,7 @@ class TestSVG(unittest.TestCase):
 
 
     def test_read_cubic_three_knot_span(self):
-        with SVG(THIS_DIR + '/test_geometries/cubic_three_knot_span_curve.svg') as myfile:
+        with SVG(THIS_DIR + '/geometries/cubic_three_knot_span_curve.svg') as myfile:
             crv = myfile.read()
         self.assertEqual(len(crv), 1)
         crv = crv[0]
@@ -39,7 +39,7 @@ class TestSVG(unittest.TestCase):
 
 
     def test_read_multiple_curves(self):
-        with SVG(THIS_DIR + '/test_geometries/three_curves.svg') as myfile:
+        with SVG(THIS_DIR + '/geometries/three_curves.svg') as myfile:
             crv = myfile.read()
         self.assertEqual(len(crv), 3)
         self.assertEqual(crv[0].order(0), 4)
@@ -66,7 +66,7 @@ class TestSVG(unittest.TestCase):
         os.remove('output.svg')
 
     def test_read_github(self):
-        with SVG(THIS_DIR + '/test_geometries/github.svg') as myfile:
+        with SVG(THIS_DIR + '/geometries/github.svg') as myfile:
             crv = myfile.read()
         self.assertEqual(len(crv), 1)
         crv = crv[0]
@@ -74,7 +74,7 @@ class TestSVG(unittest.TestCase):
         self.assertEqual(len(crv), 76)
 
     def test_read_california(self):
-        with SVG(THIS_DIR + '/test_geometries/california.svg') as myfile:
+        with SVG(THIS_DIR + '/geometries/california.svg') as myfile:
             crv = myfile.read()
         self.assertEqual(len(crv), 1)
         crv = crv[0]
@@ -82,7 +82,7 @@ class TestSVG(unittest.TestCase):
         self.assertEqual(len(crv), 307)
 
     def test_read_isengard(self):
-        with SVG(THIS_DIR + '/test_geometries/isengard.svg') as myfile:
+        with SVG(THIS_DIR + '/geometries/isengard.svg') as myfile:
             crv = myfile.read()
         self.assertEqual(len(crv), 9)
         for i in range(9):
