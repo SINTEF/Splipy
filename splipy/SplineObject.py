@@ -1161,11 +1161,11 @@ class SplineObject(object):
             # object identical to c. (Mostly black magic.)
             index_beg[direction] = i
             index_end[direction] = j
-            cps[index_beg] = t * cps[index_beg] + (1 - t) * cps[index_end]
+            cps[tuple(index_beg)] = t * cps[tuple(index_beg)] + (1 - t) * cps[tuple(index_end)]
 
         # cps[..., :-(continuity+1), ..., :]
         index_beg[direction] = slice(None, -(continuity + 1), None)
-        cps = cps[index_beg]
+        cps = cps[tuple(index_beg)]
 
         bases = list(self.bases)
         bases[direction] = basis

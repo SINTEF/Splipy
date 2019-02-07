@@ -43,13 +43,13 @@ class SPL(MasterIO):
         cpts = cpts.reshape(physdim, *(ncoeffs[::-1])).transpose()
 
         if pardim == 1:
-            patch = Curve(*bases, cpts, raw=True)
+            patch = Curve(*bases, controlpoints=cpts, raw=True)
         elif pardim == 2:
-            patch = Surface(*bases, cpts, raw=True)
+            patch = Surface(*bases, controlpoints=cpts, raw=True)
         elif pardim == 3:
-            patch = Volume(*bases, cpts, raw=True)
+            patch = Volume(*bases, controlpoints=cpts, raw=True)
         else:
-            patch = SplineObject(bases, cpts, raw=True)
+            patch = SplineObject(bases, controlpoints=cpts, raw=True)
 
         return [patch]
 
