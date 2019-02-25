@@ -322,6 +322,15 @@ class TestCurveFactory(unittest.TestCase):
         self.assertTrue(np.allclose(y[:,0],   s*s +   s - 1))
         self.assertTrue(np.allclose(y[:,1], 3*s*s - 3*s + 1))
 
+    def test_cubic_curve_1D(self):
+        n_elems = 30
+        t = np.linspace(0, 1, n_elems)
+        x = (t**2).reshape(-1,1)
+
+        crv = CurveFactory.cubic_curve(x, CurveFactory.Boundary.FREE, t=t.tolist())
+        self.assertEqual(crv.dimension, 1)
+        self.assertFalse(crv.rational)
+
     def test_bezier(self):
         crv = CurveFactory.bezier([[0,0], [0,1], [1,1], [1,0], [2,0], [2,1],[1,1]])
         self.assertEqual(len(crv.knots(0)), 3)

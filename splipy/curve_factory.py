@@ -298,6 +298,8 @@ def interpolate(x, basis, t=None):
     :return: Interpolated curve
     :rtype: Curve
     """
+    # wrap input into an array
+    x = np.array(x)
 
     # evaluate all basis functions in the interpolation points
     if t is None:
@@ -305,9 +307,10 @@ def interpolate(x, basis, t=None):
     N = basis.evaluate(t, sparse=True)
 
     # solve interpolation problem
-    controlpoints = splinalg.spsolve(N, x)
+    cp = splinalg.spsolve(N, x)
+    cp = cp.reshape(x.shape)
 
-    return Curve(basis, controlpoints)
+    return Curve(basis, cp)
 
 def least_square_fit(x, basis, t):
     """  Perform a least-square fit of a point cloud onto a spline basis
@@ -422,6 +425,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
 
     # solve system to get controlpoints
     cp = splinalg.spsolve(N,x)
+    cp = cp.reshape(x.shape)
 
     # wrap it all into a curve and return
     return Curve(basis, cp)
