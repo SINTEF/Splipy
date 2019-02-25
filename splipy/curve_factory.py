@@ -3,7 +3,6 @@
 """Handy utilities for creating curves."""
 
 from math import pi, cos, sin, sqrt, ceil, atan2
-from splipy.SplineObject import rotation_matrix
 from splipy import Curve, BSplineBasis
 from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
 from numpy.linalg import norm
@@ -211,7 +210,7 @@ def circle_segment_from_three_points(x0, x1, x2):
 
     # figure out normal, center and radius
     normal = np.cross(pt1-pt0, pt2-pt0)
-    A = np.matrix(np.vstack((2*(pt1-pt0), 2*(pt2-pt0), normal)))
+    A = np.vstack((2*(pt1-pt0), 2*(pt2-pt0), normal))
     b = np.array([ np.dot(pt1,pt1) - np.dot(pt0,pt0),
                    np.dot(pt2,pt2) - np.dot(pt0,pt0),
                    np.dot(normal,pt0)])
@@ -299,8 +298,6 @@ def interpolate(x, basis, t=None):
     :return: Interpolated curve
     :rtype: Curve
     """
-    # wrap x into a numpy matrix
-    x = np.matrix(x)
 
     # evaluate all basis functions in the interpolation points
     if t is None:
@@ -323,8 +320,6 @@ def least_square_fit(x, basis, t):
     :return: Approximated curve
     :rtype: Curve
     """
-    # wrap x into a numpy matrix
-    x = np.matrix(x)
 
     # evaluate all basis functions at evaluation points
     N = basis.evaluate(t)

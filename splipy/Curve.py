@@ -55,7 +55,7 @@ class Curve(SplineObject):
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
         N = self.bases[0].evaluate(params[0], sparse=True)
-        result = N*self.controlpoints
+        result = N @ self.controlpoints
 
         # For rational objects, we divide out the weights, which are stored in the
         # last coordinate
@@ -92,11 +92,11 @@ class Curve(SplineObject):
 
         t = ensure_listlike(t)
         dN = self.bases[0].evaluate(t, d, above)
-        result = np.array(dN * self.controlpoints)
+        result = np.array(dN @ self.controlpoints)
 
         d2 = result
-        d1 = np.array(self.bases[0].evaluate(t, 1, above) * self.controlpoints)
-        d0 = np.array(self.bases[0].evaluate(t) * self.controlpoints)
+        d1 = np.array(self.bases[0].evaluate(t, 1, above) @ self.controlpoints)
+        d0 = np.array(self.bases[0].evaluate(t) @ self.controlpoints)
         W = d0[:, -1]   # W(t)
         W1 = d1[:, -1]  # W'(t)
         W2 = d2[:, -1]  # W''(t)
@@ -270,7 +270,7 @@ class Curve(SplineObject):
         interpolation_pts_t = newBasis.greville()  # parametric interpolation points (t)
         N_old = self.bases[0].evaluate(interpolation_pts_t)
         N_new = newBasis.evaluate(interpolation_pts_t, sparse=True)
-        interpolation_pts_x = N_old * self.controlpoints  # projective interpolation points (x,y,z,w)
+        interpolation_pts_x = N_old @ self.controlpoints  # projective interpolation points (x,y,z,w)
 
         # solve the interpolation problem
         self.controlpoints = np.array(splinalg.spsolve(N_new, interpolation_pts_x))

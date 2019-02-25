@@ -544,11 +544,11 @@ def thicken(curve, amount):
     if curve.dimension == 2:
         # linear parametrization across domain
         n = len(curve)
-        left_points = np.matrix(np.zeros((n, 2)))
-        right_points = np.matrix(np.zeros((n, 2)))
+        left_points = np.zeros((n, 2))
+        right_points = np.zeros((n, 2))
         linear = BSplineBasis(2)
 
-        x = np.matrix(curve.evaluate(t))      # curve at interpolation points
+        x = curve.evaluate(t)                 # curve at interpolation points
         v = curve.derivative(t)               # velocity at interpolation points
         l = np.sqrt(v[:, 0]**2 + v[:, 1]**2)  # normalizing factor for velocity
         for i in range(n):
@@ -560,7 +560,6 @@ def thicken(curve, amount):
             else:
                 v[i,:] /= l[i]
 
-        v = np.matrix(v)
         if inspect.isfunction(amount):
             arg_names = inspect.getargspec(amount).args
             argc = len(arg_names)
@@ -675,7 +674,7 @@ def loft(*curves):
     # compute interpolation points in physical space
     x      = np.zeros((m,n, curves[0][0].size))
     for i in range(n):
-        x[:,i,:] = Nu * curves[i].controlpoints
+        x[:,i,:] = Nu @ curves[i].controlpoints
 
     # solve interpolation problem
     cp = np.tensordot(Nv_inv, x,  axes=(1,1))
@@ -742,7 +741,7 @@ def least_square_fit(x, bases, u):
     for N in N_all:
         cp = np.tensordot(N.T, cp, axes=(1,1))
     for N in N_all:
-        cp = np.tensordot(np.linalg.inv(N.T*N), cp, axes=(1,1))
+        cp = np.tensordot(np.linalg.inv(N.T @ N), cp, axes=(1,1))
 
     return Surface(bases[0], bases[1], cp.transpose(1,0,2).reshape((np.prod(surf_shape),dim)))
 
