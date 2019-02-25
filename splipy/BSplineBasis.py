@@ -128,7 +128,7 @@ class BSplineBasis:
         indices = np.zeros(m*p, dtype='int32')
         indptr  = np.array(range(0,m*p+1,p), dtype='int32')
         if p <= d: # requesting more derivatives than polymoial degree: return all zeros
-            return np.matrix(np.zeros((m,n)))
+            return np.zeros((m,n))
         if self.periodic >= 0:
             t = copy.deepcopy(t)
             # Wrap periodic evaluation into domain
@@ -180,7 +180,7 @@ class BSplineBasis:
 
         N = csr_matrix((data, indices, indptr), (m,n))
         if not sparse:
-            N = N.todense()
+            N = N.toarray()
         return N
 
     def integrate(self, t0, t1):

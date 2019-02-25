@@ -136,15 +136,15 @@ class Surface(SplineObject):
 
         # compute mapping matrix C which is the knotinsertion operator
         mult = min(b.continuity(knot), b.order-1)
-        C    = np.matrix(np.identity(self.shape[direction]))
+        C    = np.identity(self.shape[direction])
         for i in range(mult):
-            C = b.insert_knot(knot) * C
+            C = b.insert_knot(knot) @ C
 
         # at this point we have a C0 basis, find the right interpolating index
         i  = max(bisect_left(b.knots, knot) - 1,0)
 
         # compute the controlpoints and return Curve
-        cp = np.tensordot(C[i,:], self.controlpoints, axes=(1, direction))
+        cp = np.tensordot(C[i,:], self.controlpoints, axes=(0, direction))
         return Curve(self.bases[1-direction], cp, self.rational)
 
     def rebuild(self, p, n):

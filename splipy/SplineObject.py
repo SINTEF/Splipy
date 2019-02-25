@@ -625,9 +625,9 @@ class SplineObject(object):
 
         direction = check_direction(direction, self.pardim)
 
-        C = np.matrix(np.identity(shape[direction]))
+        C = np.identity(shape[direction])
         for k in knot:
-            C = self.bases[direction].insert_knot(k) * C
+            C = self.bases[direction].insert_knot(k) @ C
         self.controlpoints = np.tensordot(C, self.controlpoints, axes=(1, direction))
         self.controlpoints = self.controlpoints.transpose(transpose_fix(self.pardim, direction))
 
@@ -729,19 +729,19 @@ class SplineObject(object):
             dim = self.dimension
 
         # set up the translation matrix
-        translation_matrix = np.matrix(np.identity(dim + 1))
+        translation_matrix = np.identity(dim + 1)
         for i in range(dim):
             translation_matrix[i, -1] = x[i]
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
         if not self.rational:
-            cp = np.matrix(np.ones((n, dim + 1)))  # pad with weights=1
+            cp = np.ones((n, dim + 1))  # pad with weights=1
             cp[:, :-1] = np.reshape(self.controlpoints, (n, dim))
         else:
-            cp = np.matrix(np.reshape(self.controlpoints, (n, dim + rat)))
+            cp = np.reshape(self.controlpoints, (n, dim + rat))
 
         # do the actual scaling by matrix-matrix multiplication
-        cp = cp * translation_matrix.T  # right-mult, so we need transpose
+        cp = cp @ translation_matrix.T  # right-mult, so we need transpose
 
         # store results
         if self.rational:
@@ -774,15 +774,15 @@ class SplineObject(object):
         s = ensure_listlike(s, dups=3)
 
         # set up the scaling matrix
-        scale_matrix = np.matrix(np.identity(dim + rat))
+        scale_matrix = np.identity(dim + rat)
         for i in range(dim):
             scale_matrix[i, i] = s[i]
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
-        cp = np.matrix(np.reshape(self.controlpoints, (n, dim + rat)))
+        cp = np.reshape(self.controlpoints, (n, dim + rat))
 
         # do the actual scaling by matrix-matrix multiplication
-        cp = cp * scale_matrix
+        cp = cp @ scale_matrix
 
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
@@ -813,22 +813,22 @@ class SplineObject(object):
 
         # set up the rotation matrix
         if dim == 2:
-            R = np.matrix([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]
-                           ]).T  # we do right-multiplication, so we need a transpose
+            R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]
+                 ]).T  # we do right-multiplication, so we need a transpose
         elif dim == 3:
             normal = np.array(normal)
             R = rotation_matrix(theta, normal)
         else:
             raise RuntimeError('rotation undefined for geometries other than 2D and 3D')
 
-        rot_matrix = np.matrix(np.identity(dim + rat))
+        rot_matrix = np.identity(dim + rat)
         rot_matrix[0:dim, 0:dim] = R
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
-        cp = np.matrix(np.reshape(self.controlpoints, (n, dim + rat)))
+        cp = np.reshape(self.controlpoints, (n, dim + rat))
 
         # do the actual rotation by matrix-matrix multiplication
-        cp = cp * rot_matrix
+        cp = cp @ rot_matrix
 
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
@@ -866,14 +866,14 @@ class SplineObject(object):
         normal = normal / np.sqrt(np.dot(normal, normal))  # normalize it
 
         # set up the reflection matrix
-        reflection_matrix = np.matrix(np.identity(dim + rat))
+        reflection_matrix = np.identity(dim + rat)
         reflection_matrix[0:dim, 0:dim] -= 2 * np.outer(normal, normal)
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
-        cp = np.matrix(np.reshape(self.controlpoints, (n, dim + rat)))
+        cp = np.reshape(self.controlpoints, (n, dim + rat))
 
         # do the actual rotation by matrix-matrix multiplication
-        cp = cp * reflection_matrix
+        cp = cp @ reflection_matrix
 
         # store results
         self.controlpoints = np.reshape(np.array(cp), self.controlpoints.shape)
@@ -1105,7 +1105,7 @@ class SplineObject(object):
                 knot_slice          = slice(last_knot_i, mu+p, None)
                 cp_slice[direction] = slice(last_cp_i,   last_cp_i+n_cp,  None)
 
-                cp = splitting_obj.controlpoints[ cp_slice ]
+                cp = splitting_obj.controlpoints[ tuple(cp_slice) ]
                 bases[direction] = BSplineBasis(p, b.knots[knot_slice])
 
                 args = bases + [cp, splitting_obj.rational]
@@ -1118,7 +1118,7 @@ class SplineObject(object):
         knot_slice          = slice(last_knot_i, None, None)
         cp_slice[direction] = slice(last_cp_i,   None, None)
         bases[direction] = BSplineBasis(p, b.knots[knot_slice])
-        cp = splitting_obj.controlpoints[ cp_slice ]
+        cp = splitting_obj.controlpoints[ tuple(cp_slice) ]
         args = bases + [cp, splitting_obj.rational]
         results.append(spline_object(*args, raw=True))
 

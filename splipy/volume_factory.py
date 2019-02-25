@@ -395,6 +395,6 @@ def least_square_fit(x, bases, u):
     for N in N_all:
         cp = np.tensordot(N.T, cp, axes=(1,2))
     for N in N_all:
-        cp = np.tensordot(np.linalg.inv(N.T*N), cp, axes=(1,2))
+        cp = np.tensordot(np.linalg.inv(N.T @ N), cp, axes=(1,2))
 
     return Volume(bases[0], bases[1], bases[2], cp.transpose(2,1,0,3).reshape((np.prod(vol_shape),dim)))

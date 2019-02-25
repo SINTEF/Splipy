@@ -22,8 +22,8 @@ setup(
         'splipy': ['templates/*.bpt'],
     },
     install_requires=[
-        'numpy >= 1.9',
-        'scipy >= 0.17',
+        'numpy >= 1.15',
+        'scipy >= 1.2',
     ],
     extras_require={
         'FiniteElement': ["nutils>=3.0"],

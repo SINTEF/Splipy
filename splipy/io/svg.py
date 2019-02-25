@@ -260,18 +260,18 @@ class SVG(MasterIO):
             elif func == 'rotate':
                 curve.rotate(-args[0]/360*2*np.pi)
             elif func == 'matrix':
-                M = np.matrix([[args[0], args[2], args[4]],
+                M = np.array([[args[0], args[2], args[4]],
                                [args[1], args[3], args[5]],
                                [      0,       0,      1]])
                 n = len(curve)
                 if not curve.rational:
-                    cp = np.matrix(np.ones((n, 3)))  # pad with weights=1
+                    cp = np.ones((n, 3))  # pad with weights=1
                     cp[:, :-1] = np.reshape(curve.controlpoints, (n, 2))
-                    cp = cp * M.T
+                    cp = cp @ M.T
                     curve.controlpoints = np.reshape(np.array(cp[:,:-1]), curve.controlpoints.shape)
                 else:
-                    cp = np.matrix(np.reshape(curve.controlpoints, (n, 3)))
-                    cp = cp * M.T
+                    cp = np.reshape(curve.controlpoints, (n, 3))
+                    cp = cp @ M.T
                     curve.controlpoints = np.reshape(np.array(cp), curve.controlpoints.shape)
 
     def curves_from_path(self, path):
