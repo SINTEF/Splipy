@@ -80,7 +80,7 @@ Tests
 To run the tests, you can use your favourite test runner. For example, with
 pytest::
 
-    py.test --benchmark-skip
+    PYTHONPATH=. py.test --benchmark-skip
 
 Code analysis
 -------------
