@@ -27,7 +27,7 @@ setup(
     ],
     extras_require={
         'FiniteElement': ["nutils>=3.0"],
-        'Images':        ["opencv-python>=3.3"],
+        'Images':        ["opencv-python>=4.0"],
     },
     # include_dirs=[np.get_include()],
     classifiers=[

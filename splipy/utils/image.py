@@ -113,21 +113,17 @@ def image_curves(filename):
     imBlack  = np.zeros((len(im),   len(im[0])),   np.uint8)
 
     # convert to greyscale image
-    if cv2.__version__[0] == '2':
-        warnings.warn(FutureWarning('openCV v.2 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
-        cv2.cvtColor(im, cv2.cv.CV_RGB2GRAY, imGrey)
-    else:
-        cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
+    cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
 
     # convert to binary black/white
     cv2.threshold(imGrey, 128, 255, cv2.THRESH_BINARY, imBlack)
 
     # find contour curves in image
-    if cv2.__version__[0] == '2':
-        warnings.warn(FutureWarning('openCV v.2 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
-        [contours, _]    = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-    else:
+    if cv2.__version__[0] == '3':
+        warnings.warn(FutureWarning('openCV v.3 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
         [_, contours, _] = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    else:
+        [contours, _]    = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     result = []
     for i in range(len(contours)-1):   # for all contours (except the last one which is the edge)
@@ -214,11 +210,7 @@ def image_height(filename, N=[30,30], p=[4,4]):
     imGrey = np.zeros((len(im),   len(im[0])),   np.uint8)
 
     # convert to greyscale image
-    if cv2.__version__[0] == '2':
-        warnings.warn(FutureWarning('openCV v.2 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
-        cv2.cvtColor(im, cv2.cv.CV_RGB2GRAY, imGrey)
-    else:
-        cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
+    cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
 
     pts = []
     # guess uniform evaluation points and knot vectors
