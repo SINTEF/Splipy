@@ -220,7 +220,7 @@ class SVG(MasterIO):
     def read(self):
         tree = etree.parse(self.filename)
         root = tree.getroot()
-        parent_map = dict((c, p) for p in tree.getiterator() for c in p)
+        parent_map = dict((c, p) for p in tree.iter() for c in p)
         if 'width' in root.attrib:
             self.width,_  = read_number_and_unit(root.attrib['width'])
             self.height,_ = read_number_and_unit(root.attrib['height'])

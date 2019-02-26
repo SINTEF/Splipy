@@ -571,19 +571,19 @@ def thicken(curve, amount):
                 v[i,:] /= l[i]
 
         if inspect.isfunction(amount):
-            arg_names = inspect.getargspec(amount).args
+            arg_names = inspect.signature(amount).parameters
             argc = len(arg_names)
             argv = [0] * argc
             for i in range(n):
                 # build up the list of arguments (in case not all of (x,y,t) are specified)
-                for j in range(argc):
-                    if arg_names[j] == 'x':
+                for j,name in enumerate(arg_names):
+                    if name == 'x':
                         argv[j] = x[i, 0]
-                    elif arg_names[j] == 'y':
+                    elif name == 'y':
                         argv[j] = x[i, 1]
-                    elif arg_names[j] == 'z':
+                    elif name == 'z':
                         argv[j] = 0.0
-                    elif arg_names[j] == 't':
+                    elif name == 't':
                         argv[j] = t[i]
                 # figure out the distane at this particular point
                 dist = amount(*argv)
