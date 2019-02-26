@@ -360,12 +360,15 @@ class TestSurfaceFactory(unittest.TestCase):
         c1.refine(2).raise_order(1)
         c2.refine(2).raise_order(1)
         surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='finitestrain')
+        from splipy.io import G2
+        with G2('out.g2') as myfile:
+            myfile.write(surf)
         # the quickest way to check for self-intersecting geometry here is that
         # the normal is pointing the wrong way: down z-axis instead of up
         surf.reparam().set_dimension(3)
         self.assertTrue(surf.normal(0.5, 0.98)[2] > 0.0)
         # also check that no controlpoints leak away into the first quadrant
-        self.assertFalse(np.any(np.logical_and(surf[:,:,0] > 0, surf[:,:,1] > 0)))
+        self.assertFalse(np.any(np.logical_and(surf[:,:,0] > 1e-10, surf[:,:,1] > 1e-10)))
 
     def test_thicken(self):
         c = Curve()                       # 2D curve from (0,0) to (1,0)

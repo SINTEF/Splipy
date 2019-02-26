@@ -290,8 +290,8 @@ def coons_patch(bottom, right, top, left):
 
 def poisson_patch(bottom, right, top, left):
     from nutils import version
-    if version != '3.0':
-        raise ImportError('Outdated nutils version detected, only v3.0 supported. Upgrade by \"pip install --upgrade nutils\"')
+    if int(version[0]) != 4:
+        raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
     from nutils import mesh, function as fn
     from nutils import _, log
@@ -341,7 +341,7 @@ def poisson_patch(bottom, right, top, left):
         constraints[ :,-1] = top[   :,d]
 
         # solve system
-        lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints), solver='cg', tol=state.controlpoint_absolute_tolerance)
+        lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints))
 
         # wrap results into splipy datastructures
         controlpoints[:,:,d] = np.reshape(lhs, (n1,n2), order='C')
@@ -351,8 +351,8 @@ def poisson_patch(bottom, right, top, left):
 
 def elasticity_patch(bottom, right, top, left):
     from nutils import version
-    if version != '3.0':
-        raise ImportError('Outdated nutils version detected, only v3.0 supported. Upgrade by \"pip install --upgrade nutils\"')
+    if int(version[0]) != 4:
+        raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
     from nutils import mesh, function, solver
     from nutils import _, log
@@ -390,11 +390,14 @@ def elasticity_patch(bottom, right, top, left):
     ns.eye = np.array([[1,0],[0,1]])
     ns.lmbda = 1
     ns.mu = 1
+    # ns.u_i = 'basis_ni ?lhs_n'
+    # ns.strain_ij = '(u_i,j + u_j,i) / 2'
+    # ns.stress_ij = 'lmbda strain_kk eye_ij + 2 mu strain_ij'
     ns.strain_nij = '(basis_ni,j + basis_nj,i) / 2'
     ns.stress_nij = 'lmbda strain_nkk eye_ij + 2 mu strain_nij'
 
     # construct matrix and right hand-side
-    matrix = domain.integrate(ns.eval_nm('strain_nij stress_mij'), geometry=ns.x, degree=[p1-1,p2-1])
+    matrix = domain.integrate(ns.eval_nm('strain_nij stress_mij d:x'), ischeme='gauss'+str(max(p1,p2)+1))
     rhs    = np.zeros((n1*n2*dim))
 
     # add boundary conditions
@@ -406,7 +409,7 @@ def elasticity_patch(bottom, right, top, left):
         constraints[d, :,-1] = top[   :,d]
 
     # solve system
-    lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints, order='C'), solver='cg', tol=state.controlpoint_absolute_tolerance)
+    lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints, order='C'))
 
     # rewrap results into splipy datastructures
     controlpoints = np.reshape(lhs, (dim,n1,n2), order='C')
@@ -418,8 +421,8 @@ def elasticity_patch(bottom, right, top, left):
 
 def finitestrain_patch(bottom, right, top, left):
     from nutils import version
-    if version != '3.0':
-        raise ImportError('Outdated nutils version detected, only v3.0 supported. Upgrade by \"pip install --upgrade nutils\"')
+    if int(version[0]) != 4:
+        raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
     from nutils import mesh, function
     from nutils import _, log, solver
@@ -473,16 +476,22 @@ def finitestrain_patch(bottom, right, top, left):
         constraints[d,-1, :] = (right[ :,d] - srf[-1, :,d])
         constraints[d, :, 0] = (bottom[:,d] - srf[ :, 0,d])
         constraints[d, :,-1] = (top[   :,d] - srf[ :,-1,d])
+    # TODO: Take a close look at the logic below
 
     # in order to iterate, we let t0=0 be current configuration and t1=1 our target configuration
     # if solver divergeces (too large deformation), we will try with dt=0.5. If this still
     # fails we will resort to dt=0.25 until a suitable small iterations size have been found
-    dt = 1
-    t0 = 0
-    t1 = 1
-    while t0 < 1:
-        dt = t1-t0
-        print(' ==== Quasi-static '+str(t0*100)+'-'+str(t1*100)+' % ====')
+
+    # dt = 1
+    # t0 = 0
+    # t1 = 1
+    # while t0 < 1:
+        # dt = t1-t0
+    n  = 10
+    dt = 1/n
+    for i in range(n):
+        # print(' ==== Quasi-static '+str(t0*100)+'-'+str(t1*100)+' % ====')
+        print(' ==== Quasi-static '+str(i/(n-1)*100)+' % ====')
 
         # define the non-linear finite strain problem formulation
         ns.cp        = np.reshape(srf[:,:,:].swapaxes(0,1), (n1*n2, dim), order='F')
@@ -492,19 +501,20 @@ def finitestrain_patch(bottom, right, top, left):
         ns.strain_ij = '.5 (u_i,j + u_j,i + u_k,i u_k,j)'
         ns.stress_ij = 'lmbda strain_kk eye_ij + 2 mu strain_ij'
 
-        try:
-            residual = domain.integral(ns.eval_n('stress_ij basis_ni,j'), geometry=ns.X, degree=2*p)
-            cons = np.ndarray.flatten(constraints*dt, order='C')
-            lhs = solver.newton('w', residual, constrain=cons).solve(
-                                tol=state.controlpoint_absolute_tolerance, maxiter=8)
+        # try:
+        residual = domain.integral(ns.eval_n('stress_ij basis_ni,j d:X'), degree=2*p)
+        cons = np.ndarray.flatten(constraints*dt, order='C')
+        lhs = solver.newton('w', residual, constrain=cons).solve(
+                            tol=state.controlpoint_absolute_tolerance, maxiter=8)
 
-            # store the results on a splipy object and continue
-            geom   = lhs.reshape((n2,n1,dim), order='F')
-            srf[:,:,:] += geom.swapaxes(0,1)
-            t0 += dt
-            t1 = 1
-        except solver.ModelError: # newton method fail to converge, try a smaller step length 'dt'
-            t1 = (t1+t0)/2
+        # store the results on a splipy object and continue
+        geom   = lhs.reshape((n2,n1,dim), order='F')
+        srf[:,:,:] += geom.swapaxes(0,1)
+
+        # t0 += dt
+        # t1 = 1
+        # except solver.SolverError: # newton method fail to converge, try a smaller step length 'dt'
+            # t1 = (t1+t0)/2
     return srf
 
 def thicken(curve, amount):
