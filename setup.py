@@ -26,7 +26,7 @@ setup(
         'scipy >= 1.2',
     ],
     extras_require={
-        'FiniteElement': ["nutils>=3.0"],
+        'FiniteElement': ["nutils>=4.0"],
         'Images':        ["opencv-python>=4.0"],
     },
     # include_dirs=[np.get_include()],
