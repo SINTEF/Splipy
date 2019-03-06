@@ -1,13 +1,16 @@
 import numpy as np
-from itertools import islice, product, chain
-from splipy import Curve, Surface, Volume, SplineObject, BSplineBasis
-from splipy import curve_factory, surface_factory, volume_factory
+from itertools import product, chain
+from splipy import Surface, Volume, SplineObject, BSplineBasis
+from splipy import surface_factory, volume_factory
+from splipy.io import G2
+from splipy.utils import ensure_listlike
 from .master import MasterIO
 import re
 import warnings
 from scipy.spatial import Delaunay
 from scipy.spatial.qhull import QhullError
 from tqdm import tqdm
+import cv2
 
 
 class Box(object):
@@ -194,12 +197,14 @@ class GRDECL(MasterIO):
 
         return self.true_vol, discont_vol, self.c0_vol
 
-    def texture(self, p, n, method='full'):
+    def texture(self, p, ngeom, ntexture, method='full'):
         # Set the dimensions of geometry and texture map
-        ngeom    = np.floor(self.n / (p-1))
-        ntexture = np.floor(self.n * n)
-        ngeom    = ngeom.astype(np.int32)
-        ntexture = ntexture.astype(np.int32)
+        # ngeom    = np.floor(self.n / (p-1))
+        # ntexture = np.floor(self.n * n)
+        # ngeom    = ngeom.astype(np.int32)
+        # ntexture = ntexture.astype(np.int32)
+        ngeom    = ensure_listlike(ngeom, 3)
+        ntexture = ensure_listlike(ntexture, 3)
 
         # Create the geometry
         ngx, ngy, ngz = ngeom
@@ -225,7 +230,7 @@ class GRDECL(MasterIO):
             top    = l2_fit(self.c0_vol[:,:,-1,:].squeeze(), [b1, b2], [u, v])
             volume = volume_factory.edge_surfaces([bottom, top])
             volume.set_order(p)
-            volume.refine(ngx - 1, direction='w')
+            volume.refine(ngz - 1, direction='w')
 
         # Point-to-cell mapping
         # TODO: Optimize more
@@ -234,6 +239,7 @@ class GRDECL(MasterIO):
         cellids = np.zeros(points.shape[:-1], dtype=int)
         cell = None
         for ptid, point in enumerate(tqdm(points, desc='Inverse mapping')):
+        # for ptid, point in enumerate(points):
             i, j, k = cell = self.raw.cell_at(point, guess=cell)
             cellid = i*ny*nz + j*nz + k
             cellids[ptid] = cellid
@@ -246,16 +252,29 @@ class GRDECL(MasterIO):
 
             # TODO: This flattens the image if it happens to be 3D (or higher...)
             # do we need a way to communicate the structure back to the caller?
-            data = data.reshape(-1, data.shape[-1])
+            # data = data.reshape(-1, data.shape[-1])
 
             # TODO: This normalizes the image,
             # but we need a way to communicate the ranges back to the caller
-            a, b = min(data.flat), max(data.flat)
-            data = ((data - a) / (b - a) * 255).astype(np.uint8)
+            # a, b = min(data.flat), max(data.flat)
+            # data = ((data - a) / (b - a) * 255).astype(np.uint8)
 
             all_textures[name] = data
 
         return volume, all_textures
+
+    def to_ifem(self, p, ngeom, ntexture, method='full'):
+        vol, textures = self.texture(p, ngeom, ntexture, method)
+        for name, data in textures.items():
+            a, b = min(data.flat), max(data.flat)
+            img  = ((data - a) / (b - a) * 255).astype(np.uint8)
+            n    = data.shape
+            img  = img.reshape(n[0], n[1]*n[2])
+            print('<texturematerial set="Model" file="{}.png" min="{}" max="{}" property="{}" nx="{}" ny="{}" nz="{}"/>'.format(name, a,b, name, n[0], n[1], n[2]))
+            cv2.imwrite(name+'.png', img)
+
+        with G2('geom.g2') as myfile:
+            myfile.write(vol)
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.fstream.close()
