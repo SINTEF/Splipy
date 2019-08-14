@@ -264,7 +264,7 @@ def circle_segment(theta, r=1, center=(0,0,0), normal=(0,0,1), xaxis=(1,0,0)):
     for i in range(knot_spans + 1):
         knot += [i] * 2
     knot += [knot_spans]  # knot vector [0,0,0,1,1,2,2,..,n,n,n]
-    knot = np.array(knot) / float(knot[-1]) * theta  # set parametic space to [0,theta]
+    knot = np.array(knot) / float(knot[-1]) * theta  # set parametric space to [0,theta]
 
     n = (knot_spans - 1) * 2 + 3  # number of control points needed
     cp = []
