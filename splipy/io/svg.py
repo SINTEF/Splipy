@@ -243,10 +243,10 @@ class SVG(MasterIO):
 
     def transform(self, curve, operation):
         # intended input operation string: 'translate(-10,-20) scale(2) rotate(45) translate(5,10)'
-        all_operations = re.findall('[^\)]*\)', operation.lower())
+        all_operations = re.findall(r'[^\)]*\)', operation.lower())
         all_operations.reverse()
         for one_operation in all_operations:
-            parts = re.search('([a-z]*)\w*\((.*)\)', one_operation.strip())
+            parts = re.search(r'([a-z]*)\w*\((.*)\)', one_operation.strip())
             func = parts.group(1)
             args = [float(d) for d in parts.group(2).split(',')]
             if func == 'translate':
@@ -294,7 +294,7 @@ class SVG(MasterIO):
             # if not single-letter command (i.e. 'z')
             if len(piece)>1:
                 # points is a (string-)list of (x,y)-coordinates for the given operator
-                points = re.findall('-?\d+\.?\d*', piece[1:])
+                points = re.findall(r'-?\d+\.?\d*', piece[1:])
 
                 if piece[0].lower() != 'a' and piece[0].lower() != 'v' and piece[0].lower() != 'h':
                     # convert string-list to a list of numpy arrays (of size 2)
