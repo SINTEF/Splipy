@@ -183,7 +183,7 @@ def image_curves(filename):
 
         basis = BSplineBasis(4, knot, 0)
 
-        c = curve_factory.least_square_fit(pts, basis, parpt)
+        c = curve_factory.least_square_fit(np.array(pts), basis, parpt)
         result.append(c)
 
     return result
@@ -203,21 +203,20 @@ def image_height(filename, N=[30,30], p=[4,4]):
 
     im = cv2.imread(filename)
 
-    width  = len(im)
-    height = len(im[0])
+    width  = len(im[0])
+    height = len(im)
 
     # initialize image holder
-    imGrey = np.zeros((len(im),   len(im[0])),   np.uint8)
+    imGrey = np.zeros((height, width), np.uint8)
 
     # convert to greyscale image
     cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
 
-    pts = []
     # guess uniform evaluation points and knot vectors
-    u = range(width)
-    v = range(height)
-    knot1 = [0]*3 + range(N[0]-p[0]+2) + [N[0]-p[0]+1]*3
-    knot2 = [0]*3 + range(N[0]-p[0]+2) + [N[0]-p[0]+1]*3
+    u = list(range(width))
+    v = list(range(height))
+    knot1 = [0]*(p[0]-1) + list(range(N[0]-p[0]+2)) + [N[0]-p[0]+1]*(p[0]-1)
+    knot2 = [0]*(p[1]-1) + list(range(N[1]-p[1]+2)) + [N[1]-p[1]+1]*(p[1]-1)
 
     # normalize all values to be in range [0, 1]
     u     = [float(i)/u[-1]     for i in u]
@@ -225,12 +224,14 @@ def image_height(filename, N=[30,30], p=[4,4]):
     knot1 = [float(i)/knot1[-1] for i in knot1]
     knot2 = [float(i)/knot2[-1] for i in knot2]
 
-    for j in range(height):
-        for i in range(width):
-            pts.append([v[j], u[i], float(imGrey[width-i-1][j])/255.0*1.0])
+    # flip and reverse image so coordinate (0,0) is at lower-left corner
+    imGrey = imGrey.T  / 255.0
+    imGrey = np.flip(imGrey, axis=1)
+    x,y    = np.meshgrid(u,v, indexing='ij')
+    pts   = np.stack([x,y,imGrey], axis=2)
 
-    basis1 = BSplineBasis(4, knot1)
-    basis2 = BSplineBasis(4, knot2)
+    basis1 = BSplineBasis(p[0], knot1)
+    basis2 = BSplineBasis(p[1], knot2)
 
     return surface_factory.least_square_fit(pts,[basis1, basis2], [u,v])
 
