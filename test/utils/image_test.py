@@ -19,7 +19,7 @@ class TestImage(unittest.TestCase):
 
     @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_curve(self):
-        crv = image_curves('splipy/utils/disc.png')
+        crv = image_curves('test/utils/disc.png')
         self.assertEqual(type(crv), list)
         crv = crv[0]
         self.assertEqual(type(crv), Curve)
@@ -37,7 +37,7 @@ class TestImage(unittest.TestCase):
 
     @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_surface(self):
-        disc = image_convex_surface('splipy/utils/disc.png')
+        disc = image_convex_surface('test/utils/disc.png')
         self.assertEqual(type(disc), Surface)
 
         bb = disc.bounding_box()
@@ -45,6 +45,38 @@ class TestImage(unittest.TestCase):
         disc /= (bb[0][1]-bb[0][0])/2       # scale to have unit radius
 
         self.assertAlmostEqual(disc.area(), pi, places=1)
+
+    @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
+    def test_height_disc(self):
+        hill = image_height('test/utils/disc.png', N=[30,30], p=[3,3])
+        self.assertEqual(type(hill), Surface)
+
+        # computes \int z(u,v) dxdv where x is an approximation to x={0 inside circle, 1 outside circle}, radius=0.48
+        center = hill.center()        # computes integral
+        area_under_graph = center[-1] # look at z-component
+        r               = 0.484       # same image used for edge detector so need white area between circle edge and image edge
+        expected_value  = 1 - pi*r*r  # circle = 0, background = 1, unit domain [0,1]^2
+
+        self.assertAlmostEqual(area_under_graph, expected_value, places=1)
+
+    def test_height_orient(self):
+        surf = image_height('test/utils/gray_corners.png') # rectangular input file
+        self.assertEqual(type(surf), Surface)
+
+        self.assertAlmostEqual(surf[ 0, 0, 0], 0) # check x-coordinates
+        self.assertAlmostEqual(surf[-1, 0, 0], 1)
+        self.assertAlmostEqual(surf[ 0,-1, 0], 0)
+        self.assertAlmostEqual(surf[-1,-1, 0], 1)
+
+        self.assertAlmostEqual(surf[ 0, 0, 1], 0) # check y-coordinates
+        self.assertAlmostEqual(surf[-1, 0, 1], 0)
+        self.assertAlmostEqual(surf[ 0,-1, 1], 1)
+        self.assertAlmostEqual(surf[-1,-1, 1], 1)
+
+        self.assertAlmostEqual(surf[ 0, 0, 2], 1.00,      places=2) # check z-coordinates (image gray-value)
+        self.assertAlmostEqual(surf[-1, 0, 2], 160.0/255, places=2)
+        self.assertAlmostEqual(surf[ 0,-1, 2], 0.00,      places=2)
+        self.assertAlmostEqual(surf[-1,-1, 2], 80.0/255,  places=2)
 
 if __name__ == '__main__':
     unittest.main()
