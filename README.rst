@@ -9,7 +9,13 @@ for the creation, evaluation and manipulation of B-spline and NURBS geometries.
 It supports n-variate splines of any dimension, but emphasis is made on the
 use of curves, surfaces and volumes. The library is designed primarily for
 analysis use, and therefore allows fine-grained control over many aspects which
-is not possible to achieve with conventional CAD tools. 
+is not possible to achieve with conventional CAD tools.
+
+Installation
+---------
+The library is packaged on splipy and can be installed through pip by simply running ::
+
+    pip install splipy
 
 
 Resources
@@ -18,7 +24,12 @@ Resources
 * `Getting-started guide <https://github.com/sintefmath/Splipy/tree/master/doc/Tutorial/Getting%20Started.ipynb>`_ - tutorial page (run with `jupyter <http://jupyter.org/>`_ to get interactive features)
 * `Examples page <https://github.com/sintefmath/Splipy/tree/master/examples>`_ - stand-alone executables of different applications
 * `API documentation <http://sintefmath.github.io/Splipy>`_ - technical details on all functions
+* `Package installation page <https://pypi.org/project/Splipy>`_ - splipy on PyPi, packaged and ready for installation
 
+
+======
+Development and building from source
+======
 
 Dependencies
 ------------
