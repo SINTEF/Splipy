@@ -389,7 +389,7 @@ def elasticity_patch(bottom, right, top, left):
     ns.basis = domain.basis('spline', degree=[p1-1,p2-1], knotmultiplicities=[m1,m2]).vector(2)
     ns.eye = np.array([[1,0],[0,1]])
     ns.lmbda = 1
-    ns.mu = 1
+    ns.mu = .3
     # ns.u_i = 'basis_ni ?lhs_n'
     # ns.strain_ij = '(u_i,j + u_j,i) / 2'
     # ns.stress_ij = 'lmbda strain_kk eye_ij + 2 mu strain_ij'
