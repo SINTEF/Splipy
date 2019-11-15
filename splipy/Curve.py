@@ -421,8 +421,8 @@ class Curve(SplineObject):
 
             crv = curve_factory.circle(r=1)
             (err2, maxerr) = crv.error(arclength_circle)
-            print '|| e ||_L2  = ', np.sqrt(np.sum(err2))
-            print '|| e ||_max = ', maxerr
+            print('|| e ||_L2  = ', np.sqrt(np.sum(err2)))
+            print('|| e ||_max = ', maxerr)
         """
         knots = self.knots(0)
         (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
