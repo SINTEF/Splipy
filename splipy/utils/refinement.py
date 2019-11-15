@@ -1,5 +1,3 @@
-from __future__ import division
-
 __doc__ = 'Implementation of various refinement schemes.'
 
 from splipy.utils import ensure_listlike, check_direction

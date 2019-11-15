@@ -1,5 +1,3 @@
-from __future__ import division
-
 __doc__ = 'Implementation of convenience methods with respect to nutils integration.'
 
 from splipy import Curve, Surface, Volume
