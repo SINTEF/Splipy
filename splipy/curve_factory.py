@@ -195,9 +195,9 @@ def circle_segment_from_three_points(x0, x1, x2):
 
     Create a circle segment going from the point x0 to x2 through x1
 
-    :param vector-like x0: The start point (2D or 3D point)
-    :param vector-like x1: An intermediate point (2D or 3D)
-    :param vector-like x2: The end point (2D or 3D)
+    :param array-like x0: The start point (2D or 3D point)
+    :param array-like x1: An intermediate point (2D or 3D)
+    :param array-like x2: The end point (2D or 3D)
     :rtype: Curve
     """
     # wrap input into 3d numpy arrays
