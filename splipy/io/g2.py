@@ -220,7 +220,6 @@ class G2(MasterIO):
 
     def bounded_surface(self):
         objtype = int( next(self.fstream).strip() )
-        # print(objtype)
 
         # create the underlying surface which all trimming curves are to be applied
         if objtype in G2.g2_generators:
@@ -244,7 +243,6 @@ class G2(MasterIO):
 
                 # read a physical and parametric representation of the same curve
                 _, parameter_curve_type, space_curve_type = map(int, self.read_next_non_whitespace().split())
-                # print(parameter_curve_type)
                 two_curves = []
                 for crv_type in [parameter_curve_type, space_curve_type]:
                     if crv_type in G2.g2_generators:
@@ -259,8 +257,6 @@ class G2(MasterIO):
                 # only keep the parametric version (re-generate physical one if we need it)
                 one_loop.append(two_curves[0])
                 self.trimming_curves.append(two_curves[1])
-            # print(one_loop)
-            # print('---------------------------------------')
             all_loops.append(one_loop)
 
         return TrimmedSurface(surface.bases[0], surface.bases[1], surface.controlpoints, surface.rational, all_loops, raw=True)
