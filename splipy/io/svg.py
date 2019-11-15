@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from splipy import Curve, Surface, SplineObject, BSplineBasis
 import splipy.curve_factory as curve_factory
 import splipy.state as state

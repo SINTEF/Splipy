@@ -36,7 +36,6 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
     ],
 )
