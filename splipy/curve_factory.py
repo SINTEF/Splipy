@@ -592,7 +592,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
         def arclength_circle(t):
             return np.array( [np.cos(t), np.sin(t)] ).T
         crv = curve_factory.fit(arclength_circle, 0, 2*np.pi)
-        print crv
+        print(crv)
 
         # approximates a difficult function with wild behaviour around t=0, but
         # this is overcome by a higher knot density around this point
@@ -600,7 +600,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
             eps = 1e-8 # to avoid 1/0 we add a small epsilon
             return np.array( [t, 1.0/(t+eps)] ).T
         crv = curve_factory.fit(one_over_t, 0, 1, rtol=1e-6)
-        print crv # first knot span is ~1e-9, last knot is ~1e-1
+        print(crv) # first knot span is ~1e-9, last knot is ~1e-1
 
         # one can specify the target curve in terms of existing Curve objects
         crv = curve_factory.circle(r=1)     # Curve-object, quadratic NURBS
