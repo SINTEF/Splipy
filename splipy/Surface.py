@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from splipy import BSplineBasis, Curve, SplineObject
+from splipy.SplineObject import evaluate
+from splipy.utils import is_singleton
 from splipy.utils import ensure_listlike, check_direction, sections
 from bisect import bisect_left
 from itertools import chain
@@ -83,6 +85,109 @@ class Surface(SplineObject):
             return normals / magnitude
         else:
             raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
+
+
+    def derivative(self, u, v, d=(1,1), above=True, tensor=True):
+        """  Evaluate the derivative of the surface at the given parametric values.
+
+        This function returns an *n* × *m* x *dim* array, where *n* is the number of
+        evaluation points in u, *m* is the number of evaluation points in v, and
+        *dim* is the physical dimension of the curve.
+
+        If there is only one evaluation point, a vector of length *dim* is
+        returned instead.
+
+        :param u: Parametric coordinate(s) in the first direction
+        :type u: float or [float]
+        :param v: Parametric coordinate(s) in the second direction
+        :type v: float or [float]
+        :param int d: Number of derivatives to compute in each direction
+        :type d: [int]
+        :param (bool) above: Evaluation in the limit from above
+        :param tensor: Whether to evaluate on a tensor product grid
+        :type tensor: bool
+        :return: Derivative array *X[i,j,k]* of component *xk* evaluated at *(u[i], v[j])*
+        :rtype: numpy.array
+        """
+
+        squeeze = all(is_singleton(t) for t in [u,v])
+        derivs = ensure_listlike(d, self.pardim)
+        if not self.rational or np.sum(derivs) < 2 or np.sum(derivs) > 3:
+            return super(Surface, self).derivative(u,v, d=derivs, above=above, tensor=tensor)
+
+        u = ensure_listlike(u)
+        v = ensure_listlike(v)
+        result = np.zeros((len(u), len(v), self.dimension))
+        # dNus = [self.bases[0].evaluate(u, d, above) for d in range(derivs[0]+1)]
+        # dNvs = [self.bases[1].evaluate(v, d, above) for d in range(derivs[1]+1)]
+        dNus = [self.bases[0].evaluate(u, d, above) for d in range(np.sum(derivs)+1)]
+        dNvs = [self.bases[1].evaluate(v, d, above) for d in range(np.sum(derivs)+1)]
+
+        d0ud0v = evaluate([dNus[0], dNvs[0]], self.controlpoints, tensor)
+        d1ud0v = evaluate([dNus[1], dNvs[0]], self.controlpoints, tensor)
+        d0ud1v = evaluate([dNus[0], dNvs[1]], self.controlpoints, tensor)
+        d1ud1v = evaluate([dNus[1], dNvs[1]], self.controlpoints, tensor)
+        d2ud0v = evaluate([dNus[2], dNvs[0]], self.controlpoints, tensor)
+        d0ud2v = evaluate([dNus[0], dNvs[2]], self.controlpoints, tensor)
+        W     = d0ud0v[:,:,-1]
+        dWdu  = d1ud0v[:,:,-1]
+        dWdv  = d0ud1v[:,:,-1]
+        d2Wduv= d1ud1v[:,:,-1]
+        d2Wdu = d2ud0v[:,:,-1]
+        d2Wdv = d0ud2v[:,:,-1]
+
+        for i in range(self.dimension):
+            H1   = d1ud0v[:,:,i] * W - d0ud0v[:,:,i] * dWdu
+            H2   = d0ud1v[:,:,i] * W - d0ud0v[:,:,i] * dWdv
+            dH1du= d2ud0v[:,:,i] * W - d0ud0v[:,:,i] * d2Wdu
+            dH1dv= d1ud1v[:,:,i] * W + d1ud0v[:,:,i] * dWdv - d0ud1v[:,:,i] * dWdu - d0ud0v[:,:,i] * d2Wduv
+            dH2du= d1ud1v[:,:,i] * W + d0ud1v[:,:,i] * dWdu - d1ud0v[:,:,i] * dWdv - d0ud0v[:,:,i] * d2Wduv
+            dH2dv= d0ud2v[:,:,i] * W - d0ud0v[:,:,i] * d2Wdv
+            G1   = dH1du*W - 2*H1*dWdu
+            G2   = dH2dv*W - 2*H2*dWdv
+            if derivs == (1,0):
+                result[:,:,i] = H1 / W/W
+            elif derivs == (0,1):
+                result[:,:,i] = H2 / W/W
+            elif derivs == (1,1):
+                result[:,:,i] = (dH1dv*W - 2*H1*dWdv) /W/W/W
+            elif derivs == (2,0):
+                result[:,:,i] = G1 /W/W/W
+            elif derivs == (0,2):
+                result[:,:,i] = G2 /W/W/W
+            if np.sum(derivs) > 2:
+                d2ud1v = evaluate([dNus[2], dNvs[1]], self.controlpoints, tensor)
+                d1ud2v = evaluate([dNus[1], dNvs[2]], self.controlpoints, tensor)
+                d3ud0v = evaluate([dNus[3], dNvs[0]], self.controlpoints, tensor)
+                d0ud3v = evaluate([dNus[0], dNvs[3]], self.controlpoints, tensor)
+                d3Wdu   = d3ud0v[:,:,-1]
+                d3Wdv   = d0ud3v[:,:,-1]
+                d3Wduuv = d2ud1v[:,:,-1]
+                d3Wduvv = d1ud2v[:,:,-1]
+                d2H1du  = d3ud0v[:,:,i]*W + d2ud0v[:,:,i]*dWdu - d1ud0v[:,:,i]*d2Wdu - d0ud0v[:,:,i]*d3Wdu
+                d2H1duv = d2ud1v[:,:,i]*W + d2ud0v[:,:,i]*dWdv - d0ud1v[:,:,i]*d2Wdu - d0ud0v[:,:,i]*d3Wduuv
+                d2H2dv  = d0ud3v[:,:,i]*W + d0ud2v[:,:,i]*dWdv - d0ud1v[:,:,i]*d2Wdv - d0ud0v[:,:,i]*d3Wdv
+                d2H2duv = d1ud2v[:,:,i]*W + d0ud2v[:,:,i]*dWdu - d1ud0v[:,:,i]*d2Wdv - d0ud0v[:,:,i]*d3Wduvv
+                dG1du   = d2H1du *W + dH1du*dWdu - 2*dH1du*dWdu - 2*H1*d2Wdu
+                dG1dv   = d2H1duv*W + dH1du*dWdv - 2*dH1dv*dWdu - 2*H1*d2Wduv
+                dG2du   = d2H2duv*W + dH2dv*dWdu - 2*dH2du*dWdv - 2*H2*d2Wduv
+                dG2dv   = d2H2dv *W + dH2dv*dWdv - 2*dH2dv*dWdv - 2*H2*d2Wdv
+
+                if derivs == (3,0):
+                    result[:,:,i] = (dG1du*W -3*G1*dWdu) /W/W/W/W
+                elif derivs == (0,3):
+                    result[:,:,i] = (dG2dv*W -3*G2*dWdv) /W/W/W/W
+                elif derivs == (2,1):
+                    result[:,:,i] = (dG1dv*W -3*G1*dWdv) /W/W/W/W
+                elif derivs == (1,2):
+                    result[:,:,i] = (dG2du*W -3*G2*dWdu) /W/W/W/W
+
+        # Squeeze the singleton dimensions if we only have one point
+        if squeeze:
+            result = result.reshape(self.dimension)
+
+        return result
+
 
     def area(self):
         """ Computes the area of the surface in geometric space """
