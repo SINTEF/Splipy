@@ -78,6 +78,18 @@ class TestRefinement(unittest.TestCase):
         for low,high in zip(knots, knots[::-1]):
             self.assertAlmostEqual(low, 1-high)
 
+    def test_center_volume(self):
+        vol = Volume()
+        vol.raise_order(1,2,3)
+        center_refine(vol, 1.3, 6, direction=2)
+
+        knots = vol.knots(direction='w')
+        self.assertEqual(len(knots), 8)
+
+        # test that they form symmetric from each edge
+        for low,high in zip(knots, knots[::-1]):
+            self.assertAlmostEqual(low, 1-high)
+
     def test_subdivide_surface(self):
         surf = Surface()
         surf.raise_order(2,2)
