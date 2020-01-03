@@ -1,7 +1,7 @@
 __doc__ = 'Implementation of various refinement schemes.'
 
 from splipy.utils import ensure_listlike, check_direction
-from math import atan, pi
+from math import atan, pi, tan
 import numpy as np
 
 # TODO: put control over these tolerances somewhere. Modstate in splipy seems
@@ -61,6 +61,45 @@ def geometric_refine(obj, alpha, n, direction=0, reverse=False):
 
     if reverse:
         obj.reverse(direction)
+    return obj
+
+def center_refine(obj, S, n, direction=0):
+    """center_refine(obj, S, n, [direction=0])
+
+    Refine an object towards the center in a direction, by sampling an
+    tan function.
+
+    :param obj: The object to refine
+    :type obj: :class:`splipy.SplineObject`
+    :param float S: The slope of the tan function (range 0,pi/2)
+    :param int n: The number of knots to insert
+    :param direction: The direction to refine in
+    """
+    # some error tests on input
+    if n<=0:
+        raise ValueError('n should be greater than 0')
+    assert 0 < S < np.pi/2
+
+    direction = check_direction(direction, obj.pardim)
+
+    # fetch knots
+    knots = obj.knots()
+    knot_start = knots[direction][0]
+    knot_end   = knots[direction][-1]
+    dk = knot_end - knot_start
+
+    # compute knot locations
+    new_knots = []
+    max_tan  = tan(S)
+    for i in range(1,n+1):
+        xi  = -1.0 + 2.0*i/(n+1)
+        xi *= S
+        k   = knot_start + (tan(xi)+max_tan)/2/max_tan*dk
+        if not knot_exists(knots[direction], k):
+            new_knots.append(k)
+
+    # do the actual knot insertion
+    obj.insert_knot(new_knots, direction)
     return obj
 
 
