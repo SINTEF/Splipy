@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
-# import numpy as np
+from Cython.Build import cythonize
+import numpy as np
 
 with open('PyPI_text.md') as f:
     long_description = f.read()
@@ -29,7 +30,8 @@ setup(
         'FiniteElement': ["nutils>=4.0"],
         'Images':        ["opencv-python>=4.0"],
     },
-    # include_dirs=[np.get_include()],
+    ext_modules=cythonize("splipy/basis_eval.pyx"),
+    include_dirs=[np.get_include()],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',
