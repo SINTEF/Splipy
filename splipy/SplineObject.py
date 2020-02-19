@@ -7,8 +7,8 @@ from itertools import chain, product
 from bisect import bisect_left
 from splipy import BSplineBasis
 from splipy.utils import reshape, rotation_matrix, is_singleton, ensure_listlike,\
-                         check_direction, ensure_flatlist, check_section, sections,\
-                         raise_order_1D
+                         check_direction, ensure_flatlist, check_section, sections
+import splipy.state as state
 
 __all__ = ['SplineObject']
 
@@ -440,12 +440,12 @@ class SplineObject(object):
         if all(r == 0 for r in raises):
             return
         
-        if any(b.continuity(b.knots[0]) < b.order or b.periodic > -1 for b in self.bases):
+        if any(not(b.continuity(b.knots[0]) == -1) or b.periodic > -1 for b in self.bases):
             self.raise_order_implicit(*raises)
             return
         
         new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
-       
+
         d_p = self.pardim
         
         controlpoints = self.controlpoints
@@ -1427,4 +1427,73 @@ class SplineObject(object):
                 if c1 > c2:
                     m = min(c1-c2, p[i]-1-c2) # c1=np.inf if knot does not exist
                     spline1.insert_knot([k]*m, direction=i)
+
+def raise_order_1D(n, k, T, P, m, periodic):
+    """ Implementation of method in "Efficient Degree Elevation and Knot Insertion
+        for B-spline Curves using Derivatives" by Qi-Xing Huang a Shi-Min Hu, Ralph R Martin. Only the case of open knot vector is fully implemented
+    :param int n: (n+1) is the number of initial basis functions
+    :param int k: spline order
+    :param T: knot vector
+    :param P: weighted NURBS coefficients
+    :param int m: number of degree elevations
+    :param int periodic: Number of continuous derivatives at start and end. -1 is not periodic, 0 is continuous, etc.
+    :return Q: new control points
+    """
+
+    d = P.shape[0] # dimension of spline
+
+    # Find multiplicity of the knot vector T
+    b = BSplineBasis(k, T, periodic)
+    z = [k-1-b.continuity(t0) for t0 in b.knot_spans()]
+    z[0] = 1
+    z[-1] = 1
+
+    u = b.knot_spans(include_ghost_knots=False)
+    S = len(u) - 1
+    
+    # Step 1: Find Pt_i^j
+    Pt = np.zeros((d,n+1,k))
+    Pt[:,:,0] = P
+    Pt = np.concatenate((Pt,Pt[:,0:periodic+1,:]),axis=1) 
+    n += periodic+1
+
+    beta = np.cumsum(z[1:-1],dtype=int)
+    beta = np.insert(beta,0,0) # include the empty sum (=0)
+    for l in range(1,k):
+        for i in range(0,n+1-l):
+            if T[i+l] < T[i+k]:
+                Pt[:,i,l] = (Pt[:,i+1,l-1] - Pt[:,i,l-1])/(T[i+k]-T[i+l])
+
+    # Step 2: Create new knot vector Tb 
+    nb = n + S*m
+    Tb = np.zeros(nb+m+k+1)
+    Tb[:k-1] = T[:k-1]
+    Tb[-k+1:] = T[-k+1:]
+    j = k-1 
+    for i in range(0,len(z)):
+        Tb[j:j+z[i]+m] = u[i]
+        j = j+z[i]+m
+    
+    # Step 3: Find boundary values of Qt_i^j
+    Qt = np.zeros((d,nb+1,k))
+    l_arr = np.array(range(1,k))
+    alpha = np.cumprod((k-l_arr)/(k+m-l_arr))
+    alpha = np.insert(alpha,0,1) # include the empty product (=1)
+    indices = range(0,k)
+    Qt[:,0,indices] = np.multiply(Pt[:,0,indices],np.reshape(alpha[indices],(1,1,k))) # (21)
+    for p in range(0,S):
+        indices = range(k-z[p],k)
+        Qt[:,beta[p]+p*m,indices] = np.multiply(Pt[:,beta[p],indices],np.reshape(alpha[indices],(1,1,z[p]))) # (22)
+    
+    for p in range(0,S):
+        idx = beta[p]+p*m
+        Qt[:,idx+1:m+idx+1,k-1] = np.repeat(Qt[:,idx:idx+1,k-1],m,axis=1) # (23)
+    
+    # Step 4: Find remaining values of Qt_i^j
+    for j in range(k-1,0,-1):
+        for i in range(0,nb):
+            if Tb[i+k+m] > Tb[i+j]:
+                Qt[:,i+1,j-1] = Qt[:,i,j-1] + (Tb[i+k+m] - Tb[i+j])*Qt[:,i,j] #(20) with Qt replacing Pt
+
+    return Qt[:,:,0] 
 

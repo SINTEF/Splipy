@@ -263,7 +263,7 @@ class Curve(SplineObject):
         return nominator / np.power(magnitude, 2)
 
 
-    def raise_order(self, amount):
+    def raise_order_implicit(self, amount):
         """  Raise the polynomial order of the curve.
 
         :param int amount: Number of times to raise the order
