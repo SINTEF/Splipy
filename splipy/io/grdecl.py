@@ -371,7 +371,7 @@ class GRDECL(MasterIO):
             cv2.imwrite(name+'.png', img)
         print(r'</porotexturematerial>')
         h5_file.close()
-        print(f'Written {h5_filename}')
+        print('Written {}'.format(h5_filename))
 
         with G2('geom.g2') as myfile:
             myfile.write(vol)
