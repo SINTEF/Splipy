@@ -59,6 +59,7 @@ class TestImage(unittest.TestCase):
 
         self.assertAlmostEqual(area_under_graph, expected_value, places=1)
 
+    @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_height_orient(self):
         surf = image_height('test/utils/gray_corners.png') # rectangular input file
         self.assertEqual(type(surf), Surface)
