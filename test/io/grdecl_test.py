@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from splipy.io import GRDECL
+try:
+    from splipy.io import GRDECL
+    has_grdecl = True
+except ImportError:
+    has_grdecl = False
+
 import unittest
 import os
 import numpy as np
@@ -9,6 +14,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class TestGRDECL(unittest.TestCase):
 
+    @unittest.skipIf(not has_grdecl, "GRDECL module requires OpenCV 2")
     def test_read(self):
         with GRDECL(THIS_DIR + '/geometries/EightCells.grdecl') as myfile:
             myfile.read()
