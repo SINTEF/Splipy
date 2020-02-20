@@ -18,6 +18,10 @@ install:
   - source ./ci/install.sh
   - conda install -y python=${CONDA_PYTHON}
   - pip install -r requirements.txt
+  - |-
+    if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then
+        pip install opencv-python
+    fi
   - conda list
 
 script:
