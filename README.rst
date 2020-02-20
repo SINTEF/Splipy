@@ -56,7 +56,7 @@ To generate the documentation you will need Sphinx::
 And to run the tests you can use your favourite test runner, for example
 pytest::
 
-    pip install pytest pytest-benchmark
+    pip install pytest pytest-benchmark pytest-cov
 
 
 Installing
@@ -94,6 +94,9 @@ pytest::
 
     PYTHONPATH=. py.test --benchmark-skip
 
+To get a report of test coverage, run::
+
+    PYTHONPATH=. py.test --benchmark-skip --cov=splipy --cov-report term-missing
 
 Code analysis
 -------------
