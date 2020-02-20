@@ -1,0 +1,30 @@
+language : shell
+
+env:
+  - CONDA_PYTHON=3.5
+  - CONDA_PYTHON=3.6
+  - CONDA_PYTHON=3.7
+  - CONDA_PYTHON=3.8
+
+os:
+  - linux
+  - windows
+  - osx
+
+before_install:
+  - source ./ci/before_install.sh
+
+install:
+  - source ./ci/install.sh
+  - conda install -y python=${CONDA_PYTHON}
+  - pip install -r requirements.txt
+  - conda list
+
+script:
+  - python setup.py install
+  - pytest test
+
+notifications:
+  email:
+    on_success: never
+    on_failure: never
