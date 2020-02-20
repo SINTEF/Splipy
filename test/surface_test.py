@@ -629,8 +629,8 @@ class TestSurface(unittest.TestCase):
     def test_normal(self):
         surf = SurfaceFactory.sphere(1)
         surf.swap()
-        u    = np.linspace(surf.start(0),surf.end(0), 9)
-        v    = np.linspace(surf.start(1),surf.end(1), 9)
+        u    = np.linspace(surf.start(0) + 1e-3, surf.end(0) - 1e-3, 9)
+        v    = np.linspace(surf.start(1) + 1e-3, surf.end(1) - 1e-3, 9)
 
         xpts = surf(u,v,tensor=False)
         npts = surf.normal(u,v,tensor=False)
