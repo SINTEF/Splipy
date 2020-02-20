@@ -345,5 +345,5 @@ class G2(MasterIO):
         return BSplineBasis(order, kts, -1)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        pass
-
+        if hasattr(self, 'fstream'):
+            self.fstream.close()
