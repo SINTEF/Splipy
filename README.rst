@@ -36,7 +36,8 @@ Dependencies
 
 **Required**
 
-This library requires numpy and scipy. E.g. on Ubuntu::
+This library requires numpy and scipy. For building, cython is also
+required. E.g. on Ubuntu::
 
     pip install numpy
     pip install scipy
@@ -93,6 +94,7 @@ pytest::
 
     PYTHONPATH=. py.test --benchmark-skip
 
+
 Code analysis
 -------------
 You can use pylint3 to perform static code analysis on the module.
@@ -120,17 +122,7 @@ number, create a commit and a tag. To push this to github, use::
 
     git push --tags
 
-After that, to create the actual packages, run::
-
-    rm -rf dist
-    python setup.py sdist
-    python setup.py bdist_wheel --universal
-
-to create a source distribution and a wheel. These can then be uploaded where
-they need to be uploaded. The recommended way to do that is using `twine
-<https://pypi.python.org/pypi/twine>`_::
-
-    twine upload dist/* -r <index>
-
-Where `index` is the name of the index in your `~/.pypirc` where you want to
-upload.
+After that, Travis CI should automatically build and deploy the
+packages to PyPi. It would be helpful to monitor the Travis build so
+that errors can be fixed quickly. See the `list of builds
+<https://travis-ci.org/sintefmath/Splipy/builds>`_.
