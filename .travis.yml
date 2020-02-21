@@ -38,7 +38,7 @@ install:
 
 script:
   - python setup.py install
-  - pytest test
+  - pytest test --benchmark-skip
 
 jobs:
   include:
