@@ -90,7 +90,7 @@ class BSplineBasis:
     def greville(self, index=None):
         """  Fetch greville points, also known as knot averages:
 
-        .. math:: \sum_{j=i+1}^{i+p-1} \\frac{t_j}{p-1}
+        .. math:: \\sum_{j=i+1}^{i+p-1} \\frac{t_j}{p-1}
 
         :return: One, or all of the Greville points
         :rtype: [float] (if *index* is ``None``) or float

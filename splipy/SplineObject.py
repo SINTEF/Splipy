@@ -439,15 +439,15 @@ class SplineObject(object):
             raise ValueError("Cannot lower order using raise_order")
         if all(r == 0 for r in raises):
             return
-        
+
         if any(b.continuity(b.knots[0]) < b.order or b.periodic > -1 for b in self.bases):
             self.raise_order_implicit(*raises)
             return
-        
+
         new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
-       
+
         d_p = self.pardim
-        
+
         controlpoints = self.controlpoints
         for i in range(0,d_p):
             dimensions = np.array(controlpoints.shape)
@@ -464,6 +464,7 @@ class SplineObject(object):
         self.bases = new_bases
 
         return self
+
     def raise_order_implicit(self, *raises):
         """  Raise the polynomial order of the object. If only one argument is
         given, the order is raised equally over all directions.
@@ -957,19 +958,19 @@ class SplineObject(object):
 
         For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
 
-        .. math:: \\tilde{x} = \\frac{1}{L} \int_{t_0}^{t_1} x(t) \; dt
+        .. math:: \\tilde{x} = \\frac{1}{L} \\int_{t_0}^{t_1} x(t) \\; dt
 
         and :math:`L=t_1-t_0` is the length of the parametric domain :math:`[t_0,t_1]`.
 
         For surfaces this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
 
-        .. math:: \\tilde{x} = \\frac{1}{A} \int_{v_0}^{v_1} \int_{u_0}^{u_1} x(u,v) \; du \; dv
+        .. math:: \\tilde{x} = \\frac{1}{A} \\int_{v_0}^{v_1} \\int_{u_0}^{u_1} x(u,v) \\; du \\; dv
 
         and :math:`A=(u_1-u_0)(v_1-v_0)` is the area of the parametric domain :math:`[u_0,u_1]\\times[v_0,v_1]`.
 
         .. warning:: For rational splines, this will integrate in projective
             coordinates, then project the centerpoint. This is as opposed to
-            integrating the rational functions :math:`\\frac{N_i(t)w_i}{\sum_j
+            integrating the rational functions :math:`\\frac{N_i(t)w_i}{\\sum_j
             N_j(t)w_j}`.
         """
 
