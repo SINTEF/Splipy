@@ -124,13 +124,13 @@ class BSplineBasis:
         basis_eval.snap(self.knots, t, state.knot_tolerance)
 
         if self.order <= d: # requesting more derivatives than polymoial degree: return all zeros
-            return np.matrix(np.zeros((len(t), self.num_functions())))
+            return np.zeros((len(t), self.num_functions()))
 
         (data, size) = basis_eval.evaluate(self.knots, self.order, t, self.periodic, state.knot_tolerance, d, from_right)
 
         N = csr_matrix(data, size)
         if not sparse:
-            N = N.todense()
+            N = N.toarray()
         return N
 
     def evaluate_old(self, t, d=0, from_right=True, sparse=False):
