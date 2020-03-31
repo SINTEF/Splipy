@@ -784,13 +784,9 @@ class SplineModel(object):
         nodes = list(self.catalogue.top_nodes())
         node_ids = {node: i for i, node in enumerate(nodes)}
 
-        # dom = etree.Element('geometry')
-        # topology = etree.SubElement(dom, 'topology')
-
         lines = [
             "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
-            "<geometry>",
-            "  <topology>",
+            "<topology>",
         ]
 
         # For every object in the model...
@@ -824,7 +820,7 @@ class SplineModel(object):
                 neigh_sub = neigh.obj.section(*neigh_sec_idx)
                 orientation = Orientation.compute(node_sub, neigh_sub)
 
-                lines.append('    <connection master="{}" slave="{}" midx="{}" sidx="{}" orient="{}"/>'.format(
+                lines.append('  <connection master="{}" slave="{}" midx="{}" sidx="{}" orient="{}"/>'.format(
                     node_ids[node] + 1,
                     node_ids[neigh] + 1,
                     node_sub_idx + 1,
@@ -832,10 +828,44 @@ class SplineModel(object):
                     orientation.ifem_format,
                 ))
 
-        lines.extend(["  </topology>", "</geometry>"])
+        lines.extend(["</topology>"])
 
-        with open(filename + '.xinp', 'wb') as f:
-            f.write('\n'.join(lines).encode('utf-8'))
+        with open(filename + '-topology.xinp', 'wb') as f:
+            f.write('\n'.join(lines).encode('utf-8') + b'\n')
+
+        lines = [
+            "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
+            "<topologysets>",
+        ]
+
+        names = {
+            node.name for node in self.catalogue.nodes(self.pardim - 1)
+            if node.name is not None
+        }
+        names = sorted(names)
+
+        for name in names:
+            entries = {}
+            for node in self.catalogue.nodes(self.pardim - 1):
+                if node.name != name:
+                    continue
+                parent = node.owner
+                sub_idx = next(idx for idx, sub in enumerate(parent.lower_nodes[self.pardim - 1]) if sub is node)
+                entries.setdefault(node_ids[parent], set()).add(sub_idx)
+            if entries:
+                kind = {2: 'face', 1: 'edge', 0: 'vertex'}[self.pardim - 1]
+                lines.append('  <set name="{}" type="{}">'.format(name, kind))
+                for node_id, sub_ids in entries.items():
+                    lines.append('    <item patch="{}">{}</item>'.format(
+                        node_id + 1,
+                        ' '.join(str(i+1) for i in sorted(sub_ids))
+                    ))
+                lines.append('  </set>')
+
+        lines.extend(["</topologysets>"])
+
+        with open(filename + '-topologysets.xinp', 'wb') as f:
+            f.write('\n'.join(lines).encode('utf-8') + b'\n')
 
         with G2(filename + '.g2') as f:
             f.write([n.obj for n in nodes])
