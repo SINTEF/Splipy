@@ -8,7 +8,7 @@ from splipy.Volume import Volume
 from splipy.SplineModel import SplineModel
 from splipy.TrimmedSurface import TrimmedSurface
 
-__version__ = '1.3.1'
+__version__ = '1.4.0'
 __all__ = ['BSplineBasis',
            'SplineObject',
            'Curve',
