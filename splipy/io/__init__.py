@@ -7,7 +7,12 @@ from .ofoam import OpenFOAM
 # GRDECL depends on optional cv2
 try:
     from .grdecl import GRDECL
+    has_grdecl = True
 except ImportError:
-    pass
+    has_grdecl = False
 
-__all__ = ['G2', 'SVG', 'SPL', 'STL', 'OpenFOAM', 'GRDECL']
+
+__all__ = ['G2', 'SVG', 'SPL', 'STL', 'OpenFOAM']
+
+if has_grdecl:
+    __all__.append('GRDECL')
