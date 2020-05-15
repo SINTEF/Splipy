@@ -438,11 +438,11 @@ class SplineObject(object):
         if not all(r >= 0 for r in raises):
             raise ValueError("Cannot lower order using raise_order")
         if all(r == 0 for r in raises):
-            return
+            return self
 
         if any(b.continuity(b.knots[0]) < b.order or b.periodic > -1 for b in self.bases):
             self.raise_order_implicit(*raises)
-            return
+            return self
 
         new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
 
@@ -462,7 +462,6 @@ class SplineObject(object):
 
         self.controlpoints = controlpoints
         self.bases = new_bases
-
         return self
 
     def raise_order_implicit(self, *raises):
