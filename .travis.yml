@@ -28,6 +28,7 @@ before_install:
 install:
   - source ./ci/install.sh
   - conda install -y python=${CONDA_PYTHON}
+  - conda install -y pip
   - pip install -r requirements.txt
   - pip install twine cibuildwheel==1.1.0
   - |-
