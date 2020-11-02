@@ -6,7 +6,7 @@ from .master import MasterIO
 import splipy.surface_factory as SurfaceFactory
 import splipy.curve_factory   as CurveFactory
 import splipy.state as state
-from numpy import sqrt, pi
+from numpy import sqrt, pi, savetxt
 
 
 class G2(MasterIO):
@@ -300,9 +300,8 @@ class G2(MasterIO):
             self.fstream.write(' '.join('%.16g' % k for k in b.knots))
             self.fstream.write('\n')
 
-        for cp in obj:
-            self.fstream.write(' '.join('%.16g' % x for x in cp))
-            self.fstream.write('\n')
+        savetxt(self.fstream, obj.controlpoints.reshape(-1, obj.dimension + obj.rational, order='F'),
+                fmt='%.16g', delimiter=' ', newline='\n')
 
     def read(self):
         if not hasattr(self, 'fstream'):
