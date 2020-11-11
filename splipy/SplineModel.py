@@ -5,7 +5,7 @@ from splipy.utils import check_section, sections, section_from_index, section_to
 from splipy.io import G2
 import splipy.state as state
 import numpy as np
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product, permutations, islice
 
 try:
@@ -267,8 +267,8 @@ class Orientation(object):
             return int(self.flip[0])
         elif len(self.flip) == 2:
             ret = 0
-            for i, f in enumerate(self.flip):
-                if f:
+            for i, axis in enumerate(self.perm[::-1]):
+                if self.flip[axis]:
                     ret |= 1 << i
             if tuple(self.perm) == (1,0):
                 ret |= 1 << 2
@@ -778,19 +778,27 @@ class SplineModel(object):
             c = c.lower
 
     def write_ifem(self, filename):
-        p = self.pardim
+        IFEMWriter(self).write(filename)
+
+
+
+IFEMConnection = namedtuple('IFEMConnection', ['master', 'slave', 'midx', 'sidx', 'orient'])
+
+
+class IFEMWriter:
+
+    def __init__(self, model):
+        self.model = model
 
         # List the nodes so that the order is deterministic
-        nodes = list(self.catalogue.top_nodes())
-        node_ids = {node: i for i, node in enumerate(nodes)}
+        self.nodes = list(model.catalogue.top_nodes())
+        self.node_ids = {node: i for i, node in enumerate(self.nodes)}
 
-        lines = [
-            "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
-            "<topology>",
-        ]
+    def connections(self):
+        p = self.model.pardim
 
         # For every object in the model...
-        for node in nodes:
+        for node in self.nodes:
 
             # Loop over its sections of one lower parametric dimension
             # That is, for faces, loop over edges, and for volumes, loop over faces
@@ -807,7 +815,7 @@ class SplineModel(object):
 
                 # Only output if the node has a lower ID than the neighbour,
                 # otherwise we'll get this pair when the reverse pair is found
-                if node_ids[node] > node_ids[neigh]:
+                if self.node_ids[node] > self.node_ids[neigh]:
                     continue
 
                 # Find the actual SplineObjects representing the
@@ -818,14 +826,34 @@ class SplineModel(object):
                 node_sub = node.obj.section(*node_sec_idx)
                 neigh_sec_idx = section_from_index(p, p - 1, neigh_sub_idx)
                 neigh_sub = neigh.obj.section(*neigh_sec_idx)
-                orientation = Orientation.compute(node_sub, neigh_sub)
 
+                # print('------')
+                # print(node.obj)
+                # print(neigh.obj, self.node_ids[neigh] + 1)
+                orientation = Orientation.compute(node_sub, neigh_sub)
+                # print(orientation.flip, orientation.perm, orientation.ifem_format)
+
+                yield IFEMConnection(
+                    master = self.node_ids[node] + 1,
+                    slave = self.node_ids[neigh] + 1,
+                    midx = node_sub_idx + 1,
+                    sidx = neigh_sub_idx + 1,
+                    orient = orientation.ifem_format,
+                )
+
+    def write(self, filename):
+        lines = [
+            "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
+            "<topology>",
+        ]
+
+        for connection in self.connections():
                 lines.append('  <connection master="{}" slave="{}" midx="{}" sidx="{}" orient="{}"/>'.format(
-                    node_ids[node] + 1,
-                    node_ids[neigh] + 1,
-                    node_sub_idx + 1,
-                    neigh_sub_idx + 1,
-                    orientation.ifem_format,
+                    connection.master,
+                    connection.slave,
+                    connection.midx,
+                    connection.sidx,
+                    connection.orient,
                 ))
 
         lines.extend(["</topology>"])
@@ -838,11 +866,10 @@ class SplineModel(object):
             "<topologysets>",
         ]
 
-        names = {
-            node.name for node in self.catalogue.nodes(self.pardim - 1)
+        names = sorted({
+            node.name for node in self.model.catalogue.nodes(self.model.pardim - 1)
             if node.name is not None
-        }
-        names = sorted(names)
+        })
 
         for name in names:
             entries = {}
@@ -851,7 +878,7 @@ class SplineModel(object):
                     continue
                 parent = node.owner
                 sub_idx = next(idx for idx, sub in enumerate(parent.lower_nodes[self.pardim - 1]) if sub is node)
-                entries.setdefault(node_ids[parent], set()).add(sub_idx)
+                entries.setdefault(self.node_ids[parent], set()).add(sub_idx)
             if entries:
                 kind = {2: 'face', 1: 'edge', 0: 'vertex'}[self.pardim - 1]
                 lines.append('  <set name="{}" type="{}">'.format(name, kind))
@@ -868,4 +895,4 @@ class SplineModel(object):
             f.write('\n'.join(lines).encode('utf-8') + b'\n')
 
         with G2(filename + '.g2') as f:
-            f.write([n.obj for n in nodes])
+            f.write([n.obj for n in self.nodes])
