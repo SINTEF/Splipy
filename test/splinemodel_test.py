@@ -2,9 +2,15 @@
 
 from operator import itemgetter
 from splipy import Volume
-from splipy.SplineModel import SplineModel, Orientation
+from splipy.SplineModel import SplineModel, Orientation, IFEMWriter, IFEMConnection
+from splipy.io import G2
 import unittest
 import numpy as np
+
+import os
+
+
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestOrientation(unittest.TestCase):
@@ -227,3 +233,88 @@ class TestModel(unittest.TestCase):
                 # And that it occurs in the expected index (for boundary faces)
                 if face['name'] is not None:
                     self.assertEqual(j, 'uvw'.index(face['name'][0]))
+
+    def test_orient(self):
+        connections = [
+            [IFEMConnection(1, 2, 2, 1, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 6, 5, 0),
+             IFEMConnection(2, 4, 4, 3, 0), IFEMConnection(2, 6, 6, 5, 0), IFEMConnection(3, 4, 2, 1, 0),
+             IFEMConnection(3, 7, 6, 5, 0), IFEMConnection(4, 8, 6, 5, 0), IFEMConnection(5, 6, 2, 1, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 2, 1, 0)],
+            [IFEMConnection(1, 2, 2, 1, 3), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 6, 5, 0),
+             IFEMConnection(2, 4, 3, 3, 1), IFEMConnection(2, 6, 5, 5, 1), IFEMConnection(3, 4, 2, 1, 0),
+             IFEMConnection(3, 7, 6, 5, 0), IFEMConnection(4, 8, 6, 5, 0), IFEMConnection(5, 6, 2, 1, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 2, 1, 0)],
+            [IFEMConnection(1, 2, 2, 2, 2), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 6, 5, 0),
+             IFEMConnection(2, 4, 3, 3, 2), IFEMConnection(2, 6, 6, 5, 3), IFEMConnection(3, 4, 2, 1, 0),
+             IFEMConnection(3, 7, 6, 5, 0), IFEMConnection(4, 8, 6, 5, 0), IFEMConnection(5, 6, 2, 1, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 2, 1, 0)],
+            [IFEMConnection(1, 2, 2, 2, 1), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 6, 5, 0),
+             IFEMConnection(2, 4, 4, 3, 3), IFEMConnection(2, 6, 5, 5, 2), IFEMConnection(3, 4, 2, 1, 0),
+             IFEMConnection(3, 7, 6, 5, 0), IFEMConnection(4, 8, 6, 5, 0), IFEMConnection(5, 6, 2, 1, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 2, 1, 0)],
+            [IFEMConnection(1, 2, 2, 3, 1), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 6, 5, 0),
+             IFEMConnection(2, 4, 2, 3, 1), IFEMConnection(2, 6, 5, 5, 4), IFEMConnection(3, 4, 2, 1, 0),
+             IFEMConnection(3, 7, 6, 5, 0), IFEMConnection(4, 8, 6, 5, 0), IFEMConnection(5, 6, 2, 1, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 2, 1, 0)],
+            [IFEMConnection(1, 2, 2, 5, 5), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 6, 5, 0),
+             IFEMConnection(2, 4, 3, 3, 4), IFEMConnection(2, 6, 2, 5, 5), IFEMConnection(3, 4, 2, 1, 0),
+             IFEMConnection(3, 7, 6, 5, 0), IFEMConnection(4, 8, 6, 5, 0), IFEMConnection(5, 6, 2, 1, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 2, 1, 0)],
+            [IFEMConnection(1, 2, 2, 4, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 6, 5, 0),
+             IFEMConnection(2, 4, 2, 3, 2), IFEMConnection(2, 6, 6, 5, 6), IFEMConnection(3, 4, 2, 1, 0),
+             IFEMConnection(3, 7, 6, 5, 0), IFEMConnection(4, 8, 6, 5, 0), IFEMConnection(5, 6, 2, 1, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 2, 1, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 1, 1), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 6, 4),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 4, 1, 1), IFEMConnection(5, 6, 6, 5, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 5, 4), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 1, 0),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 4, 1, 4), IFEMConnection(5, 6, 6, 5, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 6, 0), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 3, 1),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 2, 1, 6), IFEMConnection(5, 7, 4, 3, 0),
+             IFEMConnection(5, 6, 6, 5, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 3, 5), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 1, 5),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 5, 1, 4), IFEMConnection(5, 6, 6, 5, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 1, 7), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 4, 5),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 5, 1, 1), IFEMConnection(5, 6, 6, 5, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 1, 2), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 5, 5),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 3, 1, 0), IFEMConnection(5, 6, 6, 5, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 5, 7), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 2, 2),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 3, 1, 5), IFEMConnection(5, 6, 6, 5, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 3, 6), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 2, 4),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 6, 1, 5), IFEMConnection(5, 6, 6, 5, 0),
+             IFEMConnection(5, 7, 4, 3, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+            [IFEMConnection(1, 2, 6, 5, 0), IFEMConnection(1, 3, 4, 3, 0), IFEMConnection(1, 5, 2, 1, 0),
+             IFEMConnection(2, 4, 4, 4, 7), IFEMConnection(2, 6, 2, 1, 0), IFEMConnection(3, 4, 6, 2, 7),
+             IFEMConnection(3, 7, 2, 1, 0), IFEMConnection(4, 8, 5, 1, 7), IFEMConnection(5, 7, 4, 3, 0),
+             IFEMConnection(5, 6, 6, 5, 0), IFEMConnection(6, 8, 4, 3, 0), IFEMConnection(7, 8, 6, 5, 0)],
+        ]
+
+        for i, ref_topo in enumerate(connections):
+            model = SplineModel(3,3)
+            with G2(THIS_DIR + '/geometries/cube-8-orient{}.g2'.format(i)) as myfile:
+                model.add(myfile.read())
+
+            writer = IFEMWriter(model)
+            my_topo = list(writer.connections())
+
+            my_topo = sorted(my_topo, key=lambda c: c.slave)
+            my_topo = sorted(my_topo, key=lambda c: c.master)
+            ref_topo = sorted(ref_topo, key=lambda c: c.slave)
+            ref_topo = sorted(ref_topo, key=lambda c: c.master)
+
+            for my_con, ref_con in zip(my_topo, ref_topo):
+                assert my_con == ref_con
+            assert len(my_topo) == len(ref_topo)
