@@ -7,7 +7,6 @@ env:
     - TWINE_USERNAME=__token__
     # TWINE_PASSWORD should be set to an API token in the Travis settings
   jobs:
-    - CONDA_PYTHON=3.5
     - CONDA_PYTHON=3.6
     - CONDA_PYTHON=3.7
     - CONDA_PYTHON=3.8
