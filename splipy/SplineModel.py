@@ -137,29 +137,46 @@ class Orientation(object):
         :rtype: Orientation
         :raises OrientationError: If the two objects do not match
         """
-        shape_a = cpa.controlpoints.shape
-        pardim = len(shape_a) - 1
+
+        pardim = cpa.pardim
 
         # Return the identity orientation if no cpb
         if cpb is None:
             return cls(tuple(range(pardim)),
                        tuple(False for _ in range(pardim)))
 
-        shape_b = cpb.controlpoints.shape
-
         # Deal with the easy cases: dimension mismatch, and
         # comparing the shapes as multisets
-        if len(shape_a) != len(shape_b):
+        if cpa.pardim != cpb.pardim:
             raise OrientationError("Mismatching parametric dimensions")
-        if shape_a[-1] != shape_b[-1]:
+        if cpa.dimension != cpb.dimension:
             raise OrientationError("Mismatching physical dimensions")
-        if Counter(shape_a) != Counter(shape_b):
+        if Counter(cpa.shape) != Counter(cpb.shape):
             raise OrientationError("Non-matching objects")
+
+        cps_a = cpa.controlpoints
+        cps_b = cpb.controlpoints
+
+        # If one object is rational and the other is not, promote the
+        # non-rational CP array to a rational one
+        if cpa.rational and not cpb.rational:
+            cps_b = np.concatenate((cps_b, np.ones((*cps_b.shape[:-1], 1))), axis=-1)
+        elif cpb.rational and not cpa.rational:
+            cps_a = np.concatenate((cps_a, np.ones((*cps_a.shape[:-1], 1))), axis=-1)
+
+        # At this point, both CP arrays are rational or non-rational.
+        # If any are rational, remove the weight scaling degree of
+        # freedom. We must copy to avoid clobbering the original data.
+        if cpa.rational or cpb.rational:
+            cps_a = cps_a.copy()
+            cps_a[..., -1] /= np.sum(cps_a[..., -1])
+            cps_b = cps_b.copy()
+            cps_b[..., -1] /= np.sum(cps_b[..., -1])
 
         # Enumerate all permutations of directions
         for perm in permutations(range(pardim)):
             transposed = cpb.controlpoints.transpose(perm + (pardim,))
-            if transposed.shape != shape_a:
+            if transposed.shape != cps_a.shape:
                 continue
             # Enumerate all possible direction reversals
             for flip in product([False, True], repeat=pardim):
@@ -630,10 +647,13 @@ class ObjectCatalogue(object):
 
         # Special case for points: self.lower is a mapping from array to node
         if self.pardim == 0:
+            cps = obj.controlpoints
+            if obj.rational:
+                cps = cps[..., :-1]
             if add:
                 node = TopologicalNode(obj, [])
-                return self.lower.setdefault(obj.controlpoints, node).view()
-            return self.lower[obj.controlpoints].view()
+                return self.lower.setdefault(cps, node).view()
+            return self.lower[cps].view()
 
         # Get all nodes of lower dimension (points, vertices, etc.)
         # This involves a recursive call to self.lower.__call__
@@ -716,7 +736,8 @@ class SplineModel(object):
         if isinstance(obj, SplineObject):
             obj = [obj]
         self._validate(obj)
-        self._generate(obj)
+        from tqdm import tqdm
+        self._generate(tqdm(obj))
         if name and isinstance(obj, SplineObject):
             self.names[name] = obj
 
