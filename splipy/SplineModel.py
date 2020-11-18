@@ -894,14 +894,14 @@ class IFEMWriter:
 
         for name in names:
             entries = {}
-            for node in self.catalogue.nodes(self.pardim - 1):
+            for node in self.model.catalogue.nodes(self.model.pardim - 1):
                 if node.name != name:
                     continue
                 parent = node.owner
-                sub_idx = next(idx for idx, sub in enumerate(parent.lower_nodes[self.pardim - 1]) if sub is node)
+                sub_idx = next(idx for idx, sub in enumerate(parent.lower_nodes[self.model.pardim - 1]) if sub is node)
                 entries.setdefault(self.node_ids[parent], set()).add(sub_idx)
             if entries:
-                kind = {2: 'face', 1: 'edge', 0: 'vertex'}[self.pardim - 1]
+                kind = {2: 'face', 1: 'edge', 0: 'vertex'}[self.model.pardim - 1]
                 lines.append('  <set name="{}" type="{}">'.format(name, kind))
                 for node_id, sub_ids in entries.items():
                     lines.append('    <item patch="{}">{}</item>'.format(
