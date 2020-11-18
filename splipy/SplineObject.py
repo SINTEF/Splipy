@@ -1415,16 +1415,21 @@ class SplineObject(object):
             knot2 = spline2.knots(direction=i)
             b1    = spline1.bases[i]
             b2    = spline2.bases[i]
+
+            inserts = []
             for k in knot1:
                 c1 = b1.continuity(k)
                 c2 = b2.continuity(k)
                 if c2 > c1:
                     m = min(c2-c1, p[i]-1-c1) # c2=np.inf if knot does not exist
-                    spline2.insert_knot([k]*m, direction=i)
+                    inserts.extend([k] * m)
+            spline2.insert_knot(inserts, direction=i)
+
+            inserts = []
             for k in knot2:
                 c1 = b1.continuity(k)
                 c2 = b2.continuity(k)
                 if c1 > c2:
                     m = min(c1-c2, p[i]-1-c2) # c1=np.inf if knot does not exist
-                    spline1.insert_knot([k]*m, direction=i)
-
+                    inserts.extend([k]*m)
+            spline1.insert_knot(inserts, direction=i)

@@ -325,7 +325,7 @@ def poisson_patch(bottom, right, top, left):
     grad      = basis.grad(geom)
     outer     = fn.outer(grad,grad)
     integrand = outer.sum(-1)
-    matrix = domain.integrate(integrand, geometry=geom, ischeme='gauss'+str(max(p1,p2)+1))
+    matrix = domain.integrate(integrand * fn.J(geom), ischeme='gauss'+str(max(p1,p2)+1))
 
     # initialize variables
     controlpoints = np.zeros((n1,n2,dim))
