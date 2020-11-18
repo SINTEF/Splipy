@@ -628,7 +628,7 @@ class ObjectCatalogue(object):
         else:
             self.lower = VertexDict()
 
-    def lookup(self, obj, add=False):
+    def lookup(self, obj, add=False, raise_on_twins=True):
         """Obtain the `NodeView` object corresponding to a given object.
 
         If the keyword argument `add` is true, this function may generate one
@@ -636,6 +636,14 @@ class ObjectCatalogue(object):
 
         :param SplineObject obj: The object to look up
         :param bool add: Whether to allow adding new objects
+        :param bool raise_on_twins: If true, raise an error when
+            'twins' are detected, i.e. two patches that share
+            identical nodes of lower parametric dimension but which
+            are different. For example, two surfaces with identical
+            edges but different interior, like a 'pillow'. If false,
+            such cases will be considered two genuinely different
+            patches. Setting this to true (default) allows catching a
+            number of typical topological problems.
         :return: A corresponding view
         :rtype: NodeView
 
@@ -643,7 +651,7 @@ class ObjectCatalogue(object):
         """
         # Pass lower-dimensional objects through to the lower levels
         if self.pardim > obj.pardim:
-            return self.lower.lookup(obj, add=add)
+            return self.lower.lookup(obj, add=add, raise_on_twins=raise_on_twins)
 
         # Special case for points: self.lower is a mapping from array to node
         if self.pardim == 0:
@@ -674,9 +682,15 @@ class ObjectCatalogue(object):
         try:
             for candidate_node in self.internal[lower_nodes[-1]]:
                 return candidate_node.view(obj)
-        # FIXME: It might be useful to optionally not silence OrientationError,
-        # since that more often than not indicates a real error
-        except (KeyError, OrientationError):
+
+        except (KeyError, OrientationError) as err:
+            if isinstance(err, OrientationError) and raise_on_twins:
+                raise OrientationError(
+                    "Candidate nodes found but no orientation matched. "
+                    "This probably indicates an erroneous topology. "
+                    "If you are sure this is not the case (that twin patches exist), "
+                    "use raise_on_twins=False."
+                )
             if not add:
                 raise KeyError("No such object found")
             node = TopologicalNode(obj, lower_nodes)
@@ -687,7 +701,7 @@ class ObjectCatalogue(object):
                 self.internal.setdefault(p, []).append(node)
             return node.view()
 
-    def add(self, obj):
+    def add(self, obj, raise_on_twins=True):
         """Add new nodes to the graph to accommodate the given object, then return the
         corresponding `NodeView` object.
 
@@ -696,12 +710,20 @@ class ObjectCatalogue(object):
         true.
 
         :param SplineObject obj: The object to add
+        :param bool raise_on_twins: If true, raise an error when
+            'twins' are detected, i.e. two patches that share
+            identical nodes of lower parametric dimension but which
+            are different. For example, two surfaces with identical
+            edges but different interior, like a 'pillow'. If false,
+            such cases will be considered two genuinely different
+            patches. Setting this to true (default) allows catching a
+            number of typical topological problems.
         :return: A corresponding view
         :rtype: NodeView
 
         .. warning:: The object *must* be a `SplineObject`, even for points.
         """
-        return self.lookup(obj, add=True)
+        return self.lookup(obj, add=True, raise_on_twins=raise_on_twins)
 
     __call__ = add
     __getitem__ = lookup
@@ -732,12 +754,11 @@ class SplineModel(object):
         self.names = {}
         self.add(objs)
 
-    def add(self, obj, name=None):
+    def add(self, obj, name=None, raise_on_twins=True):
         if isinstance(obj, SplineObject):
             obj = [obj]
         self._validate(obj)
-        from tqdm import tqdm
-        self._generate(tqdm(obj))
+        self._generate(obj, raise_on_twins=raise_on_twins)
         if name and isinstance(obj, SplineObject):
             self.names[name] = obj
 
@@ -761,9 +782,9 @@ class SplineModel(object):
         if any(p.pardim != self.pardim for p in objs):
             raise ValueError("Patches with different parametric dimension added")
 
-    def _generate(self, objs):
+    def _generate(self, objs, **kwargs):
         for p in objs:
-            self.catalogue.add(p)
+            self.catalogue.add(p, **kwargs)
 
     def generate_cp_numbers(self):
         index = 0
