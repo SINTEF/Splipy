@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from splipy import SplineObject
-from splipy.utils import check_section, sections, section_from_index, uniquify
+from splipy.utils import check_section, sections, section_from_index, section_to_index, uniquify
+from splipy.io import G2
 import splipy.state as state
 import numpy as np
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product, permutations, islice
 
 try:
@@ -136,29 +137,46 @@ class Orientation(object):
         :rtype: Orientation
         :raises OrientationError: If the two objects do not match
         """
-        shape_a = cpa.controlpoints.shape
-        pardim = len(shape_a) - 1
+
+        pardim = cpa.pardim
 
         # Return the identity orientation if no cpb
         if cpb is None:
             return cls(tuple(range(pardim)),
                        tuple(False for _ in range(pardim)))
 
-        shape_b = cpb.controlpoints.shape
-
         # Deal with the easy cases: dimension mismatch, and
         # comparing the shapes as multisets
-        if len(shape_a) != len(shape_b):
+        if cpa.pardim != cpb.pardim:
             raise OrientationError("Mismatching parametric dimensions")
-        if shape_a[-1] != shape_b[-1]:
+        if cpa.dimension != cpb.dimension:
             raise OrientationError("Mismatching physical dimensions")
-        if Counter(shape_a) != Counter(shape_b):
+        if Counter(cpa.shape) != Counter(cpb.shape):
             raise OrientationError("Non-matching objects")
+
+        cps_a = cpa.controlpoints
+        cps_b = cpb.controlpoints
+
+        # If one object is rational and the other is not, promote the
+        # non-rational CP array to a rational one
+        if cpa.rational and not cpb.rational:
+            cps_b = np.concatenate((cps_b, np.ones((*cps_b.shape[:-1], 1))), axis=-1)
+        elif cpb.rational and not cpa.rational:
+            cps_a = np.concatenate((cps_a, np.ones((*cps_a.shape[:-1], 1))), axis=-1)
+
+        # At this point, both CP arrays are rational or non-rational.
+        # If any are rational, remove the weight scaling degree of
+        # freedom. We must copy to avoid clobbering the original data.
+        if cpa.rational or cpb.rational:
+            cps_a = cps_a.copy()
+            cps_a[..., -1] /= np.sum(cps_a[..., -1])
+            cps_b = cps_b.copy()
+            cps_b[..., -1] /= np.sum(cps_b[..., -1])
 
         # Enumerate all permutations of directions
         for perm in permutations(range(pardim)):
             transposed = cpb.controlpoints.transpose(perm + (pardim,))
-            if transposed.shape != shape_a:
+            if transposed.shape != cps_a.shape:
                 continue
             # Enumerate all possible direction reversals
             for flip in product([False, True], repeat=pardim):
@@ -243,6 +261,38 @@ class Orientation(object):
 
         new_flip = tuple(self.flip[d] for d in actual_dirs)
         return self.__class__(new_perm, new_flip)
+
+    @property
+    def ifem_format(self):
+        """Compute the orientation in IFEM format.
+
+        For one-dimensional objects, this is a single binary digit indicating
+        if the direction is reversed or not.
+
+        For two-dimensional objects, this is a single-digit octal number with
+        binary digits `ijk` with the following meanings:
+
+        - `i` is 1 if the directions are swapped
+        - `j` is 1 if the first direction in the reference system should be
+          reversed.
+        - `k` is 1 if the second direction in the reference system should be
+          reversed.
+
+        :raises RuntimeError: If the parametric dimension is not supported.
+        """
+        if len(self.flip) == 1:
+            return int(self.flip[0])
+        elif len(self.flip) == 2:
+            ret = 0
+            for i, axis in enumerate(self.perm[::-1]):
+                if self.flip[axis]:
+                    ret |= 1 << i
+            if tuple(self.perm) == (1,0):
+                ret |= 1 << 2
+            return ret
+        raise RuntimeError(
+            'IFEM orientation format not supported for pardim {}'.format(len(self.flip))
+        )
 
 
 class TopologicalNode(object):
@@ -578,7 +628,7 @@ class ObjectCatalogue(object):
         else:
             self.lower = VertexDict()
 
-    def lookup(self, obj, add=False):
+    def lookup(self, obj, add=False, raise_on_twins=True):
         """Obtain the `NodeView` object corresponding to a given object.
 
         If the keyword argument `add` is true, this function may generate one
@@ -586,6 +636,14 @@ class ObjectCatalogue(object):
 
         :param SplineObject obj: The object to look up
         :param bool add: Whether to allow adding new objects
+        :param bool raise_on_twins: If true, raise an error when
+            'twins' are detected, i.e. two patches that share
+            identical nodes of lower parametric dimension but which
+            are different. For example, two surfaces with identical
+            edges but different interior, like a 'pillow'. If false,
+            such cases will be considered two genuinely different
+            patches. Setting this to true (default) allows catching a
+            number of typical topological problems.
         :return: A corresponding view
         :rtype: NodeView
 
@@ -593,14 +651,17 @@ class ObjectCatalogue(object):
         """
         # Pass lower-dimensional objects through to the lower levels
         if self.pardim > obj.pardim:
-            return self.lower.lookup(obj, add=add)
+            return self.lower.lookup(obj, add=add, raise_on_twins=raise_on_twins)
 
         # Special case for points: self.lower is a mapping from array to node
         if self.pardim == 0:
+            cps = obj.controlpoints
+            if obj.rational:
+                cps = cps[..., :-1]
             if add:
                 node = TopologicalNode(obj, [])
-                return self.lower.setdefault(obj.controlpoints, node).view()
-            return self.lower[obj.controlpoints].view()
+                return self.lower.setdefault(cps, node).view()
+            return self.lower[cps].view()
 
         # Get all nodes of lower dimension (points, vertices, etc.)
         # This involves a recursive call to self.lower.__call__
@@ -621,9 +682,15 @@ class ObjectCatalogue(object):
         try:
             for candidate_node in self.internal[lower_nodes[-1]]:
                 return candidate_node.view(obj)
-        # FIXME: It might be useful to optionally not silence OrientationError,
-        # since that more often than not indicates a real error
-        except (KeyError, OrientationError):
+
+        except (KeyError, OrientationError) as err:
+            if isinstance(err, OrientationError) and raise_on_twins:
+                raise OrientationError(
+                    "Candidate nodes found but no orientation matched. "
+                    "This probably indicates an erroneous topology. "
+                    "If you are sure this is not the case (that twin patches exist), "
+                    "use raise_on_twins=False."
+                )
             if not add:
                 raise KeyError("No such object found")
             node = TopologicalNode(obj, lower_nodes)
@@ -634,7 +701,7 @@ class ObjectCatalogue(object):
                 self.internal.setdefault(p, []).append(node)
             return node.view()
 
-    def add(self, obj):
+    def add(self, obj, raise_on_twins=True):
         """Add new nodes to the graph to accommodate the given object, then return the
         corresponding `NodeView` object.
 
@@ -643,12 +710,20 @@ class ObjectCatalogue(object):
         true.
 
         :param SplineObject obj: The object to add
+        :param bool raise_on_twins: If true, raise an error when
+            'twins' are detected, i.e. two patches that share
+            identical nodes of lower parametric dimension but which
+            are different. For example, two surfaces with identical
+            edges but different interior, like a 'pillow'. If false,
+            such cases will be considered two genuinely different
+            patches. Setting this to true (default) allows catching a
+            number of typical topological problems.
         :return: A corresponding view
         :rtype: NodeView
 
         .. warning:: The object *must* be a `SplineObject`, even for points.
         """
-        return self.lookup(obj, add=True)
+        return self.lookup(obj, add=True, raise_on_twins=raise_on_twins)
 
     __call__ = add
     __getitem__ = lookup
@@ -676,13 +751,16 @@ class SplineModel(object):
         self.dimension = dimension
 
         self.catalogue = ObjectCatalogue(pardim)
+        self.names = {}
         self.add(objs)
 
-    def add(self, obj):
+    def add(self, obj, name=None, raise_on_twins=True):
         if isinstance(obj, SplineObject):
             obj = [obj]
         self._validate(obj)
-        self._generate(obj)
+        self._generate(obj, raise_on_twins=raise_on_twins)
+        if name and isinstance(obj, SplineObject):
+            self.names[name] = obj
 
     def __getitem__(self, obj):
         return self.catalogue[obj]
@@ -704,9 +782,9 @@ class SplineModel(object):
         if any(p.pardim != self.pardim for p in objs):
             raise ValueError("Patches with different parametric dimension added")
 
-    def _generate(self, objs):
+    def _generate(self, objs, **kwargs):
         for p in objs:
-            self.catalogue.add(p)
+            self.catalogue.add(p, **kwargs)
 
     def generate_cp_numbers(self):
         index = 0
@@ -740,3 +818,123 @@ class SplineModel(object):
         while isinstance(c, ObjectCatalogue):
             print('Dim {}: {}'.format(c.pardim, len(c.top_nodes())))
             c = c.lower
+
+    def write_ifem(self, filename):
+        IFEMWriter(self).write(filename)
+
+
+
+IFEMConnection = namedtuple('IFEMConnection', ['master', 'slave', 'midx', 'sidx', 'orient'])
+
+
+class IFEMWriter:
+
+    def __init__(self, model):
+        self.model = model
+
+        # List the nodes so that the order is deterministic
+        self.nodes = list(model.catalogue.top_nodes())
+        self.node_ids = {node: i for i, node in enumerate(self.nodes)}
+
+    def connections(self):
+        p = self.model.pardim
+
+        # For every object in the model...
+        for node in self.nodes:
+
+            # Loop over its sections of one lower parametric dimension
+            # That is, for faces, loop over edges, and for volumes, loop over faces
+            for node_sub_idx, sub in enumerate(node.lower_nodes[p - 1]):
+                # The sub-node should have at most one neighbour, excluding the original node
+                neighbours = set(sub.higher_nodes[p]) - {node}
+                assert len(neighbours) <= 1
+                if not neighbours:
+                    continue
+
+                # Get the neighbour node and its section index to the same sub-node
+                neigh = next(iter(neighbours))
+                neigh_sub_idx = neigh.lower_nodes[p - 1].index(sub)
+
+                # Only output if the node has a lower ID than the neighbour,
+                # otherwise we'll get this pair when the reverse pair is found
+                if self.node_ids[node] > self.node_ids[neigh]:
+                    continue
+
+                # Find the actual SplineObjects representing the
+                # sub-node, as it is viewed from the perspective of
+                # both the node and the neighbour, then compute the
+                # orientation mapping between them
+                node_sec_idx = section_from_index(p, p - 1, node_sub_idx)
+                node_sub = node.obj.section(*node_sec_idx)
+                neigh_sec_idx = section_from_index(p, p - 1, neigh_sub_idx)
+                neigh_sub = neigh.obj.section(*neigh_sec_idx)
+
+                # print('------')
+                # print(node.obj)
+                # print(neigh.obj, self.node_ids[neigh] + 1)
+                orientation = Orientation.compute(node_sub, neigh_sub)
+                # print(orientation.flip, orientation.perm, orientation.ifem_format)
+
+                yield IFEMConnection(
+                    master = self.node_ids[node] + 1,
+                    slave = self.node_ids[neigh] + 1,
+                    midx = node_sub_idx + 1,
+                    sidx = neigh_sub_idx + 1,
+                    orient = orientation.ifem_format,
+                )
+
+    def write(self, filename):
+        lines = [
+            "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
+            "<topology>",
+        ]
+
+        for connection in self.connections():
+                lines.append('  <connection master="{}" slave="{}" midx="{}" sidx="{}" orient="{}"/>'.format(
+                    connection.master,
+                    connection.slave,
+                    connection.midx,
+                    connection.sidx,
+                    connection.orient,
+                ))
+
+        lines.extend(["</topology>"])
+
+        with open(filename + '-topology.xinp', 'wb') as f:
+            f.write('\n'.join(lines).encode('utf-8') + b'\n')
+
+        lines = [
+            "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
+            "<topologysets>",
+        ]
+
+        names = sorted({
+            node.name for node in self.model.catalogue.nodes(self.model.pardim - 1)
+            if node.name is not None
+        })
+
+        for name in names:
+            entries = {}
+            for node in self.model.catalogue.nodes(self.model.pardim - 1):
+                if node.name != name:
+                    continue
+                parent = node.owner
+                sub_idx = next(idx for idx, sub in enumerate(parent.lower_nodes[self.model.pardim - 1]) if sub is node)
+                entries.setdefault(self.node_ids[parent], set()).add(sub_idx)
+            if entries:
+                kind = {2: 'face', 1: 'edge', 0: 'vertex'}[self.model.pardim - 1]
+                lines.append('  <set name="{}" type="{}">'.format(name, kind))
+                for node_id, sub_ids in entries.items():
+                    lines.append('    <item patch="{}">{}</item>'.format(
+                        node_id + 1,
+                        ' '.join(str(i+1) for i in sorted(sub_ids))
+                    ))
+                lines.append('  </set>')
+
+        lines.extend(["</topologysets>"])
+
+        with open(filename + '-topologysets.xinp', 'wb') as f:
+            f.write('\n'.join(lines).encode('utf-8') + b'\n')
+
+        with G2(filename + '.g2') as f:
+            f.write([n.obj for n in self.nodes])
