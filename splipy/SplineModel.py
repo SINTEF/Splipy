@@ -321,15 +321,17 @@ class TopologicalNode(object):
         of any kind.
     """
 
-    def __init__(self, obj, lower_nodes):
+    def __init__(self, obj, lower_nodes, index):
         """Initialize a `TopologicalNode` object associated with the given
         `SplineObject` and lower order nodes.
 
         :param SplineObject obj: The underlying spline object
         :param lower_nodes: A nested list of lower order nodes
+        :param index: The node number
         """
         self.obj = obj
         self.lower_nodes = lower_nodes
+        self.index = index
         self.higher_nodes = {}
         self.owner = None
 
@@ -354,6 +356,14 @@ class TopologicalNode(object):
     @property
     def nhigher(self):
         return len(self.higher_nodes[self.pardim + 1])
+
+    @property
+    def super_owner(self):
+        """Return the highest owning node."""
+        owner = self
+        while owner.owner is not None:
+            owner = owner.owner
+        return owner
 
     def assign_higher(self, node):
         """Add a link to a node of higher dimension."""
@@ -617,6 +627,7 @@ class ObjectCatalogue(object):
         `pardim`.
         """
         self.pardim = pardim
+        self.count = 0
 
         # Internal mapping from tuples of lower-order nodes to lists of nodes
         self.internal = OrderedDict()
@@ -659,7 +670,8 @@ class ObjectCatalogue(object):
             if obj.rational:
                 cps = cps[..., :-1]
             if add:
-                node = TopologicalNode(obj, [])
+                node = TopologicalNode(obj, [], index=self.count)
+                self.count += 1
                 return self.lower.setdefault(cps, node).view()
             return self.lower[cps].view()
 
@@ -689,11 +701,13 @@ class ObjectCatalogue(object):
                     "Candidate nodes found but no orientation matched. "
                     "This probably indicates an erroneous topology. "
                     "If you are sure this is not the case (that twin patches exist), "
-                    "use raise_on_twins=False."
+                    "use raise_on_twins=False.",
+                    candidate_node.super_owner.index,
                 )
             if not add:
                 raise KeyError("No such object found")
-            node = TopologicalNode(obj, lower_nodes)
+            node = TopologicalNode(obj, lower_nodes, index=self.count)
+            self.count += 1
             # Assign the new node to each possible permutation of lower-order
             # nodes. This is slight overkill since some of these permutations
             # are invalid, but c'est la vie.
@@ -783,8 +797,18 @@ class SplineModel(object):
             raise ValueError("Patches with different parametric dimension added")
 
     def _generate(self, objs, **kwargs):
-        for p in objs:
-            self.catalogue.add(p, **kwargs)
+        for i, p in enumerate(objs):
+            try:
+                self.catalogue.add(p, **kwargs)
+            except OrientationError as err:
+                # TODO: Mutating exceptions is fishy.
+                if len(err.args) > 1:
+                    err.args = (
+                        err.args[0] +
+                        f" This happened while trying to connect patches at indexes"
+                        f" {err.args[1]} and {i}.",
+                    )
+                raise err
 
     def generate_cp_numbers(self):
         index = 0
