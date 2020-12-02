@@ -639,7 +639,7 @@ class ObjectCatalogue(object):
         else:
             self.lower = VertexDict()
 
-    def lookup(self, obj, add=False, raise_on_twins=True):
+    def lookup(self, obj, add=False, raise_on_twins=()):
         """Obtain the `NodeView` object corresponding to a given object.
 
         If the keyword argument `add` is true, this function may generate one
@@ -647,14 +647,15 @@ class ObjectCatalogue(object):
 
         :param SplineObject obj: The object to look up
         :param bool add: Whether to allow adding new objects
-        :param bool raise_on_twins: If true, raise an error when
-            'twins' are detected, i.e. two patches that share
-            identical nodes of lower parametric dimension but which
-            are different. For example, two surfaces with identical
-            edges but different interior, like a 'pillow'. If false,
-            such cases will be considered two genuinely different
-            patches. Setting this to true (default) allows catching a
-            number of typical topological problems.
+        :param bool raise_on_twins: Should be a list of parametric
+            dimensions where 'twins' are disallowed, i.e. two patches
+            that share identical nodes of lower parametric dimension
+            but which are different. For example, two surfaces with
+            identical edges but different interior, like a
+            'pillow'. If None, such cases will be considered two
+            genuinely different patches. Setting this to a list of all
+            possible parametric dimensions allow catching a number of
+            common topological problems.
         :return: A corresponding view
         :rtype: NodeView
 
@@ -679,7 +680,8 @@ class ObjectCatalogue(object):
         # This involves a recursive call to self.lower.__call__
         lower_nodes = []
         for i in range(0, self.pardim):
-            nodes = tuple(self.lower.lookup(obj.section(*args, unwrap_points=False), add=add).node
+            nodes = tuple(self.lower.lookup(obj.section(*args, unwrap_points=False), add=add,
+                                            raise_on_twins=raise_on_twins).node
                           for args in sections(self.pardim, i))
             lower_nodes.append(nodes)
 
@@ -696,7 +698,7 @@ class ObjectCatalogue(object):
                 return candidate_node.view(obj)
 
         except (KeyError, OrientationError) as err:
-            if isinstance(err, OrientationError) and raise_on_twins:
+            if isinstance(err, OrientationError) and self.pardim in raise_on_twins:
                 raise OrientationError(
                     "Candidate nodes found but no orientation matched. "
                     "This probably indicates an erroneous topology. "
@@ -715,7 +717,7 @@ class ObjectCatalogue(object):
                 self.internal.setdefault(p, []).append(node)
             return node.view()
 
-    def add(self, obj, raise_on_twins=True):
+    def add(self, obj, raise_on_twins=()):
         """Add new nodes to the graph to accommodate the given object, then return the
         corresponding `NodeView` object.
 
@@ -724,14 +726,15 @@ class ObjectCatalogue(object):
         true.
 
         :param SplineObject obj: The object to add
-        :param bool raise_on_twins: If true, raise an error when
-            'twins' are detected, i.e. two patches that share
-            identical nodes of lower parametric dimension but which
-            are different. For example, two surfaces with identical
-            edges but different interior, like a 'pillow'. If false,
-            such cases will be considered two genuinely different
-            patches. Setting this to true (default) allows catching a
-            number of typical topological problems.
+        :param bool raise_on_twins: Should be a list of parametric
+            dimensions where 'twins' are disallowed, i.e. two patches
+            that share identical nodes of lower parametric dimension
+            but which are different. For example, two surfaces with
+            identical edges but different interior, like a
+            'pillow'. If None, such cases will be considered two
+            genuinely different patches. Setting this to a list of all
+            possible parametric dimensions allow catching a number of
+            common topological problems.
         :return: A corresponding view
         :rtype: NodeView
 
@@ -773,6 +776,8 @@ class SplineModel(object):
         self.add(objs)
 
     def add(self, obj, name=None, raise_on_twins=True):
+        if raise_on_twins is True:
+            raise_on_twins = tuple(range(self.pardim + 1))
         if isinstance(obj, SplineObject):
             obj = [obj]
         self._validate(obj)
