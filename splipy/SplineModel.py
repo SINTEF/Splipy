@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from splipy import SplineObject
-from splipy.utils import check_section, sections, section_from_index, section_to_index, uniquify
+from splipy.utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
 from splipy.io import G2
 import splipy.state as state
 import numpy as np
@@ -760,9 +760,13 @@ class ObjectCatalogue(object):
 
 class SplineModel(object):
 
-    def __init__(self, pardim=3, dimension=3, objs=[]):
+    def __init__(self, pardim=3, dimension=3, objs=[], force_right_hand=False):
         self.pardim = pardim
         self.dimension = dimension
+
+        self.force_right_hand = force_right_hand
+        if force_right_hand and (pardim, dimension) not in ((2,2), (3,3)):
+            raise ValueError("Right-handedness only defined for 2D or 3D patches in 2D or 3D space, respectively")
 
         self.catalogue = ObjectCatalogue(pardim)
         self.names = {}
@@ -795,6 +799,11 @@ class SplineModel(object):
             raise ValueError("Patches with different dimension added")
         if any(p.pardim != self.pardim for p in objs):
             raise ValueError("Patches with different parametric dimension added")
+        if self.force_right_hand:
+            left_inds = [i for i, p in enumerate(objs) if not is_right_hand(p)]
+            if left_inds:
+                indices = ', '.join(map(str, left_inds))
+                raise ValueError(f"Possibly left-handed patches detected, indexes {indices}")
 
     def _generate(self, objs, **kwargs):
         for i, p in enumerate(objs):

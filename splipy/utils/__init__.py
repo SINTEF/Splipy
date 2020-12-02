@@ -9,6 +9,34 @@ try:
 except ImportError:
     from collections import Sized
 
+def is_right_hand(patch, tol=1e-3):
+    param = tuple((a+b)/2 for a,b in zip(patch.start(), patch.end()))
+
+    if patch.dimension == patch.pardim == 3:
+        du = patch.derivative(*param, d=(1,0,0))
+        dv = patch.derivative(*param, d=(0,1,0))
+        dw = patch.derivative(*param, d=(0,0,1))
+
+        # Normalize
+        du = du / np.linalg.norm(du)
+        dv = dv / np.linalg.norm(dv)
+        dw = dw / np.linalg.norm(dw)
+
+        # Compare cross product
+        return np.dot(dw, np.cross(du, dv)) >= tol
+
+    if patch.dimension == patch.pardim == 2:
+        du = patch.derivative(*param, d=(1,0))
+        dv = patch.derivative(*param, d=(0,1))
+
+        # Normalize
+        du = du / np.linalg.norm(du)
+        dv = dv / np.linalg.norm(dv)
+
+        return np.cross(du, dv) >= tol
+
+    raise ValueError("Right-handedness only defined for 2D or 3D patches in 2D or 3D space, respectively")
+
 def rotation_matrix(theta, axis):
     axis = axis / np.sqrt(np.dot(axis, axis))
     a = np.cos(theta / 2)
