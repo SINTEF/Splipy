@@ -152,7 +152,7 @@ class Orientation(object):
         if cpa.dimension != cpb.dimension:
             raise OrientationError("Mismatching physical dimensions")
         if Counter(cpa.shape) != Counter(cpb.shape):
-            raise OrientationError("Non-matching objects")
+            raise OrientationError("Non-matching objects (different shape)")
 
         cps_a = cpa.controlpoints
         cps_b = cpb.controlpoints
@@ -175,14 +175,14 @@ class Orientation(object):
 
         # Enumerate all permutations of directions
         for perm in permutations(range(pardim)):
-            transposed = cpb.controlpoints.transpose(perm + (pardim,))
+            transposed = cps_b.transpose(perm + (pardim,))
             if transposed.shape != cps_a.shape:
                 continue
             # Enumerate all possible direction reversals
             for flip in product([False, True], repeat=pardim):
                 slices = tuple(slice(None, None, -1) if f else slice(None) for f in flip)
                 test_b = transposed[slices + (slice(None),)]
-                if np.allclose(cpa.controlpoints, test_b,
+                if np.allclose(cps_a, test_b,
                                rtol=state.controlpoint_relative_tolerance,
                                atol=state.controlpoint_absolute_tolerance):
                     if all([cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i]) for i in range(pardim)]):
