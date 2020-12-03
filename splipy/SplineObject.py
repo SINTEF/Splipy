@@ -425,16 +425,24 @@ class SplineObject(object):
         diff = [new - old for new, old in zip(order, self.order())]
         return self.raise_order(*diff)
 
-    def raise_order(self, *raises):
-        """  Raise the polynomial order of the object. If only one argument is
-        given, the order is raised equally over all directions. The explicit version is only implemented on open knot vectors. The function raise_order_implicit is used otherwise
+    def raise_order(self, *raises, direction=None):
+        """  Raise the polynomial order of the object. If only one
+        argument is given, the order is raised equally over all
+        directions, unless the `direction` argument is also given. The
+        explicit version is only implemented on open knot vectors. The
+        function raise_order_implicit is used otherwise.
 
         :param int u,v,...: Number of times to raise the order in a given
             direction.
+        :param int direction: The direction in which to raise the order.
         :return: self
         """
-        if len(raises) == 1:
+        if len(raises) == 1 and direction is None:
             raises = [raises[0]] * self.pardim
+        elif len(raises) == 1:
+            newraises = [0] * self.pardim
+            newraises[check_direction(direction, self.pardim)] = raises[0]
+            raises = newraises
         if not all(r >= 0 for r in raises):
             raise ValueError("Cannot lower order using raise_order")
         if all(r == 0 for r in raises):
@@ -1375,7 +1383,7 @@ class SplineObject(object):
             spline1.set_dimension(spline2.dimension)
 
     @classmethod
-    def make_splines_identical(cls, spline1, spline2):
+    def make_splines_identical(cls, spline1, spline2, direction=None):
         """Ensure that two splines have identical discretization.
 
         This will first make them compatible (see
@@ -1384,52 +1392,59 @@ class SplineObject(object):
 
         :param SplineObject spline1: The first spline
         :param SplineObject spline2: The second spline
+        :param int direction: The direction to make identical. If
+            None, make all directions identical.
         """
+
         # make sure that rational/dimension is the same
         SplineObject.make_splines_compatible(spline1, spline2)
 
+        # If all directions, just call the same method several times
+        if direction is None:
+            for i in range(spline1.pardim):
+                cls.make_splines_identical(spline1, spline2, direction=i)
+            return
+
+        # From this point, assume we're running on a single direction
+        i = check_direction(direction, spline1.pardim)
+
         # make both have knot vectors in domain (0,1)
-        spline1.reparam()
-        spline2.reparam()
+        spline1.reparam(direction=i)
+        spline2.reparam(direction=i)
 
         # settle on the lowest periodicity if different appear
-        for i in range(spline1.pardim):
-            if spline1.bases[i].periodic < spline2.bases[i].periodic:
-                spline2.lower_periodic(spline1.bases[i].periodic, i)
-            elif spline2.bases[i].periodic < spline1.bases[i].periodic:
-                spline1.lower_periodic(spline2.bases[i].periodic, i)
+        if spline1.bases[i].periodic < spline2.bases[i].periodic:
+            spline2.lower_periodic(spline1.bases[i].periodic, i)
+        elif spline2.bases[i].periodic < spline1.bases[i].periodic:
+            spline1.lower_periodic(spline2.bases[i].periodic, i)
 
         # make sure both have the same order
-        p1 = spline1.order()
-        p2 = spline2.order()
-        p  = tuple(max(q,r) for (q,r) in zip(p1,p2))
-        raise1 = tuple(max(q-r,0) for (q,r) in zip(p,p1))
-        raise2 = tuple(max(q-r,0) for (q,r) in zip(p,p2))
-
-        spline1.raise_order( *raise1 )
-        spline2.raise_order( *raise2 )
+        p1 = spline1.order(i)
+        p2 = spline2.order(i)
+        p = max(p1, p2)
+        spline1.raise_order(p - p1, direction=i)
+        spline2.raise_order(p - p2, direction=i)
 
         # make sure both have the same knot vectors
-        for i in range(spline1.pardim):
-            knot1 = spline1.knots(direction=i)
-            knot2 = spline2.knots(direction=i)
-            b1    = spline1.bases[i]
-            b2    = spline2.bases[i]
+        knot1 = spline1.knots(direction=i)
+        knot2 = spline2.knots(direction=i)
+        b1    = spline1.bases[i]
+        b2    = spline2.bases[i]
 
-            inserts = []
-            for k in knot1:
-                c1 = b1.continuity(k)
-                c2 = b2.continuity(k)
-                if c2 > c1:
-                    m = min(c2-c1, p[i]-1-c1) # c2=np.inf if knot does not exist
-                    inserts.extend([k] * m)
-            spline2.insert_knot(inserts, direction=i)
+        inserts = []
+        for k in knot1:
+            c1 = b1.continuity(k)
+            c2 = b2.continuity(k)
+            if c2 > c1:
+                m = min(c2-c1, p-1-c1) # c2=np.inf if knot does not exist
+                inserts.extend([k] * m)
+        spline2.insert_knot(inserts, direction=i)
 
-            inserts = []
-            for k in knot2:
-                c1 = b1.continuity(k)
-                c2 = b2.continuity(k)
-                if c1 > c2:
-                    m = min(c1-c2, p[i]-1-c2) # c1=np.inf if knot does not exist
-                    inserts.extend([k]*m)
-            spline1.insert_knot(inserts, direction=i)
+        inserts = []
+        for k in knot2:
+            c1 = b1.continuity(k)
+            c2 = b2.continuity(k)
+            if c1 > c2:
+                m = min(c1-c2, p-1-c2) # c1=np.inf if knot does not exist
+                inserts.extend([k]*m)
+        spline1.insert_knot(inserts, direction=i)
