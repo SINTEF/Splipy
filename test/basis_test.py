@@ -15,6 +15,9 @@ class TestBasis(unittest.TestCase):
         self.assertEqual(b.continuity(2), -1)
         self.assertEqual(b.continuity(.4), np.inf)
 
+        self.assertEqual(b.continuity(1.000000000000002), 1)
+        self.assertEqual(b.continuity(0.999999999999998), 1)
+
     def test_errors(self):
         with self.assertRaises(ValueError):
             BSplineBasis(4, [1, 2, 3])

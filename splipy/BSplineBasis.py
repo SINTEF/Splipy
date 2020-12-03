@@ -273,20 +273,15 @@ class BSplineBasis:
         elif knot < self.start() or self.end() < knot:
             raise ValueError('out of range')
 
-        p = self.order
-        mu = bisect_left(self.knots, knot)
+        # First knot that is larger than the right tolerance point
+        hi = bisect_left(self.knots, knot + state.knot_tolerance)
 
-        # Pick the knot to the left if it exists and is closer
-        if mu > 0 and abs(self.knots[mu-1] - knot) < abs(self.knots[mu] - knot):
-            mu -= 1
+        # Last knot that is smaller than the left tolerance point
+        lo = bisect_left(self.knots, knot - state.knot_tolerance)
 
-        if abs(self.knots[mu] - knot) > state.knot_tolerance:
+        if hi == lo:
             return np.inf
-        continuity = p - 1
-        while mu < len(self.knots) and abs(self.knots[mu] - knot) < state.knot_tolerance:
-            continuity -= 1
-            mu += 1
-        return continuity
+        return self.order - (hi - lo) - 1
 
     def make_periodic(self, continuity):
         """Create a periodic basis with a given continuity."""
