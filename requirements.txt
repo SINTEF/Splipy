@@ -1,8 +1,5 @@
-Cython==0.29.15
-numpy==1.18.1
-pytest==5.3.5
-scipy==1.4.1
-pytest-benchmark==3.2.3
-h5py==2.10.0
+numpy==1.19.5
+scipy==1.5.4
+h5py==3.1.0
 tqdm==4.41.1
 nutils==4.1
