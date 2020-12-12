@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from splipy import BSplineBasis, SplineObject
-from splipy.utils import ensure_listlike, check_direction, sections
 from itertools import chain
+
 import numpy as np
+
+from .basis import BSplineBasis
+from .splineobject import SplineObject
+from .utils import ensure_listlike, check_direction, sections
 
 __all__ = ['Volume']
 

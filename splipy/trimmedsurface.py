@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from splipy import BSplineBasis, Surface, Curve, SplineObject
-from splipy.utils import ensure_listlike, check_direction, sections
-import splipy.state as state
-from scipy.spatial import ConvexHull
-import numpy as np
 from math import pi
+
+import numpy as np
+from scipy.spatial import ConvexHull
+
+from .basis import BSplineBasis
+from .curve import Curve
+from .surface import Surface
+from .splineobject import SplineObject
+from .utils import ensure_listlike, check_direction, sections
+from . import state
 
 __all__ = ['TrimmedSurface']
 

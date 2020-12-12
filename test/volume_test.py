@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from splipy import BSplineBasis, Volume
-import splipy.volume_factory as VolumeFactory
 import unittest
-import numpy as np
 from math import pi, sqrt
+
+import numpy as np
+
+from splipy import BSplineBasis, Volume
+import splipy.volume_factory as vf
 
 
 class TestVolume(unittest.TestCase):
@@ -152,7 +154,7 @@ class TestVolume(unittest.TestCase):
         cp[...,1] = X*X
         cp[...,2] = Z**2 + 2
 
-        vol  = VolumeFactory.interpolate(cp, [b,b,b])
+        vol  = vf.interpolate(cp, [b,b,b])
         vol2 = vol.lower_order(1) # still in space, vol2 is *also* exact
         u = np.linspace(0,1, 5)
         v = np.linspace(0,1, 6)

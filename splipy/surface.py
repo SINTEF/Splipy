@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from splipy import BSplineBasis, Curve, SplineObject
-from splipy.SplineObject import evaluate
-from splipy.utils import is_singleton
-from splipy.utils import ensure_listlike, check_direction, sections
 from bisect import bisect_left
 from itertools import chain
+
 import numpy as np
+
+from .basis import BSplineBasis
+from .curve import Curve
+from .splineobject import SplineObject, evaluate
+from .utils import is_singleton, ensure_listlike, check_direction, sections
 
 __all__ = ['Surface']
 

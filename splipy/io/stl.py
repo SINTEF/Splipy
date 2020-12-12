@@ -1,10 +1,16 @@
 #coding:utf-8
 
 import struct
+
 import numpy as np
-from splipy.utils import ensure_listlike
-from splipy import SplineModel, Surface, Volume
+
+from ..surface import Surface
+from ..volume import Volume
+from ..utils import ensure_listlike
+from ..splinemodel import SplineModel
+
 from .master import MasterIO
+
 
 ASCII_FACET = """facet normal 0 0 0
 outer loop
@@ -17,6 +23,7 @@ endfacet
 
 BINARY_HEADER ="80sI"
 BINARY_FACET = "12fH"
+
 
 class ASCII_STL_Writer(object):
     """ Export 3D objects build of 3 or 4 vertices as ASCII STL file.

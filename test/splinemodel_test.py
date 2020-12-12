@@ -2,7 +2,7 @@
 
 from operator import itemgetter
 from splipy import Volume
-from splipy.SplineModel import SplineModel, Orientation, IFEMWriter, IFEMConnection
+from splipy.splinemodel import SplineModel, Orientation, IFEMWriter, IFEMConnection
 from splipy.io import G2
 import unittest
 import numpy as np

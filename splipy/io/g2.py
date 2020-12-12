@@ -1,12 +1,18 @@
-import numpy as np
 from itertools import chain, product
-from splipy import Curve, Surface, Volume, SplineObject, BSplineBasis, TrimmedSurface
-from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from .master import MasterIO
-import splipy.surface_factory as SurfaceFactory
-import splipy.curve_factory   as CurveFactory
-import splipy.state as state
+
+import numpy as np
 from numpy import sqrt, pi, savetxt
+
+from ..curve import Curve
+from ..surface import Surface
+from ..volume import Volume
+from ..splineobject import SplineObject
+from ..basis import BSplineBasis
+from ..trimmedsurface import TrimmedSurface
+from ..utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from .. import surface_factory, curve_factory, state
+
+from .master import MasterIO
 
 
 class G2(MasterIO):
@@ -26,7 +32,7 @@ class G2(MasterIO):
         param = np.array(next(self.fstream).split(), dtype=float)
         reverse =        next(self.fstream).strip() != '0'
 
-        result = CurveFactory.circle(r=r, center=center, normal=normal, xaxis=xaxis)
+        result = curve_factory.circle(r=r, center=center, normal=normal, xaxis=xaxis)
         result.reparam(param)
         if reverse:
             result.reverse()
@@ -42,7 +48,7 @@ class G2(MasterIO):
         param = np.array(next(self.fstream).split(), dtype=float)
         reverse =        next(self.fstream).strip() != '0'
 
-        result = CurveFactory.ellipse(r1=r1, r2=r2, center=center, normal=normal, xaxis=xaxis)
+        result = curve_factory.ellipse(r1=r1, r2=r2, center=center, normal=normal, xaxis=xaxis)
         result.reparam(param)
         if reverse:
             result.reverse()
@@ -61,7 +67,7 @@ class G2(MasterIO):
         if not finite:
             param = [-state.unlimited, +state.unlimited]
 
-        result = CurveFactory.line(s+d*param[0], s+d*param[1])
+        result = curve_factory.line(s+d*param[0], s+d*param[1])
         if reverse:
             result.reverse()
         return result
@@ -96,7 +102,7 @@ class G2(MasterIO):
 
         center = center + z_axis*param_v[0]
         h      = param_v[1] - param_v[0]
-        result = SurfaceFactory.cylinder(r=r, center=center, xaxis=x_axis, axis=z_axis, h=h)
+        result = surface_factory.cylinder(r=r, center=center, xaxis=x_axis, axis=z_axis, h=h)
         result.reparam(param_u, param_v)
         if swap:
             result.swap()
@@ -115,11 +121,11 @@ class G2(MasterIO):
         swap     =          next(self.fstream).strip() != '0'
 
         if degen:
-            result = SurfaceFactory.disc(r=r, center=center, xaxis=x_axis, normal=z_axis, type='radial')
+            result = surface_factory.disc(r=r, center=center, xaxis=x_axis, normal=z_axis, type='radial')
         else:
             if not(np.allclose(np.diff(angles), pi/2, atol=1e-10)):
                 raise RuntimeError('Unknown square parametrization of disc elementary surface')
-            result = SurfaceFactory.disc(r=r, center=center, xaxis=x_axis, normal=z_axis, type='square')
+            result = surface_factory.disc(r=r, center=center, xaxis=x_axis, normal=z_axis, type='square')
         result.reparam(param_u, param_v)
         if swap:
             result.swap()
@@ -159,7 +165,7 @@ class G2(MasterIO):
         param_v  = np.array(next(self.fstream).split(), dtype=float)
         swap     =          next(self.fstream).strip() != '0'
 
-        result = SurfaceFactory.torus(minor_r=r1, major_r=r2, center=center, normal=z_axis, xaxis=x_axis)
+        result = surface_factory.torus(minor_r=r1, major_r=r2, center=center, normal=z_axis, xaxis=x_axis)
         result.reparam(param_u, param_v)
         if(swap):
             result.swap()
@@ -175,7 +181,7 @@ class G2(MasterIO):
         param_v  = np.array(next(self.fstream).split(), dtype=float)
         swap     =          next(self.fstream).strip() != '0'
 
-        result = SurfaceFactory.sphere(r=r, center=center, xaxis=x_axis, zaxis=z_axis).swap()
+        result = surface_factory.sphere(r=r, center=center, xaxis=x_axis, zaxis=z_axis).swap()
         if swap:
             result.swap()
         result.reparam(param_u, param_v)
@@ -210,7 +216,7 @@ class G2(MasterIO):
             param_v=[-state.unlimited, +state.unlimited]
         swap     =          next(self.fstream).strip() != '0'
 
-        result = SurfaceFactory.extrude(crv + normal*param_v[0], normal*(param_v[1]-param_v[0]))
+        result = surface_factory.extrude(crv + normal*param_v[0], normal*(param_v[1]-param_v[0]))
         result.reparam(param_u, param_v)
 
         if swap:

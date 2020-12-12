@@ -2,11 +2,15 @@
 
 __doc__ = 'Implementation of image based mesh generation.'
 
-from splipy import BSplineBasis, curve_factory, surface_factory
 from math import sqrt
-import numpy as np
 import sys
 import warnings
+
+import numpy as np
+
+from ..basis import BSplineBasis
+from .. import curve_factory, surface_factory
+
 
 def get_corners(X, L=50, R=30, D=15):
     """Detects corners of traced outlines using the SAM04 algorithm.
@@ -283,4 +287,3 @@ def image_convex_surface(filename):
         corners = kinks[0:4]
 
     return surface_factory.edge_curves(crv.split(corners))
-

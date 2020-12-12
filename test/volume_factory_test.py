@@ -1,24 +1,28 @@
 # -*- coding: utf-8 -*-
 
-from splipy import BSplineBasis, Curve, Surface, Volume
-import splipy.curve_factory as CurveFactory
-import splipy.surface_factory as SurfaceFactory
-import splipy.volume_factory as VolumeFactory
 from math import pi, sqrt
+import unittest
+
 import numpy as np
 from numpy.linalg import norm
-import unittest
+
+from splipy import BSplineBasis, Curve, Surface, Volume
+import splipy.curve_factory as cf
+import splipy.surface_factory as sf
+import splipy.volume_factory as vf
+
 try:
     import nutils
     has_nutils = True
 except ImportError:
     has_nutils = False
 
+
 class TestVolumeFactory(unittest.TestCase):
 
     def test_cylinder_volume(self):
         # unit cylinder
-        vol = VolumeFactory.cylinder()
+        vol = vf.cylinder()
         # test 5x5x5 grid for xy-radius = w and v=z
         for u in np.linspace(vol.start()[0], vol.end()[0], 5):
             for v in np.linspace(vol.start()[1], vol.end()[1], 5):
@@ -30,7 +34,7 @@ class TestVolumeFactory(unittest.TestCase):
         self.assertAlmostEqual(vol.volume(), pi, places=3)
 
         # cylinder with parameters
-        vol = VolumeFactory.cylinder(r=2, h=5, center=(0,0,1), axis=(1,0,0))
+        vol = vf.cylinder(r=2, h=5, center=(0,0,1), axis=(1,0,0))
         for u in np.linspace(vol.start()[0], vol.end()[0], 5):
             for v in np.linspace(vol.start()[1], vol.end()[1], 5):
                 for w in np.linspace(vol.start()[2], vol.end()[2], 5):
@@ -40,13 +44,13 @@ class TestVolumeFactory(unittest.TestCase):
         self.assertAlmostEqual(vol.volume(), 2*2*pi*5, places=3)
 
         # test xaxis
-        vol = VolumeFactory.cylinder(r=sqrt(2), xaxis=(1,1,0))
+        vol = vf.cylinder(r=sqrt(2), xaxis=(1,1,0))
         u = vol.end('u')
         self.assertTrue(np.allclose(vol(u,0,0), [1,1,0]))
 
     def test_surface_torus(self):
         # default torus
-        vol = VolumeFactory.torus(1, 3)
+        vol = vf.torus(1, 3)
         start = vol.start()
         end = vol.end()
         # check a 13 evaluation points of v-evaluation (around the z-axis)
@@ -95,7 +99,7 @@ class TestVolumeFactory(unittest.TestCase):
         basis2 = BSplineBasis(2, [0, 0, .4, .44, 1, 1])
         bottom = Surface(basis1, basis2, controlpoints, True)
 
-        vol = VolumeFactory.edge_surfaces(bottom, top)
+        vol = vf.edge_surfaces(bottom, top)
 
         # set parametric domain to [0,1]^2 for easier comparison
         top.reparam()
@@ -121,7 +125,7 @@ class TestVolumeFactory(unittest.TestCase):
         basis2 = BSplineBasis(2, [0, 0, .4, .44, 1, 1])
         bottom = Surface(basis1, basis2, controlpoints)  # non-rational!
 
-        vol = VolumeFactory.edge_surfaces(bottom, top)  # also non-rational!
+        vol = vf.edge_surfaces(bottom, top)  # also non-rational!
 
         # verify on 5x5x7 evaluation grid
         for u in np.linspace(0, 1, 5):
@@ -146,7 +150,7 @@ class TestVolumeFactory(unittest.TestCase):
         edges = vol.faces()
 
         # edge_surface should give back the same unit cube
-        vol2 = VolumeFactory.edge_surfaces(edges)
+        vol2 = vf.edge_surfaces(edges)
 
         # check discretization
         self.assertEqual(vol2.order(0), 4)
@@ -167,10 +171,10 @@ class TestVolumeFactory(unittest.TestCase):
 
     def test_surface_loft(self):
         crv1 = Curve(BSplineBasis(3, range(11), 1), [[1,-1], [1,0], [1,1], [-1,1], [-1,0], [-1,-1]])
-        crv2 = CurveFactory.circle(2) + (0,0,1)
+        crv2 = cf.circle(2) + (0,0,1)
         crv3 = Curve(BSplineBasis(4, range(11), 2), [[1,-1,2], [1,1,2], [-1,1,2], [-1,-1,2]])
-        crv4 = CurveFactory.circle(2) + (0,0,3)
-        surf = SurfaceFactory.loft(crv1, crv2, crv3, crv4)
+        crv4 = cf.circle(2) + (0,0,3)
+        surf = sf.loft(crv1, crv2, crv3, crv4)
 
         crv1.set_dimension(3) # for convenience when evaluating
         t = np.linspace( 0, 1, 13)
@@ -197,17 +201,17 @@ class TestVolumeFactory(unittest.TestCase):
 
     def test_volume_loft(self):
         crv1 = Curve(BSplineBasis(3, range(11), 1), [[1,-1], [1,0], [1,1], [-1,1], [-1,0], [-1,-1]])
-        crv2 = CurveFactory.circle(2) + (0,0,1)
+        crv2 = cf.circle(2) + (0,0,1)
         crv3 = Curve(BSplineBasis(4, range(11), 2), [[1,-1,2], [1,1,2], [-1,1,2], [-1,-1,2]])
-        crv4 = CurveFactory.circle(2) + (0,0,3)
+        crv4 = cf.circle(2) + (0,0,3)
 
         surf = []
         for c in [crv1, crv2, crv3, crv4]:
             c2 = c.clone()
             c2.project('z')
-            surf.append(SurfaceFactory.edge_curves(c, c2))
+            surf.append(sf.edge_curves(c, c2))
 
-        vol = VolumeFactory.loft(surf)
+        vol = vf.loft(surf)
 
         surf[0].set_dimension(3) # for convenience when evaluating
         t = np.linspace( 0, 1, 9)
@@ -242,7 +246,7 @@ class TestVolumeFactory(unittest.TestCase):
         square = Surface() + (1,0)
         square.rotate(pi / 2, (1, 0, 0)) # in xz-plane with corners at (1,0),(2,0),(2,1),(1,1)
 
-        vol = VolumeFactory.revolve(square)
+        vol = vf.revolve(square)
         vol.reparam()  # set parametric space to (0,1)^3
         u = np.linspace(0, 1, 7)
         v = np.linspace(0, 1, 7)
@@ -256,7 +260,7 @@ class TestVolumeFactory(unittest.TestCase):
         self.assertAlmostEqual(vol.volume(), 2*pi*1.5, places=3)
 
         # test incomplete reolve
-        vol = VolumeFactory.revolve(square, theta=pi/3)
+        vol = vf.revolve(square, theta=pi/3)
         vol.reparam()  # set parametric space to (0,1)^3
         u = np.linspace(0, 1, 7)
         v = np.linspace(0, 1, 7)
@@ -271,7 +275,7 @@ class TestVolumeFactory(unittest.TestCase):
         self.assertTrue(np.all(x >= 0)) # completely contained in first octant
 
         # test axis revolve
-        vol = VolumeFactory.revolve(Surface()+(1,1), theta=pi/3, axis=(1,0,0))
+        vol = vf.revolve(Surface()+(1,1), theta=pi/3, axis=(1,0,0))
         vol.reparam()  # set parametric space to (0,1)^3
         u = np.linspace(0, 1, 7)
         v = np.linspace(0, 1, 7)
@@ -295,7 +299,7 @@ class TestVolumeFactory(unittest.TestCase):
         b2 = BSplineBasis(4, [0,0,0,0,.5,1,1,1,1])
         b3 = BSplineBasis(4, [0,0,0,0,.2,1,1,1,1])
 
-        vol = VolumeFactory.interpolate(x, [b1,b2,b3], [t,t,t])
+        vol = vf.interpolate(x, [b1,b2,b3], [t,t,t])
         t = np.linspace(0, 1, 7)
         V,U,W = np.meshgrid(t,t,t)
         x = vol(t,t,t)
@@ -315,7 +319,7 @@ class TestVolumeFactory(unittest.TestCase):
         b2 = BSplineBasis(4, [0,0,0,0,.5,1,1,1,1])
         b3 = BSplineBasis(4, [0,0,0,0,.2,1,1,1,1])
 
-        vol = VolumeFactory.least_square_fit(x, [b1,b2,b3], [t,t,t])
+        vol = vf.least_square_fit(x, [b1,b2,b3], [t,t,t])
         t = np.linspace(0, 1, 7)
         V,U,W = np.meshgrid(t,t,t)
         x = vol(t,t,t)
@@ -326,7 +330,7 @@ class TestVolumeFactory(unittest.TestCase):
 
     def test_volume_sphere(self):
         # unit ball
-        ball = VolumeFactory.sphere(type='square')
+        ball = vf.sphere(type='square')
         # test 7x7 grid for radius = 1
         for surf in ball.faces():
             for u in np.linspace(surf.start(0), surf.end(0), 7):
@@ -335,7 +339,7 @@ class TestVolumeFactory(unittest.TestCase):
             self.assertAlmostEqual(surf.area(), 4*pi/6, places=3)
 
         # unit ball
-        ball = VolumeFactory.sphere(type='radial')
+        ball = vf.sphere(type='radial')
         # test 7x7 grid for radius = 1
         for u in np.linspace(surf.start(0), surf.end(0), 7):
             for v in np.linspace(surf.start(1), surf.end(1), 7):

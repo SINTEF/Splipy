@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from splipy import BSplineBasis
-from splipy import SplineObject
-from splipy.utils import ensure_listlike, is_singleton
 from itertools import chain
 from bisect import bisect_left, bisect_right
+
 import numpy as np
 import scipy.sparse.linalg as splinalg
+
+from .basis import BSplineBasis
+from .splineobject import SplineObject
+from .utils import ensure_listlike, is_singleton
 
 __all__ = ['Curve']
 
@@ -414,9 +416,9 @@ class Curve(SplineObject):
         this curve and a target curve
 
         .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^2(t_1,t_2)}^2 = \\int_{t_1}^{t_2}
-            |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|^2 dt, \\quad \\forall \;\\text{knots}\;t_1 < t_2
+            |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|^2 dt, \\quad \\forall \\;\\text{knots}\\;t_1 < t_2
 
-        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\infty} = \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|
+        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\\infty} = \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|
 
         :param function target: callable function which takes as input a vector
             of evaluation points t and gives as output a matrix x where

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from splipy import SplineObject
-from splipy.utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
-from splipy.io import G2
-import splipy.state as state
-import numpy as np
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product, permutations, islice
+
+import numpy as np
+
+from .splineobject import SplineObject
+from .utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
+from . import state
 
 try:
     from collections.abc import MutableMapping
@@ -971,5 +972,7 @@ class IFEMWriter:
         with open(filename + '-topologysets.xinp', 'wb') as f:
             f.write('\n'.join(lines).encode('utf-8') + b'\n')
 
+        # Import here to avoid circular dependencies
+        from .io import G2
         with G2(filename + '.g2') as f:
             f.write([n.obj for n in self.nodes])

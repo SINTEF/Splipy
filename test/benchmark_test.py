@@ -5,11 +5,11 @@ import pytest
 
 def get_spline(spline, n, p, rational=False):
     basis = BSplineBasis(p, [0]*(p-1) + list(range(n-p+2)) + [n-p+1]*(p-1))
-    if spline is 'curve':
+    if spline == 'curve':
         return Curve(basis, rational=rational)
-    elif spline is 'surface':
+    elif spline == 'surface':
         return Surface(basis, basis, rational=rational)
-    elif spline is 'volume':
+    elif spline == 'volume':
         return Volume(basis, basis, basis, rational=rational)
     return None
 

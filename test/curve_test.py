@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from splipy import SplineObject, Curve, BSplineBasis
-import splipy.curve_factory as CurveFactory
 from math import sqrt, pi
-import numpy as np
 import unittest
+
+import numpy as np
+
+from splipy import SplineObject, Curve, BSplineBasis
+import splipy.curve_factory as cf
+
 
 class TestCurve(unittest.TestCase):
     def test_constructor(self):
@@ -129,7 +132,7 @@ class TestCurve(unittest.TestCase):
         interp_pts = basis.greville()
         x = [[t*(1-t), t**2] for t in interp_pts]
 
-        crv = CurveFactory.interpolate(x, basis) # function in space, exact representation kept
+        crv = cf.interpolate(x, basis) # function in space, exact representation kept
 
         crv2 = crv.lower_order(1) # still in space, crv2 is *also* exact
 
@@ -398,7 +401,7 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(crv.derivative(0.86, 3)[0], expect_derivative_3(0.86))
 
     def test_tangent_and_normal(self):
-        crv = CurveFactory.circle()
+        crv = cf.circle()
         crv.set_dimension(3)
         t = np.linspace(crv.start(0), crv.end(0), 13)
         X = crv(t)
@@ -506,7 +509,7 @@ class TestCurve(unittest.TestCase):
         self.assertTrue(np.allclose(k, 0.0))
 
         # test circle
-        crv = CurveFactory.circle(r=3) + [1,1]
+        crv = cf.circle(r=3) + [1,1]
         t = np.linspace(0,2*pi, 10)
         k = crv.curvature(t)
         self.assertTrue(np.allclose(k, 1.0/3.0)) # circles: k = 1/r
@@ -535,7 +538,7 @@ class TestCurve(unittest.TestCase):
         a = 3.0
         b = 2.0
         x = np.array([a*np.cos(t), a*np.sin(t), b*t])
-        crv = CurveFactory.cubic_curve(x.T, t=t)
+        crv = cf.cubic_curve(x.T, t=t)
         t = np.linspace(0, 6*pi, 10)
         k = crv.torsion(t)
 

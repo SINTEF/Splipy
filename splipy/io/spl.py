@@ -1,6 +1,13 @@
-import numpy as np
 from itertools import islice
-from splipy import Curve, Surface, Volume, SplineObject, BSplineBasis
+
+import numpy as np
+
+from ..curve import Curve
+from ..surface import Surface
+from ..volume import Volume
+from ..splineobject import SplineObject
+from ..basis import BSplineBasis
+
 from .master import MasterIO
 
 

@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from splipy import BSplineBasis, Curve, Surface
-import splipy.curve_factory as CurveFactory
-import splipy.surface_factory as SurfaceFactory
 from math import pi, sqrt
+import unittest
+
 import numpy as np
 from numpy.linalg import norm
-import unittest
+
+from splipy import BSplineBasis, Curve, Surface
+import splipy.curve_factory as cf
+import splipy.surface_factory as sf
+
 try:
     import nutils
     has_nutils = True
 except ImportError:
     has_nutils = False
 
+
 class TestSurfaceFactory(unittest.TestCase):
     def test_square(self):
-        surf = SurfaceFactory.square((4, 5))
+        surf = sf.square((4, 5))
         self.assertEqual(surf.dimension, 2)
         self.assertEqual(surf.rational, False)
         self.assertEqual(surf.order(), (2, 2))
@@ -28,7 +32,7 @@ class TestSurfaceFactory(unittest.TestCase):
         x_pts[:, 0] = t * t
         x_pts[:, 1] = 1 - t
         x_pts[:, 2] = t * t * t + 2 * t
-        crv = CurveFactory.interpolate(x_pts, basis)
+        crv = cf.interpolate(x_pts, basis)
         self.assertEqual(crv.order(0), 4)
         self.assertAlmostEqual(crv(.4)[0], .4**2)  # x=t^2
         self.assertAlmostEqual(crv(.4)[1], 1 - .4)  # y=1-t
@@ -39,7 +43,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
     def test_disc(self):
         # radial disc
-        surf = SurfaceFactory.disc()
+        surf = sf.disc()
         x = surf.evaluate([0, 1], [0, pi / 4, pi / 2, pi])
         self.assertTrue(np.allclose(x[0,0], [0,0]))
         self.assertTrue(np.allclose(x[1,0], [1,0]))
@@ -48,7 +52,7 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertAlmostEqual(surf.area(), pi, places=3)
 
         # radial disc of size different from 1
-        surf = SurfaceFactory.disc(4)
+        surf = sf.disc(4)
         # test evaluation at 25 points for radius=4
         v = np.linspace(surf.start('v'), surf.end('v'),25)
         u = np.linspace(surf.start('u'), surf.end('u'), 5)
@@ -59,7 +63,7 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertAlmostEqual(surf.area(), 4*4*pi, places=3)
 
         # square disc
-        surf = SurfaceFactory.disc(3, type='square')
+        surf = sf.disc(3, type='square')
         # evaluate on all 4 edges, 5 pts on each edge
         u = np.linspace(0, 1, 5)
         v = np.linspace(0, 1, 5)
@@ -75,21 +79,21 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertAlmostEqual(surf.area(), 3*3*pi, places=2)
 
         # test xaxis
-        surf = SurfaceFactory.disc(r=3, xaxis=(0,1,0))
+        surf = sf.disc(r=3, xaxis=(0,1,0))
         u = surf.end('u')
         self.assertTrue(np.allclose(surf(u,0), [0,3]))
 
         # test normal
-        surf = SurfaceFactory.disc(r=2, normal=(1,1,0), xaxis=(0,0,1))
+        surf = sf.disc(r=2, normal=(1,1,0), xaxis=(0,0,1))
         u = surf.end('u')
         self.assertTrue(np.allclose(surf(u,0), [0,0,2]))
 
     def test_revolve(self):
         # square torus
-        square = CurveFactory.n_gon(4)
+        square = cf.n_gon(4)
         square.rotate(pi / 2, (1, 0, 0))
         square.translate((2, 0, 0))  # in xz-plane with corners at (3,0),(2,1),(1,0),(2,-1)
-        surf = SurfaceFactory.revolve(square)
+        surf = sf.revolve(square)
         surf.reparam()  # set parametric space to (0,1)^2
         v = np.linspace(0, 1, 13)
         x = surf.evaluate(0, v)  # outer ring evaluation u=0
@@ -105,8 +109,8 @@ class TestSurfaceFactory(unittest.TestCase):
             self.assertAlmostEqual(pt[2], .5)  # check height=0.5
 
         # incomplete revolve
-        c    = CurveFactory.line([1,0], [0,1], relative=True)
-        surf = SurfaceFactory.revolve(c, theta=4.2222, axis=[0,1,0])
+        c    = cf.line([1,0], [0,1], relative=True)
+        surf = sf.revolve(c, theta=4.2222, axis=[0,1,0])
         surf.reparam()
         u = np.linspace(0,1,7)
         v = np.linspace(0,1,7)
@@ -118,7 +122,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
     def test_surface_torus(self):
         # default torus
-        surf = SurfaceFactory.torus(1, 3)
+        surf = sf.torus(1, 3)
         start = surf.start()
         end = surf.end()
         # check a 13 evaluation points of v-evaluation (around the z-axis)
@@ -147,7 +151,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
     def test_sphere(self):
         # unit ball
-        surf = SurfaceFactory.sphere()
+        surf = sf.sphere()
         # test 7x7 grid for radius = 1
         for u in np.linspace(surf.start()[0], surf.end()[0], 7):
             for v in np.linspace(surf.start()[1], surf.end()[1], 7):
@@ -157,7 +161,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
     def test_cylinder_surface(self):
         # unit cylinder
-        surf = SurfaceFactory.cylinder()
+        surf = sf.cylinder()
         # test 7x7 grid for xy-radius = 1 and v=z
         for u in np.linspace(surf.start()[0], surf.end()[0], 7):
             for v in np.linspace(surf.start()[1], surf.end()[1], 7):
@@ -167,7 +171,7 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertAlmostEqual(surf.area(), 2*pi, places=3)
 
         # cylinder with parameters
-        surf = SurfaceFactory.cylinder(r=2, h=5, center=(0,0,1), axis=(1,0,0))
+        surf = sf.cylinder(r=2, h=5, center=(0,0,1), axis=(1,0,0))
         for u in np.linspace(surf.start()[0], surf.end()[0], 7):
             for v in np.linspace(surf.start()[1], surf.end()[1], 7):
                 x = surf(u, v)
@@ -176,19 +180,19 @@ class TestSurfaceFactory(unittest.TestCase):
         self.assertAlmostEqual(surf.area(), 2*2*pi*5, places=3)
 
         # test xaxis
-        surf = SurfaceFactory.cylinder(r=sqrt(2), xaxis=(1,1,0))
+        surf = sf.cylinder(r=sqrt(2), xaxis=(1,1,0))
         self.assertTrue(np.allclose(surf(0,0), [1,1,0]))
 
     def test_edge_curves(self):
         # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
         # mixes rational and non-rational curves with different parametrization spaces
-        c1 = CurveFactory.circle_segment(pi / 2)
+        c1 = cf.circle_segment(pi / 2)
         c2 = Curve(BSplineBasis(2, [0, 0, 1, 2, 2]), [[0, 1], [-1, 1], [-1, 0]])
-        c3 = CurveFactory.circle_segment(pi / 2)
+        c3 = cf.circle_segment(pi / 2)
         c3.rotate(pi)
         c4 = Curve(BSplineBasis(2), [[0, -1], [1, 0]])
 
-        surf = SurfaceFactory.edge_curves(c1, c2, c3, c4)
+        surf = sf.edge_curves(c1, c2, c3, c4)
 
         # srf spits out parametric space (0,1)^2, so we sync these up to input curves
         c3.reverse()
@@ -217,34 +221,34 @@ class TestSurfaceFactory(unittest.TestCase):
         crvs[1].reverse()
         crvs[2].reverse()
         # input curves should be clockwise oriented closed loop
-        srf = SurfaceFactory.edge_curves(crvs[0], crvs[3], crvs[1], crvs[2])
+        srf = sf.edge_curves(crvs[0], crvs[3], crvs[1], crvs[2])
         crvs[1].reverse()
         u = np.linspace(0,1,7)
         self.assertTrue(np.allclose(srf(u,0).reshape((7,2)), crvs[0](u)))
         self.assertTrue(np.allclose(srf(u,1).reshape((7,2)), crvs[1](u)))
 
         # test self-organizing curve ordering when they are not sequential
-        srf = SurfaceFactory.edge_curves(crvs[0], crvs[2].reverse(), crvs[3], crvs[1])
+        srf = sf.edge_curves(crvs[0], crvs[2].reverse(), crvs[3], crvs[1])
         u = np.linspace(0,1,7)
         self.assertTrue(np.allclose(srf(u,0).reshape((7,2)), crvs[0](u)))
         self.assertTrue(np.allclose(srf(u,1).reshape((7,2)), crvs[1](u)))
 
         # test error handling
         with self.assertRaises(ValueError):
-            srf = SurfaceFactory.edge_curves(crvs + (Curve(),)) # 5 input curves
+            srf = sf.edge_curves(crvs + (Curve(),)) # 5 input curves
 
     @unittest.skipIf(not has_nutils, "EdgeCurves with poisson solver requires nutils")
     def test_edge_curves_poisson(self):
         # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
         # rebuild to avoid rational representations
-        c1 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c1 = cf.circle_segment(pi / 2).rebuild(3,11)
         c2 = Curve(BSplineBasis(2, [0, 0, 1, 2, 2]), [[0, 1], [-1, 1], [-1, 0]])
-        c3 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c3 = cf.circle_segment(pi / 2).rebuild(3,11)
         c3.rotate(pi)
         c4 = Curve(BSplineBasis(2), [[0, -1], [1, 0]]).rebuild(3,10)
         c4 = c4.rebuild(4,11)
 
-        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='poisson')
+        surf = sf.edge_curves([c1, c2, c3, c4], type='poisson')
 
         # check right dimensions of output
         self.assertEqual(surf.shape[0], 11) # 11 controlpoints in the circle segment
@@ -278,14 +282,14 @@ class TestSurfaceFactory(unittest.TestCase):
     def test_edge_curves_elasticity(self):
         # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
         # rebuild to avoid rational representations
-        c1 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c1 = cf.circle_segment(pi / 2).rebuild(3,11)
         c2 = Curve(BSplineBasis(2, [0, 0, 1, 2, 2]), [[0, 1], [-1, 1], [-1, 0]])
-        c3 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c3 = cf.circle_segment(pi / 2).rebuild(3,11)
         c3.rotate(pi)
         c4 = Curve(BSplineBasis(2), [[0, -1], [1, 0]]).rebuild(3,10)
         c4 = c4.rebuild(4,11)
 
-        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='elasticity')
+        surf = sf.edge_curves([c1, c2, c3, c4], type='elasticity')
 
         # check right dimensions of output
         self.assertEqual(surf.shape[0], 11) # 11 controlpoints in the circle segment
@@ -313,14 +317,14 @@ class TestSurfaceFactory(unittest.TestCase):
     def test_edge_curves_finitestrain(self):
         # create an arrow-like 2D geometry with the pointy end at (-1,1) towards up and left
         # rebuild to avoid rational representations
-        c1 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c1 = cf.circle_segment(pi / 2).rebuild(3,11)
         c2 = Curve(BSplineBasis(2, [0, 0, 1, 2, 2]), [[0, 1], [-1, 1], [-1, 0]])
-        c3 = CurveFactory.circle_segment(pi / 2).rebuild(3,11)
+        c3 = cf.circle_segment(pi / 2).rebuild(3,11)
         c3.rotate(pi)
         c4 = Curve(BSplineBasis(2), [[0, -1], [1, 0]]).rebuild(3,10)
         c4 = c4.rebuild(4,11)
 
-        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='finitestrain')
+        surf = sf.edge_curves([c1, c2, c3, c4], type='finitestrain')
 
         # check right dimensions of output
         self.assertEqual(surf.shape[0], 11) # 11 controlpoints in the circle segment
@@ -353,16 +357,13 @@ class TestSurfaceFactory(unittest.TestCase):
     @unittest.skipIf(not has_nutils, "EdgeCurves with finitestrain solver requires nutils")
     def test_edge_curves_finitestrain_lshape(self):
         # Create an L-shape geometry with an interior 270-degree angle at the origin (u=.5, v=1)
-        c1 = CurveFactory.polygon([[-1, 1], [-1,-1], [1,-1]])
-        c2 = CurveFactory.polygon([[ 1,-1], [ 1, 0]])
-        c3 = CurveFactory.polygon([[ 1, 0], [ 0, 0], [0, 1]])
-        c4 = CurveFactory.polygon([[ 0, 1], [-1, 1]])
+        c1 = cf.polygon([[-1, 1], [-1,-1], [1,-1]])
+        c2 = cf.polygon([[ 1,-1], [ 1, 0]])
+        c3 = cf.polygon([[ 1, 0], [ 0, 0], [0, 1]])
+        c4 = cf.polygon([[ 0, 1], [-1, 1]])
         c1.refine(2).raise_order(1)
         c2.refine(2).raise_order(1)
-        surf = SurfaceFactory.edge_curves([c1, c2, c3, c4], type='finitestrain')
-        from splipy.io import G2
-        with G2('out.g2') as myfile:
-            myfile.write(surf)
+        surf = sf.edge_curves([c1, c2, c3, c4], type='finitestrain')
         # the quickest way to check for self-intersecting geometry here is that
         # the normal is pointing the wrong way: down z-axis instead of up
         surf.reparam().set_dimension(3)
@@ -372,7 +373,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
     def test_thicken(self):
         c = Curve()                       # 2D curve from (0,0) to (1,0)
-        s = SurfaceFactory.thicken(c, .5) # extend to y=[-.5, .5]
+        s = sf.thicken(c, .5) # extend to y=[-.5, .5]
         self.assertTupleEqual(s.order(), (2,2))
         self.assertTupleEqual(s.start(), (0,0))
         self.assertTupleEqual(s.end(),   (1,1))
@@ -381,7 +382,7 @@ class TestSurfaceFactory(unittest.TestCase):
 
         # test a case with vanishing velocity. x'(t)=0, y'(t)=0 for t=0
         c = Curve(BSplineBasis(3), [[0,0],[0,0],[1,0]]) # x(t)=t^2, y(t)=0
-        s = SurfaceFactory.thicken(c, .5)
+        s = sf.thicken(c, .5)
         self.assertTupleEqual(s.order(), (3,2))
         self.assertTupleEqual(s.start(), (0,0))
         self.assertTupleEqual(s.end(),   (1,1))
@@ -391,7 +392,7 @@ class TestSurfaceFactory(unittest.TestCase):
         def myThickness(t):
             return t**2
         c = Curve(BSplineBasis(3))
-        s = SurfaceFactory.thicken(c, myThickness)
+        s = sf.thicken(c, myThickness)
         self.assertTupleEqual(s.order(), (3,2))
         self.assertTupleEqual(s.start(), (0,0))
         self.assertTupleEqual(s.end(),   (1,1))
@@ -401,7 +402,7 @@ class TestSurfaceFactory(unittest.TestCase):
         # test 3D geometry
         c = Curve()
         c.set_dimension(3)
-        s = SurfaceFactory.thicken(c, 1) # cylinder along x-axis with h=1, r=1
+        s = sf.thicken(c, 1) # cylinder along x-axis with h=1, r=1
         for u in np.linspace(s.start(0), s.end(0), 5):
             for v in np.linspace(s.start(1), s.end(1), 5):
                 x = s(u, v)
@@ -418,7 +419,7 @@ class TestSurfaceFactory(unittest.TestCase):
         b1 = BSplineBasis(3, [0,0,0,.33,.66,.7, .8,1,1,1])
         b2 = BSplineBasis(4, [0,0,0,0,.1, .2, .5,1,1,1,1])
 
-        surf = SurfaceFactory.interpolate(x, [b1,b2], [t,t])
+        surf = sf.interpolate(x, [b1,b2], [t,t])
         t = np.linspace(0, 1, 13)
         V,U = np.meshgrid(t,t)
         x = surf(t,t)
@@ -437,7 +438,7 @@ class TestSurfaceFactory(unittest.TestCase):
         b1 = BSplineBasis(3, [0,0,0,.33,.66,.7, .8,1,1,1])
         b2 = BSplineBasis(4, [0,0,0,0,.1, .2, .5,1,1,1,1])
 
-        surf = SurfaceFactory.least_square_fit(x, [b1,b2], [t,t])
+        surf = sf.least_square_fit(x, [b1,b2], [t,t])
         t = np.linspace(0, 1, 13)
         V,U = np.meshgrid(t,t)
         x = surf(t,t)

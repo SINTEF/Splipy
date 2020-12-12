@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from splipy import Surface, BSplineBasis
-import splipy.surface_factory as SurfaceFactory
 from math import pi
-import numpy as np
 import unittest
+
+import numpy as np
+
+from splipy import Surface, BSplineBasis
+import splipy.surface_factory as sf
+
 
 class TestSurface(unittest.TestCase):
     def test_constructor(self):
@@ -470,7 +473,7 @@ class TestSurface(unittest.TestCase):
 
     def test_periodic_split(self):
         # create a double-periodic spline on the knot vector [-1,0,0,1,1,2,2,3,3,4,4,5]*pi/2
-        surf = SurfaceFactory.torus()
+        surf = sf.torus()
 
         surf2 = surf.split( pi/2, 0) # split on existing knot
         surf3 = surf.split( 1.23, 1) # split between knots
@@ -540,7 +543,7 @@ class TestSurface(unittest.TestCase):
 
     def test_center(self):
         # make an ellipse at (2,1)
-        surf = SurfaceFactory.disc(3)
+        surf = sf.disc(3)
         print(surf)
         surf.scale((3,1))
         surf += (2,1)
@@ -627,7 +630,7 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
 
     def test_normal(self):
-        surf = SurfaceFactory.sphere(1)
+        surf = sf.sphere(1)
         surf.swap()
         u    = np.linspace(surf.start(0) + 1e-3, surf.end(0) - 1e-3, 9)
         v    = np.linspace(surf.start(1) + 1e-3, surf.end(1) - 1e-3, 9)
