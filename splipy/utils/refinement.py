@@ -1,8 +1,10 @@
 __doc__ = 'Implementation of various refinement schemes.'
 
-from splipy.utils import ensure_listlike, check_direction
 from math import atan, pi, tan
+
 import numpy as np
+
+from . import ensure_listlike, check_direction
 
 # TODO: put control over these tolerances somewhere. Modstate in splipy seems
 #       to be the place for it, but we can't let splipy.utils influence the

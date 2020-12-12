@@ -2,7 +2,9 @@ __doc__ = 'Implementation of various smoothing operations on a per-controlpoint 
 
 from scipy import ndimage
 import numpy as np
-from splipy.utils import check_direction
+
+from . import check_direction
+
 
 def smooth(obj, comp=None):
     """Smooth an object by setting the interior control points to the average of

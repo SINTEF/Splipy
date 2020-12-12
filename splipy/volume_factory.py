@@ -2,13 +2,15 @@
 
 """Handy utilities for creating volumes."""
 
-from math import pi, sqrt
-import numpy as np
 from math import pi, sqrt, atan2
-from splipy import Surface, Volume, BSplineBasis
-from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
-import splipy.curve_factory as CurveFactory
-import splipy.surface_factory as SurfaceFactory
+
+import numpy as np
+
+from .basis import BSplineBasis
+from .surface import Surface
+from .volume import Volume
+from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from . import curve_factory, surface_factory
 
 __all__ = ['cube', 'sphere', 'revolve', 'cylinder', 'extrude', 'edge_surfaces',
            'loft', 'interpolate', 'least_square_fit']
@@ -38,7 +40,7 @@ def sphere(r=1, center=(0,0,0), type='radial'):
     :rtype: Volume
     """
     if type == 'radial':
-        shell    = SurfaceFactory.sphere(r, center)
+        shell    = surface_factory.sphere(r, center)
         midpoint = shell*0 + center
         return edge_surfaces(shell, midpoint)
     elif type == 'square':
@@ -121,7 +123,7 @@ def revolve(surf, theta=2 * pi, axis=(0,0,1)):
     surf.rotate(-normal_theta, [0,0,1])
     surf.rotate(-normal_phi,   [0,1,0])
 
-    path = CurveFactory.circle_segment(theta=theta)
+    path = curve_factory.circle_segment(theta=theta)
     n = len(surf)  # number of control points of the surface
     m = len(path)  # number of control points of the sweep
 
@@ -154,7 +156,7 @@ def torus(minor_r=1, major_r=3, center=(0,0,0), normal=(0,0,1), xaxis=(1,0,0), t
     :rtype: Volume
     """
 
-    disc = SurfaceFactory.disc(minor_r, type=type)
+    disc = surface_factory.disc(minor_r, type=type)
     disc.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
     disc.translate((major_r, 0, 0))  # move into position to spin around z-axis
     result = revolve(disc)
@@ -174,7 +176,7 @@ def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0), type='radial
     :return: The cylinder
     :rtype: Volume
     """
-    return extrude(SurfaceFactory.disc(r, center, axis, xaxis=xaxis, type=type), h*np.array(axis))
+    return extrude(surface_factory.disc(r, center, axis, xaxis=xaxis, type=type), h*np.array(axis))
 
 
 def extrude(surf, amount):
@@ -340,7 +342,7 @@ def loft(*surfaces):
     # make sure everything has the same dimension since we need to compute length
     surfaces = [s.clone().set_dimension(3) for s in surfaces]
     if len(surfaces)==2:
-        return SurfaceFactory.edge_curves(surfaces)
+        return surface_factory.edge_curves(surfaces)
     elif len(surfaces)==3:
         # can't do cubic spline interpolation, so we'll do quadratic
         basis3 = BSplineBasis(3)

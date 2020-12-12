@@ -2,16 +2,19 @@
 
 """Handy utilities for creating surfaces."""
 
-from splipy import BSplineBasis, Curve, Surface
 from math import pi, sqrt, atan2
-from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from splipy.utils.nutils import controlpoints, multiplicities, degree
-import splipy.curve_factory as CurveFactory
-import splipy.state as state
 import inspect
-import numpy as np
 import os
 from os.path import dirname, realpath, join
+
+import numpy as np
+
+from .basis import BSplineBasis
+from .curve import Curve
+from .surface import Surface
+from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from .utils.nutils import controlpoints, multiplicities, degree
+from . import curve_factory, state
 
 __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus', 'edge_curves',
            'thicken', 'sweep', 'loft', 'interpolate', 'least_square_fit', 'teapot']
@@ -44,7 +47,7 @@ def disc(r=1, center=(0,0,0), normal=(0,0,1), type='radial', xaxis=(1,0,0)):
     :rtype: Surface
     """
     if type == 'radial':
-        c1 = CurveFactory.circle(r, center=center, normal=normal, xaxis=xaxis)
+        c1 = curve_factory.circle(r, center=center, normal=normal, xaxis=xaxis)
         c2 = flip_and_move_plane_geometry(c1*0, center, normal)
         result = edge_curves(c2, c1)
         result.swap()
@@ -78,7 +81,7 @@ def sphere(r=1, center=(0,0,0), zaxis=(0,0,1), xaxis=(1,0,0)):
     :return: The spherical shell
     :rtype: Surface
     """
-    circle = CurveFactory.circle_segment(pi, r)
+    circle = curve_factory.circle_segment(pi, r)
     circle.rotate(-pi / 2)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
     result = revolve(circle)
@@ -126,7 +129,7 @@ def revolve(curve, theta=2 * pi, axis=(0,0,1)):
     curve.rotate(-normal_theta, [0,0,1])
     curve.rotate(-normal_phi,   [0,1,0])
 
-    circle_seg = CurveFactory.circle_segment(theta)
+    circle_seg = curve_factory.circle_segment(theta)
 
     n = len(curve)      # number of control points of the curve
     m = len(circle_seg) # number of control points of the sweep
@@ -162,7 +165,7 @@ def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0)):
     :return: The cylinder shell
     :rtype: Surface
     """
-    return extrude(CurveFactory.circle(r, center, axis, xaxis=xaxis), h*np.array(axis))
+    return extrude(curve_factory.circle(r, center, axis, xaxis=xaxis), h*np.array(axis))
 
 
 def torus(minor_r=1, major_r=3, center=(0,0,0), normal=(0,0,1), xaxis=(1,0,0)):
@@ -177,7 +180,7 @@ def torus(minor_r=1, major_r=3, center=(0,0,0), normal=(0,0,1), xaxis=(1,0,0)):
     :return: A periodic torus
     :rtype: Surface
     """
-    circle = CurveFactory.circle(minor_r)
+    circle = curve_factory.circle(minor_r)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
     circle.translate((major_r, 0, 0))  # move into position to spin around z-axis
     result = revolve(circle)
@@ -611,12 +614,12 @@ def thicken(curve, amount):
             left_points[ :, 0] = x[:, 0] + v[:, 1] * amount  # x at top
             left_points[ :, 1] = x[:, 1] - v[:, 0] * amount  # y at top
         # perform interpolation on each side
-        right = CurveFactory.interpolate(right_points, curve.bases[0])
-        left  = CurveFactory.interpolate(left_points,  curve.bases[0])
+        right = curve_factory.interpolate(right_points, curve.bases[0])
+        left  = curve_factory.interpolate(left_points,  curve.bases[0])
         return edge_curves(right, left)
 
     else:  # dimension=3, we will create a surrounding tube
-        return sweep(curve, CurveFactory.circle(r=amount))
+        return sweep(curve, curve_factory.circle(r=amount))
 
 def sweep(path, shape):
     """  Generate a surface by sweeping a shape along a path

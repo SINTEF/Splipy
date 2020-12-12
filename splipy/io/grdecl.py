@@ -1,17 +1,23 @@
-import numpy as np
 from itertools import product, chain
-from splipy import Surface, Volume, SplineObject, BSplineBasis
-from splipy import surface_factory, volume_factory, curve_factory
-from splipy.io import G2
-from splipy.utils import ensure_listlike
-from .master import MasterIO
 import re
 import warnings
-from scipy.spatial import Delaunay
-from scipy.spatial.qhull import QhullError
+
+import numpy as np
 from tqdm import tqdm
 import cv2
 import h5py
+from scipy.spatial import Delaunay
+from scipy.spatial.qhull import QhullError
+
+from ..surface import Surface
+from ..volume import Volume
+from ..splineobject import SplineObject
+from ..basis import BSplineBasis
+from ..utils import ensure_listlike
+from .. import surface_factory, curve_factory, volume_factory
+
+from .master import MasterIO
+from .g2 import G2
 
 
 class Box(object):

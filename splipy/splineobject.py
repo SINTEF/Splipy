@@ -5,10 +5,13 @@ import copy
 from operator import attrgetter, methodcaller
 from itertools import chain, product
 from bisect import bisect_left
-from splipy import BSplineBasis
-from splipy.utils import reshape, rotation_matrix, is_singleton, ensure_listlike,\
-                         check_direction, ensure_flatlist, check_section, sections,\
-                         raise_order_1D
+
+from .basis import BSplineBasis
+from .utils import (
+    reshape, rotation_matrix, is_singleton, ensure_listlike,
+    check_direction, ensure_flatlist, check_section, sections,
+    raise_order_1D
+)
 
 __all__ = ['SplineObject']
 

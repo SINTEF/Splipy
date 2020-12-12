@@ -1,10 +1,11 @@
 from itertools import groupby
-import numpy as np
 from operator import itemgetter
 from os.path import exists, isdir, join
 from os import makedirs
 
-from splipy import SplineModel
+import numpy as np
+
+from ..splinemodel import SplineModel
 
 
 class OpenFOAM(object):

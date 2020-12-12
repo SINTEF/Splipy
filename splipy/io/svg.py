@@ -1,11 +1,17 @@
-from splipy import Curve, Surface, SplineObject, BSplineBasis
-import splipy.curve_factory as curve_factory
-import splipy.state as state
 import xml.etree.ElementTree as etree
 from xml.dom import minidom
-import numpy as np
 import re
+
+import numpy as np
+
+from ..curve import Curve
+from ..surface import Surface
+from ..splineobject import SplineObject
+from ..basis import BSplineBasis
+from .. import curve_factory, state
+
 from .master import MasterIO
+
 
 def read_number_and_unit(mystring):
     unit = ''

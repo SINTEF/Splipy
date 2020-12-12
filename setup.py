@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
+from distutils.extension import Extension
+from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy as np
 
@@ -18,7 +19,7 @@ setup(
     maintainer='Kjetil Andre Johannessen',
     maintainer_email='kjetijo@gmail.com',
     license='GNU public license v3',
-    packages=['splipy', 'splipy.utils', 'splipy.io'],
+    packages=find_packages(),
     package_data={
         'splipy': ['templates/*.bpt'],
     },
@@ -30,8 +31,15 @@ setup(
         'FiniteElement': ["nutils>=4.0"],
         'Images':        ["opencv-python>=4.0"],
     },
-    ext_modules=cythonize("splipy/basis_eval.pyx"),
-    include_dirs=[np.get_include()],
+    # ext_modules=cythonize("splipy/basis_eval.pyx"),
+    ext_modules=cythonize([
+        Extension(
+            'splipy.basis_eval',
+            ['splipy/basis_eval.pyx'],
+            include_dirs=[np.get_include()],
+        )
+    ]),
+    # include_dirs=[np.get_include()],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',

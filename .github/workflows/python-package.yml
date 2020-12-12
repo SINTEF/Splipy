@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.dev.txt
       - name: Install package
         run: |
-          pip install .
+          pip install -vvv .
       - name: Test with pytest
         run: |
           pytest --benchmark-skip

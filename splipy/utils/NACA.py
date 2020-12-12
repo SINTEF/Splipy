@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from splipy import Curve, BSplineBasis
-import splipy.surface_factory as SurfaceFactory
 import numpy as np
+
+from ..curve import Curve
+from ..basis import BSplineBasis
+from .. import surface_factory
 
 __all__ = ['camber', 'NACA']
 
@@ -85,7 +87,7 @@ def NACA(M, P, X, n=40, order=5, closed=False):
         a4 = -0.1036 if closed else -0.1015
         return T / 0.2 * (a0 * np.sqrt(x) + a1 * x + a2 * x**2 + a3 * x**3 + a4 * x**4)
 
-    surf = SurfaceFactory.thicken(center_line, thickness)
+    surf = surface_factory.thicken(center_line, thickness)
     _, _, top, btm = surf.edges()
     top.reverse()
     top.append(btm)

@@ -3,15 +3,18 @@
 """Handy utilities for creating curves."""
 
 from math import pi, cos, sin, sqrt, ceil, atan2
-from splipy import Curve, BSplineBasis
-from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from numpy.linalg import norm
-import splipy.state as state
-import scipy.sparse.linalg as splinalg
-import numpy as np
-import scipy.sparse as sp
 import copy
 import inspect
+
+import numpy as np
+from numpy.linalg import norm
+import scipy.sparse as sp
+import scipy.sparse.linalg as splinalg
+
+from .curve import Curve
+from .basis import BSplineBasis
+from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from . import state
 
 __all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'ellipse',
            'circle_segment_from_three_points', 'circle_segment', 'interpolate',

@@ -7,3 +7,4 @@ doc/_templates
 /doc/html/
 /doc/latex/
 .dir-locals.el
+/dist

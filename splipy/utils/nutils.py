@@ -1,7 +1,10 @@
 __doc__ = 'Implementation of convenience methods with respect to nutils integration.'
 
-from splipy import Curve, Surface, Volume
 import numpy as np
+
+from ..curve import Curve
+from ..surface import Surface
+from ..volume import Volume
 
 
 def controlpoints(spline):
