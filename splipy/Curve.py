@@ -219,10 +219,14 @@ class Curve(SplineObject):
             speed     = np.linalg.norm(v)
         else:                 # multiple evaluation points
             if self.dimension == 2:
-                magnitude = w # for 2D-cases np.cross() outputs scalars
-            else:             # for 3D, it is vectors
+                # for 2D-cases np.cross() outputs scalars
+                # (the z-component of the cross product)
+                magnitude = np.abs(w)
+            else:
+                # for 3D, it is vectors
                 magnitude = np.apply_along_axis(np.linalg.norm, -1, w)
-            speed     = np.apply_along_axis(np.linalg.norm, -1, v)
+
+            speed = np.apply_along_axis(np.linalg.norm, -1, v)
 
         return magnitude / np.power(speed,3)
 
