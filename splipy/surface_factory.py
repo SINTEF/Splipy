@@ -261,6 +261,18 @@ def edge_curves(*curves, **kwargs):
 
 
 def coons_patch(bottom, right, top, left):
+    """  Create the surface defined by the region between the 4 input curves.
+
+    The input curves need to be parametrized to form a directed loop around the resulting Surface.
+    For more information on Coons patch see: https://en.wikipedia.org/wiki/Coons_patch.
+
+    :param [Curve] bottom: curve corresponding to the result parametric value v=0
+    :param [Curve] right: curve corresponding to the result parametric value u=1
+    :param [Curve] top: curve corresponding to the result parametric value v=1 (reversed: going right-left)
+    :param [Curve] left: curve corresponding to the result parametric value u=0 (reversed: going top-bottom)
+    :return: The enclosed surface
+    :rtype: Surface
+    """
     # coons patch (https://en.wikipedia.org/wiki/Coons_patch)
     top.reverse()
     left.reverse()
