@@ -278,6 +278,38 @@ def sweep(path, shape):
 
 
 def loft(*surfaces):
+    """  Generate a volume by lofting a series of surfaces
+
+    The resulting volume is interpolated at all input surfaces and a smooth transition
+    between these surfaces is computed as a cubic spline interpolation in the lofting
+    direction. In the case that insufficient surfaces are provided as input (less than 4
+    surfaces), then a quadratic or linear interpolation is performed.
+
+    Note that the order of input surfaces matter as they will be interpolated in this
+    particular order. Also note that the surfaces need to be parametrized in the same
+    direction, otherwise you will encounter self-intersecting result volume as it is
+    wrapping in on itself.
+
+    :param Surfaces surfaces:  A sequence of surfaces to be lofted
+    :return: Lofted volume
+    :rtype: Volume
+
+    Examples:
+
+    .. code:: python
+
+        from splipy import surface_factory, volume_factory
+        srf1 = surface_factory.disc(r=1)
+        srf2 = 1.5 * srf1 + [0,0,1]
+        srf3 = 1.0 * srf1 + [0,0,2]
+        srf4 = 1.3 * srf1 + [0,0,4]
+        vol = volume_factory.loft(srf1, srf2, srf3, srf4)
+
+        # alternatively you can provide all input curves as a list
+        all_my_surfaces = [srf1, srf2, srf3, srf4]
+        vol = volume_factory.loft(all_my_surfaces)
+
+    """
     if len(surfaces) == 1:
         surfaces = surfaces[0]
 
