@@ -641,6 +641,38 @@ def sweep(path, shape):
 
 
 def loft(*curves):
+    """  Generate a surface by lofting a series of curves
+
+    The resulting surface is interpolated at all input curves and a smooth transition
+    between these curves is computed as a cubic spline interpolation in the lofting
+    direction. In the case that insufficient curves are provided as input (less than 4
+    curves), then a quadratic or linear interpolation is performed.
+
+    Note that the order of input curves matter as they will be interpolated in this
+    particular order. Also note that the curves need to be parametrized in the same
+    direction, otherwise you will encounter self-intersecting result surface as it is
+    wrapping in on itself.
+
+    :param Curve curves:  A sequence of curves to be lofted
+    :return: Lofted surface
+    :rtype: Surface
+
+    Examples:
+
+    .. code:: python
+
+        from splipy import curve_factory, surface_factory
+        crv1 = curve_factory.circle(r=1)
+        crv2 = 1.5 * crv1 + [0,0,1]
+        crv3 = 1.0 * crv1 + [0,0,2]
+        crv4 = 1.3 * crv1 + [0,0,4]
+        srf = surface_factory.loft(crv1, crv2, crv3, crv4)
+
+        # alternatively you can provide all input curves as a list
+        all_my_curves = [crv1, crv2, crv3, crv4]
+        srf = surface_factory.loft(all_my_curves)
+
+    """
     if len(curves) == 1:
         curves = curves[0]
 
