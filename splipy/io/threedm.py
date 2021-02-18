@@ -1,14 +1,9 @@
 import numpy as np
 from itertools import chain, product
-from splipy import Curve, Surface, Volume, SplineObject, BSplineBasis, TrimmedSurface
-from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from splipy import Curve, Surface, BSplineBasis
 from .master import MasterIO
-import splipy.surface_factory as SurfaceFactory
-import splipy.curve_factory   as CurveFactory
 import splipy.state as state
-from numpy import sqrt, pi, ndarray
 from rhino3dm import Brep, File3dm, NurbsCurve, NurbsSurface
-
 
 class ThreeDM(MasterIO):
 
@@ -27,9 +22,7 @@ class ThreeDM(MasterIO):
     def read(self):
         if not hasattr(self, 'fstream'):
             self.onlywrite = False
-            print('jada %s' %(self.filename))
             self.fstream   = File3dm.Read(self.filename)
-            print(self.fstream)
 
         if self.onlywrite:
             raise IOError('Could not read from file %s' % (self.filename))
@@ -67,14 +60,15 @@ class ThreeDM(MasterIO):
         basisv = BSplineBasis(nsrf.OrderV, knotsv, -1)
         cpts = []
 
-        cpts = ndarray((nsrf.Points.CountU*nsrf.Points.CountV, 3 + nsrf.IsRational))
+        cpts = np.ndarray((nsrf.Points.CountU*nsrf.Points.CountV, 3 + nsrf.IsRational))
         for v in range(0,nsrf.Points.CountV):
             for u in range(0,nsrf.Points.CountU):
                 cpts[u+v*nsrf.Points.CountU,0] = nsrf.Points[u,v].X
                 cpts[u+v*nsrf.Points.CountU,1] = nsrf.Points[u,v].Y
                 cpts[u+v*nsrf.Points.CountU,2] = nsrf.Points[u,v].Z
                 if nsrf.IsRational:
-                    cpts[u+v*nsrf.Points.CountU,3] = nsrf.Points[u,v].W
+                    cpts[u+v*nsrf.Points.CountU,3] = 1
+                    cpts[u+v*nsrf.Points.CountU,:] *= nsrf.Points[u,v].W
 
         return Surface(basisu, basisv, cpts, nsrf.IsRational)
 
@@ -87,16 +81,18 @@ class ThreeDM(MasterIO):
         basis = BSplineBasis(ncrv.Order, knots, -1)
         cpts = []
 
-        cpts = ndarray((len(ncrv.Points), 3 + obj.Geometry.IsRational))
+        cpts = np.ndarray((len(ncrv.Points), ncrv.Dimension + ncrv.IsRational))
         for u in range(0,len(ncrv.Points)):
             cpts[u,0] = ncrv.Points[u].X
             cpts[u,1] = ncrv.Points[u].Y
-            cpts[u,2] = ncrv.Points[u].Z
+            if ncrv.Dimension > 2:
+                cpts[u,2] = ncrv.Points[u].Z
             if ncrv.IsRational:
-                cpts[u,3] = ncrv.Points[u].W
+                cpts[u,-1] = 1
+                cpts[u,:] *= ncrv.Points[u].W
 
         return Curve(basis, cpts, ncrv.IsRational)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if hasattr(self, 'fstream'):
-            self.fstream.close()
+        # Apperently File3DM objects don't need to dedicated cleanup/close code
+        pass
