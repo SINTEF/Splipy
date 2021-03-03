@@ -280,6 +280,8 @@ class Orientation(object):
 
         :raises RuntimeError: If the parametric dimension is not supported.
         """
+        if len(self.flip) == 0:
+            return 0
         if len(self.flip) == 1:
             return int(self.flip[0])
         elif len(self.flip) == 2:
@@ -885,41 +887,36 @@ class IFEMWriter:
             for node_sub_idx, sub in enumerate(node.lower_nodes[p - 1]):
                 # The sub-node should have at most one neighbour, excluding the original node
                 neighbours = set(sub.higher_nodes[p]) - {node}
-                assert len(neighbours) <= 1
-                if not neighbours:
-                    continue
 
-                # Get the neighbour node and its section index to the same sub-node
-                neigh = next(iter(neighbours))
-                neigh_sub_idx = neigh.lower_nodes[p - 1].index(sub)
+                # Iterate over the neighbour nodes
+                for neigh in neighbours:
 
-                # Only output if the node has a lower ID than the neighbour,
-                # otherwise we'll get this pair when the reverse pair is found
-                if self.node_ids[node] > self.node_ids[neigh]:
-                    continue
+                    # Get the section index to the same sub-node
+                    neigh_sub_idx = neigh.lower_nodes[p - 1].index(sub)
 
-                # Find the actual SplineObjects representing the
-                # sub-node, as it is viewed from the perspective of
-                # both the node and the neighbour, then compute the
-                # orientation mapping between them
-                node_sec_idx = section_from_index(p, p - 1, node_sub_idx)
-                node_sub = node.obj.section(*node_sec_idx)
-                neigh_sec_idx = section_from_index(p, p - 1, neigh_sub_idx)
-                neigh_sub = neigh.obj.section(*neigh_sec_idx)
+                    # Only output if the node has a lower ID than the neighbour,
+                    # otherwise we'll get this pair when the reverse pair is found
+                    if self.node_ids[node] > self.node_ids[neigh]:
+                        continue
 
-                # print('------')
-                # print(node.obj)
-                # print(neigh.obj, self.node_ids[neigh] + 1)
-                orientation = Orientation.compute(node_sub, neigh_sub)
-                # print(orientation.flip, orientation.perm, orientation.ifem_format)
+                    # Find the actual SplineObjects representing the
+                    # sub-node, as it is viewed from the perspective of
+                    # both the node and the neighbour, then compute the
+                    # orientation mapping between them
+                    node_sec_idx = section_from_index(p, p - 1, node_sub_idx)
+                    node_sub = node.obj.section(*node_sec_idx, unwrap_points=False)
+                    neigh_sec_idx = section_from_index(p, p - 1, neigh_sub_idx)
+                    neigh_sub = neigh.obj.section(*neigh_sec_idx, unwrap_points=False)
 
-                yield IFEMConnection(
-                    master = self.node_ids[node] + 1,
-                    slave = self.node_ids[neigh] + 1,
-                    midx = node_sub_idx + 1,
-                    sidx = neigh_sub_idx + 1,
-                    orient = orientation.ifem_format,
-                )
+                    orientation = Orientation.compute(node_sub, neigh_sub)
+
+                    yield IFEMConnection(
+                        master = self.node_ids[node] + 1,
+                        slave = self.node_ids[neigh] + 1,
+                        midx = node_sub_idx + 1,
+                        sidx = neigh_sub_idx + 1,
+                        orient = orientation.ifem_format,
+                    )
 
     def write(self, filename):
         lines = [
