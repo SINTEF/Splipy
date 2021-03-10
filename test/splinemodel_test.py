@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from operator import itemgetter
-from splipy import Volume
+from splipy import Volume, Surface
 from splipy.splinemodel import SplineModel, Orientation, IFEMWriter, IFEMConnection
 from splipy.io import G2
+from splipy import curve_factory, surface_factory, volume_factory
 import unittest
 import numpy as np
 
@@ -318,3 +319,56 @@ class TestModel(unittest.TestCase):
             for my_con, ref_con in zip(my_topo, ref_topo):
                 assert my_con == ref_con
             assert len(my_topo) == len(ref_topo)
+
+    def test_2d_self_connection(self):
+        c = curve_factory.line([1,0], [2,0])
+        surf = surface_factory.revolve(c)
+        surf = surf.split(surf.knots('v')[0], direction='v') # break periodicity
+        surf.set_dimension(2)
+        model = SplineModel(2,2)
+        model.add(surf)
+
+        writer = IFEMWriter(model)
+        expected = [IFEMConnection(1,1,3,4,0)]
+        for connection, want in zip(writer.connections(), expected):
+            self.assertEqual(connection, want)
+
+    def test_3d_self_connection(self):
+        square = Surface() + [1,0]
+        square = square.rotate(np.pi/2, (1,0,0))
+        vol = volume_factory.revolve(square)
+        vol = vol.split(vol.knots('w')[0], direction='w') # break periodicity
+        model = SplineModel(3,3)
+        model.add(vol, raise_on_twins=False)
+
+        writer = IFEMWriter(model)
+        expected = [IFEMConnection(1,1,5,6,0)]
+        for connection, want in zip(writer.connections(), expected):
+            self.assertEqual(connection, want)
+
+    def test_3d_torus_self_connection(self):
+        torus = volume_factory.torus()
+        torus = torus.split(torus.knots(1)[0], direction='v')
+        torus = torus.split(torus.knots(2)[0], direction='w')
+        model = SplineModel(3,3)
+        model.add(torus, raise_on_twins=False)
+
+        writer = IFEMWriter(model)
+        expected = [IFEMConnection(1,1,3,4,0), IFEMConnection(1,1,5,6,0)]
+        for connection, want in zip(writer.connections(), expected):
+            self.assertEqual(connection, want)
+
+    def test_3d_self_double_connection(self):
+        c1 = curve_factory.circle(r=1, center=(3,0,0), normal=(0,1,0))
+        c2 = curve_factory.circle(r=2, center=(3,0,0), normal=(0,1,0))
+        ring = surface_factory.edge_curves(c1,c2)
+        vol = volume_factory.revolve(ring)
+        vol = vol.split(vol.knots('u')[0], direction='u') # break periodicity
+        vol = vol.split(vol.knots('w')[0], direction='w')
+        model = SplineModel(3,3)
+        model.add(vol, raise_on_twins=False)
+
+        writer = IFEMWriter(model)
+        expected = [IFEMConnection(1,1,1,2,0),IFEMConnection(1,1,5,6,0)]
+        for connection, want in zip(writer.connections(), expected):
+            self.assertEqual(connection, want)
