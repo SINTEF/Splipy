@@ -102,6 +102,12 @@ class OrientationError(RuntimeError):
     """
     pass
 
+class TwinError(RuntimeError):
+    """A `TwinError` is raised when two objects with identical interfaces
+    are added, but different interiors.
+    """
+    pass
+
 class Orientation(object):
     """An `Orientation` represents a mapping between two coordinate systems: the
     *reference* system and the *actual* or *mapped* system.
@@ -696,29 +702,43 @@ class ObjectCatalogue(object):
         # or an OrientationError (if it is not new, but the objects don't
         # match). If that happens, we generate a new node and return the
         # identity view on it.
-        try:
-            for candidate_node in self.internal[lower_nodes[-1]]:
-                return candidate_node.view(obj)
+        candidates = self.internal.get(lower_nodes[-1], [])
 
-        except (KeyError, OrientationError) as err:
-            if isinstance(err, OrientationError) and self.pardim in raise_on_twins:
-                raise OrientationError(
-                    "Candidate nodes found but no orientation matched. "
-                    "This probably indicates an erroneous topology. "
-                    "If you are sure this is not the case (that twin patches exist), "
-                    "use raise_on_twins=False.",
-                    candidate_node.super_owner.index,
-                )
+        # If there are no candidates, we fail (unless wanting to add)
+        if not candidates:
             if not add:
                 raise KeyError("No such object found")
-            node = TopologicalNode(obj, lower_nodes, index=self.count)
-            self.count += 1
-            # Assign the new node to each possible permutation of lower-order
-            # nodes. This is slight overkill since some of these permutations
-            # are invalid, but c'est la vie.
-            for p in permutations(lower_nodes[-1]):
-                self.internal.setdefault(p, []).append(node)
-            return node.view()
+            else:
+                return self._add(obj, lower_nodes)
+
+        # If there is exactly one candidate, check it
+        if len(candidates) == 1:
+            try:
+                return candidates[0].view(obj)
+            except OrientationError:
+                if self.pardim in raise_on_twins:
+                    raise OrientationError(
+                        "Candidate nodes found but no orientation matched. "
+                        "This probably indicates an erroneous topology. "
+                        "If you are sure this is not the case (that twin patches exist), "
+                        "use raise_on_twins=False.",
+                        candidates[0].super_owner.index,
+                    )
+            if not add:
+                raise KeyError("No such object found")
+            return self._add(obj, lower_nodes)
+
+        # If there are multiple candidates, twins must be allowed
+        if self.pardim in raise_on_twins:
+            raise TwinError()
+        for candidate in candidates:
+            try:
+                return candidate.view(obj)
+            except OrientationError:
+                pass
+        if not add:
+            raise KeyError("No such object found")
+        return self._add(obj, lower_nodes)
 
     def add(self, obj, raise_on_twins=()):
         """Add new nodes to the graph to accommodate the given object, then return the
@@ -744,6 +764,16 @@ class ObjectCatalogue(object):
         .. warning:: The object *must* be a `SplineObject`, even for points.
         """
         return self.lookup(obj, add=True, raise_on_twins=raise_on_twins)
+
+    def _add(self, obj, lower_nodes):
+        node = TopologicalNode(obj, lower_nodes, index=self.count)
+        self.count += 1
+        # Assign the new node to each possible permutation of lower-order
+        # nodes. This is slight overkill since some of these permutations
+        # are invalid, but c'est la vie.
+        for p in permutations(lower_nodes[-1]):
+            self.internal.setdefault(p, []).append(node)
+        return node.view()
 
     __call__ = add
     __getitem__ = lookup
@@ -781,6 +811,8 @@ class SplineModel(object):
     def add(self, obj, name=None, raise_on_twins=True):
         if raise_on_twins is True:
             raise_on_twins = tuple(range(self.pardim + 1))
+        elif raise_on_twins is False:
+            raise_on_twins = ()
         if isinstance(obj, SplineObject):
             obj = [obj]
         self._validate(obj)
@@ -886,38 +918,44 @@ class IFEMWriter:
             # Loop over its sections of one lower parametric dimension
             # That is, for faces, loop over edges, and for volumes, loop over faces
             for node_sub_idx, sub in enumerate(node.lower_nodes[p - 1]):
-                # The sub-node should have at most one neighbour, excluding the original node
-                neighbours = set(sub.higher_nodes[p]) - {node}
 
                 # Iterate over the neighbour nodes
-                for neigh in neighbours:
-
-                    # Get the section index to the same sub-node
-                    neigh_sub_idx = neigh.lower_nodes[p - 1].index(sub)
+                for neigh in set(sub.higher_nodes[p]):
 
                     # Only output if the node has a lower ID than the neighbour,
                     # otherwise we'll get this pair when the reverse pair is found
                     if self.node_ids[node] > self.node_ids[neigh]:
                         continue
 
-                    # Find the actual SplineObjects representing the
-                    # sub-node, as it is viewed from the perspective of
-                    # both the node and the neighbour, then compute the
-                    # orientation mapping between them
-                    node_sec_idx = section_from_index(p, p - 1, node_sub_idx)
-                    node_sub = node.obj.section(*node_sec_idx, unwrap_points=False)
-                    neigh_sec_idx = section_from_index(p, p - 1, neigh_sub_idx)
-                    neigh_sub = neigh.obj.section(*neigh_sec_idx, unwrap_points=False)
+                    # Find the section index(es) to the same sub-node as seen
+                    # from the neighboring node
+                    neigh_sub_idxs = [i for i, n in enumerate(neigh.lower_nodes[p - 1]) if n is sub]
 
-                    orientation = Orientation.compute(node_sub, neigh_sub)
+                    # If the neighboring node is the same as this node (that is,
+                    # the node connects to itself), we use the same rule to prevent
+                    # double connections
+                    if neigh is node:
+                        neigh_sub_idxs = [i for i in neigh_sub_idxs if i > node_sub_idx]
 
-                    yield IFEMConnection(
-                        master = self.node_ids[node] + 1,
-                        slave = self.node_ids[neigh] + 1,
-                        midx = node_sub_idx + 1,
-                        sidx = neigh_sub_idx + 1,
-                        orient = orientation.ifem_format,
-                    )
+                    for neigh_sub_idx in neigh_sub_idxs:
+                        # Find the actual SplineObjects representing the
+                        # sub-node, as it is viewed from the perspective of
+                        # both the node and the neighbour, then compute the
+                        # orientation mapping between them
+                        node_sec_idx = section_from_index(p, p - 1, node_sub_idx)
+                        node_sub = node.obj.section(*node_sec_idx, unwrap_points=False)
+                        neigh_sec_idx = section_from_index(p, p - 1, neigh_sub_idx)
+                        neigh_sub = neigh.obj.section(*neigh_sec_idx, unwrap_points=False)
+
+                        orientation = Orientation.compute(node_sub, neigh_sub)
+
+                        yield IFEMConnection(
+                            master = self.node_ids[node] + 1,
+                            slave = self.node_ids[neigh] + 1,
+                            midx = node_sub_idx + 1,
+                            sidx = neigh_sub_idx + 1,
+                            orient = orientation.ifem_format,
+                        )
 
     def write(self, filename):
         lines = [
