@@ -480,7 +480,7 @@ class SplineObject(object):
             direction.
         :return: self
         """
-        
+
         new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
 
         # Set up an interpolation problem
