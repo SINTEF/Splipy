@@ -339,7 +339,7 @@ class SplineObject(object):
                 if len(v.shape)==1:
                     speed = np.linalg.norm(v)
                 else:
-                    speed = np.apply_along_axis(np.linalg.norm, -1, v)
+                    speed = np.linalg.norm( v, axis=-1)
                     speed = np.reshape(speed, speed.shape +(1,))
                 # store in result tuple
                 result += (v/speed,)
@@ -354,7 +354,7 @@ class SplineObject(object):
         if len(v.shape)==1:
             speed = np.linalg.norm(v)
         else:
-            speed = np.apply_along_axis(np.linalg.norm, -1, v)
+            speed = np.linalg.norm( v, axis=-1)
             speed = np.reshape(speed, speed.shape +(1,))
 
         return v / speed

@@ -168,7 +168,7 @@ class Curve(SplineObject):
             return result / np.linalg.norm(result)
 
         # normalize
-        magnitude = np.apply_along_axis(np.linalg.norm, 1, result)
+        magnitude = np.linalg.norm(result, axis=1)
         magnitude = magnitude.reshape(-1,1)
 
         return result / magnitude
@@ -224,9 +224,9 @@ class Curve(SplineObject):
                 magnitude = np.abs(w)
             else:
                 # for 3D, it is vectors
-                magnitude = np.apply_along_axis(np.linalg.norm, -1, w)
+                magnitude = np.linalg.norm( w,  axis= -1)
 
-            speed = np.apply_along_axis(np.linalg.norm, -1, v)
+            speed = np.linalg.norm( v, axis=-1)
 
         return magnitude / np.power(speed,3)
 
@@ -261,7 +261,7 @@ class Curve(SplineObject):
             magnitude = np.linalg.norm(w)
             nominator = np.dot(w, a)
         else:                 # multiple evaluation points
-            magnitude = np.apply_along_axis(np.linalg.norm, -1, w)
+            magnitude = np.linalg.norm( w, axis=-1)
             nominator = np.array([np.dot(w1,da1) for (w1,da1) in zip(w, da)])
 
         return nominator / np.power(magnitude, 2)
