@@ -169,6 +169,37 @@ class TestVolumeFactory(unittest.TestCase):
         pt2 = vol2(u,v,w)
         self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
 
+    def test_edge_surfaces_six_sides_issue_141(self):
+        # create the unit cube
+        vol = Volume()
+        # modify slightly one edge: umin(w=0) is now a parabola instead of a line
+        vol.raise_order(0,1,0)
+        vol.controlpoints[-1, 1, 0, 0] += 1
+
+        faces = vol.faces()
+
+        # edge_surface should give back the same modified unit cube
+        vol2 = VolumeFactory.edge_surfaces(faces)
+
+        # check discretization
+        self.assertEqual(vol2.order(0),2)
+        self.assertEqual(vol2.order(1),3)
+        self.assertEqual(vol2.order(2),2)
+
+        self.assertEqual(len(vol2.knots(0)),2) # [0, 1]
+        self.assertEqual(len(vol2.knots(1)),2)
+        self.assertEqual(len(vol2.knots(2)),2)
+
+        # check a 5x5x5 evaluation grid
+        u = np.linspace(0,1,5)
+        v = np.linspace(0,1,5)
+        w = np.linspace(0,1,5)
+        pt  = vol( u,v,w)
+        pt2 = vol2(u,v,w)
+
+        self.assertTrue(np.allclose(pt, pt2))
+
+
     def test_surface_loft(self):
         crv1 = Curve(BSplineBasis(3, range(11), 1), [[1,-1], [1,0], [1,1], [-1,1], [-1,0], [-1,-1]])
         crv2 = cf.circle(2) + (0,0,1)
