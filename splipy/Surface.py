@@ -80,7 +80,7 @@ class Surface(SplineObject):
             # normalize output
             if len(du.shape) == 1:
                 return normals / np.linalg.norm(normals)
-            magnitude = np.apply_along_axis(np.linalg.norm, -1, normals)
+            magnitude = np.linalg.norm( normals, axis=-1)
             magnitude = magnitude.reshape(magnitude.shape + (1,))
             return normals / magnitude
         else:
