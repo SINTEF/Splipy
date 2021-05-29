@@ -231,7 +231,63 @@ def edge_surfaces(*surfaces):
         result                =   vol1.clone()
         result.controlpoints +=   vol2.controlpoints
         result.controlpoints +=   vol3.controlpoints
-        result.controlpoints -= 2*vol4.controlpoints
+
+
+		### as suggested by github user UnaiSan (see issues 141)
+        result.controlpoints += vol4.controlpoints
+
+        Nu, Nv, Nw, d = result.controlpoints.shape
+
+        controlpoints = np.zeros((2, 2, Nw, d))
+        controlpoints[0, 0, :] = vol1.controlpoints[0, 0]
+        controlpoints[0, 1, :] = vol1.controlpoints[0, -1]
+        controlpoints[1, 0, :] = vol1.controlpoints[-1, 0]
+        controlpoints[1, 1, :] = vol1.controlpoints[-1, -1]
+        vol_u_edges = Volume(
+            BSplineBasis(),
+            BSplineBasis(),
+            result.bases[2],
+            controlpoints=controlpoints,
+            raw=True,
+            rational=result.rational
+        )
+
+        controlpoints = np.zeros((Nu, 2, 2, d))
+        controlpoints[:, 0, 0] = vol2.controlpoints[:, 0, 0]
+        controlpoints[:, 0, 1] = vol2.controlpoints[:, 0, -1]
+        controlpoints[:, 1, 0] = vol2.controlpoints[:, -1, 0]
+        controlpoints[:, 1, 1] = vol2.controlpoints[:, -1, -1]
+        vol_v_edges = Volume(
+            result.bases[0],
+            BSplineBasis(),
+            BSplineBasis(),
+            controlpoints=controlpoints,
+            raw=True,
+            rational=result.rational
+        )
+
+        controlpoints = np.zeros((2, Nv, 2, d))
+        controlpoints[0, :, 0] = vol3.controlpoints[0, :, 0]
+        controlpoints[0, :, 1] = vol3.controlpoints[0, :, -1]
+        controlpoints[1, :, 0] = vol3.controlpoints[-1, :, 0]
+        controlpoints[1, :, 1] = vol3.controlpoints[-1, :, -1]
+        vol_w_edges = Volume(
+            BSplineBasis(),
+            result.bases[1],
+            BSplineBasis(),
+            controlpoints=controlpoints,
+            raw=True,
+            rational=result.rational
+        )
+
+        Volume.make_splines_identical(result, vol_u_edges)
+        Volume.make_splines_identical(result, vol_v_edges)
+        Volume.make_splines_identical(result, vol_w_edges)
+
+        result.controlpoints -= vol_u_edges.controlpoints
+        result.controlpoints -= vol_v_edges.controlpoints
+        result.controlpoints -= vol_w_edges.controlpoints
+
         return result
     else:
         raise ValueError('Requires two or six input surfaces')
