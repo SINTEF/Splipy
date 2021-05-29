@@ -44,6 +44,40 @@ class TestVolumeFactory(unittest.TestCase):
         u = vol.end('u')
         self.assertTrue(np.allclose(vol(u,0,0), [1,1,0]))
 
+    def test_surface_torus(self):
+        # default torus
+        vol = VolumeFactory.torus(1, 3)
+        start = vol.start()
+        end = vol.end()
+        # check a 13 evaluation points of v-evaluation (around the z-axis)
+        w = np.linspace(start[2], end[2], 13)
+        # check minor-circle v=0 (outmost ring)
+        x = vol.evaluate(end[0], 0, w)
+        for pt in np.array(x[0, 0, :, :]):
+            self.assertAlmostEqual(pt[0] * pt[0] + pt[1] * pt[1], 4 * 4)  # check radius=4
+            self.assertAlmostEqual(pt[2], 0)  # check height=0
+        # check minor-circle v=pi (innermost ring)
+        x = vol.evaluate(end[0], pi, w)
+        for pt in np.array(x[0, 0, :, :]):
+            self.assertAlmostEqual(pt[0] * pt[0] + pt[1] * pt[1], 2 * 2)  # check radius=2
+            self.assertAlmostEqual(pt[2], 0)  # check height=0
+        # check minor-circle v=pi/2 (topmost ring)
+        x = vol.evaluate(end[0], pi / 2, w)
+        for pt in np.array(x[0, 0, :, :]):
+            self.assertAlmostEqual(pt[0] * pt[0] + pt[1] * pt[1], 3 * 3)  # check radius=3
+            self.assertAlmostEqual(pt[2], 1)  # check height=1
+        # check minor-circle v=3*pi/2 (mid-evaluation)
+        x = vol.evaluate(end[0], 3 * pi / 4, w)
+        for pt in np.array(x[0, 0, :, :]):
+            self.assertAlmostEqual(pt[0] * pt[0] + pt[1] * pt[1],
+                                   (3 - 1.0 / sqrt(2))**2)  # check radius=3-1/sqrt(2)
+            self.assertAlmostEqual(pt[2], 1.0 / sqrt(2))  # check height=1/sqrt(2)
+        # check disc center
+        x = vol.evaluate(start[0], 0, w)
+        for pt in np.array(x[0, 0, :, :]):
+            self.assertAlmostEqual(pt[0] * pt[0] + pt[1] * pt[1], 3*3)  # check radius=3 (major_r)
+            self.assertAlmostEqual(pt[2], 0)  # check height=0
+
     def test_edge_surfaces(self):
         # test 3D surface vs 2D rational surface
 

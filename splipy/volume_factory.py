@@ -6,6 +6,7 @@ from math import pi, sqrt
 import numpy as np
 from math import pi, sqrt, atan2
 from splipy import Surface, Volume, BSplineBasis
+from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
 import splipy.curve_factory as CurveFactory
 import splipy.surface_factory as SurfaceFactory
 
@@ -139,8 +140,29 @@ def revolve(surf, theta=2 * pi, axis=(0,0,1)):
     result.rotate(normal_theta, [0,0,1])
     return result
 
+def torus(minor_r=1, major_r=3, center=(0,0,0), normal=(0,0,1), xaxis=(1,0,0), type='radial'):
+    """  Create a torus (doughnut) by revolving a circle of size *minor_r*
+    around the *z* axis with radius *major_r*.
 
-def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0)):
+    :param float minor_r: The thickness of the torus (radius in the *xz* plane)
+    :param float major_r: The size of the torus (radius in the *xy* plane)
+    :param array-like center: Local origin of the torus
+    :param array-like normal: Local origin of the torus
+    :param array-like center: Local origin of the torus
+    :param string type: The type of parametrization ('radial' or 'square')
+    :return: A periodic torus
+    :rtype: Volume
+    """
+
+    disc = SurfaceFactory.disc(minor_r, type=type)
+    disc.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
+    disc.translate((major_r, 0, 0))  # move into position to spin around z-axis
+    result = revolve(disc)
+
+    result.rotate(rotate_local_x_axis(xaxis, normal))
+    return flip_and_move_plane_geometry(result, center, normal)
+
+def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0), type='radial'):
     """  Create a solid cylinder
 
     :param float r: Radius
@@ -148,10 +170,11 @@ def cylinder(r=1, h=1, center=(0,0,0), axis=(0,0,1), xaxis=(1,0,0)):
     :param array-like center: The center of the bottom circle
     :param array-like axis: Cylinder axis
     :param array-like xaxis: direction of sem, i.e. parametric start point u=0
+    :param string type: The type of parametrization ('radial' or 'square')
     :return: The cylinder
     :rtype: Volume
     """
-    return extrude(SurfaceFactory.disc(r, center, axis, xaxis=xaxis), h*np.array(axis))
+    return extrude(SurfaceFactory.disc(r, center, axis, xaxis=xaxis, type=type), h*np.array(axis))
 
 
 def extrude(surf, amount):
