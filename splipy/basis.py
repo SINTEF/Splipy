@@ -6,6 +6,8 @@ import copy
 import numpy as np
 from scipy.sparse import csr_matrix
 
+from typing import List, Iterable, Tuple
+
 from .utils import ensure_listlike
 from . import basis_eval, state
 
@@ -527,3 +529,30 @@ class BSplineBasis:
         if self.periodic > -1:
             result += ', C' + str(self.periodic) + '-periodic'
         return result
+
+
+class TensorBasis:
+
+    bases: List[BSplineBasis]
+    rational: bool
+
+    def __init__(self, *bases: BSplineBasis, rational: bool = False):
+        self.bases = list(bases)
+        self.rational = rational
+
+    def __iter__(self) -> Iterable[BSplineBasis]:
+        yield from self.bases
+
+    def __len__(self) -> int:
+        return len(self.bases)
+
+    def __getitem__(self, index: int) -> BSplineBasis:
+        return self.bases[index]
+
+    @property
+    def ndims(self) -> int:
+        return len(self)
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return tuple(b.num_functions() for b in self.bases)
