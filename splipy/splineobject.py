@@ -649,16 +649,9 @@ class SplineObject(object):
         dir1 = check_direction(dir1, self.pardim)
         dir2 = check_direction(dir2, self.pardim)
 
-        # Reorder control points
-        new_directions = list(range(self.pardim + 1))
-        new_directions[dir1] = dir2
-        new_directions[dir2] = dir1
-        self.controlpoints = self.controlpoints.transpose(new_directions)
-
         # Swap knot vectors
-        bases = self.bases
-        bases[dir1], bases[dir2] = bases[dir2], bases[dir1]
-        self.basis = TensorBasis(*bases, rational=self.rational)
+        trf = self.basis.swap(dir1, dir2)
+        self.controlpoints = trf(self.controlpoints)
 
         return self
 

@@ -9,7 +9,7 @@ from scipy.sparse import csr_matrix
 from typing import List, Iterable, Tuple
 
 from .utils import ensure_listlike
-from . import basis_eval, state
+from . import basis_eval, state, transform as trf
 
 __all__ = ['BSplineBasis']
 
@@ -556,3 +556,7 @@ class TensorBasis:
     @property
     def shape(self) -> Tuple[int, ...]:
         return tuple(b.num_functions() for b in self.bases)
+
+    def swap(self, dir1: int, dir2: int) -> trf.Transform:
+        self.bases[dir1], self.bases[dir2] = self.bases[dir2], self.bases[dir1]
+        return trf.SwapTransform(dir1, dir2)
