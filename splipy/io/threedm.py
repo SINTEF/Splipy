@@ -1,9 +1,13 @@
 import numpy as np
 from itertools import chain, product
-from splipy import Curve, Surface, BSplineBasis
+from splipy import Curve, Surface, BSplineBasis, curve_factory
 from .master import MasterIO
 import splipy.state as state
-from rhino3dm import Brep, File3dm, NurbsCurve, NurbsSurface
+from rhino3dm import Brep, File3dm
+from rhino3dm import NurbsCurve, PolylineCurve, Circle, Polyline, BezierCurve, Arc, Line
+from rhino3dm import NurbsSurface, Cylinder, Sphere, Extrusion
+from rhino3dm import Curve   as threedmCurve   # name conflict with splipy
+from rhino3dm import Surface as threedmSurface # name conflict with splipy
 
 class ThreeDM(MasterIO):
 
@@ -30,16 +34,37 @@ class ThreeDM(MasterIO):
         result = []
 
         for obj in self.fstream.Objects:
-            if type(obj.Geometry) is Brep:
-                for idx in range(0,len(obj.Geometry.Faces)):
-                    nsrf = obj.Geometry.Faces[idx].UnderlyingSurface().ToNurbsSurface()
+            geom = obj.Geometry
+            print(geom)
+            if type(geom) is Extrusion:
+                geom = geom.ToBrep(splitKinkyFaces=True)
+            if type(geom) is Brep:
+                for idx in range(len(geom.Faces)):
+                    print('  ', geom.Faces[idx], "(", geom.Faces[idx].UnderlyingSurface(), ")")
+                    nsrf = geom.Faces[idx].UnderlyingSurface().ToNurbsSurface()
                     result.append(self.read_surface(nsrf))
 
-            if type(obj.Geometry) is NurbsCurve:
-                result.append(self.read_curve(obj.Geometry))
+            if type(geom) is Line:
+                geom = result.append(curve_factory.line(geom.From, geom.To))
+                continue
+            if type(geom) is PolylineCurve:
+                geom = geom.ToPolyline()
+            if type(geom) is Polyline or \
+               type(geom) is Circle or \
+               type(geom) is threedmCurve or \
+               type(geom) is BezierCurve or \
+               type(geom) is Arc:
+                geom = geom.ToNurbsCurve()
 
-            if type(obj.Geometry) is NurbsSurface:
-                result.append(self.read_surface(obj.Geometry))
+            if type(geom) is NurbsCurve:
+                result.append(self.read_curve(geom))
+
+            if type(geom) is Cylinder or \
+               type(geom) is Sphere or \
+               type(geom) is threedmSurface:
+                geom = geom.ToNurbsSurface()
+            if type(geom) is NurbsSurface:
+                result.append(self.read_surface(geom))
 
         return result
 
@@ -67,8 +92,7 @@ class ThreeDM(MasterIO):
                 cpts[u+v*nsrf.Points.CountU,1] = nsrf.Points[u,v].Y
                 cpts[u+v*nsrf.Points.CountU,2] = nsrf.Points[u,v].Z
                 if nsrf.IsRational:
-                    cpts[u+v*nsrf.Points.CountU,3] = 1
-                    cpts[u+v*nsrf.Points.CountU,:] *= nsrf.Points[u,v].W
+                    cpts[u+v*nsrf.Points.CountU,3] = nsrf.Points[u,v].W
 
         return Surface(basisu, basisv, cpts, nsrf.IsRational)
 
@@ -88,8 +112,7 @@ class ThreeDM(MasterIO):
             if ncrv.Dimension > 2:
                 cpts[u,2] = ncrv.Points[u].Z
             if ncrv.IsRational:
-                cpts[u,-1] = 1
-                cpts[u,:] *= ncrv.Points[u].W
+                cpts[u,3] = ncrv.Points[u].W
 
         return Curve(basis, cpts, ncrv.IsRational)
 
