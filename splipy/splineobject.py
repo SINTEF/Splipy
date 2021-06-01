@@ -90,17 +90,6 @@ class SplineObject(object):
         if not raw:
             self.controlpoints = reshape(self.controlpoints, self.basis.shape, order='F', ncomps=self.raw_dimension)
 
-    def _validate_domain(self, *params: float):
-        """Check whether the given evaluation parameters are valid.
-
-        :raises ValueError: If the parameters are outside the domain
-        """
-        for b, p in zip(self.bases, params):
-            b.snap(p)
-            if b.periodic < 0:
-                if min(p) < b.start() or b.end() < max(p):
-                    raise ValueError('Evaluation outside parametric domain')
-
     def evaluate(self, *params, **kwargs):
         """Evaluate the object at given parametric values.
 
@@ -130,7 +119,7 @@ class SplineObject(object):
         if not tensor and len({len(p) for p in params}) != 1:
             raise ValueError('Parameters must have same length')
 
-        self._validate_domain(*params)
+        self.basis.validate_domain(*params)
 
         # Evaluate the corresponding bases at the corresponding points
         # and build the result array
@@ -208,7 +197,7 @@ class SplineObject(object):
         if not tensor and len({len(p) for p in params}) != 1:
             raise ValueError('Parameters must have same length')
 
-        self._validate_domain(*params)
+        self.basis.validate_domain(*params)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
@@ -274,7 +263,7 @@ class SplineObject(object):
 
         # if no direction is specified, return a tuple with all derivatives
         if direction is None:
-            return tuple([self.get_derivative_spline(dim) for dim in range(self.pardim)])
+            return tuple(self.get_derivative_spline(dim) for dim in range(self.pardim))
         else:
             d = check_direction(direction, self.pardim)
             k = self.knots(d, with_multiplicities=True)
@@ -561,10 +550,7 @@ class SplineObject(object):
         :param int direction: Direction in which to get the start.
         :raises ValueError: For invalid direction
         """
-        if direction is None:
-            return tuple(b.start() for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return self.bases[direction].start()
+        return self.basis.start(direction)
 
     def end(self, direction=None):
         """  Return the end of the parametric domain.
@@ -575,10 +561,7 @@ class SplineObject(object):
         :param int direction: Direction in which to get the end.
         :raises ValueError: For invalid direction
         """
-        if direction is None:
-            return tuple(b.end() for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return self.bases[direction].end()
+        return self.basis.end(direction)
 
     def order(self, direction=None):
         """  Return polynomial order (degree + 1).
@@ -590,13 +573,10 @@ class SplineObject(object):
         :param int direction: Direction in which to get the order.
         :raises ValueError: For invalid direction
         """
-        if direction is None:
-            return tuple(b.order for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return self.bases[direction].order
+        return self.basis.order(direction)
 
     def knots(self, direction=None, with_multiplicities=False):
-        """  Return knots vector
+        """Return knots vector
 
         If `direction` is given, returns the knots in that direction, as a
         list. If it is not given, returns the knots of all directions, as a
@@ -607,11 +587,7 @@ class SplineObject(object):
             multiplicities (i.e. repeated).
         :raises ValueError: For invalid direction
         """
-        getter = attrgetter('knots') if with_multiplicities else methodcaller('knot_spans')
-        if direction is None:
-            return tuple(getter(b) for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return getter(self.bases[direction])
+        return self.basis.knots(direction, with_multiplicities)
 
     def reverse(self, direction=0):
         """  Swap the direction of a parameter by making it go in the reverse
@@ -635,7 +611,7 @@ class SplineObject(object):
         return self
 
     def swap(self, dir1=0, dir2=1):
-        """  Swaps two parameter directions.
+        """Swap two parameter directions.
 
         This function silently passes for curves.
 
@@ -646,9 +622,6 @@ class SplineObject(object):
         if self.pardim == 1:
             return
 
-        dir1 = check_direction(dir1, self.pardim)
-        dir2 = check_direction(dir2, self.pardim)
-
         # Swap knot vectors
         trf = self.basis.swap(dir1, dir2)
         self.controlpoints = trf(self.controlpoints)
@@ -656,7 +629,7 @@ class SplineObject(object):
         return self
 
     def insert_knot(self, knot, direction=0):
-        """  Insert a new knot into the spline.
+        """Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
         :param knot: The new knot(s) to insert

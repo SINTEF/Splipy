@@ -2,13 +2,14 @@
 
 from bisect import bisect_right, bisect_left
 import copy
+from operator import attrgetter, methodcaller
 
 import numpy as np
 from scipy.sparse import csr_matrix
 
 from typing import List, Iterable, Tuple
 
-from .utils import ensure_listlike
+from .utils import ensure_listlike, check_direction
 from . import basis_eval, state, transform as trf
 
 __all__ = ['BSplineBasis']
@@ -557,6 +558,43 @@ class TensorBasis:
     def shape(self) -> Tuple[int, ...]:
         return tuple(b.num_functions() for b in self.bases)
 
+    def validate_domain(self, *params: float):
+        """Check whether the given evaluation parameters are valid.
+
+        :raises ValueError: If the parameters are outside the domain
+        """
+        for b, p in zip(self.bases, params):
+            b.snap(p)
+            if b.periodic < 0 and (min(p) < b.start() or b.end() < max(p)):
+                raise ValueError("Evaluation outside parametric domain")
+
+    def start(self, direction=None):
+        if direction is None:
+            return tuple(b.start() for b in self.bases)
+        direction = check_direction(direction, self.ndims)
+        return self.bases[direction].start()
+
+    def end(self, direction=None):
+        if direction is None:
+            return tuple(b.end() for b in self.bases)
+        direction = check_direction(direction, self.ndims)
+        return self.bases[direction].end()
+
+    def order(self, direction=None):
+        if direction is None:
+            return tuple(b.order for b in self.bases)
+        direction = check_direction(direction, self.ndims)
+        return self.bases[direction].order
+
+    def knots(self, direction=None, with_multiplicities=False):
+        getter = attrgetter('knots') if with_multiplicities else methodcaller('knot_spans')
+        if direction is None:
+            return tuple(getter(b) for b in self.bases)
+        direction = check_direction(direction, self.ndims)
+        return getter(self.bases[direction])
+
     def swap(self, dir1: int, dir2: int) -> trf.Transform:
+        dir1 = check_direction(dir1, self.ndims)
+        dir2 = check_direction(dir2, self.ndims)
         self.bases[dir1], self.bases[dir2] = self.bases[dir2], self.bases[dir1]
         return trf.SwapTransform(dir1, dir2)

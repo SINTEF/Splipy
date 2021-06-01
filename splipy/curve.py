@@ -52,7 +52,7 @@ class Curve(SplineObject):
         squeeze = is_singleton(params[0])
         params = [ensure_listlike(p) for p in params]
 
-        self._validate_domain(*params)
+        self.basis.validate_domain(*params)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
