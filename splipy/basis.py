@@ -608,6 +608,29 @@ class TensorBasis:
         Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
         return trf.Evaluator(Ns, tensor, self.rational, squeeze)
 
+    def derivative(self, *params, **kwargs) -> trf.Transform:
+        squeeze = all(is_singleton(p) for p in params)
+        params = [ensure_listlike(p) for p in params]
+
+        derivs = kwargs.get('d', [1] * self.ndims)
+        derivs = ensure_listlike(derivs, self.ndims)
+
+        above = kwargs.get('above', [True] * self.ndims)
+        above = ensure_listlike(above, self.ndims)
+
+        tensor = kwargs.get('tensor', True)
+        if not tensor and len({len(p) for p in params}) != 1:
+            raise ValueError('Parameters must have same length')
+
+        self.validate_domain(*params)
+        dNs = [b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params, derivs, above)]
+
+        if not self.rational:
+            return trf.DerivativeEvaluator(dNs, tensor, None, squeeze)
+
+        Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+        return trf.DerivativeEvaluator(dNs, tensor, Ns, squeeze)
+
     def swap(self, dir1: int, dir2: int) -> trf.Transform:
         dir1 = check_direction(dir1, self.ndims)
         dir2 = check_direction(dir2, self.ndims)

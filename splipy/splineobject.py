@@ -159,48 +159,8 @@ class SplineObject(object):
         :return: Derivatives
         :rtype: numpy.array
         """
-        squeeze = all(is_singleton(p) for p in params)
-        params = [ensure_listlike(p) for p in params]
-
-        derivs = kwargs.get('d', [1] * self.pardim)
-        derivs = ensure_listlike(derivs, self.pardim)
-
-        above = kwargs.get('above', [True] * self.pardim)
-        above = ensure_listlike(above, self.pardim)
-
-        tensor = kwargs.get('tensor', True)
-
-        if not tensor and len({len(p) for p in params}) != 1:
-            raise ValueError('Parameters must have same length')
-
-        self.basis.validate_domain(*params)
-
-        # Evaluate the derivatives of the corresponding bases at the corresponding points
-        # and build the result array
-        dNs = [b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params, derivs, above)]
-        result = evaluate(dNs, self.controlpoints, tensor)
-
-        # For rational curves, we need to use the quotient rule
-        # (n/W)' = (n' W - n W') / W^2 = n'/W - nW'/W^2
-        # * n'(i) = result[..., i]
-        # * W'(i) = result[..., -1]
-        # We evaluate in the regular way to compute n and W.
-        if self.rational:
-            if sum(derivs) > 1:
-                raise RuntimeError('Rational derivative not implemented for order %i' % sum(derivs))
-            Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
-            non_derivative = evaluate(Ns, self.controlpoints, tensor)
-            W = non_derivative[..., -1]  # W
-            Wd = result[..., -1]         # W'
-            for i in range(self.dimension):
-                result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W
-            result = np.delete(result, self.dimension, -1)
-
-        # Squeeze the singleton dimensions if we only have one point
-        if squeeze:
-            result = result.reshape(self.dimension)
-
-        return result
+        evaluator = self.basis.derivative(*params, **kwargs)
+        return evaluator(self.controlpoints)
 
     def get_derivative_spline(self, direction=None):
         """  Compute the controlpoints associated with the derivative spline object

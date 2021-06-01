@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
@@ -81,6 +81,36 @@ class Evaluator:
         if self.rational:
             for i in range(cps.shape[-1]):
                 result[..., i] /= result[..., -1]
+            result = np.delete(result, cps.shape[-1] - 1, -1)
+
+        if self.squeeze:
+            result = result.reshape(-1)
+
+        return result
+
+
+class DerivativeEvaluator:
+
+    dns: List[np.ndarray]
+    tensor: bool
+    rational: Optional[List[np.ndarray]]
+    squeeze: bool
+
+    def __init__(self, dns: List[np.ndarray], tensor: bool, rational: Optional[List[np.ndarray]], squeeze: bool):
+        self.dns = dns
+        self.tensor = tensor
+        self.rational = rational
+        self.squeeze = squeeze
+
+    def __call__(self, cps: np.ndarray) -> np.ndarray:
+        result = evaluate(self.dns, cps, self.tensor)
+
+        if self.rational is not None:
+            non_derivative = evaluate(self.rational, cps, self.tensor)
+            W = non_derivative[..., -1]  # W
+            Wd = result[..., -1]         # W'
+            for i in range(cps.shape[-1] - 1):
+                result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W
             result = np.delete(result, cps.shape[-1] - 1, -1)
 
         if self.squeeze:
