@@ -3,6 +3,18 @@ from typing import List
 import numpy as np
 
 
+def evaluate(bases, cps, tensor=True):
+    if tensor:
+        idx = len(bases) - 1
+        for N in bases[::-1]:
+            cps = np.tensordot(N, cps, axes=(1, idx))
+    else:
+        cps = np.einsum('ij,j...->i...', bases[0], cps)
+        for N in bases[1:]:
+            cps = np.einsum('ij,ij...->i...', N, cps)
+    return cps
+
+
 class Transform:
     """Superclass for control point transformations."""
 
@@ -48,3 +60,30 @@ class SwapTransform:
         new_directions[self.dir1] = self.dir2
         new_directions[self.dir2] = self.dir1
         return cps.transpose(new_directions)
+
+
+class Evaluator:
+
+    ns: List[np.ndarray]
+    tensor: bool
+    rational: bool
+    squeeze: bool
+
+    def __init__(self, ns: List[np.ndarray], tensor: bool, rational: bool, squeeze: bool):
+        self.ns = ns
+        self.tensor = tensor
+        self.rational = rational
+        self.squeeze = squeeze
+
+    def __call__(self, cps: np.ndarray) -> np.ndarray:
+        result = evaluate(self.ns, cps, self.tensor)
+
+        if self.rational:
+            for i in range(cps.shape[-1]):
+                result[..., i] /= result[..., -1]
+            result = np.delete(result, cps.shape[-1] - 1, -1)
+
+        if self.squeeze:
+            result = result.reshape(-1)
+
+        return result

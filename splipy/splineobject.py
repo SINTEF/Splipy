@@ -112,32 +112,8 @@ class SplineObject(object):
         :return: Geometry coordinates
         :rtype: numpy.array
         """
-        squeeze = all(is_singleton(p) for p in params)
-        params = [ensure_listlike(p) for p in params]
-
-        tensor = kwargs.get('tensor', True)
-        if not tensor and len({len(p) for p in params}) != 1:
-            raise ValueError('Parameters must have same length')
-
-        self.basis.validate_domain(*params)
-
-        # Evaluate the corresponding bases at the corresponding points
-        # and build the result array
-        Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
-        result = evaluate(Ns, self.controlpoints, tensor)
-
-        # For rational objects, we divide out the weights, which are stored in the
-        # last coordinate
-        if self.rational:
-            for i in range(self.dimension):
-                result[..., i] /= result[..., -1]
-            result = np.delete(result, self.dimension, -1)
-
-        # Squeeze the singleton dimensions if we only have one point
-        if squeeze:
-            result = result.reshape(self.dimension)
-
-        return result
+        evaluator = self.basis.evaluate(*params, **kwargs)
+        return evaluator(self.controlpoints)
 
     def derivative(self, *params, **kwargs):
         """Evaluate the derivative of the object at the given parametric values.

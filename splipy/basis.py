@@ -9,7 +9,7 @@ from scipy.sparse import csr_matrix
 
 from typing import List, Iterable, Tuple
 
-from .utils import ensure_listlike, check_direction
+from .utils import ensure_listlike, check_direction, is_singleton
 from . import basis_eval, state, transform as trf
 
 __all__ = ['BSplineBasis']
@@ -592,6 +592,21 @@ class TensorBasis:
             return tuple(getter(b) for b in self.bases)
         direction = check_direction(direction, self.ndims)
         return getter(self.bases[direction])
+
+    def evaluate(self, *params, **kwargs) -> trf.Transform:
+        squeeze = all(is_singleton(p) for p in params)
+        params = [ensure_listlike(p) for p in params]
+
+        tensor = kwargs.get('tensor', True)
+        if not tensor and len({len(p) for p in params}) != 1:
+            raise ValueError('Parameters must have same length')
+
+        self.validate_domain(*params)
+
+        # Evaluate the corresponding bases at the corresponding points
+        # and build the result array
+        Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+        return trf.Evaluator(Ns, tensor, self.rational, squeeze)
 
     def swap(self, dir1: int, dir2: int) -> trf.Transform:
         dir1 = check_direction(dir1, self.ndims)
