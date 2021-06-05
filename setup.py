@@ -26,11 +26,11 @@ setup(
     install_requires=[
         'numpy    >= 1.15',
         'scipy    >= 1.2',
-        'rhino3dm >= 0.14',
     ],
     extras_require={
         'FiniteElement': ["nutils>=4.0"],
         'Images':        ["opencv-python>=4.0"],
+        'Rhino':         ["rhino3dm>=0.14"],
     },
     # ext_modules=cythonize("splipy/basis_eval.pyx"),
     ext_modules=cythonize([
