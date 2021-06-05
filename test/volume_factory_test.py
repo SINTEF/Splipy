@@ -179,7 +179,7 @@ class TestVolumeFactory(unittest.TestCase):
         faces = vol.faces()
 
         # edge_surface should give back the same modified unit cube
-        vol2 = VolumeFactory.edge_surfaces(faces)
+        vol2 = vf.edge_surfaces(faces)
 
         # check discretization
         self.assertEqual(vol2.order(0),2)
