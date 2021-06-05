@@ -4,3 +4,4 @@ h5py==3.1.0
 tqdm==4.41.1
 nutils==4.1
 rhino3dm==7.6.0
+opencv-python==4.5.2.52
