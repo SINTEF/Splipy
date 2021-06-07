@@ -129,3 +129,11 @@ After that, Travis CI should automatically build and deploy the
 packages to PyPi. It would be helpful to monitor the Travis build so
 that errors can be fixed quickly. See the `list of builds
 <https://travis-ci.org/sintefmath/Splipy/builds>`_.
+
+
+======
+Citations
+======
+
+If you use Splipy in your work, please consider citing
+`K. A. Johannessen and E. Fonn 2020 J. Phys.: Conf. Ser. 1669 012032 <https://iopscience.iop.org/article/10.1088/1742-6596/1669/1/012032/meta>`_.
