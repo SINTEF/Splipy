@@ -165,3 +165,8 @@ with STL('torus.stl') as my_file:
 **Torus tessellation as viewed in Meshlab**
 ![Torus](images/torus.png)
 
+
+## Citations
+
+If you use Splipy in your work, please consider citing
+[K. A. Johannessen and E. Fonn 2020 *J. Phys.: Conf. Ser.* **1669** 012032](https://iopscience.iop.org/article/10.1088/1742-6596/1669/1/012032/meta).
