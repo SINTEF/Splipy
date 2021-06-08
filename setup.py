@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from distutils.extension import Extension
-from setuptools import setup, find_packages
+from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
 import numpy as np
 
