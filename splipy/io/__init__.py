@@ -3,7 +3,7 @@ from .svg import SVG
 from .spl import SPL
 from .stl import STL
 from .ofoam import OpenFOAM
-from .threedm  import ThreeDM
+
 
 # GRDECL depends on optional cv2
 try:
