@@ -21,9 +21,9 @@ The library is packaged on splipy and can be installed through pip by simply run
 Resources
 ---------
 
-* `Getting-started guide <https://github.com/sintefmath/Splipy/tree/master/doc/Tutorial/Getting%20Started.ipynb>`_ - tutorial page (run with `jupyter <http://jupyter.org/>`_ to get interactive features)
-* `Examples page <https://github.com/sintefmath/Splipy/tree/master/examples>`_ - stand-alone executables of different applications
-* `API documentation <http://sintefmath.github.io/Splipy>`_ - technical details on all functions
+* `Getting-started guide <https://github.com/sintef/Splipy/tree/master/doc/Tutorial/Getting%20Started.ipynb>`_ - tutorial page (run with `jupyter <http://jupyter.org/>`_ to get interactive features)
+* `Examples page <https://github.com/sintef/Splipy/tree/master/examples>`_ - stand-alone executables of different applications
+* `API documentation <http://sintef.github.io/Splipy>`_ - technical details on all functions
 * `Package installation page <https://pypi.org/project/Splipy>`_ - splipy on PyPi, packaged and ready for installation
 
 
