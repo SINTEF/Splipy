@@ -1,7 +1,7 @@
-numpy==1.19.5
-scipy==1.5.4
-h5py==3.1.0
+numpy==1.21.5
+scipy==1.7.3
+h5py==3.6.0
 tqdm==4.41.1
 nutils==4.1
-rhino3dm==7.6.0
-opencv-python==4.5.2.52
+# rhino3dm==7.11.1
+# opencv-python==4.5.4.58

@@ -23,7 +23,7 @@ setup(
         'splipy': ['templates/*.bpt'],
     },
     install_requires=[
-        'numpy    >= 1.15, < 1.20',
+        'numpy    >= 1.20',
         'scipy    >= 1.2',
     ],
     extras_require={
