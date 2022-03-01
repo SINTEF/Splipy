@@ -460,6 +460,47 @@ class TestVolume(unittest.TestCase):
         self.assertAlmostEqual(vol.start('w'),   0)
         self.assertAlmostEqual(vol.end('w'),     8)
 
+    def test_faces(self):
+        vol1 = Volume()
+        faces = vol1.faces()
+        self.assertEqual(len(faces), 6)
+        # check that it all comes out in the order umin, umax, vmin, vmax, wmin, wmax
+        self.assertTrue(np.allclose(faces[0][0,0], (0,0,0)))
+        self.assertTrue(np.allclose(faces[0][1,1], (0,1,1)))
+        self.assertTrue(np.allclose(faces[1][0,0], (1,0,0)))
+        self.assertTrue(np.allclose(faces[1][1,1], (1,1,1)))
+        self.assertTrue(np.allclose(faces[2][0,0], (0,0,0)))
+        self.assertTrue(np.allclose(faces[2][1,1], (1,0,1)))
+        self.assertTrue(np.allclose(faces[3][0,0], (0,1,0)))
+        self.assertTrue(np.allclose(faces[3][1,1], (1,1,1)))
+        self.assertTrue(np.allclose(faces[4][0,0], (0,0,0)))
+        self.assertTrue(np.allclose(faces[4][1,1], (1,1,0)))
+        self.assertTrue(np.allclose(faces[5][0,0], (0,0,1)))
+        self.assertTrue(np.allclose(faces[5][1,1], (1,1,1)))
+
+        # one parametric direction is periodic, these indices should return None
+        vol2 = vf.cylinder()
+        faces = vol2.faces()
+        self.assertEqual(len(faces), 6)
+        self.assertIsNotNone(faces[0])
+        self.assertIsNotNone(faces[1])
+        self.assertIsNone(faces[2])
+        self.assertIsNone(faces[3])
+        self.assertIsNotNone(faces[4])
+        self.assertIsNotNone(faces[5])
+
+        # two parametric directions are periodic
+        vol3 = vf.torus()
+        faces = vol3.faces()
+        self.assertEqual(len(faces), 6)
+        self.assertIsNotNone(faces[0])
+        self.assertIsNotNone(faces[1])
+        self.assertIsNone(faces[2])
+        self.assertIsNone(faces[3])
+        self.assertIsNone(faces[4])
+        self.assertIsNone(faces[5])
+        
+
     def test_make_identical(self):
         basis1 = BSplineBasis(4, [-1,-1,0,0,1,1,2,2], periodic=1)
         basis2 = BSplineBasis(3, [-1,0,0,1,1,2],      periodic=0)

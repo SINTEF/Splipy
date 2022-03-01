@@ -62,7 +62,12 @@ class Volume(SplineObject):
         :return: Boundary faces
         :rtype: (Surface)
         """
-        return tuple(self.section(*args) for args in sections(3, 2))
+        boundary_faces = [self.section(*args) for args in sections(3, 2)]
+        for i,b in enumerate(self.bases):
+            if b.periodic > -1:
+                boundary_faces[2*i  ] = None
+                boundary_faces[2*i+1] = None
+        return tuple(boundary_faces)
 
     def volume(self):
         """ Computes the volume of the object in geometric space """
