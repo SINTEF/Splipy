@@ -118,7 +118,8 @@ class STL(MasterIO):
 
         elif isinstance(obj, Volume):
             for surface in obj.faces():
-                self.write_surface(surface, n)
+                if surface is not None: # happens with periodic volumes
+                    self.write_surface(surface, n)
 
         elif isinstance(obj, Surface):
             self.write_surface(obj, n)

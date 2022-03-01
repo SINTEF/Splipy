@@ -122,7 +122,7 @@ class BSplineBasis:
 
         # for single-value input, wrap it into a list so it don't crash on the loop below
         t = ensure_listlike(t)
-        t = np.array(t, dtype=np.float64)
+        t = np.array(t, dtype=float)
         basis_eval.snap(self.knots, t, state.knot_tolerance)
 
         if self.order <= d: # requesting more derivatives than polymoial degree: return all zeros
