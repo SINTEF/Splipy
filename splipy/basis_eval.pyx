@@ -60,10 +60,10 @@ def evaluate(np.ndarray[np.float_t, ndim=1] knots_in,
     cdef unsigned int mu     = 0
 
     cdef np.float_t[:] t    = eval_t_in.copy()
-    cdef np.float_t[:] data = np.zeros(m*p, dtype=np.float)
+    cdef np.float_t[:] data = np.zeros(m*p, dtype=float)
     cdef np.int32_t[:] indices  = np.zeros(m*p, dtype=np.int32)
     cdef np.int32_t[:] indptr   = np.arange(0,m*p+1,p, dtype=np.int32)
-    cdef np.float_t[:] M        = np.zeros(p, dtype=np.float)  # temp storage to keep all the function evaluations
+    cdef np.float_t[:] M        = np.zeros(p, dtype=float)  # temp storage to keep all the function evaluations
     cdef unsigned int k,q,j,i
     cdef bint right
 

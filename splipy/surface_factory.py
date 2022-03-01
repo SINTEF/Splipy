@@ -823,7 +823,7 @@ def teapot():
             basis2 = BSplineBasis(p[1]+1)
 
             ncp = basis1.num_functions() * basis2.num_functions()
-            cp  = [np.fromstring(f.readline(), dtype=np.float, count=3, sep=' ') for j in range(ncp)]
+            cp  = [np.fromstring(f.readline(), dtype=float, count=3, sep=' ') for j in range(ncp)]
             results.append(Surface(basis1, basis2, cp))
 
     return results

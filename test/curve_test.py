@@ -466,7 +466,7 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(crv.length(), 14.0)
 
     def test_make_periodic(self):
-        my_cps = np.array([[0, -1], [1, 0], [0, 1], [-1, 0], [0, -1]], dtype=np.float)
+        my_cps = np.array([[0, -1], [1, 0], [0, 1], [-1, 0], [0, -1]], dtype=float)
 
         crv = Curve(BSplineBasis(2, [0, 0, 1, 2, 3, 4, 4]), my_cps, rational=False)
         crv = crv.make_periodic(0)
