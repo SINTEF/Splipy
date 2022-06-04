@@ -771,7 +771,8 @@ class ObjectCatalogue(object):
         # Assign the new node to each possible permutation of lower-order
         # nodes. This is slight overkill since some of these permutations
         # are invalid, but c'est la vie.
-        for p in permutations(lower_nodes[-1]):
+        perms = set(permutations(lower_nodes[-1]))
+        for p in perms:
             self.internal.setdefault(p, []).append(node)
         return node.view()
 
