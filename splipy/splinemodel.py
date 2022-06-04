@@ -838,7 +838,7 @@ class SplineModel(object):
     def _validate(self, objs):
         if any(p.dimension != self.dimension for p in objs):
             raise ValueError("Patches with different dimension added")
-        if any(p.pardim != self.pardim for p in objs):
+        if any(p.pardim > self.pardim for p in objs):
             raise ValueError("Patches with different parametric dimension added")
         if self.force_right_hand:
             left_inds = [i for i, p in enumerate(objs) if not is_right_hand(p)]
