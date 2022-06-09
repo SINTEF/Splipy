@@ -3,7 +3,7 @@
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product, permutations, islice
 from operator import itemgetter
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Callable, Dict, List, Tuple, Any, Optional
 
 import numpy as np
 
@@ -693,6 +693,13 @@ class ObjectCatalogue(object):
         else:
             self.lower = VertexDict()
 
+        # Callbacks for events
+        self.callbacks = dict()
+
+    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]):
+        """Add a callback function to be called on a given event."""
+        self.callbacks.setdefault(event, []).append(callback)
+
     def lookup(self, obj, add=False, raise_on_twins=()):
         """Obtain the `NodeView` object corresponding to a given object.
 
@@ -727,7 +734,10 @@ class ObjectCatalogue(object):
             if add:
                 node = TopologicalNode(obj, [], index=self.count)
                 self.count += 1
-                return self.lower.setdefault(cps, node).view()
+                rval = self.lower.setdefault(cps, node).view()
+                for cb in self.callbacks.get('add', []):
+                    cb(node)
+                return rval
             return self.lower[cps].view()
 
         # Get all nodes of lower dimension (points, vertices, etc.)
@@ -819,6 +829,8 @@ class ObjectCatalogue(object):
         perms = set(permutations(lower_nodes[-1]))
         for p in perms:
             self.internal.setdefault(p, []).append(node)
+        for cb in self.callbacks.get('add', []):
+            cb(node)
         return node.view()
 
     __call__ = add
@@ -853,6 +865,12 @@ class SplineModel(object):
         self.catalogue = ObjectCatalogue(pardim)
         self.names = {}
         self.add(objs)
+
+    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]):
+        catalogue = self.catalogue
+        while isinstance(catalogue, ObjectCatalogue):
+            catalogue.add_callback(event, callback)
+            catalogue = catalogue.lower
 
     def add(self, obj, name=None, raise_on_twins=True):
         if raise_on_twins is True:
