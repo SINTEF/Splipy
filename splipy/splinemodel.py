@@ -2,11 +2,14 @@
 
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product, permutations, islice
+from operator import itemgetter
+from typing import Callable, Dict, List, Tuple, Any, Optional
 
 import numpy as np
 
 from .splineobject import SplineObject
 from .utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
+from .utils import bisect
 from . import state
 
 try:
@@ -32,17 +35,39 @@ class VertexDict(MutableMapping):
     All keys must have the same dimensions.
     """
 
-    def __init__(self):
-        # List of (key, value) pairs
-        self.internal = []
+    rtol: float
+    atol: float
 
-    def _eq(self, a, b):
-        """Check whether two numpy arrays are almost equal, according to the given
-        tolerances.
-        """
-        return np.allclose(a, b,
-                           rtol=state.controlpoint_relative_tolerance,
-                           atol=state.controlpoint_absolute_tolerance)
+    _keys: List[Optional[np.ndarray]]
+    _values: List[Any]
+
+    lut: Dict[Tuple[int, ...], List[Tuple[int, float]]]
+
+    def __init__(self, rtol=1e-5, atol=1e-8):
+        # List of (key, value) pairs
+        self.rtol = rtol
+        self.atol = atol
+        self._keys = []
+        self._values = []
+        self.lut = dict()
+
+    def _bounds(self, key):
+        if key >= self.atol:
+            return (
+                (key - self.atol) / (1 + self.rtol),
+                (key + self.atol) / (1 - self.rtol),
+            )
+
+        if key <= -self.atol:
+            return (
+                (key - self.atol) / (1 - self.rtol),
+                (key + self.atol) / (1 + self.rtol),
+            )
+
+        return (
+            (key - self.atol) / (1 - self.rtol),
+            (key + self.atol) / (1 - self.rtol),
+        )
 
     def _candidate(self, key):
         """Return the internal index for the first stored mapping that matches the
@@ -51,19 +76,36 @@ class VertexDict(MutableMapping):
         :param numpy.array key: The key to look for
         :raises KeyError: If the key is not found
         """
-        for i, (k, v) in enumerate(self.internal):
-            if self._eq(key, k):
-                return i
+        candidates = None
+        for coord, k in np.ndenumerate(key):
+            lut = self.lut.setdefault(coord, [])
+            minval, maxval = self._bounds(k)
+            lo = bisect.bisect_left(lut, minval, key=itemgetter(1))
+            hi = bisect.bisect_left(lut, maxval, key=itemgetter(1))
+            if candidates is None:
+                candidates = {i for i, _ in lut[lo:hi]}
+            else:
+                candidates &= {i for i, _ in lut[lo:hi]}
+        for c in candidates:
+            if self._keys[c] is not None:
+                return c
         raise KeyError(key)
+
+    def _insert(self, key, value):
+        newindex = len(self._values)
+        for coord, v in np.ndenumerate(key):
+            lut = self.lut.setdefault(coord, [])
+            bisect.insort(lut, (newindex, v), key=itemgetter(1))
+        self._keys.append(key)
+        self._values.append(value)
 
     def __setitem__(self, key, value):
         """Assign a key to a value."""
         try:
             c = self._candidate(key)
-            k, _ = self.internal[c]
-            self.internal[c] = (k, value)
+            self._values[c] = value
         except KeyError:
-            self.internal.append((key, value))
+            self._insert(key, value)
 
     def __getitem__(self, key):
         """Gets the value assigned to a key.
@@ -71,28 +113,31 @@ class VertexDict(MutableMapping):
         :raises KeyError: If the key is not found
         """
         c = self._candidate(key)
-        return self.internal[c][1]
+        return self._values[c]
 
     def __delitem__(self, key):
         """Deletes an assignment."""
-        self.internal = [(k, v) for k, v in self.internal
-                         if not self._eq(key, k)]
+        try:
+            i = self._candidate(key)
+        except KeyError:
+            return
+        self._keys[i] = None
+        self._values[i] = None
 
     def __iter__(self):
         """Iterate over all keys.
 
         .. note:: This generates all the stored keys, not all matching keys.
         """
-        for k, _ in self.internal:
-            yield k
+        yield from self._keys
 
     def items(self):
         """Return a list of key, value pairs."""
-        return list(self.internal)
+        yield from self._values
 
     def __len__(self):
         """Returns the number of stored assignments."""
-        return len(self.internal)
+        return len(self._values)
 
 
 class OrientationError(RuntimeError):
@@ -648,6 +693,13 @@ class ObjectCatalogue(object):
         else:
             self.lower = VertexDict()
 
+        # Callbacks for events
+        self.callbacks = dict()
+
+    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]):
+        """Add a callback function to be called on a given event."""
+        self.callbacks.setdefault(event, []).append(callback)
+
     def lookup(self, obj, add=False, raise_on_twins=()):
         """Obtain the `NodeView` object corresponding to a given object.
 
@@ -682,7 +734,10 @@ class ObjectCatalogue(object):
             if add:
                 node = TopologicalNode(obj, [], index=self.count)
                 self.count += 1
-                return self.lower.setdefault(cps, node).view()
+                rval = self.lower.setdefault(cps, node).view()
+                for cb in self.callbacks.get('add', []):
+                    cb(node)
+                return rval
             return self.lower[cps].view()
 
         # Get all nodes of lower dimension (points, vertices, etc.)
@@ -771,8 +826,11 @@ class ObjectCatalogue(object):
         # Assign the new node to each possible permutation of lower-order
         # nodes. This is slight overkill since some of these permutations
         # are invalid, but c'est la vie.
-        for p in permutations(lower_nodes[-1]):
+        perms = set(permutations(lower_nodes[-1]))
+        for p in perms:
             self.internal.setdefault(p, []).append(node)
+        for cb in self.callbacks.get('add', []):
+            cb(node)
         return node.view()
 
     __call__ = add
@@ -808,6 +866,12 @@ class SplineModel(object):
         self.names = {}
         self.add(objs)
 
+    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]):
+        catalogue = self.catalogue
+        while isinstance(catalogue, ObjectCatalogue):
+            catalogue.add_callback(event, callback)
+            catalogue = catalogue.lower
+
     def add(self, obj, name=None, raise_on_twins=True):
         if raise_on_twins is True:
             raise_on_twins = tuple(range(self.pardim + 1))
@@ -837,7 +901,7 @@ class SplineModel(object):
     def _validate(self, objs):
         if any(p.dimension != self.dimension for p in objs):
             raise ValueError("Patches with different dimension added")
-        if any(p.pardim != self.pardim for p in objs):
+        if any(p.pardim > self.pardim for p in objs):
             raise ValueError("Patches with different parametric dimension added")
         if self.force_right_hand:
             left_inds = [i for i, p in enumerate(objs) if not is_right_hand(p)]
