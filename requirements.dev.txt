@@ -1,4 +1,4 @@
 Cython==0.29.28
-numpy==1.21.6
+numpy==1.22.0
 pytest==6.2.5
 pytest-benchmark==3.2.3
