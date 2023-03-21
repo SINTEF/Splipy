@@ -1,7 +1,7 @@
-numpy==1.21.6
-scipy==1.7.3
-h5py==3.6.0
+numpy==1.24.2
+scipy==1.10.1
+h5py==3.8.0
 tqdm==4.41.1
 nutils==4.1
-rhino3dm==7.11.1; sys_platform == 'windows' or sys_platform == 'linux' and (python_version == '3.8' or python_version == '3.9')
-opencv-python==4.5.4.58; sys_platform != 'darwin' or python_version != '3.10'
+rhino3dm==7.15.0; (sys_platform == 'windows' and python_version < '3.11') or (sys_platform == 'linux' and python_version < '3.10')
+opencv-python==4.5.4.60; python_version < '3.11'
