@@ -18,9 +18,9 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11']
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -44,9 +44,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Install dependencies
@@ -58,6 +58,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: cp38-* cp39-* cp310-* cp311-*
+          CIBW_SKIP: '*musllinux*'
           CIBW_BEFORE_BUILD: pip install -r requirements.dev.txt
       - uses: actions/upload-artifact@v2
         with:
@@ -69,9 +70,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'create' && startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Install dependencies
@@ -90,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'create' && startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: artifact
           path: dist
