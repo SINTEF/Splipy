@@ -77,7 +77,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip wheel
-          python -m pip install requirements.dev.txt
+          python -m pip install -r requirements.dev.txt
       - name: Build sdist
         run: python setup.py sdist
       - uses: actions/upload-artifact@v2
