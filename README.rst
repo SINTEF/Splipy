@@ -12,7 +12,7 @@ analysis use, and therefore allows fine-grained control over many aspects which
 is not possible to achieve with conventional CAD tools.
 
 Installation
----------
+------------
 The library is packaged on splipy and can be installed through pip by simply running ::
 
     pip install splipy
@@ -27,9 +27,9 @@ Resources
 * `Package installation page <https://pypi.org/project/Splipy>`_ - splipy on PyPi, packaged and ready for installation
 
 
-======
+====================================
 Development and building from source
-======
+====================================
 
 Dependencies
 ------------
@@ -131,9 +131,9 @@ that errors can be fixed quickly. See the `list of builds
 <https://travis-ci.org/sintefmath/Splipy/builds>`_.
 
 
-======
+=========
 Citations
-======
+=========
 
 If you use Splipy in your work, please consider citing
 `K. A. Johannessen and E. Fonn 2020 J. Phys.: Conf. Ser. 1669 012032 <https://iopscience.iop.org/article/10.1088/1742-6596/1669/1/012032/meta>`_.
