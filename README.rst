@@ -11,9 +11,11 @@ use of curves, surfaces and volumes. The library is designed primarily for
 analysis use, and therefore allows fine-grained control over many aspects which
 is not possible to achieve with conventional CAD tools.
 
+
 Installation
----------
-The library is packaged on splipy and can be installed through pip by simply running ::
+------------
+The library is packaged on PyPI and can be installed through pip by simply
+running ::
 
     pip install splipy
 
@@ -27,36 +29,33 @@ Resources
 * `Package installation page <https://pypi.org/project/Splipy>`_ - splipy on PyPi, packaged and ready for installation
 
 
-======
+====================================
 Development and building from source
-======
+====================================
 
-Dependencies
-------------
+Poetry
+------
 
-**Required**
+Splipy uses Poetry as a project management tool. To install poetry, use::
 
-This library requires numpy and scipy. For building, cython is also
-required. E.g. on Ubuntu::
+    pip install poetry
 
-    pip install numpy
-    pip install scipy
-    pip install cython
+Poetry is the only tool that must be installed outside of the virtual
+environment for Splipy. Once installed, run the command::
 
-**Optional**
+    make install
 
-To use image processing tools, you need OpenCV ::
+in the root Splipy directory. This will install Splipy and its dependencies in a
+virtual environment located in the ``.venv`` directory.
 
-    pip install python-opencv
+You should activate this virtual environment whenever you work on Splipy. The
+makefile commands do not require it, but it's a good habit::
 
-To generate the documentation you will need Sphinx::
+    source .venv/bin/activate
 
-    pip install sphinx
+To run the tests::
 
-And to run the tests you can use your favourite test runner, for example
-pytest::
-
-    pip install pytest pytest-benchmark pytest-cov
+    make test
 
 
 Installing
@@ -64,20 +63,24 @@ Installing
 
 To install, use::
 
-    python setup.py build_ext --inplace
-    python setup.py install
+    pip install .
 
-To generate a package, use::
+To generate a package (source distribution or wheel), use::
 
-    python setup.py sdist --dist-dir .
+    make sdist
+    make wheel
+    make build  # both sdist and wheel
+
+Don't upload wheels to PyPI manually. They are built by CI runners whenever a
+new version is tagged (see below).
 
 
 Documentation
 -------------
 
-To generate the documentation, run in the `doc` folder::
+To generate the documentation, run::
 
-    make html
+    make doc
 
 To push generated docs online on the ``gh-pages`` branch, run the helper script::
 
@@ -89,51 +92,39 @@ where ``remote`` is the name of the remote to push to. If not given, it will be 
 Tests
 -----
 
-To run the tests, you can use your favourite test runner. For example, with
-pytest::
+To run the tests, use::
 
-    PYTHONPATH=. py.test --benchmark-skip
+    make test
 
-To get a report of test coverage, run::
+For benchmarks::
 
-    PYTHONPATH=. py.test --benchmark-skip --cov=splipy --cov-report term-missing
-
-Code analysis
--------------
-You can use pylint3 to perform static code analysis on the module.
-This can help identify bugs and give suggestions for improvements.
-
-To install, use::
-
-    pip3 install pylint
-
-To perform the code analysis, use::
-
-    pylint -d C --rcfile=pylint.cfg splipy/
+    make bench
 
 
 Releasing
 ---------
 
-To make a new release, it is recommended to install `bumpversion
-<https://pypi.python.org/pypi/bumpversion>`_. To make a new release, run::
+To make a new release, run the `bump-my-version` command::
 
-    bumpversion <type>
+    bump-my-version --dry-run <part>
 
-where `type` is one of `patch`, `minor` or `major`. This will up the version
-number, create a commit and a tag. To push this to github, use::
+Where `<part>` is the part you want to bump: either `major`, `minor`, `patch`,
+`pre_label` or `pre_number`.
 
-    git push --tags
+You can also specify the new version directly by using::
 
-After that, Travis CI should automatically build and deploy the
-packages to PyPi. It would be helpful to monitor the Travis build so
-that errors can be fixed quickly. See the `list of builds
-<https://travis-ci.org/sintefmath/Splipy/builds>`_.
+    bump-my-version --dry-run --new-version <new_version>
+
+Once you are satisfied with the results, run the command without `--dry-run`.
+We highly recommend to always use a dry run!
+
+After that, CI should automatically build and deploy the packages to PyPi. It
+would be helpful to monitor the actions so that errors can be fixed quickly.
 
 
-======
+=========
 Citations
-======
+=========
 
 If you use Splipy in your work, please consider citing
 `K. A. Johannessen and E. Fonn 2020 J. Phys.: Conf. Ser. 1669 012032 <https://iopscience.iop.org/article/10.1088/1742-6596/1669/1/012032/meta>`_.

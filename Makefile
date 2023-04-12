@@ -28,6 +28,7 @@ test: pytest
 doc:
 	$(MAKE) -C doc html
 
+
 # Build targets (used from CI)
 
 sdist:
