@@ -23,7 +23,17 @@ fmtcheck:
 	poetry run black splipy --check
 	poetry run isort splipy --check
 
-test: mypy pytest lint fmtcheck
+test: pytest
 
 doc:
 	$(MAKE) -C doc html
+
+# Build targets (used from CI)
+
+sdist:
+	poetry build -f sdist
+
+wheel:
+	poetry build -f wheel
+
+build: sdist wheel
