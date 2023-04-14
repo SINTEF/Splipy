@@ -12,7 +12,6 @@ from bisect import bisect_left
 from typing import (
     Sequence, Optional, List, overload, Union, Tuple,
     TypedDict, ClassVar, Protocol, cast, TypeVar, Literal,
-    MutableSequence,
 )
 from typing_extensions import Unpack, Self
 
@@ -1546,7 +1545,7 @@ class SplineObject:
             c1 = b1.continuity(k)
             c2 = b2.continuity(k)
             if c2 > c1:
-                m = cast(int, min(c2-c1, p-1-c1)) # c2=np.inf if knot does not exist
+                m = min(c2-c1, p-1-c1) # c2=np.inf if knot does not exist
                 inserts.extend([k] * m)
         spline2.insert_knot(inserts, direction=i)
 
@@ -1555,6 +1554,6 @@ class SplineObject:
             c1 = b1.continuity(k)
             c2 = b2.continuity(k)
             if c1 > c2:
-                m = cast(int, min(c1-c2, p-1-c2)) # c1=np.inf if knot does not exist
+                m = min(c1-c2, p-1-c2) # c1=np.inf if knot does not exist
                 inserts.extend([k]*m)
         spline1.insert_knot(inserts, direction=i)
