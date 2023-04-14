@@ -37,4 +37,3 @@ def splipy_to_nutils(spline):
     geom  = function.matmat(basis, cp)
     #TODO: add correct behaviour for rational and/or periodic geometries
     return domain, geom
-

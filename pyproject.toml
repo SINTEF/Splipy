@@ -49,6 +49,7 @@ generate-setup-file = true
 python = ">=3.8,<3.12"
 numpy = "^1.21"
 scipy = "^1.9"
+typing-extensions = "^4.5.0"
 
 [tool.poetry.extras]
 FiniteElement = ["nutils"]
@@ -60,7 +61,34 @@ pytest = "^7.3.0"
 pytest-benchmark = "^4.0.0"
 cython = "^0.29.34"
 sphinx = "^6.1.3"
+types-tqdm = "^4.65.0.1"
+mypy = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core", "cython", "numpy", "wheel", "setuptools"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = "cv2.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "h5py.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "nutils.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "rhino3dm.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scipy.*"
+ignore_missing_imports = true
