@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+
 from bisect import bisect_left
 from itertools import chain
+from typing import Optional, Union, Sequence, Tuple, cast
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
+from numpy import floating
 
 from .basis import BSplineBasis
 from .curve import Curve
 from .splineobject import SplineObject, evaluate
 from .utils import is_singleton, ensure_listlike, check_direction, sections
+from .types import Direction, OneOrMore, Float
 
 __all__ = ['Surface']
 
@@ -20,7 +26,14 @@ class Surface(SplineObject):
 
     _intended_pardim = 2
 
-    def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False, **kwargs):
+    def __init__(
+        self,
+        basis1: Optional[BSplineBasis] = None,
+        basis2: Optional[BSplineBasis] = None,
+        controlpoints: Optional[ArrayLike] = None,
+        rational: bool = False,
+        raw: bool = False,
+    ) -> None:
         """  Construct a surface with the given basis and control points.
 
         The default is to create a linear one-element mapping from and to the
@@ -33,10 +46,16 @@ class Surface(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
+        super().__init__([basis1, basis2], controlpoints, rational, raw)
 
-    def normal(self, u, v, above=(True,True), tensor=True):
-        """  Evaluate the normal of the surface at given parametric values.
+    def normal(
+        self,
+        u: OneOrMore[Float],
+        v: OneOrMore[Float],
+        above: Tuple[bool, bool] = (True, True),
+        tensor: bool = True,
+    ) -> NDArray[floating]:
+        """Evaluate the normal of the surface at given parametric values.
 
         This is equal to the cross-product between tangents. The return value
         is normalized.
@@ -61,17 +80,20 @@ class Surface(SplineObject):
         :rtype: numpy.array
         :raises RuntimeError: If the physical dimension is not 2 or 3
         """
-        if not tensor and len(u) != len(v):
+        us = ensure_listlike(u)
+        vs = ensure_listlike(v)
+
+        if not tensor and len(us) != len(vs):
             raise ValueError('Parametes must have same length')
 
         if self.dimension == 2:
-            try:
-                shape = (len(u), len(v), 3) if tensor else (len(u), 3)
+            if len(us) == 1 or len(vs) == 1:
+                return np.array([0, 0, 1])
+            else:
+                shape = (len(us), len(vs), 3) if tensor else (len(us), 3)
                 result = np.zeros(shape)
                 result[..., 2] = 1
                 return result
-            except TypeError:  # single valued input u, fails on len(u)
-                return np.array([0, 0, 1])
         elif self.dimension == 3:
             # fetch the tangent vectors
             (du, dv) = self.tangent(u, v, above=above, tensor=tensor)
@@ -88,11 +110,16 @@ class Surface(SplineObject):
         else:
             raise RuntimeError('Normal evaluation only defined for 2D and 3D geometries')
 
+    def derivative(
+        self,
+        *params: OneOrMore[Float],
+        d: OneOrMore[int] = (1, 1),
+        above: OneOrMore[bool] = True,
+        tensor: bool = True,
+    ) -> NDArray[floating]:
+        """Evaluate the derivative of the surface at the given parametric values.
 
-    def derivative(self, u, v, d=(1,1), above=True, tensor=True):
-        """  Evaluate the derivative of the surface at the given parametric values.
-
-        This function returns an *n* × *m* x *dim* array, where *n* is the number of
+        This function returns an *n* × *m* × *dim* array, where *n* is the number of
         evaluation points in u, *m* is the number of evaluation points in v, and
         *dim* is the physical dimension of the curve.
 
@@ -112,18 +139,22 @@ class Surface(SplineObject):
         :rtype: numpy.array
         """
 
+        u, v = params
+
         squeeze = all(is_singleton(t) for t in [u,v])
         derivs = ensure_listlike(d, self.pardim)
         if not self.rational or np.sum(derivs) < 2 or np.sum(derivs) > 3:
             return super(Surface, self).derivative(u,v, d=derivs, above=above, tensor=tensor)
 
-        u = ensure_listlike(u)
-        v = ensure_listlike(v)
-        result = np.zeros((len(u), len(v), self.dimension))
+        us = ensure_listlike(u)
+        vs = ensure_listlike(v)
+        above_u, above_v = ensure_listlike(above, dups=2)
+
+        result = np.zeros((len(us), len(vs), self.dimension))
         # dNus = [self.bases[0].evaluate(u, d, above) for d in range(derivs[0]+1)]
         # dNvs = [self.bases[1].evaluate(v, d, above) for d in range(derivs[1]+1)]
-        dNus = [self.bases[0].evaluate(u, d, above) for d in range(np.sum(derivs)+1)]
-        dNvs = [self.bases[1].evaluate(v, d, above) for d in range(np.sum(derivs)+1)]
+        dNus = [self.bases[0].evaluate(us, d, above_u) for d in range(np.sum(derivs)+1)]
+        dNvs = [self.bases[1].evaluate(vs, d, above_v) for d in range(np.sum(derivs)+1)]
 
         d0ud0v = evaluate([dNus[0], dNvs[0]], self.controlpoints, tensor)
         d1ud0v = evaluate([dNus[1], dNvs[0]], self.controlpoints, tensor)
@@ -190,12 +221,13 @@ class Surface(SplineObject):
 
         return result
 
+    def area(self) -> float:
+        """Computes the area of the surface in geometric space."""
 
-    def area(self):
-        """ Computes the area of the surface in geometric space """
         # fetch integration points
         (x1,w1) = np.polynomial.legendre.leggauss(self.order(0)+1)
         (x2,w2) = np.polynomial.legendre.leggauss(self.order(1)+1)
+
         # map points to parametric coordinates (and update the weights)
         (knots1,knots2) = self.knots()
         u  = np.array([ (x1+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots1[:-1], knots1[1:]) ])
@@ -220,15 +252,15 @@ class Surface(SplineObject):
             J = np.abs(J)
         return w1.dot(J).dot(w2)
 
-    def edges(self):
+    def edges(self) -> Tuple[Curve, ...]:
         """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
 
         :return: Edge curves
         :rtype: (Curve)
         """
-        return tuple(self.section(*args) for args in sections(2, 1))
+        return tuple(cast(Curve, self.section(*args)) for args in sections(2, 1))
 
-    def const_par_curve(self, knot, direction):
+    def const_par_curve(self, knot: float, direction: Direction) -> Curve:
         """  Get a Curve representation of the parametric line of some constant
         knot value.
         :param float knot: The constant knot value to sample the surface
@@ -236,14 +268,14 @@ class Surface(SplineObject):
         :return: curve on this surface
         :rtype: Curve
         """
-        direction = check_direction(direction, 2)
+        index = check_direction(direction, 2)
 
         # clone basis since we need to augment this by knot insertion
-        b    = self.bases[direction].clone()
+        b    = self.bases[index].clone()
 
         # compute mapping matrix C which is the knotinsertion operator
         mult = min(b.continuity(knot), b.order-1)
-        C    = np.identity(self.shape[direction])
+        C    = np.identity(self.shape[index])
         for i in range(mult):
             C = b.insert_knot(knot) @ C
 
@@ -251,11 +283,15 @@ class Surface(SplineObject):
         i  = max(bisect_left(b.knots, knot) - 1,0)
 
         # compute the controlpoints and return Curve
-        cp = np.tensordot(C[i,:], self.controlpoints, axes=(0, direction))
-        return Curve(self.bases[1-direction], cp, self.rational)
+        cp = np.tensordot(C[i,:], self.controlpoints, axes=(0, index))
+        return Curve(self.bases[1-index], cp, self.rational)
 
-    def rebuild(self, p, n):
-        """  Creates an approximation to this surface by resampling it using
+    def rebuild(
+        self,
+        p: Union[int, Sequence[int]],
+        n: Union[int, Sequence[int]],
+    ) -> Surface:
+        """Creates an approximation to this surface by resampling it using
         uniform knot vectors of order *p* with *n* control points.
 
         :param (int) p: Tuple of polynomial discretization order in each direction
@@ -263,8 +299,8 @@ class Surface(SplineObject):
         :return: A new approximate surface
         :rtype: Surface
         """
-        p = ensure_listlike(p, dups=2)
-        n = ensure_listlike(n, dups=2)
+        ps = ensure_listlike(p, dups=2)
+        ns = ensure_listlike(n, dups=2)
 
         old_basis = self.bases
         basis = []
@@ -272,8 +308,8 @@ class Surface(SplineObject):
         N = []
         # establish uniform open knot vectors
         for i in range(2):
-            knot = [0] * p[i] + list(range(1, n[i] - p[i] + 1)) + [n[i] - p[i] + 1] * p[i]
-            basis.append(BSplineBasis(p[i], knot))
+            knot = [0] * ps[i] + list(range(1, ns[i] - ps[i] + 1)) + [ns[i] - ps[i] + 1] * ps[i]
+            basis.append(BSplineBasis(ps[i], knot))
 
             # make these span the same parametric domain as the old ones
             basis[i].normalize()
@@ -295,12 +331,12 @@ class Surface(SplineObject):
 
         # re-order controlpoints so they match up with Surface constructor
         cp = cp.transpose((1, 0, 2))
-        cp = cp.reshape(n[0] * n[1], cp.shape[2])
+        cp = cp.reshape(ns[0] * ns[1], cp.shape[2])
 
         # return new resampled curve
         return Surface(basis[0], basis[1], cp)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         result = str(self.bases[0]) + '\n' + str(self.bases[1]) + '\n'
         # print legacy controlpoint enumeration
         n1, n2, n3 = self.controlpoints.shape
