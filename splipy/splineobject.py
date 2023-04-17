@@ -6,6 +6,7 @@ from operator import attrgetter, methodcaller
 from itertools import chain, product
 from bisect import bisect_left
 
+from . import state
 from .basis import BSplineBasis
 from .utils import (
     reshape, rotation_matrix, is_singleton, ensure_listlike,
@@ -90,9 +91,8 @@ class SplineObject(object):
         :raises ValueError: If the parameters are outside the domain
         """
         for b, p in zip(self.bases, params):
-            b.snap(p)
             if b.periodic < 0:
-                if min(p) < b.start() or b.end() < max(p):
+                if min(p) < b.start() - state.knot_tolerance or b.end() + state.knot_tolerance < max(p):
                     raise ValueError('Evaluation outside parametric domain')
 
     def evaluate(self, *params, **kwargs):
