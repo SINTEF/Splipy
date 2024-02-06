@@ -14,7 +14,7 @@ setup(
     long_description_content_type='text/markdown',
     long_description=long_description,
     keywords=['Bspline', 'Splines', 'NURBS', 'Curve', 'Surface', 'Volume', 'Interpolation', 'Approximation', 'Fit', 'Integration', 'Differentiation'],
-    url='https://github.com/sintefmath/Splipy',
+    url='https://github.com/sintef/Splipy',
     maintainer='Kjetil Andre Johannessen',
     maintainer_email='kjetijo@gmail.com',
     license='GNU public license v3',
@@ -41,7 +41,7 @@ setup(
     ]),
     # include_dirs=[np.get_include()],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Topic :: Multimedia :: Graphics :: 3D Modeling',
         'Topic :: Scientific/Engineering :: Mathematics',
         'Intended Audience :: Science/Research',
