@@ -2,7 +2,7 @@
 requires = ["setuptools", "cython", "numpy"]
 
 [tool.bumpversion]
-current_version = "1.7.4"
+current_version = "1.8.0"
 allow_dirty = false
 commit = false
 tag = false
