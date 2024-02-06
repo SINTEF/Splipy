@@ -37,3 +37,6 @@ first_value = "1"
 
 [[tool.bumpversion.files]]
 filename = "splipy/__init__.py"
+
+[[tool.bumpversion.files]]
+filename = "setup.py"
