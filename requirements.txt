@@ -1,6 +1,6 @@
-numpy==1.24.2
-scipy==1.10.1
-h5py==3.8.0
+numpy==1.26.4
+scipy==1.12.0
+h5py==3.10.0
 tqdm==4.41.1
 nutils==4.1
 rhino3dm==7.15.0; (sys_platform == 'windows' and python_version < '3.11') or (sys_platform == 'linux' and python_version < '3.10')
