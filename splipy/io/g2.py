@@ -1,4 +1,7 @@
 from itertools import chain, product
+from typing import TextIO, Union, Sequence, Optional, Type, cast
+from typing_extensions import Self
+from types import TracebackType
 
 import numpy as np
 from numpy import sqrt, pi, savetxt
@@ -17,13 +20,15 @@ from .master import MasterIO
 
 class G2(MasterIO):
 
-    def read_next_non_whitespace(self):
+    fstream: TextIO
+
+    def read_next_non_whitespace(self) -> str:
         line = next(self.fstream).strip()
         while not line:
             line = next(self.fstream).strip()
         return line
 
-    def circle(self):
+    def circle(self) -> SplineObject:
         dim   = int(     self.read_next_non_whitespace().strip())
         r     = float(   next(self.fstream).strip())
         center= np.array(next(self.fstream).split(), dtype=float)
@@ -38,7 +43,7 @@ class G2(MasterIO):
             result.reverse()
         return result
 
-    def ellipse(self):
+    def ellipse(self) -> SplineObject:
         dim   = int(     self.read_next_non_whitespace().strip())
         r1    = float(   next(self.fstream).strip())
         r2    = float(   next(self.fstream).strip())
@@ -54,7 +59,7 @@ class G2(MasterIO):
             result.reverse()
         return result
 
-    def line(self):
+    def line(self) -> SplineObject:
         dim      = int(     self.read_next_non_whitespace().strip())
         start    = np.array(next(self.fstream).split(), dtype=float)
         direction= np.array(next(self.fstream).split(), dtype=float)
@@ -65,13 +70,12 @@ class G2(MasterIO):
         s = np.array(start)
         # d /= np.linalg.norm(d)
         if not finite:
-            param = [-state.unlimited, +state.unlimited]
+            param = np.array([-state.unlimited, +state.unlimited], dtype=float)
 
         result = curve_factory.line(s+d*param[0], s+d*param[1])
         if reverse:
             result.reverse()
         return result
-
 
 #   def cone(self):
 #       dim      = int(     self.read_next_non_whitespace().strip())
@@ -85,8 +89,7 @@ class G2(MasterIO):
 #       if finite:
 #           param_v=np.array(next(self.fstream).split(' '), dtype=float)
 
-
-    def cylinder(self):
+    def cylinder(self) -> SplineObject:
         dim      = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(), dtype=float)
@@ -97,7 +100,7 @@ class G2(MasterIO):
         if finite:
             param_v=np.array(next(self.fstream).split(), dtype=float)
         else:
-            param_v=[-state.unlimited, state.unlimited]
+            param_v=np.array([-state.unlimited, state.unlimited], dtype=float)
         swap     =          next(self.fstream).strip() != '0'
 
         center = center + z_axis*param_v[0]
@@ -108,7 +111,7 @@ class G2(MasterIO):
             result.swap()
         return result
 
-    def disc(self):
+    def disc(self) -> SplineObject:
         dim      = int(     self.read_next_non_whitespace().strip())
         center   = np.array(next(self.fstream).split(), dtype=float)
         r        = float(   next(self.fstream).strip())
@@ -131,7 +134,7 @@ class G2(MasterIO):
             result.swap()
         return result
 
-    def plane(self):
+    def plane(self) -> SplineObject:
         dim        = int(     self.read_next_non_whitespace().strip())
         center     = np.array(next(self.fstream).split(), dtype=float)
         normal     = np.array(next(self.fstream).split(), dtype=float)
@@ -141,19 +144,19 @@ class G2(MasterIO):
             param_u= np.array(next(self.fstream).split(), dtype=float)
             param_v= np.array(next(self.fstream).split(), dtype=float)
         else:
-            param_u= [-state.unlimited, +state.unlimited]
-            param_v= [-state.unlimited, +state.unlimited]
+            param_u= np.array([-state.unlimited, +state.unlimited], dtype=float)
+            param_v= np.array([-state.unlimited, +state.unlimited], dtype=float)
         swap       =          next(self.fstream).strip() != '0'
 
         result = Surface() * [param_u[1]-param_u[0], param_v[1]-param_v[0]] + [param_u[0],param_v[0]]
         result.rotate(rotate_local_x_axis(x_axis, normal))
         result = flip_and_move_plane_geometry(result,center,normal)
-        result.reparam(param_u, param_v)
+        result.reparam(tuple(param_u), tuple(param_v))
         if(swap):
             result.swap()
         return result
 
-    def torus(self):
+    def torus(self) -> SplineObject:
         dim      = int(     self.read_next_non_whitespace().strip())
         r2       = float(   next(self.fstream).strip())
         r1       = float(   next(self.fstream).strip())
@@ -171,7 +174,7 @@ class G2(MasterIO):
             result.swap()
         return result
 
-    def sphere(self):
+    def sphere(self) -> SplineObject:
         dim      = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(), dtype=float)
@@ -187,11 +190,11 @@ class G2(MasterIO):
         result.reparam(param_u, param_v)
         return result
 
-    def splines(self, pardim):
+    def splines(self, pardim: int) -> SplineObject:
         cls    = G2.classes[pardim-1]
 
-        _, rational = self.read_next_non_whitespace().strip().split()
-        rational = bool(int(rational))
+        _, _rational = self.read_next_non_whitespace().strip().split()
+        rational = bool(int(_rational))
 
         bases = [self.read_basis() for _ in range(pardim)]
         ncps = 1
@@ -204,7 +207,7 @@ class G2(MasterIO):
         args = bases + [cps, rational]
         return cls(*args)
 
-    def surface_of_linear_extrusion(self):
+    def surface_of_linear_extrusion(self) -> SplineObject:
         dim      = int(      self.read_next_non_whitespace().strip())
         crv      = self.splines(1)
         normal   = np.array(self.read_next_non_whitespace().split(), dtype=float)
@@ -213,7 +216,7 @@ class G2(MasterIO):
         if finite:
             param_v=np.array(next(self.fstream).split(), dtype=float)
         else:
-            param_v=[-state.unlimited, +state.unlimited]
+            param_v=np.array([-state.unlimited, +state.unlimited], dtype=float)
         swap     =          next(self.fstream).strip() != '0'
 
         result = surface_factory.extrude(crv + normal*param_v[0], normal*(param_v[1]-param_v[0]))
@@ -223,8 +226,7 @@ class G2(MasterIO):
             result.swap()
         return result
 
-
-    def bounded_surface(self):
+    def bounded_surface(self) -> TrimmedSurface:
         objtype = int( next(self.fstream).strip() )
 
         # create the underlying surface which all trimming curves are to be applied
@@ -269,20 +271,32 @@ class G2(MasterIO):
 
     g2_type = [100, 200, 700] # curve, surface, volume identifiers
     classes = [Curve, Surface, Volume]
-    g2_generators = {120:line, 130:circle, 140:ellipse,
-                     260:cylinder, 292:disc, 270:sphere, 290:torus, 250:plane,
-                     210:bounded_surface, 261:surface_of_linear_extrusion} #, 280:cone
+    g2_generators = {
+        120: line,
+        130: circle,
+        140: ellipse,
+        260: cylinder,
+        292: disc,
+        270: sphere,
+        290: torus,
+        250: plane,
+        210: bounded_surface,
+        261: surface_of_linear_extrusion,
+        # 280: cone,
+    }
 
-    def __init__(self, filename):
+    trimming_curves: list[SplineObject]
+
+    def __init__(self, filename: str) -> None:
         if filename[-3:] != '.g2':
             filename += '.g2'
         self.filename = filename
         self.trimming_curves = []
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def write(self, obj):
+    def write(self, obj: Union[SplineObject, Sequence[SplineObject]]) -> None:
         if not hasattr(self, 'fstream'):
             self.onlywrite = True
             self.fstream   = open(self.filename, 'w')
@@ -290,14 +304,17 @@ class G2(MasterIO):
             raise IOError('Could not write to file %s' % (self.filename))
 
         """Write the object in GoTools format. """
-        if isinstance(obj[0], SplineObject): # input SplineModel or list
+        if not isinstance(obj, SplineObject): # input SplineModel or list
             for o in obj:
                 self.write(o)
             return
 
+        assert isinstance(obj, SplineObject)
+
         for i in range(obj.pardim):
             if obj.periodic(i):
                 obj = obj.split(obj.start(i), i)
+                assert isinstance(obj, SplineObject)
 
         self.fstream.write('{} 1 0 0\n'.format(G2.g2_type[obj.pardim-1]))
         self.fstream.write('{} {}\n'.format(obj.dimension, int(obj.rational)))
@@ -309,7 +326,7 @@ class G2(MasterIO):
         savetxt(self.fstream, obj.controlpoints.reshape(-1, obj.dimension + obj.rational, order='F'),
                 fmt='%.16g', delimiter=' ', newline='\n')
 
-    def read(self):
+    def read(self) -> list[SplineObject]:
         if not hasattr(self, 'fstream'):
             self.onlywrite = False
             self.fstream   = open(self.filename, 'r')
@@ -339,16 +356,20 @@ class G2(MasterIO):
             pardim = [i for i in range(len(G2.g2_type)) if G2.g2_type[i] == objtype]
             if not pardim:
                 raise IOError('Unknown G2 object type {}'.format(objtype))
-            pardim = pardim[0] + 1
-            result.append(self.splines(pardim))
+            result.append(self.splines(pardim[0] + 1))
 
         return result
 
-    def read_basis(self):
+    def read_basis(self) -> BSplineBasis:
         ncps, order = map(int, next(self.fstream).split())
         kts = list(map(float, next(self.fstream).split()))
         return BSplineBasis(order, kts, -1)
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         if hasattr(self, 'fstream'):
             self.fstream.close()

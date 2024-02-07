@@ -909,7 +909,13 @@ class SplineObject:
 
         return self
 
-    def scale(self, *args: float) -> Self:
+    @overload
+    def scale(self, *args: float) -> Self: ...
+
+    @overload
+    def scale(self, arg: Sequence[float], /) -> Self: ...
+
+    def scale(self, *args) -> Self:  # type: ignore[no-untyped-def]
         """Scale, or magnify the object by a given amount.
 
         In case of one input argument, the scaling is uniform.
@@ -928,7 +934,7 @@ class SplineObject:
         dim = self.dimension
         rat = self.rational
         n = len(self)  # number of control points
-        s = ensure_flatlist(args)
+        s: Sequence[float] = ensure_flatlist(args)
         s = ensure_listlike(s, dups=3)
 
         # set up the scaling matrix
@@ -1427,7 +1433,13 @@ class SplineObject:
         self.translate(-np.array(x))  # can't do -x if x is a list, so we rewrap it here
         return self
 
-    def __imul__(self, x: float) -> Self:
+    @overload
+    def __imul__(self, x: float, /) -> Self: ...
+
+    @overload
+    def __imul__(self, x: Sequence[float], /) -> Self: ...
+
+    def __imul__(self, x):  # type: ignore[no-untyped-def, misc]
         self.scale(x)
         return self
 
@@ -1451,12 +1463,24 @@ class SplineObject:
         new_obj -= x
         return new_obj
 
-    def __mul__(self, x: float) -> Self:
+    @overload
+    def __mul__(self, x: float, /) -> Self: ...
+
+    @overload
+    def __mul__(self, x: Sequence[float], /) -> Self: ...
+
+    def __mul__(self, x):  # type: ignore[no-untyped-def, misc]
         new_obj = copy.deepcopy(self)
         new_obj *= x
         return new_obj
 
-    def __rmul__(self, x: float) -> Self:
+    @overload
+    def __rmul__(self, x: float, /) -> Self: ...
+
+    @overload
+    def __rmul__(self, x: Sequence[float], /) -> Self: ...
+
+    def __rmul__(self, x):  # type: ignore[no-untyped-def]
         return self * x
 
     def __truediv__(self, x: float) -> Self:
