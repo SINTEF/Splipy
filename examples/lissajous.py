@@ -12,7 +12,7 @@
 from sys import path
 path.append('../')
 from splipy import curve_factory
-from fractions import gcd
+from math import gcd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
