@@ -4,12 +4,12 @@ from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product, permutations, islice
 from operator import itemgetter
 from typing import Callable, Dict, List, Tuple, Any, Optional
+import bisect
 
 import numpy as np
 
 from .splineobject import SplineObject
 from .utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
-from .utils import bisect
 from . import state
 
 try:
