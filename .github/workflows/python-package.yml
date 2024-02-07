@@ -26,15 +26,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip wheel
-          pip install -r requirements.txt
-          pip install -r requirements.dev.txt
+          python -m pip install --upgrade pip wheel poetry
+          make install
       - name: Install package
         run: |
-          pip install -vvv .
+          poetry run pip install .
       - name: Test with pytest
         run: |
-          pytest --benchmark-skip
+          make test
 
   build_wheels:
     name: Build wheels
@@ -52,15 +51,14 @@ jobs:
           python-version: '3.9'
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip wheel
-          pip install cibuildwheel
+          python -m pip install --upgrade pip wheel poetry cibuildwheel
       - name: Build wheels
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: cp39-* cp310-* cp311-* cp312-*
-          CIBW_SKIP: '*musllinux*'
-          CIBW_BEFORE_BUILD: pip install -r requirements.dev.txt
+          CIBW_SKIP: '*musllinux* *i686*'
+          # CIBW_BEFORE_BUILD: pip install -r requirements.dev.txt
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
@@ -78,13 +76,12 @@ jobs:
           python-version: '3.9'
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip wheel
-          python -m pip install -r requirements.dev.txt
+          python -m pip install --upgrade pip wheel poetry
       - name: Build sdist
-        run: python setup.py sdist
+        run: make sdist
       - uses: actions/upload-artifact@v3
         with:
-          path: dist/*.tar.gz
+          path: ./dist/*.tar.gz
 
   deploy:
     name: Deploy
