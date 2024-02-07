@@ -43,7 +43,6 @@ surf = surfaces.revolve(half_curve, axis=[0,1,0])
 u = np.linspace(surf.start(0), surf.end(0), 71)
 v = np.linspace(surf.start(1), surf.end(1), 71)
 x = surf(u,v)
-ax = plt.figure().gca(projection='3d')
+ax = plt.axes(projection='3d')
 ax.plot_wireframe(x[:,:,0], x[:,:,1], x[:,:,2])
 plt.show()
-
