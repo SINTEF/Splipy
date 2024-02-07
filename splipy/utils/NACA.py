@@ -9,7 +9,7 @@ from .. import surface_factory
 __all__ = ['camber', 'NACA']
 
 
-def camber(M, P, order=5):
+def camber(M: int, P: int, order: int = 5) -> Curve:
     """ Create the NACA centerline used for wing profiles. This is given as
     an exact quadratic piecewise polynomial y(x),
     see http://airfoiltools.com/airfoil/naca4digit. The method will produce
@@ -24,35 +24,35 @@ def camber(M, P, order=5):
     :rtype  : Curve
     """
     # parametrized by x=t or x="t^2" if order>4
-    M = M / 100.0
-    P = P / 10.0
+    Mf = M / 100.0
+    Pf = P / 10.0
     basis = BSplineBasis(order)
     # basis.insert_knot([P]*(order-2)) # insert a C1-knot
     for i in range(order - 2):
-        basis.insert_knot(P)
+        basis.insert_knot(Pf)
 
     t = basis.greville()
     n = len(t)
     x = np.zeros((n, 2))
     for i in range(n):
-        if t[i] <= P:
+        if t[i] <= Pf:
             if order > 4:
-                x[i, 0] = t[i]**2 / P
+                x[i, 0] = t[i]**2 / Pf
             else:
                 x[i, 0] = t[i]
-            x[i, 1] = M / P / P * (2 * P * x[i, 0] - x[i, 0] * x[i, 0])
+            x[i, 1] = Mf / Pf / Pf * (2 * Pf * x[i, 0] - x[i, 0] * x[i, 0])
         else:
             if order > 4:
-                x[i, 0] = (t[i]**2 - 2 * t[i] + P) / (P - 1)
+                x[i, 0] = (t[i]**2 - 2 * t[i] + Pf) / (Pf - 1)
             else:
                 x[i, 0] = t[i]
-            x[i, 1] = M / (1 - P) / (1 - P) * (1 - 2 * P + 2 * P * x[i, 0] - x[i, 0] * x[i, 0])
+            x[i, 1] = Mf / (1 - Pf) / (1 - Pf) * (1 - 2 * Pf + 2 * Pf * x[i, 0] - x[i, 0] * x[i, 0])
     N = basis.evaluate(t)
     controlpoints = np.linalg.solve(N, x)
     return Curve(basis, controlpoints)
 
 
-def NACA(M, P, X, n=40, order=5, closed=False):
+def NACA(M: int, P: int, X: int, n: int = 40, order: int = 5, closed: bool = False) -> Curve:
     """ Create the NACA 4 digit airfoil. This is generated as an approximation
     through the use of SurfaceFactory.thicken functions.
     :param M: Max camber height (y) given as percentage 0% to 9% of length
@@ -79,7 +79,7 @@ def NACA(M, P, X, n=40, order=5, closed=False):
     center_line.insert_knot(new_knots)
     T = X / 100.0
 
-    def thickness(x):
+    def thickness(x: float) -> float:
         a0 = 0.2969
         a1 = -0.126
         a2 = -0.3516
