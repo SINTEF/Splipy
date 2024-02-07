@@ -5,9 +5,6 @@
 # Date:      June 2017
 #
 
-from sys import path
-path.append('../')
-
 from splipy import curve_factory, surface_factory
 from splipy.io import STL
 from numpy import pi, cos, sin
@@ -35,4 +32,3 @@ srf = surface_factory.sweep(path, shape)
 ### write results to file. Use meshlab (www.meshlab.net) to view stl-files
 with STL('trefoil.stl') as f:
     f.write(srf, n=(150,30))
-

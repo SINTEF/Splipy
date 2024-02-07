@@ -6,8 +6,7 @@
 # Date:      March 2016
 #
 
-from sys import path
-path.append('../')
+from sys import argv
 from splipy import *
 import splipy.curve_factory as curves
 import splipy.surface_factory as surfaces
@@ -15,6 +14,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import pi, cos, sin
+
+
+INTERACTIVE = "--ci" not in argv[1:]
+
 
 # create the three sides of the triangle, each consisting of a circle segment
 c1 = curves.circle_segment(pi/3)
@@ -30,7 +33,11 @@ t = np.linspace(c.start(0), c.end(0), 151) # 151 parametric evaluation points
 x = c(t)                                   # evaluate (x,y)-coordinates
 plt.plot(x[:,0], x[:,1])
 plt.axis('equal')
-plt.show()
+
+if INTERACTIVE:
+    plt.show()
+else:
+    plt.savefig('reuleaux-1.png')
 
 # split the triangle in two, and align this with the y-axis
 two_parts = c.split((c.start(0) + c.end(0)) / 2.0)
@@ -45,4 +52,8 @@ v = np.linspace(surf.start(1), surf.end(1), 71)
 x = surf(u,v)
 ax = plt.axes(projection='3d')
 ax.plot_wireframe(x[:,:,0], x[:,:,1], x[:,:,2])
-plt.show()
+
+if INTERACTIVE:
+    plt.show()
+else:
+    plt.savefig('reuleaux-2.png')

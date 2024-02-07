@@ -5,13 +5,16 @@
 # Institute: Norwegian University of Science and Technology (NTNU)
 # Date:      March 2016
 #
-from sys import path
-path.append('../')
+from sys import argv
 from splipy import *
 import splipy.curve_factory as curves
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+
+
+INTERACTIVE = "--ci" not in argv[1:]
+
 
 n = 250                                  # number of evaluation points
 c = curves.circle()                      # create the NURBS circle
@@ -37,7 +40,9 @@ def animate(i):
     
 # create and show the animation
 ani = animation.FuncAnimation(fig, animate, np.arange(1,n), interval=24)
-plt.show()
 
-# save results as an animated gif for web display (PS: this function call is slow)
-# ani.save('circle.gif', writer='imagemagick', fps=30);
+if INTERACTIVE:
+    plt.show()
+else:
+    # save results as an animated gif for web display (PS: this function call is slow)
+    ani.save('circle.gif', writer='imagemagick', fps=30);
