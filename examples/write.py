@@ -5,8 +5,6 @@
 # Date:      March 2016
 #
 
-from sys import path
-path.append('../')
 from splipy.io import G2, STL
 import splipy.surface_factory as surfaces
 

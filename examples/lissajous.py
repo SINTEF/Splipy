@@ -9,8 +9,7 @@
 #
 
 
-from sys import path
-path.append('../')
+from sys import argv
 from splipy import curve_factory
 from math import gcd
 import numpy as np
@@ -18,22 +17,26 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from math import pi
 
+
+INTERACTIVE = "--ci" not in argv[1:]
+
+
 def lissajous(a, b, d):
-  # request a,b integers, so we have closed, periodic curves
-  n = gcd(a,b)
-  N = (a/n) * (b/n) # number of periods before looping
+    # request a,b integers, so we have closed, periodic curves
+    n = gcd(a,b)
+    N = (a/n) * (b/n) # number of periods before looping
 
-  # error test input
-  if N > 1e4:       # non-integer (a,b) or otherwise too irregular
-    raise Exception('Non-periodic', 'a,b must be integers (of moderate size)')
+    # error test input
+    if N > 1e4:       # non-integer (a,b) or otherwise too irregular
+      raise Exception('Non-periodic', 'a,b must be integers (of moderate size)')
 
-  # compute a set of interpolation points
-  numb_pts = max(3*N, 100) # using 3N interpolation points is decent enough
-  t = np.linspace(0,2*pi/n, numb_pts)
-  x = np.array([np.sin(a*t + d), np.sin(b*t)])
+    # compute a set of interpolation points
+    numb_pts = max(3*N, 100) # using 3N interpolation points is decent enough
+    t = np.linspace(0,2*pi/n, numb_pts)
+    x = np.array([np.sin(a*t + d), np.sin(b*t)])
 
-  # do a cubic curve interpolation with periodic boundary conditions
-  return curve_factory.cubic_curve(x.T, curve_factory.Boundary.PERIODIC)
+    # do a cubic curve interpolation with periodic boundary conditions
+    return curve_factory.cubic_curve(x.T, curve_factory.Boundary.PERIODIC)
 
 
 ### main program ###
@@ -73,7 +76,9 @@ def animate(i):
 
 # create and show the animation
 ani = animation.FuncAnimation(fig, animate, np.arange(0,int(2*n/fps)), interval=10)
-plt.show()
 
-# save results as an animated gif for web display (PS: this function call is slow)
-# ani.save('lissajous34.gif', writer='imagemagick', fps=30);
+if INTERACTIVE:
+    plt.show()
+else:
+    # save results as an animated gif for web display (PS: this function call is slow)
+    ani.save('lissajous34.gif', writer='imagemagick', fps=30);

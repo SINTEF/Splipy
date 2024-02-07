@@ -5,18 +5,19 @@
 # Date:      October 2017
 #
 
-from sys import path
-path.append('../')
+from pathlib import Path
 from splipy.io import *
 
 # G2 files are native GoTools (http://www.sintef.no/projectweb/geometry-toolkits/gotools/)
 
+path = str(Path(__file__).parent)
+
 # Read a single NURBS patch from the file 'sphere.g2'
-with G2('sphere.g2') as my_file:
+with G2(f'{path}/sphere.g2') as my_file:
     my_sphere = my_file.read()
 
 # Read multiple NURBS patches from the file 'teapot.g2'
-with G2('teapot.g2') as my_file:
+with G2(f'{path}/teapot.g2') as my_file:
     my_teapot = my_file.read()
 
 print(type(my_teapot)) # <class 'list'>

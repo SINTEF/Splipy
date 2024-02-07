@@ -5,11 +5,6 @@
 # Date:      February 2021
 #
 
-# This is simply to allow the example to run from the example 
-# folder without the need for splipy to be installed globally on the system
-from sys import path
-path.append('../')
-
 # Slightly more interesting input geometries. Read more on NACA wing 
 # profiles here: https://en.wikipedia.org/wiki/NACA_airfoil
 from splipy.utils.NACA import NACA
