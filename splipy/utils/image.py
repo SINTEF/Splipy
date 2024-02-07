@@ -5,14 +5,17 @@ __doc__ = 'Implementation of image based mesh generation.'
 from math import sqrt
 import sys
 import warnings
+from typing import Tuple, Sequence
 
 import numpy as np
+from numpy import floating
+from numpy.typing import NDArray
 
 from ..basis import BSplineBasis
-from .. import curve_factory, surface_factory
+from .. import curve_factory, surface_factory, SplineObject, Curve, Surface
 
 
-def get_corners(X, L=50, R=30, D=15):
+def get_corners(X: NDArray[floating], L: float = 50, R: float = 30, D: float = 15) -> NDArray[floating]:
     """Detects corners of traced outlines using the SAM04 algorithm.
 
     The outline is assumed to constitute a discrete closed curve where each
@@ -34,10 +37,10 @@ def get_corners(X, L=50, R=30, D=15):
     d = np.zeros(n)
     for i in range(1,n+1):
         if i+L <= n:
-            k = i+L
+            k = int(i+L)
             index = np.array(range(i+1,k))
         else:
-            k = i+L-n
+            k = int(i+L-n)
             index = np.array(list(range(i+1,n+1)) + list(range(1,k)))
 
         M = X[k-1,:]-X[i-1,:]
@@ -53,14 +56,13 @@ def get_corners(X, L=50, R=30, D=15):
         if Y > d[index[I]-1]:
             d[index[I]-1] = Y
 
-    I = np.where(d > 0)[0]
+    # I = np.where(d > 0)[0]
     # Rejects candidates which do not meet the lower metric bound D.
     index  = d <  D
     index2 = d >= D
     d[index] = 0
     C = np.array(range(n))
     C = C[index2]
-
 
     # Rejects corners that are too close to a corner with larger metric.
     l = len(C)
@@ -100,7 +102,7 @@ def get_corners(X, L=50, R=30, D=15):
     return C
 
 
-def image_curves(filename):
+def image_curves(filename: str) -> list[Curve]:
     """Generate B-spline curves corresponding to the edges in a black/white
     mask image.
 
@@ -141,7 +143,7 @@ def image_curves(filename):
             corners = get_corners(pts)            # recompute corners, since previous sem might be smooth
 
         n = len(pts)
-        parpt = list(range(n))
+        parpt: list[float] = list(range(n))
         for i in range(n):
             parpt[i] = float(parpt[i]) / (n-1)
 
@@ -155,7 +157,7 @@ def image_curves(filename):
         # - up to a max of 100(ish) control points for large models
 
         # start off with a uniform(ish) knot vector
-        knot = []
+        knot: list[float] = []
         nStart = min(n//10, 90)
         for i in range(nStart+1):
             knot.append(int(1.0*i*(n-1)/nStart))
@@ -192,7 +194,7 @@ def image_curves(filename):
 
     return result
 
-def image_height(filename, N=[30,30], p=[4,4]):
+def image_height(filename: str, N: Tuple[int, int] = (30, 30), p: Tuple[int, int] = (4,4)) -> Surface:
     """Generate a B-spline surface approximation given by the heightmap in a
     grayscale image.
 
@@ -217,10 +219,10 @@ def image_height(filename, N=[30,30], p=[4,4]):
     cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
 
     # guess uniform evaluation points and knot vectors
-    u = list(range(width))
-    v = list(range(height))
-    knot1 = [0]*(p[0]-1) + list(range(N[0]-p[0]+2)) + [N[0]-p[0]+1]*(p[0]-1)
-    knot2 = [0]*(p[1]-1) + list(range(N[1]-p[1]+2)) + [N[1]-p[1]+1]*(p[1]-1)
+    u: list[float] = list(range(width))
+    v: list[float] = list(range(height))
+    knot1: Sequence[float] = [0]*(p[0]-1) + list(range(N[0]-p[0]+2)) + [N[0]-p[0]+1]*(p[0]-1)
+    knot2: Sequence[float] = [0]*(p[1]-1) + list(range(N[1]-p[1]+2)) + [N[1]-p[1]+1]*(p[1]-1)
 
     # normalize all values to be in range [0, 1]
     u     = [float(i)/u[-1]     for i in u]
@@ -229,17 +231,16 @@ def image_height(filename, N=[30,30], p=[4,4]):
     knot2 = [float(i)/knot2[-1] for i in knot2]
 
     # flip and reverse image so coordinate (0,0) is at lower-left corner
-    imGrey = imGrey.T  / 255.0
-    imGrey = np.flip(imGrey, axis=1)
+    imGrey_f = np.flip(imGrey.T  / 255.0, axis=1)
     x,y    = np.meshgrid(u,v, indexing='ij')
-    pts   = np.stack([x,y,imGrey], axis=2)
+    pts   = np.stack([x,y,imGrey_f], axis=2)
 
     basis1 = BSplineBasis(p[0], knot1)
     basis2 = BSplineBasis(p[1], knot2)
 
     return surface_factory.least_square_fit(pts,[basis1, basis2], [u,v])
 
-def image_convex_surface(filename):
+def image_convex_surface(filename: str) -> SplineObject:
     """Generate a single B-spline surface corresponding to convex black domain
     of a black/white mask image. The algorithm traces the boundary and searches
     for 4 natural corner points. It will then generate 4 boundary curves which
@@ -250,16 +251,18 @@ def image_convex_surface(filename):
     :rtype: :class:`splipy.Surface`
     """
     # generate boundary curve
-    crv = image_curves(filename)
+    crvs = image_curves(filename)
 
     # error test input
-    if len(crv) != 1:
+    if len(crvs) != 1:
         raise RuntimeError('Error: image_convex_surface expects a single closed curve. Multiple curves detected')
 
-    crv = crv[0]
+    crv = crvs[0]
 
     # parametric value of corner candidates. These are all in the range [0,1] and both 0 and 1 is present
-    kinks = crv.get_kinks()
+    kinks: list[float] = list(crv.get_kinks())
+
+    corners: Sequence[float]
 
     # generate 4 corners
     if len(kinks) == 2:
@@ -272,16 +275,16 @@ def image_convex_surface(filename):
         if kinks[1]-kinks[0] > kinks[2]-kinks[1] and kinks[1]-kinks[0] > kinks[3]-kinks[2]:
             corners = [0, (kinks[0]+kinks[1])/2] + kinks[1:3]
         elif kinks[2]-kinks[1] > kinks[3]-kinks[2]:
-            corners = [0, kinks[1], (kinks[1]+kinks[2])/2], kinks[2]
+            corners = [0, kinks[1], (kinks[1]+kinks[2])/2, kinks[2]]
         else:
             corners = [0] + kinks[1:3] + [(kinks[2]+kinks[3])/2]
 
     else:
         while len(kinks) > 5:
-            max_span   = 0
+            max_span: float = 0
             max_span_i = 0
             for i in range(1,len(kinks)-1):
-                max_span   = max(max_span, kinks[i+1]-kinks[i-1])
+                max_span = max(max_span, kinks[i+1]-kinks[i-1])
                 max_span_i = i
             del kinks[max_span_i]
         corners = kinks[0:4]

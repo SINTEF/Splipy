@@ -20,13 +20,13 @@ from .master import MasterIO
 from .g2 import G2
 
 
-class Box(object):
+class Box:
 
     def __init__(self, x):
         self.x = x
 
 
-class DiscontBoxMesh(object):
+class DiscontBoxMesh:
 
     def __init__(self, n, coord, zcorn):
         nx, ny, nz = n

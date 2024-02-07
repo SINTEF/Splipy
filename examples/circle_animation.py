@@ -17,8 +17,8 @@ n = 250                                  # number of evaluation points
 c = curves.circle()                      # create the NURBS circle
 t = np.linspace(c.start(0), c.end(0), n) # parametric evaluation points
 x = c(t)                                 # physical (x,y)-coordinates, size (n,2)
-v = c.derivative(t, 1)                   # velocity at all points
-a = c.derivative(t, 2)                   # acceleration at all points
+v = c.derivative(t, d=1)                 # velocity at all points
+a = c.derivative(t, d=2)                 # acceleration at all points
 
 # plot the circle and get reference to the acceleration/velocity lines which we
 # will update during animation

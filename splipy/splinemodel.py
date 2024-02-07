@@ -9,7 +9,7 @@ import numpy as np
 
 from .splineobject import SplineObject
 from .utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
-from .utils import bisect
+from .utils import bisect   # TODO: Py310 - remove this module
 from . import state
 
 try:
