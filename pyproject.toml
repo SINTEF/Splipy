@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splipy"
-version = "1.7.4"
+version = "1.8.2"
 description = "Spline modelling library for Python"
 authors = [
     "Kjetil Andre Johannessen <kjetijo@gmail.com>",
@@ -46,7 +46,7 @@ script = "build_ext.py"
 generate-setup-file = true
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
+python = ">=3.9,<3.13"
 numpy = "^1.21"
 scipy = "^1.9"
 
@@ -103,4 +103,4 @@ first_value = "1"
 filename = "splipy/__init__.py"
 
 [[tool.bumpversion.files]]
-filename = "setup.py"
+filename = "pyproject.toml"
