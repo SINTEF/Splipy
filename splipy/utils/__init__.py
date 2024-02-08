@@ -9,6 +9,9 @@ try:
 except ImportError:
     from collections import Sized
 
+from ..basis import BSplineBasis
+
+
 def is_right_hand(patch, tol=1e-3):
     param = tuple((a+b)/2 for a,b in zip(patch.start(), patch.end()))
 

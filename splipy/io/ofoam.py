@@ -16,7 +16,7 @@ class OpenFOAM(object):
     def __enter__(self):
         # Create the target directory if it does not exist
         if not exists(self.target):
-            makedirs(target)
+            makedirs(self.target)
         # If it does, ensure that it's a directory
         elif not isdir(self.target):
             raise FileExistsError('{} exists and is not a directory'.format(self.target))
@@ -49,7 +49,7 @@ class OpenFOAM(object):
         model.generate_cp_numbers()
         model.generate_cell_numbers()
         faces = model.faces()
-        ninternal = sum(faces['name'] == None)
+        ninternal = sum(faces['name'] == None)  # noqa: E711
         note = 'nPoints: {} nCells: {} nFaces: {} nInternalFaces: {}'.format(
             model.ncps, model.ncells, len(faces), ninternal
         )

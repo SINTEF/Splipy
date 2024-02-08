@@ -112,10 +112,13 @@ class DiscontBoxMesh(object):
         if check == -1:
             for (i,j) in numb_hits:
                 for k, hull in enumerate(self.hull[i,j,:]):
-                    if hull is None: continue
+                    if hull is None:
+                        continue
                     check = hull.find_simplex(x)
-                    if check >= 0: break
-                if check >= 0: break
+                    if check >= 0:
+                        break
+                if check >= 0:
+                    break
 
         if check < 0:
             print(numb_hits)
@@ -262,10 +265,14 @@ class GRDECL(MasterIO):
         i = slice(irange[0], irange[1], None)
         j = slice(jrange[0], jrange[1], None)
         # special case number of evaluation points for full domain
-        if irange[1] == None: irange[1] = vol.shape[0]
-        if jrange[1] == None: jrange[1] = vol.shape[1]
-        if irange[0] == None: irange[0] = 0
-        if jrange[0] == None: jrange[0] = 0
+        if irange[1] is None:
+            irange[1] = vol.shape[0]
+        if jrange[1] is None:
+            jrange[1] = vol.shape[1]
+        if irange[0] is None:
+            irange[0] = 0
+        if jrange[0] is None:
+            jrange[0] = 0
 
         nu = np.diff(irange)
         nv = np.diff(jrange)
@@ -317,10 +324,9 @@ class GRDECL(MasterIO):
         u = [np.linspace(eps, 1-eps, n) for n in ntexture]
         points = volume(*u).reshape(-1, 3)
         cellids = np.zeros(points.shape[:-1], dtype=int)
-        cell = None
         nx, ny, nz = self.n
         for ptid, point in enumerate(tqdm(points, desc='Inverse mapping')):
-            i, j, k = cell = self.raw.cell_at(point) # , guess=cell)
+            i, j, k = self.raw.cell_at(point)
             cellid = i*ny*nz + j*nz + k
             cellids[ptid] = cellid
 
@@ -364,7 +370,8 @@ class GRDECL(MasterIO):
         print(r'<porotexturematerial>')
         for name, data in textures.items():
             # translate to more IFEM-friendly terminology
-            if name in translate: name = translate[name]
+            if name in translate:
+                name = translate[name]
 
             h5_file.create_dataset(name, data=data, compression='gzip')
             a, b = min(data.flat), max(data.flat)

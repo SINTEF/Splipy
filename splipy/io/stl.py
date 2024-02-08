@@ -132,10 +132,10 @@ class STL(MasterIO):
         #   1. specified with input
         #   2. linear splines, only picks knots
         #   3. general splines choose 2*order-1 per knot span
-        if n != None:
+        if n is not None:
             n = ensure_listlike(n,2)
 
-        if n != None:
+        if n is not None:
             u = np.linspace(surface.start(0), surface.end(0), n[0])
         elif surface.order(0) == 2:
             u = surface.knots(0)
@@ -146,7 +146,7 @@ class STL(MasterIO):
             u = [point for element in u for point in element] + knots
             u = np.sort(u)
 
-        if n != None:
+        if n is not None:
             v = np.linspace(surface.start(1), surface.end(1), n[1])
         elif surface.order(1) == 2:
             v = surface.knots(1)

@@ -5,20 +5,20 @@ from .stl import STL
 from .ofoam import OpenFOAM
 
 
+from importlib.util import find_spec
+has_cv2 = find_spec('cv2')
+has_rhino = find_spec('rhino3dm')
+
+
 # GRDECL depends on optional cv2
-try:
-    from .grdecl import GRDECL
-    has_grdecl = True
-except ImportError:
-    has_grdecl = False
+has_grdecl = has_cv2
+if has_cv2:
+    pass
 
 
 # ThreeDM depends on optional rhino3dm
-try:
-    from .threedm import ThreeDM
-    has_rhino = True
-except ImportError:
-    has_rhino = False
+if has_rhino:
+    pass
 
 
 __all__ = ['G2', 'SVG', 'SPL', 'STL', 'OpenFOAM']

@@ -70,6 +70,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 110
 
+[tool.ruff.lint]
+ignore = ["E741"]
+
 [tool.mypy]
 disallow_untyped_defs = true
 disallow_any_unimported = true

@@ -331,7 +331,7 @@ class BSplineBasis:
         :raises TypeError: If `amount` is not an int
         :raises ValueError: If `amount` is negative
         """
-        if type(amount) is not int:
+        if not isinstance(amount, int):
             raise TypeError('amount needs to be a non-negative integer')
         if amount < 0:
             raise ValueError('amount needs to be a non-negative integer')
@@ -361,7 +361,7 @@ class BSplineBasis:
         :raises TypeError: If `amount` is not an int
         :raises ValueError: If `amount` is negative
         """
-        if type(amount) is not int:
+        if not isinstance(amount, int):
             raise TypeError('amount needs to be a non-negative integer')
         if amount < 0:
             raise ValueError('amount needs to be a non-negative integer')
@@ -374,8 +374,8 @@ class BSplineBasis:
 
         if self.periodic > -1:
             # remove excessive ghost knots which appear at both ends of the knot vector
-            n0 =                   bisect_left(knot_spans, self.start())
-            n1 = len(knot_spans) - bisect_left(knot_spans, self.end())   - 1
+            n0 = bisect_left(knots, self.start())
+            n1 = len(knots) - bisect_left(knots, self.end())   - 1
             knots = knots[n0*amount : -n1*amount]
 
         return BSplineBasis(p, knots, self.periodic)

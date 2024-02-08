@@ -109,7 +109,7 @@ class Curve(SplineObject):
         if d == 3:
             d3 = np.array(self.bases[0].evaluate(t, 3, above) @ self.controlpoints)
             W3 = d3[:,-1]    # W'''(t)
-            W6 = W*W*W*W*W*W # W^6
+            # W6 = W*W*W*W*W*W # W^6
             for i in range(self.dimension):
                 H  =  d1[:,i]*W                           - d0[:,i]*W1
                 H1 =  d2[:,i]*W                           - d0[:,i]*W2

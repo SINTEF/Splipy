@@ -220,8 +220,8 @@ def edge_curves(*curves, **kwargs):
         rtol = state.controlpoint_relative_tolerance
         atol = state.controlpoint_absolute_tolerance
         mycurves = [c.clone() for c in curves] # wrap into list and clone all since we're changing them
-        dim = np.max([c.dimension for c in mycurves])
-        rat = np.any([c.rational  for c in mycurves])
+        # dim = np.max([c.dimension for c in mycurves])
+        # rat = np.any([c.rational  for c in mycurves])
         for i in range(4):
             for j in range(i+1,4):
                 Curve.make_splines_compatible(mycurves[i], mycurves[j])
@@ -568,7 +568,7 @@ def thicken(curve, amount):
         n = len(curve)
         left_points = np.zeros((n, 2))
         right_points = np.zeros((n, 2))
-        linear = BSplineBasis(2)
+        # linear = BSplineBasis(2)
 
         x = curve.evaluate(t)                 # curve at interpolation points
         v = curve.derivative(t)               # velocity at interpolation points

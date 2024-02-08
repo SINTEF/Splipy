@@ -368,7 +368,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
             # augment interpolation knot by euclidian distance to end
             t = list(t) + [t[-1] + norm(np.array(x[0,:])- np.array(x[-2,:]))]
 
-    n = len(x)
+    # n = len(x)
     if t is None:
         t = [0.0]
         for (x0,x1) in zip(x[:-1,:], x[1:,:]):
@@ -634,7 +634,7 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
     while np.sqrt(np.sum(err2))/length > rtol and maxerr > atol:
         knot_span    = crv.knots(0) # knot vector without multiplicities
         target_error = (rtol*length)**2 / len(err2) # equidistribute error among all knot spans
-        refinements  = []
+        # refinements  = []
         for i in range(len(err2)):
             # figure out how many new knots we require in this knot interval:
             # if we converge with *scale* and want an error of *target_error*

@@ -283,12 +283,12 @@ class SVG(MasterIO):
         # and also https://www.w3.org/TR/SVG/paths.html
 
         # figure out the largest polynomial order of this path
-        if re.search('[cCsS]', path):
-            order = 4
-        elif re.search('[qQtTaA]', path):
-            order = 3
-        else:
-            order = 2
+        # if re.search('[cCsS]', path):
+        #     order = 4
+        # elif re.search('[qQtTaA]', path):
+        #     order = 3
+        # else:
+        #     order = 2
         last_curve = None
         result = []
 

@@ -23,7 +23,8 @@ class G2(MasterIO):
         return line
 
     def circle(self):
-        dim   = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim   = int(     self.read_next_non_whitespace().strip())
         r     = float(   next(self.fstream).strip())
         center= np.array(next(self.fstream).split(), dtype=float)
         normal= np.array(next(self.fstream).split(), dtype=float)
@@ -38,7 +39,8 @@ class G2(MasterIO):
         return result
 
     def ellipse(self):
-        dim   = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim   = int(     self.read_next_non_whitespace().strip())
         r1    = float(   next(self.fstream).strip())
         r2    = float(   next(self.fstream).strip())
         center= np.array(next(self.fstream).split(), dtype=float)
@@ -54,7 +56,8 @@ class G2(MasterIO):
         return result
 
     def line(self):
-        dim      = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim   = int(     self.read_next_non_whitespace().strip())
         start    = np.array(next(self.fstream).split(), dtype=float)
         direction= np.array(next(self.fstream).split(), dtype=float)
         finite   =          next(self.fstream).strip() != '0'
@@ -86,7 +89,8 @@ class G2(MasterIO):
 
 
     def cylinder(self):
-        dim      = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim   = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(), dtype=float)
         z_axis   = np.array(next(self.fstream).split(), dtype=float)
@@ -108,7 +112,8 @@ class G2(MasterIO):
         return result
 
     def disc(self):
-        dim      = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim      = int(     self.read_next_non_whitespace().strip())
         center   = np.array(next(self.fstream).split(), dtype=float)
         r        = float(   next(self.fstream).strip())
         z_axis   = np.array(next(self.fstream).split(), dtype=float)
@@ -131,7 +136,8 @@ class G2(MasterIO):
         return result
 
     def plane(self):
-        dim        = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim        = int(     self.read_next_non_whitespace().strip())
         center     = np.array(next(self.fstream).split(), dtype=float)
         normal     = np.array(next(self.fstream).split(), dtype=float)
         x_axis     = np.array(next(self.fstream).split(), dtype=float)
@@ -153,13 +159,15 @@ class G2(MasterIO):
         return result
 
     def torus(self):
-        dim      = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim      = int(     self.read_next_non_whitespace().strip())
         r2       = float(   next(self.fstream).strip())
         r1       = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(), dtype=float)
         z_axis   = np.array(next(self.fstream).split(), dtype=float)
         x_axis   = np.array(next(self.fstream).split(), dtype=float)
-        select_out=         next(self.fstream).strip() != '0' # I have no idea what this does :(
+        next(self.fstream())
+        # select_out=         next(self.fstream).strip() != '0' # I have no idea what this does :(
         param_u  = np.array(next(self.fstream).split(), dtype=float)
         param_v  = np.array(next(self.fstream).split(), dtype=float)
         swap     =          next(self.fstream).strip() != '0'
@@ -171,7 +179,8 @@ class G2(MasterIO):
         return result
 
     def sphere(self):
-        dim      = int(     self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim      = int(     self.read_next_non_whitespace().strip())
         r        = float(   next(self.fstream).strip())
         center   = np.array(next(self.fstream).split(), dtype=float)
         z_axis   = np.array(next(self.fstream).split(), dtype=float)
@@ -204,7 +213,8 @@ class G2(MasterIO):
         return cls(*args)
 
     def surface_of_linear_extrusion(self):
-        dim      = int(      self.read_next_non_whitespace().strip())
+        self.read_next_non_whitespace()
+        # dim      = int(      self.read_next_non_whitespace().strip())
         crv      = self.splines(1)
         normal   = np.array(self.read_next_non_whitespace().split(), dtype=float)
         finite   =          next(self.fstream).strip() != '0'
