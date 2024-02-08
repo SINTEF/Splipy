@@ -2,7 +2,7 @@
 
 """Handy utilities for creating curves."""
 
-from math import pi, cos, sin, sqrt, ceil, atan2
+from math import pi, cos, sin, sqrt, ceil
 import copy
 import inspect
 

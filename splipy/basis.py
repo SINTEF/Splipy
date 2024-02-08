@@ -221,7 +221,7 @@ class BSplineBasis:
         :rtype: list
         """
         if self.periodic > -1 and (t0<self.start() or t1>self.end()):
-            raise NotImplemented('Periodic functions integrated across sem')
+            raise NotImplementedError('Periodic functions integrated across sem')
 
         t0 = max(t0, self.start())
         t1 = min(t1, self.end()  )

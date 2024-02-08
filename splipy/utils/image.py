@@ -3,7 +3,6 @@
 __doc__ = 'Implementation of image based mesh generation.'
 
 from math import sqrt
-import sys
 import warnings
 
 import numpy as np

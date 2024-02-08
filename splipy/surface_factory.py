@@ -4,7 +4,6 @@
 
 from math import pi, sqrt, atan2
 import inspect
-import os
 from os.path import dirname, realpath, join
 
 import numpy as np
@@ -309,7 +308,6 @@ def poisson_patch(bottom, right, top, left):
         raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
     from nutils import mesh, function as fn
-    from nutils import _, log
 
     # error test input
     if left.rational or right.rational or top.rational or bottom.rational:
@@ -369,8 +367,7 @@ def elasticity_patch(bottom, right, top, left):
     if int(version[0]) != 4:
         raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
-    from nutils import mesh, function, solver
-    from nutils import _, log
+    from nutils import mesh, function
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
@@ -440,7 +437,7 @@ def finitestrain_patch(bottom, right, top, left):
         raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
     from nutils import mesh, function
-    from nutils import _, log, solver
+    from nutils import solver
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):

@@ -7,3 +7,12 @@ from .trimmedsurface import TrimmedSurface
 from .splinemodel import SplineModel
 
 __version__ = '1.8.2'
+__all__ = [
+    'BSplineBasis',
+    'SplineObject',
+    'Curve',
+    'Surface',
+    'Volume',
+    'TrimmedSurface',
+    'SplineModel',
+]

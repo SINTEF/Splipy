@@ -1,8 +1,6 @@
 import numpy as np
-from itertools import chain, product
 from splipy import Curve, Surface, BSplineBasis, curve_factory
 from .master import MasterIO
-import splipy.state as state
 from rhino3dm import Brep, File3dm
 from rhino3dm import NurbsCurve, PolylineCurve, Circle, Polyline, BezierCurve, Arc, Line
 from rhino3dm import NurbsSurface, Cylinder, Sphere, Extrusion

@@ -3,7 +3,7 @@
 import numpy as np
 import copy
 from operator import attrgetter, methodcaller
-from itertools import chain, product
+from itertools import product
 from bisect import bisect_left
 
 from .basis import BSplineBasis

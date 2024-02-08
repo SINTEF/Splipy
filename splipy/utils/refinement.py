@@ -1,6 +1,6 @@
 __doc__ = 'Implementation of various refinement schemes.'
 
-from math import atan, pi, tan
+from math import atan, tan
 
 import numpy as np
 

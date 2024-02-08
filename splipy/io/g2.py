@@ -1,7 +1,6 @@
-from itertools import chain, product
 
 import numpy as np
-from numpy import sqrt, pi, savetxt
+from numpy import pi, savetxt
 
 from ..curve import Curve
 from ..surface import Surface

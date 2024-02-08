@@ -5,11 +5,8 @@ from math import pi
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from .basis import BSplineBasis
-from .curve import Curve
 from .surface import Surface
-from .splineobject import SplineObject
-from .utils import ensure_listlike, check_direction, sections
+from .utils import sections
 from . import state
 
 __all__ = ['TrimmedSurface']

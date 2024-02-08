@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from bisect import bisect_left
-from itertools import chain
 
 import numpy as np
 

@@ -61,10 +61,23 @@ pytest-benchmark = "^4.0.0"
 cython = "^0.29.34"
 sphinx = "^6.1.3"
 bump-my-version = "^0.17.3"
+ruff = "^0.2.1"
 
 [build-system]
 requires = ["poetry-core", "cython", "numpy", "wheel", "setuptools"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 110
+
+[tool.mypy]
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+show_error_codes = true
+mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
 
 [tool.bumpversion]
 current_version = "1.8.2"

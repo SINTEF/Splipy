@@ -9,9 +9,7 @@ import h5py
 from scipy.spatial import Delaunay
 from scipy.spatial.qhull import QhullError
 
-from ..surface import Surface
 from ..volume import Volume
-from ..splineobject import SplineObject
 from ..basis import BSplineBasis
 from ..utils import ensure_listlike
 from .. import surface_factory, curve_factory, volume_factory
@@ -359,7 +357,7 @@ class GRDECL(MasterIO):
         vol, textures = self.texture(p, ngeom, ntexture, method, irange, jrange)
 
         # augment dataset with missing information
-        if 'kx' in textures and not 'ky' in textures:
+        if 'kx' in textures and 'ky' not in textures:
             textures['ky'] = textures['kx']
 
         # print information to png-images and hdf5-files

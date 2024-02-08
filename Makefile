@@ -12,10 +12,6 @@ lint:
 bench:
 	poetry run pytest --benchmark-only
 
-fmt:
-	poetry run black splipy
-	poetry run isort splipy
-
 fmtcheck:
 	poetry run black splipy --check
 	poetry run isort splipy --check
@@ -23,6 +19,13 @@ fmtcheck:
 
 doc:
 	$(MAKE) -C doc html
+
+
+# Linting targets
+
+.PHONY: format
+format:
+	poetry run ruff check --fix splipy
 
 
 # Test targets
