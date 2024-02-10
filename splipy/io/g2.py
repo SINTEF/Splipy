@@ -166,7 +166,7 @@ class G2(MasterIO):
         center   = np.array(next(self.fstream).split(), dtype=float)
         z_axis   = np.array(next(self.fstream).split(), dtype=float)
         x_axis   = np.array(next(self.fstream).split(), dtype=float)
-        next(self.fstream())
+        next(self.fstream)
         # select_out=         next(self.fstream).strip() != '0' # I have no idea what this does :(
         param_u  = np.array(next(self.fstream).split(), dtype=float)
         param_v  = np.array(next(self.fstream).split(), dtype=float)

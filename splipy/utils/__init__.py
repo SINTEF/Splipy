@@ -3,13 +3,18 @@
 from itertools import combinations, product
 from math import atan2, sqrt
 import numpy as np
+from typing import TYPE_CHECKING, SupportsFloat, Literal, TypedDict, Sequence, TypeVar, Union
+from typing_extensions import Unpack
 
 try:
     from collections.abc import Sized
 except ImportError:
     from collections import Sized
 
-from ..basis import BSplineBasis
+from ..types import Direction, ScalarOrScalars
+
+if TYPE_CHECKING:
+    from ..basis import BSplineBasis
 
 
 def is_right_hand(patch, tol=1e-3):
@@ -83,7 +88,13 @@ def section_to_index(section):
         if tuple(section) == tuple(t):
             return i
 
-def check_section(*args, **kwargs):
+
+class SectionKwargs(TypedDict, total=False):
+    u: Literal[-1, 0, None]
+    v: Literal[-1, 0, None]
+    w: Literal[-1, 0, None]
+
+def check_section(*args: Literal[-1, 0, None], pardim: int = 0, **kwargs: Unpack[SectionKwargs]) -> tuple[Literal[-1, 0, None]]:
     """check_section(u, v, ...)
 
     Parse arguments and return a section spec.
@@ -91,7 +102,6 @@ def check_section(*args, **kwargs):
     The keyword argument `pardim` *must* be provided. The return value is a
     section as described in :func:`splipy.Utils.sections`.
     """
-    pardim = kwargs['pardim']
     args = list(args)
     while len(args) < pardim:
         args.append(None)
@@ -100,7 +110,7 @@ def check_section(*args, **kwargs):
         args[index] = kwargs[k]
     return args
 
-def check_direction(direction, pardim):
+def check_direction(direction: Direction, pardim: int) -> int:
     if   direction in {0, 'u', 'U'} and 0 < pardim:
         return 0
     elif direction in {1, 'v', 'V'} and 1 < pardim:
@@ -119,7 +129,17 @@ def is_singleton(x):
     """Checks if x is list-like."""
     return not isinstance(x, Sized)
 
-def ensure_listlike(x, dups=1):
+def ensure_scalars(x: ScalarOrScalars, dups: int = 1) -> list[float]:
+    if isinstance(x, SupportsFloat) and not isinstance(x, np.ndarray):
+        return [float(x)] * dups
+    retval = list(x)
+    if len(retval) < dups and retval:
+        retval.extend(x[-1] for _ in range(dups - len(retval)))
+    return retval
+
+T = TypeVar("T", covariant=True)
+
+def ensure_listlike(x: Union[T, Sequence[T]], dups: int = 1) -> list[T]:
     """Wraps x in a list if it's not list-like."""
     try:
         while len(x) < dups:
@@ -208,6 +228,8 @@ def raise_order_1D(n, k, T, P, m, periodic):
     :param int periodic: Number of continuous derivatives at start and end. -1 is not periodic, 0 is continuous, etc.
     :return Q: new control points
     """
+
+    from ..basis import BSplineBasis
 
     u = np.unique(T[k-1:-k+1])
     S = u.size - 1

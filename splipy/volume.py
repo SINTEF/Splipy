@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+
+from typing import Optional, Sequence, Any, cast, Union
 
 import numpy as np
 
 from .basis import BSplineBasis
 from .splineobject import SplineObject
+from .curve import Curve
+from .surface import Surface
 from .utils import ensure_listlike, sections
 
 __all__ = ['Volume']
@@ -17,8 +22,16 @@ class Volume(SplineObject):
 
     _intended_pardim = 3
 
-    def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False, **kwargs):
-        """  Construct a volume with the given basis and control points.
+    def __init__(
+        self,
+        basis1: Optional[BSplineBasis] = None,
+        basis2: Optional[BSplineBasis] = None,
+        basis3: Optional[BSplineBasis] = None,
+        controlpoints: Any = None,
+        rational: bool = False,
+        raw: bool = False,
+    ) -> None:
+        """Construct a volume with the given basis and control points.
 
         The default is to create a linear one-element mapping from and to the
         unit cube.
@@ -32,9 +45,9 @@ class Volume(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational, **kwargs)
+        super().__init__([basis1, basis2, basis3], controlpoints, rational=rational, raw=raw)
 
-    def edges(self):
+    def edges(self) -> tuple[Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve]:
         """Return the twelve edges of this volume in order:
 
         - umin, vmin
@@ -53,23 +66,45 @@ class Volume(SplineObject):
         :return: Edges
         :rtype: (Curve)
         """
-        return tuple(self.section(*args) for args in sections(3, 1))
+        return cast(
+            tuple[Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve, Curve],
+            tuple(self.section(*args) for args in sections(3, 1)),
+        )
 
-    def faces(self):
+    def faces(self) -> tuple[
+        Optional[Surface],
+        Optional[Surface],
+        Optional[Surface],
+        Optional[Surface],
+        Optional[Surface],
+        Optional[Surface],
+    ]:
         """Return the six faces of this volume in order: umin, umax, vmin, vmax, wmin, wmax.
 
         :return: Boundary faces
         :rtype: (Surface)
         """
-        boundary_faces = [self.section(*args) for args in sections(3, 2)]
+        boundary_faces: list[Optional[Surface]]
+        boundary_faces = [self.section(*args) for args in sections(3, 2)]  # type: ignore[misc]
         for i,b in enumerate(self.bases):
             if b.periodic > -1:
-                boundary_faces[2*i  ] = None
+                boundary_faces[2*i] = None
                 boundary_faces[2*i+1] = None
-        return tuple(boundary_faces)
+        return cast(
+            tuple[
+                Optional[Surface],
+                Optional[Surface],
+                Optional[Surface],
+                Optional[Surface],
+                Optional[Surface],
+                Optional[Surface],
+            ],
+            tuple(boundary_faces),
+        )
 
-    def volume(self):
-        """ Computes the volume of the object in geometric space """
+    def volume(self) -> float:
+        """Compute the volume of the object in geometric space."""
+
         # fetch integration points
         (x1,w1) = np.polynomial.legendre.leggauss(self.order(0)+1)
         (x2,w2) = np.polynomial.legendre.leggauss(self.order(1)+1)
@@ -100,10 +135,14 @@ class Volume(SplineObject):
              du[:,:,:,1] * np.cross(dv[:,:,:,0::2], dw[:,:,:,0::2]) +  \
              du[:,:,:,2] * np.cross(dv[:,:,:,:-1],  dw[:,:,:,:-1] )
 
-        return np.abs(J).dot(w3).dot(w2).dot(w1)
+        return cast(float, np.abs(J).dot(w3).dot(w2).dot(w1))
 
-    def rebuild(self, p, n):
-        """  Creates an approximation to this volume by resampling it using
+    def rebuild(
+        self,
+        p: Union[int, Sequence[int]],
+        n: Union[int, Sequence[int]],
+    ) -> Volume:
+        """Create an approximation to this volume by resampling it using
         uniform knot vectors of order *p* with *n* control points.
 
         :param (int) p: Tuple of polynomial discretization order in each direction
@@ -149,7 +188,7 @@ class Volume(SplineObject):
         # return new resampled curve
         return Volume(basis[0], basis[1], basis[2], cp)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         result = str(self.bases[0]) + '\n'
         result += str(self.bases[1]) + '\n'
         result += str(self.bases[2]) + '\n'
