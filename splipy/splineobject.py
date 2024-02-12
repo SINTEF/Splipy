@@ -7,9 +7,8 @@ import copy
 from operator import attrgetter, methodcaller
 from itertools import product
 from bisect import bisect_left
-from types import NotImplementedType
 from typing import Sequence, Any, Optional, SupportsIndex, Union, SupportsFloat, Protocol, cast, TypeVar, Generic, Iterator, Literal, overload, Callable, MutableSequence, ClassVar
-from typing_extensions import Self, Unpack
+from typing_extensions import Self, Unpack, TypeAlias
 from numpy.typing import ArrayLike
 
 from .basis import BSplineBasis
@@ -1499,19 +1498,22 @@ class SplineObject:
         """The dimensions of the control point array."""
         return self.controlpoints.shape[:-1]
 
-    def __iadd__(self, x: Any) -> Union[Self, NotImplementedType]:
+    # TODO: Py310 from types import NotImplementedType
+    # Then change all the return types to Self | NotImplementedType
+
+    def __iadd__(self, x: Any) -> Self:
         if isinstance(x, (Sequence, np.ndarray)):
             self.translate(x)
             return self
         return NotImplemented
 
-    def __isub__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __isub__(self, x: Any) -> Self:
         if isinstance(x, (Sequence, np.ndarray)):
             self.translate(-np.array(x, dtype=float))  # can't do -x if x is a list, so we rewrap it here
             return self
         return NotImplemented
 
-    def __imul__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __imul__(self, x: Any) -> Self:
         if isinstance(x, (Sequence, np.ndarray)):
             self.scale(*x)
             return self
@@ -1523,7 +1525,7 @@ class SplineObject:
             return self
         return NotImplemented
 
-    def __itruediv__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __itruediv__(self, x: Any) -> Self:
         if isinstance(x, (Sequence, np.ndarray)):
             y = 1 / np.ndarray(x, dtype=float)
             self.scale(*y)
@@ -1538,22 +1540,22 @@ class SplineObject:
 
     __ifloordiv__ = __itruediv__  # integer division (should not distinguish)
 
-    def __add__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __add__(self, x: Any) -> Self:
         return self.clone().__iadd__(x)
 
-    def __radd__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __radd__(self, x: Any) -> Self:
         return self.__add__(x)
 
-    def __sub__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __sub__(self, x: Any) -> Self:
         return self.clone().__isub__(x)
 
-    def __mul__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __mul__(self, x: Any) -> Self:
         return self.clone().__imul__(x)
 
-    def __rmul__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __rmul__(self, x: Any) -> Self:
         return self.__mul__(x)
 
-    def __div__(self, x: Any) -> Union[Self, NotImplementedType]:
+    def __div__(self, x: Any) -> Self:
         return self.clone().__itruediv__(x)
 
     def flip_and_move_plane_geometry(self, center: Scalars = (0,0,0), normal: Scalars = (0,0,1)) -> Self:
