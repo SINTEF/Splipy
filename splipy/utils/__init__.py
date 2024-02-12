@@ -165,6 +165,9 @@ def rotate_local_x_axis(xaxis=(1,0,0), normal=(0,0,1)):
     # treating it as such is the closest projection, which makes perfect sense
     return atan2(xaxis[0,1], xaxis[0,0])
 
+
+# O = TypeVar("O", bound=SplineObject)
+
 def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
     """re-orients a planar geometry by moving it to a different location and
     tilting it"""
@@ -178,6 +181,7 @@ def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
     if not np.allclose(center, 0):
         obj.translate(center)
     return obj
+
 
 def reshape(cps, newshape, order='C', ncomps=None):
     """Like numpy's reshape, but preserves control points of several dimensions

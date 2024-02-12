@@ -1,4 +1,4 @@
-from typing import overload, TypeVar
+from typing import overload, TypeVar, Sequence
 
 from numpy.typing import NDArray
 from numpy import float_, int_, generic
@@ -20,8 +20,16 @@ class csr_matrix:
     ) -> None:
         ...
 
+    @overload
+    def __init__(self, array: NDArray[float_]) -> None:
+        ...
+
     def toarray(self) -> NDArray[float_]:
         ...
 
     def __matmul__(self, other: NDArray[T]) -> NDArray[T]:
         ...
+
+
+def vstack(blocks: Sequence[csr_matrix]) -> csr_matrix:
+    ...

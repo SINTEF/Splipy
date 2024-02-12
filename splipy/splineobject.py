@@ -1556,6 +1556,22 @@ class SplineObject:
     def __div__(self, x: Any) -> Union[Self, NotImplementedType]:
         return self.clone().__itruediv__(x)
 
+    def flip_and_move_plane_geometry(self, center: Scalars = (0,0,0), normal: Scalars = (0,0,1)) -> Self:
+        """Re-orient a planar geometry by moving it to a different location and
+        tilting it.
+
+        Don't call unless necessary. Translate or scale operations may force
+        an object into 3D space.
+        """
+        if not np.allclose(normal, np.array([0,0,1])):
+            theta = np.arctan2(normal[1], normal[0])
+            phi = np.arctan2(np.sqrt(normal[0]**2+normal[1]**2), normal[2])
+            self.rotate(phi, (0,1,0))
+            self.rotate(theta, (0,0,1))
+        if not np.allclose(center, 0):
+            self.translate(center)
+        return self
+
     @classmethod
     def make_splines_compatible(cls, spline1: SplineObject, spline2: SplineObject) -> None:
         """Ensure that two splines are compatible.
