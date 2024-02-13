@@ -65,6 +65,7 @@ class SplineObject:
 
     _intended_pardim: ClassVar[Optional[int]] = None
 
+    dimension: int
     bases: list[BSplineBasis]
     controlpoints: FArray
     rational: bool
