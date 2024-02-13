@@ -143,7 +143,7 @@ class STL(MasterIO):
             knots = surface.knots(0)
             p = surface.order(0)
             u = [np.linspace(k0,k1, 2*p-3, endpoint=False) for (k0,k1) in zip(knots[:-1], knots[1:])]
-            u = [point for element in u for point in element] + knots
+            u = [point for element in u for point in element] + list(knots)
             u = np.sort(u)
 
         if n is not None:
@@ -154,7 +154,7 @@ class STL(MasterIO):
             knots = surface.knots(1)
             p = surface.order(1)
             v = [np.linspace(k0,k1, 2*p-3, endpoint=False) for (k0,k1) in zip(knots[:-1], knots[1:])]
-            v = [point for element in v for point in element] + knots
+            v = [point for element in v for point in element] + list(knots)
             v = np.sort(v)
 
         # perform evaluation and make sure that we have 3 components (in case of 2D geometries)
