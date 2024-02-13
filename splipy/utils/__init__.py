@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+
 from itertools import combinations, product
 from math import atan2, sqrt
 import numpy as np
-from typing import TYPE_CHECKING, SupportsFloat, Literal, TypedDict, Sequence, TypeVar, Union
+from typing import TYPE_CHECKING, SupportsFloat, Literal, TypedDict, Sequence, TypeVar, Union, Iterator
 from typing_extensions import Unpack
 
 try:
@@ -11,7 +13,7 @@ try:
 except ImportError:
     from collections import Sized
 
-from ..types import Direction, ScalarOrScalars, Scalar
+from ..types import Direction, ScalarOrScalars, Scalar, Section, SectionElt, SectionKwargs, SectionLike
 
 if TYPE_CHECKING:
     from ..basis import BSplineBasis
@@ -53,7 +55,7 @@ def rotation_matrix(theta, axis):
                       [2*(b*c+a*d),     a*a+c*c-b*b-d*d, 2*(c*d-a*b)],
                       [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
 
-def sections(src_dim, tgt_dim):
+def sections(src_dim, tgt_dim) -> Iterator[Section]:
     """Generate all boundary sections from a source dimension to a target
     dimension. For example, `sections(3,1)` generates all edges on a volume.
 
@@ -69,9 +71,9 @@ def sections(src_dim, tgt_dim):
             args = [None] * src_dim
             for f, i in zip(fixed, indices[::-1]):
                 args[f] = i
-            yield args
+            yield tuple(args)
 
-def section_from_index(src_dim, tgt_dim, i):
+def section_from_index(src_dim, tgt_dim, i) -> Section:
     """Return the i'th section from a source dimension to a target dimension.
 
     See :func:`splipy.Utils.sections` for more information.
@@ -80,7 +82,7 @@ def section_from_index(src_dim, tgt_dim, i):
         if i == j:
             return s
 
-def section_to_index(section):
+def section_to_index(section: SectionLike) -> int:
     """Return the index corresponding to a section."""
     src_dim = len(section)
     tgt_dim = sum(1 for s in section if s is None)
@@ -88,13 +90,7 @@ def section_to_index(section):
         if tuple(section) == tuple(t):
             return i
 
-
-class SectionKwargs(TypedDict, total=False):
-    u: Literal[-1, 0, None]
-    v: Literal[-1, 0, None]
-    w: Literal[-1, 0, None]
-
-def check_section(*args: Literal[-1, 0, None], pardim: int = 0, **kwargs: Unpack[SectionKwargs]) -> tuple[Literal[-1, 0, None]]:
+def check_section(*args: SectionElt, pardim: int = 0, **kwargs: Unpack[SectionKwargs]) -> Section:
     """check_section(u, v, ...)
 
     Parse arguments and return a section spec.

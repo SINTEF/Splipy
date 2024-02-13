@@ -12,7 +12,7 @@ from typing_extensions import Self, Unpack, TypeAlias
 from numpy.typing import ArrayLike
 
 from .basis import BSplineBasis
-from .types import Direction, Scalars, Scalar, FArray, IArray, ScalarOrScalars
+from .types import Direction, Scalars, Scalar, FArray, IArray, ScalarOrScalars, SectionElt
 from .utils import (
     reshape, rotation_matrix, is_singleton, ensure_listlike,
     check_direction, ensure_flatlist, check_section, sections,
@@ -452,7 +452,7 @@ class SplineObject:
     @overload
     def section(
         self,
-        *args: Literal[-1, 0, None],
+        *args: SectionElt,
         unwrap_points: Literal[True] = True,
         **kwargs: Unpack[SectionKwargs]
     ) -> Union[SplineObject, FArray]:
@@ -461,7 +461,7 @@ class SplineObject:
     @overload
     def section(
         self,
-        *args: Literal[-1, 0, None],
+        *args: SectionElt,
         unwrap_points: Literal[False],
         **kwargs: Unpack[SectionKwargs]
     ) -> SplineObject:

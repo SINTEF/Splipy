@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Union, Literal
+from typing import Union, Literal, TypedDict
 
 from numpy.typing import NDArray
 from numpy import float_, int_
@@ -21,3 +21,12 @@ Scalars = Union[
 ]
 
 ScalarOrScalars = Union[Scalar, Scalars]
+
+SectionElt = Literal[-1, 0, None]
+SectionLike = Sequence[SectionElt]
+Section = tuple[SectionElt, ...]
+
+class SectionKwargs(TypedDict, total=False):
+    u: SectionElt
+    v: SectionElt
+    w: SectionElt
