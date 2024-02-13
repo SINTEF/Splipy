@@ -258,7 +258,7 @@ def circle_segment_from_three_points(x0: Scalars, x1: Scalars, x2: Scalars) -> C
             np.dot(pt2,pt2) - np.dot(pt0,pt0),
             np.dot(normal,pt0),
         ],
-        dtype=float
+        dtype=float,
     )
     center = np.linalg.solve(A,b)
     radius = norm(pt2-center)

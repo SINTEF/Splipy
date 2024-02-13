@@ -16,8 +16,7 @@ Scalar = Union[
 ]
 
 Scalars = Union[
-    Sequence[float],
-    Sequence[float_],
+    Sequence[Scalar],
     FArray,
 ]
 

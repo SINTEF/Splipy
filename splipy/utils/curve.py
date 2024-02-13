@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Union
 
 import numpy as np
 
@@ -27,12 +27,6 @@ def curve_length_parametrization(
 
     knots = buffer if buffer is not None else np.empty((len(points) - 1,), dtype=float)
     knots[:] = np.cumsum(np.linalg.norm(points[1:] - points[:-1], axis=1))
-
-    # knots = np.empty((len(pts),), dtype=float)
-    # knots[0] = 0.0
-    # for i in range(1, len(pts)):
-    #     knots[i] = knots[i-1] + np.linalg.norm(pts[i] - pts[i-1])
-    #     # knots.append(knots[-1] + np.linalg.norm(pts[i,:] - pts[i-1,:]))
 
     if normalize:
         knots /= knots[-1]

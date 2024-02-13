@@ -1062,12 +1062,12 @@ class SplineObject:
             raise RuntimeError('reflection undefined for geometries other than 3D')
 
         # fixup the input normal to right form
-        normal = np.array(normal)
-        normal = normal / np.sqrt(np.dot(normal, normal))  # normalize it
+        normal_vec = np.asarray(normal, dtype=float)
+        normal_vec /= np.sqrt(np.dot(normal_vec, normal_vec))  # normalize it
 
         # set up the reflection matrix
         reflection_matrix = np.identity(dim + rat)
-        reflection_matrix[0:dim, 0:dim] -= 2 * np.outer(normal, normal)
+        reflection_matrix[0:dim, 0:dim] -= 2 * np.outer(normal_vec, normal_vec)
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
         cp = np.reshape(self.controlpoints, (n, dim + rat))
@@ -1565,12 +1565,12 @@ class SplineObject:
         Don't call unless necessary. Translate or scale operations may force
         an object into 3D space.
         """
-        if not np.allclose(normal, np.array([0,0,1])):
+        if not np.allclose(np.asarray(normal), np.array([0,0,1])):
             theta = np.arctan2(normal[1], normal[0])
             phi = np.arctan2(np.sqrt(normal[0]**2+normal[1]**2), normal[2])
             self.rotate(phi, (0,1,0))
             self.rotate(theta, (0,0,1))
-        if not np.allclose(center, 0):
+        if not np.allclose(np.asarray(center), 0):
             self.translate(center)
         return self
 

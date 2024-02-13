@@ -11,7 +11,7 @@ try:
 except ImportError:
     from collections import Sized
 
-from ..types import Direction, ScalarOrScalars
+from ..types import Direction, ScalarOrScalars, Scalar
 
 if TYPE_CHECKING:
     from ..basis import BSplineBasis
@@ -129,12 +129,12 @@ def is_singleton(x):
     """Checks if x is list-like."""
     return not isinstance(x, Sized)
 
-def ensure_scalars(x: ScalarOrScalars, dups: int = 1) -> list[float]:
+def ensure_scalars(x: Union[ScalarOrScalars, tuple[Scalar]], dups: int = 1) -> list[float]:
     if isinstance(x, SupportsFloat) and not isinstance(x, np.ndarray):
         return [float(x)] * dups
-    retval = list(x)
+    retval = list(map(float, x))
     if len(retval) < dups and retval:
-        retval.extend(x[-1] for _ in range(dups - len(retval)))
+        retval.extend(float(x[-1]) for _ in range(dups - len(retval)))
     return retval
 
 T = TypeVar("T", covariant=True)
