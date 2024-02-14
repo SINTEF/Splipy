@@ -912,7 +912,6 @@ class ObjectCatalogue:
 
 # TODO: This class is unfinished, and right now it doesn't do much other than wrap ObjectCatalogue
 class SplineModel:
-
     pardim: int
     dimension: int
     force_right_hand: bool
@@ -966,6 +965,10 @@ class SplineModel:
 
     def __getitem__(self, obj: SplineObject) -> NodeView:
         return self.catalogue[obj]
+
+    def __iter__(self) -> Iterator[SplineObject]:
+        for node in self.catalogue.top_nodes():
+            yield node.obj
 
     def boundary(self, name: Optional[str] = None) -> Iterator[TopologicalNode]:
         for node in self.catalogue.nodes(self.pardim-1):
@@ -1169,5 +1172,5 @@ class IFEMWriter:
 
         # Import here to avoid circular dependencies
         from .io import G2
-        with G2(filename + '.g2') as f:
+        with G2(filename + '.g2', 'w') as f:
             f.write([n.obj for n in self.nodes])

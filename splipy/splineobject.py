@@ -864,11 +864,11 @@ class SplineObject:
         return self
 
     @overload
-    def reparam(self, *args: tuple[Scalar, Scalar]) -> Self:
+    def reparam(self, *args: Union[FArray, tuple[Scalar, Scalar]]) -> Self:
         ...
 
     @overload
-    def reparam(self, arg: tuple[Scalar, Scalar], /, direction: Direction) -> Self:
+    def reparam(self, arg: Union[FArray, tuple[Scalar, Scalar]], /, direction: Direction) -> Self:
         ...
 
     @overload

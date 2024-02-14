@@ -18,5 +18,5 @@ with STL('torus.stl') as my_file:
 
 
 # G2 files are native GoTools (http://www.sintef.no/projectweb/geometry-toolkits/gotools/)
-with G2('torus.g2') as my_file:
+with G2('torus.g2', 'w') as my_file:
     my_file.write(torus)

@@ -1,38 +1,43 @@
 import xml.etree.ElementTree as etree
 from xml.dom import minidom
 import re
+from typing import ClassVar, Optional, Type, Union, Sequence, cast
+from types import TracebackType
+from pathlib import Path
 
 import numpy as np
+from typing_extensions import Self
 
 from ..curve import Curve
 from ..surface import Surface
 from ..splineobject import SplineObject
 from ..basis import BSplineBasis
+from ..types import FArray
 from .. import curve_factory, state
 
 from .master import MasterIO
 
 
-def read_number_and_unit(mystring):
+def read_number_and_unit(mystring: str) -> tuple[float, str]:
     unit = ''
     try:
         for i in range(1, len(mystring)+1):
-            number=float(mystring[:i])
+            number = float(mystring[:i])
     except ValueError:
-        unit=mystring[i-1:]
+        unit = mystring[i-1:]
     return (number, unit)
 
 
-def bezier_representation(curve):
-    """ Compute a Bezier representation of a given spline curve. The input
-        curve must be of order less than or equal to 4. The bezier
-        representation is of order 4, and maximal knot multiplicity, i.e.
-        consist of a C0-discretization with knot multiplicity 3.
+def bezier_representation(curve: Curve) -> Curve:
+    """Compute a Bezier representation of a given spline curve. The input
+    curve must be of order less than or equal to 4. The bezier
+    representation is of order 4, and maximal knot multiplicity, i.e.
+    consist of a C0-discretization with knot multiplicity 3.
 
-        :param curve  : Spline curve
-        :type  curve  : Curve
-        :returns      : Bezier curve
-        :rtype        : Curve
+    :param curve  : Spline curve
+    :type  curve  : Curve
+    :returns      : Bezier curve
+    :rtype        : Curve
     """
     # error test input. Another way would be to approximate higher-order curves. Consider looking at Curve.rebuild()
     if curve.order(0) > 4 or curve.rational:
@@ -43,7 +48,7 @@ def bezier_representation(curve):
 
     # make it non-periodic
     if bezier.periodic():
-        bezier = bezier.split(bezier.start(0))
+        bezier = bezier.split_periodic(bezier.start(0))
 
     # make sure it is C0 everywhere
     for k in bezier.knots(0):
@@ -53,23 +58,32 @@ def bezier_representation(curve):
 
 
 class SVG(MasterIO):
+    namespace: ClassVar[str] = '{http://www.w3.org/2000/svg}'
 
-    namespace = '{http://www.w3.org/2000/svg}'
+    filename: str
+    width: float
+    height: float
+    margin: float
+    all_objects: list[SplineObject]
 
-    def __init__(self, filename, width=1000, height=1000, margin=0.05):
-        """  Constructor
-          :param filename: Filename to write results to
-          :type  filename: String
-          :param width   : Maximum image width in pixels
-          :type  width   : Int
-          :param height  : Maximum image height in pixels
-          :type  height  : Int
-          :param margin  : White-space around all edges of image, given in percentage of total size (default 5%)
-          :type  margin  : Float
+    scale: float
+    center: tuple[float, float]
+    offset: tuple[float, float]
+    xmlRoot: etree.Element
+
+    def __init__(self, filename: Union[Path, str], width: int = 1000, height: int = 1000, margin: float = 0.05) -> None:
+        """Constructor
+
+        :param filename: Filename to write results to
+        :type  filename: String
+        :param width   : Maximum image width in pixels
+        :type  width   : Int
+        :param height  : Maximum image height in pixels
+        :type  height  : Int
+        :param margin  : White-space around all edges of image, given in percentage of total size (default 5%)
+        :type  margin  : Float
         """
-        if filename[-4:] != '.svg':
-            filename += '.svg'
-        self.filename = filename
+        self.filename = str(filename)
 
         self.width  = width
         self.height = height
@@ -77,14 +91,18 @@ class SVG(MasterIO):
 
         self.all_objects = []
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         # in case something goes wrong, print error and abandon writing process
         if exc_type is not None:
-            print(exc_type, exc_value, traceback)
-            return False
+            print(exc_type, exc_val, exc_tb)
 
         # compute the bounding box for all geometries
         boundingbox = [np.inf, np.inf, -np.inf, -np.inf]
@@ -97,7 +115,7 @@ class SVG(MasterIO):
 
         # compute scaling factors by keeping aspect ratio, and never exceed width or height size (including margins)
         geometryRatio = float(boundingbox[3]-boundingbox[1])/(boundingbox[2]-boundingbox[0])
-        imageRatio    = 1.0*self.height / self.width
+        imageRatio    = 1.0 * self.height / self.width
         if geometryRatio > imageRatio: # scale by y-coordinate
             marginPixels = self.height*self.margin
             self.scale   = self.height*(1-2*self.margin) / (boundingbox[3]-boundingbox[1])
@@ -106,8 +124,8 @@ class SVG(MasterIO):
             marginPixels = self.width*self.margin
             self.scale   = self.width*(1-2*self.margin) / (boundingbox[2]-boundingbox[0])
             self.height  = self.width*geometryRatio + 2*marginPixels
-        self.center      = [boundingbox[0], boundingbox[1]]
-        self.offset      = [marginPixels, marginPixels]
+        self.center      = (boundingbox[0], boundingbox[1])
+        self.offset      = (marginPixels, marginPixels)
 
         # create xml root tag
         self.xmlRoot = etree.Element('svg',  {'xmlns':'http://www.w3.org/2000/svg',
@@ -130,21 +148,21 @@ class SVG(MasterIO):
             f = open(self.filename, 'w')
             f.write(result)
 
-    def write_curve(self, xmlNode, curve, fill='none', stroke='#000000', width=2):
-        """ Writes a Curve to the xml tree. This will draw a single curve
+    def write_curve(self, xmlNode: etree.Element, curve: Curve, fill: str = 'none', stroke: str = '#000000', width: int = 2) -> None:
+        """Write a Curve to the xml tree. This will draw a single curve.
 
-            :param xmlNode: Node in xml tree
-            :type  xmlNode: Etree.element
-            :param curve  : The spline curve to write
-            :type  curve  : Curve
-            :param fill   : Fill color in hex or none
-            :type  fill   : String
-            :param stroke : Line color written in hex, i.e. '#000000'
-            :type  stroke : String
-            :param width  : Line width, measured in pixels
-            :type  width  : Int
-            :returns: None
-            :rtype  : NoneType
+        :param xmlNode: Node in xml tree
+        :type  xmlNode: Etree.element
+        :param curve  : The spline curve to write
+        :type  curve  : Curve
+        :param fill   : Fill color in hex or none
+        :type  fill   : String
+        :param stroke : Line color written in hex, i.e. '#000000'
+        :type  stroke : String
+        :param width  : Line width, measured in pixels
+        :type  width  : Int
+        :returns: None
+        :rtype  : NoneType
         """
         curveNode = etree.SubElement(xmlNode, 'path')
         curveNode.attrib['style'] = 'fill:%s;stroke:%s;stroke-width:%dpx;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' %(fill,stroke,width)
@@ -159,15 +177,15 @@ class SVG(MasterIO):
 
         curveNode.attrib['d'] = pathString
 
-    def write_surface(self, surface, fill='#ffcc99'):
-        """ Writes a Surface to the xml tree. This will draw the surface along with all knot lines
+    def write_surface(self, surface: Surface, fill: str = '#ffcc99') -> None:
+        """Write a Surface to the xml tree. This will draw the surface along with all knot lines.
 
-            :param surface: The spline surface to write
-            :type  surface: Surface
-            :param fill   : Surface color written in hex, i.e. '#ffcc99'
-            :type  fill   : String
-            :returns: None
-            :rtype  : NoneType
+        :param surface: The spline surface to write
+        :type  surface: Surface
+        :param fill   : Surface color written in hex, i.e. '#ffcc99'
+        :type  fill   : String
+        :returns: None
+        :rtype  : NoneType
         """
         # fetch boundary curves and create a connected, oriented bezier loop from it
         bndry_curves = surface.edges()
@@ -196,32 +214,32 @@ class SVG(MasterIO):
         for meshline in knotlines:
             self.write_curve(groupNode, meshline, width=1)
 
+    def write(self, obj: Union[SplineObject, Sequence[SplineObject]]) -> None:
+        """Writes a list of planar curves and surfaces to vector graphics SVG file.
+        The image will never be stretched, and the geometry will keep width/height ratio
+        of original geometry, regardless of provided width/height ratio from arguments.
 
-    def write(self, obj):
-        """ Writes a list of planar curves and surfaces to vector graphics SVG file.
-            The image will never be stretched, and the geometry will keep width/height ratio
-            of original geometry, regardless of provided width/height ratio from arguments.
-
-            :param obj: Primitives to write
-            :type  obj: List of Curves and/or Surfaces
-            :returns: None
-            :rtype  : NoneType
+        :param obj: Primitives to write
+        :type  obj: List of Curves and/or Surfaces
+        :returns: None
+        :rtype  : NoneType
         """
         # actually this is a dummy method. It will collect all geometries provided
         # and ton't actually write them to file until __exit__ is called
 
-        if isinstance(obj[0], SplineObject): # input SplineModel or list
+        if isinstance(obj, Sequence): # input SplineModel or list
             for o in obj:
                 self.write(o)
             return
 
+        assert isinstance(obj, SplineObject)
         if obj.dimension != 2:
             raise RuntimeError('SVG files only applicable for 2D geometries')
 
         # have to clone stuff we put here, in case they change on the outside
-        self.all_objects.append( obj.clone() )
+        self.all_objects.append(obj.clone())
 
-    def read(self):
+    def read(self) -> list[SplineObject]:
         tree = etree.parse(self.filename)
         root = tree.getroot()
         parent_map = dict((c, p) for p in tree.iter() for c in p)
@@ -245,12 +263,13 @@ class SVG(MasterIO):
                 result.append(crv)
         return result
 
-    def transform(self, curve, operation):
+    def transform(self, curve: SplineObject, operation: str) -> None:
         # intended input operation string: 'translate(-10,-20) scale(2) rotate(45) translate(5,10)'
         all_operations = re.findall(r'[^\)]*\)', operation.lower())
         all_operations.reverse()
         for one_operation in all_operations:
             parts = re.search(r'([a-z]*)\w*\((.*)\)', one_operation.strip())
+            assert parts is not None
             func = parts.group(1)
             args = [float(d) for d in parts.group(2).split(',')]
             if func == 'translate':
@@ -278,7 +297,7 @@ class SVG(MasterIO):
                     cp = cp @ M.T
                     curve.controlpoints = np.reshape(np.array(cp), curve.controlpoints.shape)
 
-    def curves_from_path(self, path):
+    def curves_from_path(self, path: str) -> list[SplineObject]:
         # see https://www.w3schools.com/graphics/svg_path.asp for documentation
         # and also https://www.w3.org/TR/SVG/paths.html
 
@@ -289,8 +308,8 @@ class SVG(MasterIO):
         #     order = 3
         # else:
         #     order = 2
-        last_curve = None
-        result = []
+        last_curve: Optional[SplineObject] = None
+        result: list[SplineObject] = []
 
         # each 'piece' is an operator (M,C,Q,L etc) and accomponying list of argument points
         for piece in re.findall('[a-zA-Z][^a-zA-Z]*', path):
@@ -344,6 +363,7 @@ class SVG(MasterIO):
                 knot = list(range(int(len(np_pts)/2)+1)) * 3
                 knot += [knot[0], knot[-1]]
                 knot.sort()
+                assert last_curve is not None
                 x0  = np.array(last_curve[-1])
                 xn1 = np.array(last_curve[-2])
                 controlpoints.append(2*x0 -xn1)
@@ -360,6 +380,7 @@ class SVG(MasterIO):
                 knot = list(range(int(len(np_pts)/2)+1)) * 3
                 knot += [knot[0], knot[-1]]
                 knot.sort()
+                assert last_curve is not None
                 x0  = np.array(last_curve[-1])
                 xn1 = np.array(last_curve[-2])
                 controlpoints.append(2*x0 -xn1)
@@ -381,7 +402,7 @@ class SVG(MasterIO):
             elif piece[0] == 'Q':
                 # quadratic spline, absolute position
                 controlpoints = [startpoint]
-                knot = list(range(len(np_pts)/2+1)) * 2
+                knot = list(range(len(np_pts)//2+1)) * 2
                 knot += [knot[0], knot[-1]]
                 knot.sort()
                 for cp in np_pts:
@@ -471,9 +492,16 @@ class SVG(MasterIO):
                                        (rx**2*xp[1]**2 + ry**2*xp[0]**2)) *
                                        np.array([rx*xp[1]/ry, -ry*xp[0]/rx]))
                 center = np.linalg.solve(R.T, cprime) + (startpoint+xend)/2
-                def arccos(vec1, vec2):
-                    return (np.sign(vec1[0]*vec2[1] - vec1[1]*vec2[0]) *
-                            np.arccos(vec1.dot(vec2)/np.linalg.norm(vec1)/np.linalg.norm(vec2)))
+
+                def arccos(vec1: FArray, vec2: FArray) -> float:
+                    return cast(
+                        float,
+                        (
+                            np.sign(vec1[0]*vec2[1] - vec1[1]*vec2[0]) *
+                            np.arccos(vec1.dot(vec2)/np.linalg.norm(vec1)/np.linalg.norm(vec2))
+                        ),
+                    )
+
                 tmp1 = np.divide( xp - cprime, [rx,ry])
                 tmp2 = np.divide(-xp - cprime, [rx,ry])
                 theta1 = arccos(np.array([1,0]), tmp1)
@@ -490,6 +518,7 @@ class SVG(MasterIO):
                 # curve_piece = Curve(BSplineBasis(2), [startpoint, last_curve[0]])
                 # curve_piece.reparam([0, curve_piece.length()])
                 # last_curve.append(curve_piece).make_periodic(0)
+                assert last_curve is not None
                 last_curve.make_periodic(0)
                 result.append(last_curve)
                 last_curve = None
@@ -497,12 +526,13 @@ class SVG(MasterIO):
             else:
                 raise RuntimeError('Unknown path parameter:' + piece)
 
-            if(curve_piece.length()>state.controlpoint_absolute_tolerance):
-                curve_piece.reparam([0, curve_piece.length()])
+            if curve_piece.length() > state.controlpoint_absolute_tolerance:
+                curve_piece.reparam((0, curve_piece.length()))
                 if last_curve is None:
                     last_curve = curve_piece
                 else:
-                    last_curve.append(curve_piece)
+                    cast(Curve, last_curve).append(curve_piece)
+            assert last_curve is not None
             startpoint = last_curve[-1,:2] # disregard rational weight (if any)
 
         if last_curve is not None:
