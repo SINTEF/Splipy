@@ -1,119 +1,147 @@
+from pathlib import Path
+from typing import Union, Literal, Optional, Type, Sequence, Iterator, cast, Iterable, Protocol
+from types import TracebackType
+from itertools import chain
+
+from typing_extensions import Self
+
 import numpy as np
-from splipy import Curve, Surface, BSplineBasis, curve_factory
+import rhino3dm as rhino
+
+from ..splineobject import SplineObject
+from ..curve import Curve
+from ..surface import Surface
+from ..basis import BSplineBasis
+from ..types import FArray
+from .. import curve_factory
 from .master import MasterIO
-from rhino3dm import Brep, File3dm
-from rhino3dm import NurbsCurve, PolylineCurve, Circle, Polyline, BezierCurve, Arc, Line
-from rhino3dm import NurbsSurface, Cylinder, Sphere, Extrusion
-from rhino3dm import Curve   as threedmCurve   # name conflict with splipy
-from rhino3dm import Surface as threedmSurface # name conflict with splipy
+
+
+# The rhino3dm library has incomplete type information. In particular, some
+# classes which are iterable and support the sequence protocol don't advertise
+# that fact. All the casting and the protocols here are just to fix that.
+# TODO: Remove all this cruft if Rhino ever fixes their types.
+class Point:
+    X: float
+    Y: float
+    Z: float
+    W: float
+
+class CurvePointList(Protocol):
+    def __getitem__(self, i: int) -> Point:
+        ...
+
+    def __len__(self) -> int:
+        ...
+
+class SurfacePointList(Protocol):
+    def __getitem__(self, i: tuple[int, int]) -> Point:
+        ...
+
 
 class ThreeDM(MasterIO):
 
-    def __init__(self, filename):
-        if filename[-4:] != '.3dm':
-            filename += '.3dm'
-        self.filename = filename
+    filename: str
+    trimming_curves: list
+    fstream: rhino.File3dm
+
+    def __init__(self, filename: Union[str, Path]) -> None:
+        self.filename = str(filename)
         self.trimming_curves = []
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
+        self.fstream = rhino.File3dm.Read(self.filename)
         return self
 
-    def write(self, obj):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
+        pass
+
+    def write(self, obj: Union[SplineObject, Sequence[SplineObject]]) -> None:
         raise IOError('Writing to 3DM not supported')
 
-    def read(self):
-        if not hasattr(self, 'fstream'):
-            self.onlywrite = False
-            self.fstream   = File3dm.Read(self.filename)
+    def read(self) -> list[SplineObject]:
+        result: list[SplineObject] = []
 
-        if self.onlywrite:
-            raise IOError('Could not read from file %s' % (self.filename))
+        for obj in cast(Iterator[rhino.File3dmObject], self.fstream.Objects):
+            geom: Union[rhino.GeometryBase, rhino.Polyline] = obj.Geometry
 
-        result = []
-
-        for obj in self.fstream.Objects:
-            geom = obj.Geometry
-            print(geom)
-            if type(geom) is Extrusion:
+            if isinstance(geom, rhino.Extrusion):
                 geom = geom.ToBrep(splitKinkyFaces=True)
-            if type(geom) is Brep:
-                for idx in range(len(geom.Faces)):
-                    print('  ', geom.Faces[idx], "(", geom.Faces[idx].UnderlyingSurface(), ")")
-                    nsrf = geom.Faces[idx].UnderlyingSurface().ToNurbsSurface()
+
+            if isinstance(geom, rhino.Brep):
+                faces = cast(Sequence[rhino.BrepFace], geom.Faces)
+                for idx in range(len(faces)):
+                    nsrf = faces[idx].UnderlyingSurface().ToNurbsSurface()
                     result.append(self.read_surface(nsrf))
 
-            if type(geom) is Line:
-                geom = result.append(curve_factory.line(geom.From, geom.To))
+            if isinstance(geom, rhino.Line):
+                a = (geom.From.X, geom.From.Y, geom.From.Z)
+                b = (geom.To.X, geom.To.Y, geom.To.Z)
+                result.append(curve_factory.line(a, b))
                 continue
-            if type(geom) is PolylineCurve:
+
+            if isinstance(geom, rhino.PolylineCurve):
                 geom = geom.ToPolyline()
-            if type(geom) is Polyline or \
-               type(geom) is Circle or \
-               type(geom) is threedmCurve or \
-               type(geom) is BezierCurve or \
-               type(geom) is Arc:
+
+            if isinstance(geom, (rhino.Polyline, rhino.Circle, rhino.Curve, rhino.BezierCurve, rhino.Arc)):
                 geom = geom.ToNurbsCurve()
 
-            if type(geom) is NurbsCurve:
+            if isinstance(geom, rhino.NurbsCurve):
                 result.append(self.read_curve(geom))
 
-            if type(geom) is Cylinder or \
-               type(geom) is Sphere or \
-               type(geom) is threedmSurface:
+            if isinstance(geom, (rhino.Cylinder, rhino.Sphere, rhino.Surface)):
                 geom = geom.ToNurbsSurface()
-            if type(geom) is NurbsSurface:
+
+            if isinstance(geom, rhino.NurbsSurface):
                 result.append(self.read_surface(geom))
 
         return result
 
-    def read_surface(self, nsrf):
-        knotsu = [0]
-        for i in nsrf.KnotsU:
-            knotsu.append(i)
-        knotsu.append(knotsu[len(knotsu)-1])
+    def read_surface(self, nsrf: rhino.NurbsSurface) -> Surface:
+        knotsu = np.fromiter(chain([0.0], cast(Iterable[float], nsrf.KnotsU), [0.0]), dtype=float)
         knotsu[0] = knotsu[1]
+        knotsu[-1] = knotsu[-2]
 
-        knotsv = [0]
-        for i in nsrf.KnotsV:
-            knotsv.append(i)
-        knotsv.append(knotsv[len(knotsv)-1])
+        knotsv = np.fromiter(chain([0.0], cast(Iterable[float], nsrf.KnotsV), [0.0]), dtype=float)
         knotsv[0] = knotsv[1]
+        knotsv[-1] = knotsv[-2]
 
         basisu = BSplineBasis(nsrf.OrderU, knotsu, -1)
         basisv = BSplineBasis(nsrf.OrderV, knotsv, -1)
-        cpts = []
 
-        cpts = np.ndarray((nsrf.Points.CountU*nsrf.Points.CountV, 3 + nsrf.IsRational))
-        for v in range(0,nsrf.Points.CountV):
-            for u in range(0,nsrf.Points.CountU):
-                cpts[u+v*nsrf.Points.CountU,0] = nsrf.Points[u,v].X
-                cpts[u+v*nsrf.Points.CountU,1] = nsrf.Points[u,v].Y
-                cpts[u+v*nsrf.Points.CountU,2] = nsrf.Points[u,v].Z
+        cpts: FArray = np.ndarray((nsrf.Points.CountU*nsrf.Points.CountV, 3 + nsrf.IsRational), dtype=float)
+        points = cast(SurfacePointList, nsrf.Points)
+        for v in range(nsrf.Points.CountV):
+            count_u = nsrf.Points.CountU
+            for u in range(count_u):
+                cpts[u+v*count_u,0] = points[u,v].X
+                cpts[u+v*count_u,1] = points[u,v].Y
+                cpts[u+v*count_u,2] = points[u,v].Z
                 if nsrf.IsRational:
-                    cpts[u+v*nsrf.Points.CountU,3] = nsrf.Points[u,v].W
+                    cpts[u+v*count_u,3] = points[u,v].W
 
         return Surface(basisu, basisv, cpts, nsrf.IsRational)
 
-    def read_curve(self, ncrv):
-        knots = [0]
-        for i in ncrv.Knots:
-            knots.append(i)
+    def read_curve(self, ncrv: rhino.NurbsCurve) -> Curve:
+        knots = np.fromiter(chain([0.0], cast(Iterable[float], ncrv.Knots), [0.0]), dtype=float)
         knots[0] = knots[1]
-        knots.append(knots[len(knots)-1])
-        basis = BSplineBasis(ncrv.Order, knots, -1)
-        cpts = []
+        knots[-1] = knots[-2]
 
-        cpts = np.ndarray((len(ncrv.Points), ncrv.Dimension + ncrv.IsRational))
-        for u in range(0,len(ncrv.Points)):
-            cpts[u,0] = ncrv.Points[u].X
-            cpts[u,1] = ncrv.Points[u].Y
+        basis = BSplineBasis(ncrv.Order, knots, -1)
+
+        points = cast(CurvePointList, ncrv.Points)
+        cpts: FArray = np.ndarray((len(points), ncrv.Dimension + ncrv.IsRational))
+        for u in range(0,len(points)):
+            cpts[u,0] = points[u].X
+            cpts[u,1] = points[u].Y
             if ncrv.Dimension > 2:
-                cpts[u,2] = ncrv.Points[u].Z
+                cpts[u,2] = points[u].Z
             if ncrv.IsRational:
-                cpts[u,3] = ncrv.Points[u].W
+                cpts[u,3] = points[u].W
 
         return Curve(basis, cpts, ncrv.IsRational)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        # Apperently File3DM objects don't need to dedicated cleanup/close code
-        pass

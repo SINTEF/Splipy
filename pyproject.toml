@@ -83,6 +83,10 @@ warn_return_any = true
 show_error_codes = true
 mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
 
+[[tool.mypy.overrides]]
+module = "splipy.io.grdecl"
+ignore_errors = true
+
 [tool.bumpversion]
 current_version = "1.8.2"
 allow_dirty = false

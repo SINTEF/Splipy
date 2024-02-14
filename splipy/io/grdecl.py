@@ -7,7 +7,7 @@ from tqdm import tqdm
 import cv2
 import h5py
 from scipy.spatial import Delaunay
-from scipy.spatial.qhull import QhullError
+from scipy.spatial import QhullError
 
 from ..volume import Volume
 from ..basis import BSplineBasis
@@ -38,7 +38,7 @@ class DiscontBoxMesh(object):
             for k0, j0, i0 in product(range(2), repeat=3):
                 # Interpolate to find the x,y values of this point
                 zmin, zmax = coord[i+i0, j+j0, :, 2]
-                z  = zcorn[2*i+i0, 2*j+j0, 2*k+k0]
+                z = zcorn[2*i+i0, 2*j+j0, 2*k+k0]
                 t = (z - zmax) / (zmin - zmax)
                 point = coord[i+i0, j+j0, 0] * t + coord[i+i0, j+j0, 1] * (1 - t)
                 x.append(point)
@@ -185,7 +185,7 @@ class GRDECL(MasterIO):
         while len(numbers) < ntot:
             numbers += next(self.fstream).split()
         numbers = numbers[:ntot] # strip away any '/' characters at the end of the line
-        return np.array(numbers, dtype=dtype)
+        # # return np.array(numbers, dtype=dtype)
 
     def read(self):
         for line in self.fstream:
@@ -198,7 +198,7 @@ class GRDECL(MasterIO):
                 self.zcorn = self.read_zcorn()
             elif line in {'actnum', 'permx', 'permy', 'permz', 'poro', 'satnum', 'rho', 'kx', 'kz', 'emodulus25', 'poissonratio25', 'pressure', }:
                 dtype = np.int32 if line in {'actnum', 'satnum'} else np.float64
-                self.attribute[line] = self.cell_property(dtype)
+                # lf.attribute[line] = self.cell_property(dtype)
             elif line in {'grid', '/', ''} or line.startswith('--'):
                 pass
             elif not re.match('[0-9]', line[0]):
