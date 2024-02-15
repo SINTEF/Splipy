@@ -11,6 +11,7 @@ from typing_extensions import Self
 from ..curve import Curve
 from ..surface import Surface
 from ..splineobject import SplineObject
+from ..splinemodel import SplineModel
 from ..basis import BSplineBasis
 from ..types import FArray
 from .. import curve_factory, state
@@ -214,7 +215,7 @@ class SVG(MasterIO):
         for meshline in knotlines:
             self.write_curve(groupNode, meshline, width=1)
 
-    def write(self, obj: Union[SplineObject, Sequence[SplineObject]]) -> None:
+    def write(self, obj: Union[SplineObject, SplineModel, Sequence[SplineObject]]) -> None:
         """Writes a list of planar curves and surfaces to vector graphics SVG file.
         The image will never be stretched, and the geometry will keep width/height ratio
         of original geometry, regardless of provided width/height ratio from arguments.

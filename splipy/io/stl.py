@@ -144,6 +144,9 @@ class STL(MasterIO):
         self.writer.close()
         self.writer.fp.__exit__(exc_type, exc_val, exc_tb)
 
+    def read(self) -> list[SplineObject]:
+        raise IOError('Reading STL not supported')
+
     def write(
         self,
         obj: Union[SplineModel, Sequence[SplineObject], SplineObject],

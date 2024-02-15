@@ -6,9 +6,10 @@ from pathlib import Path
 from typing_extensions import Self
 
 from ..splineobject import SplineObject
+from ..splinemodel import SplineModel
 
 
-class MasterIO:
+class MasterIO(ABC):
 
     def __init__(self, filename: Union[str, Path]) -> None:
         """Create an IO object attached to a file.
@@ -31,7 +32,7 @@ class MasterIO:
         ...
 
     @abstractmethod
-    def write(self, obj: Union[SplineObject, Sequence[SplineObject]]) -> None:
+    def write(self, obj: Union[SplineObject, Sequence[SplineObject], SplineModel]) -> None:
         """Write one or more objects to the file.
 
         :param obj: The object(s) to write

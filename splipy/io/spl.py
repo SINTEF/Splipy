@@ -1,6 +1,6 @@
 from itertools import islice
 from pathlib import Path
-from typing import Union, TextIO, Type, Optional, Iterator
+from typing import Union, TextIO, Type, Optional, Iterator, Sequence
 from types import TracebackType
 
 import numpy as np
@@ -10,6 +10,7 @@ from ..curve import Curve
 from ..surface import Surface
 from ..volume import Volume
 from ..splineobject import SplineObject
+from ..splinemodel import SplineModel
 from ..basis import BSplineBasis
 
 from .master import MasterIO
@@ -38,6 +39,9 @@ class SPL(MasterIO):
     def lines(self) -> Iterator[str]:
         for line in self.fstream:
             yield line.split('#', maxsplit=1)[0].strip()
+
+    def write(self, obj: Union[SplineObject, SplineModel, Sequence[SplineObject]]) -> None:
+        raise IOError('Writing to SPL not supported')
 
     def read(self) -> list[SplineObject]:
         lines = self.lines()

@@ -1,6 +1,7 @@
 from itertools import product, chain
 import re
 import warnings
+from typing import Union, Sequence
 
 import numpy as np
 from tqdm import tqdm
@@ -12,6 +13,8 @@ from scipy.spatial import QhullError
 from ..volume import Volume
 from ..basis import BSplineBasis
 from ..utils import ensure_listlike
+from ..splineobject import SplineObject
+from ..splinemodel import SplineModel
 from .. import surface_factory, curve_factory, volume_factory
 
 from .master import MasterIO
@@ -211,6 +214,8 @@ class GRDECL(MasterIO):
 
         self.raw = DiscontBoxMesh(self.n, self.coord, self.zcorn)
 
+    def write(self, obj: Union[SplineObject, SplineModel, Sequence[SplineObject]]) -> None:
+        raise IOError('Writing to GRDECL not supported')
 
     def get_c0_mesh(self):
         # Create the C0-mesh

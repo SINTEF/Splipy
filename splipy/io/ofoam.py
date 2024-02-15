@@ -1,43 +1,56 @@
+from pathlib import Path
 from itertools import groupby
 from operator import itemgetter
 from os.path import exists, isdir, join
 from os import makedirs
+from typing import Union, Optional, Type, Sequence
+from types import TracebackType
+from typing_extensions import Self
 
 import numpy as np
 
+from .master import MasterIO
+from ..splineobject import SplineObject
 from ..splinemodel import SplineModel
 
 
-class OpenFOAM(object):
+class OpenFOAM(MasterIO):
+    target: str
 
-    def __init__(self, target):
-        self.target = target
+    def __init__(self, target: Union[Path, str]) -> None:
+        self.target = str(target)
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         # Create the target directory if it does not exist
         if not exists(self.target):
             makedirs(self.target)
+
         # If it does, ensure that it's a directory
         elif not isdir(self.target):
             raise FileExistsError('{} exists and is not a directory'.format(self.target))
 
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
+        return
 
-    def _header(self, cls, obj, note=None):
+    def _header(self, cls: str, obj: str, note: Optional[str] = None) -> str:
         s = 'FoamFile\n{\n'
         s += '    version     2.0;\n'
         s += '    format      ascii;\n'
-        s += '    class       %s;\n' % cls
+        s += f'    class       {cls};\n'
         if note:
-            s += '    note        "%s";\n' % note
-        s += '    object      %s;\n' % obj
+            s += f'    note        "{note}";\n'
+        s += f'    object      {obj};\n'
         s += '}\n'
         return s
 
-    def write(self, model):
+    def write(self, model: Union[SplineObject, Sequence[SplineObject], SplineModel]) -> None:
         assert isinstance(model, SplineModel), "OpenFOAM.write only supports SplineModel objects"
 
         # Only linear volumes in 3D, please
@@ -60,11 +73,11 @@ class OpenFOAM(object):
         # - All faces in the same boundary must be contiguous
         # - Low number owners before high number owners
         # - Low number neighbors before high number neighbors
-        faces = list(faces)
-        faces = sorted(faces, key=itemgetter('neighbor'))
-        faces = sorted(faces, key=itemgetter('owner'))
-        faces = sorted(faces, key=lambda x: (x['name'] is not None, x['name']))
-        faces = np.array(faces)
+        faces_list = list(faces)
+        faces_list = sorted(faces_list, key=itemgetter('neighbor'))
+        faces_list = sorted(faces_list, key=itemgetter('owner'))
+        faces_list = sorted(faces_list, key=lambda x: (x['name'] is not None, x['name']))
+        faces = np.array(faces_list)
 
         # Write the points file (vertex coordinates)
         with open(join(self.target, 'points'), 'w') as f:

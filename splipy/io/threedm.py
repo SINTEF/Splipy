@@ -8,6 +8,7 @@ from typing_extensions import Self
 import numpy as np
 import rhino3dm as rhino
 
+from ..splinemodel import SplineModel
 from ..splineobject import SplineObject
 from ..curve import Curve
 from ..surface import Surface
@@ -61,7 +62,7 @@ class ThreeDM(MasterIO):
     ) -> None:
         pass
 
-    def write(self, obj: Union[SplineObject, Sequence[SplineObject]]) -> None:
+    def write(self, obj: Union[SplineObject, SplineModel, Sequence[SplineObject]]) -> None:
         raise IOError('Writing to 3DM not supported')
 
     def read(self) -> list[SplineObject]:
