@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from math import pi
+from typing import Any, Optional, Sequence, Literal
 
 import numpy as np
 from scipy.spatial import ConvexHull
 
 from .surface import Surface
-from .utils import sections
 from . import state
+from .basis import BSplineBasis
+from .curve import Curve
+from .types import FArray, Scalar
 
 __all__ = ['TrimmedSurface']
 
@@ -18,10 +21,20 @@ class TrimmedSurface(Surface):
     Represents a surface: an object with a two-dimensional parameter space and
     one or more interior closed trimming loops."""
 
-    _intended_pardim = 2
+    boundaries: list[list[Curve]]
+    convexhull: list[FArray]
+    rotation: list[Literal['clockwise', 'counterclockwise']]
 
-    def __init__(self, basis1=None, basis2=None, controlpoints=None, rational=False, loops=None, **kwargs):
-        """  Construct a surface with the given basis and control points.
+    def __init__(
+        self,
+        basis1: Optional[BSplineBasis] = None,
+        basis2: Optional[BSplineBasis] = None,
+        controlpoints: Any = None,
+        rational: bool = False,
+        loops: Optional[Sequence[Sequence[Curve]]] = None,
+        raw: bool = False,
+    ) -> None:
+        """Construct a surface with the given basis and control points.
 
         The default is to create a linear one-element mapping from and to the
         unit square.
@@ -36,9 +49,13 @@ class TrimmedSurface(Surface):
         :raises RuntimeError: If the loops are not contained to dimension 2 (parametric
             space), or if they are not closed, or if they are not looping properly
         """
-        super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
+        super().__init__(basis1, basis2, controlpoints, rational=rational, raw=raw)
+
         # make sure to make deep copies of the loops so nothing bad happens
-        self.boundaries = [[l.clone() for l in one_loop] for one_loop in loops]
+        if loops:
+            self.boundaries = [[l.clone() for l in one_loop] for one_loop in loops]
+        else:
+            self.boundaries = []
 
         # error check input curves
         for one_loop in self.boundaries:
@@ -55,15 +72,7 @@ class TrimmedSurface(Surface):
 
         self.__compute_convex_hulls()
 
-    def edges(self):
-        """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
-
-        :return: Edge curves
-        :rtype: (Curve)
-        """
-        return tuple(self.section(*args) for args in sections(2, 1))
-
-    def __compute_convex_hulls(self):
+    def __compute_convex_hulls(self) -> None:
         self.rotation   = []
         self.convexhull = []
         for loop in self.boundaries:
@@ -92,10 +101,9 @@ class TrimmedSurface(Surface):
 
             hull = ConvexHull(x)
             self.convexhull.append(x[hull.vertices,:])
-            # print(self.convexhull[-1])
 
-    def is_contained(self, u, v):
-        """ Returns a boolean mask if the input points are inside (True) or 
+    def is_contained(self, u: Scalar, v: Scalar) -> bool:
+        """Returns a boolean mask if the input points are inside (True) or
         outside (False) of the trimming curves."""
 
         raise NotImplementedError('This has yet to be implemented')
@@ -108,7 +116,7 @@ class TrimmedSurface(Surface):
 
         return False
 
-    def __is_contained_fine(self, u, v):
+    def __is_contained_fine(self, u: Scalar, v: Scalar) -> bool:
         """ Does a fine test based on parametric curve representation to see if
         points are inside or outside trimming domain. Trimming curves are high-
         polynomial representations, so figuring this out means newton iteration
@@ -116,7 +124,7 @@ class TrimmedSurface(Surface):
         domain."""
         return False
 
-    def __is_contained_coarse(self, u, v):
+    def __is_contained_coarse(self, u: Scalar, v: Scalar) -> bool:
         """ Does a course test based on control-grid to see if points are inside or
         outside domain. Inside control-grid means inside a trimming loop and outputs
         False. Outside the *convex hull* of a control-grid means"""

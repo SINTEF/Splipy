@@ -1257,6 +1257,9 @@ class SplineObject:
         :return: The new object
         :rtype: SplineObject
         """
+
+        knots_list = ensure_scalars(knot)
+
         direction_index = check_direction(direction, self.pardim)
         assert self.periodic(direction_index)
 
@@ -1275,7 +1278,7 @@ class SplineObject:
 
         return splitting_obj
 
-    def split(self, knots: ScalarOrScalars, direction: Direction = 0) -> Union[Self, list[Self]]:
+    def split_nonperiodic(self, knot: ScalarOrScalars, direction: Direction = 0) -> list[Self]:
         """Split an object into two or more separate representations with C0
         continuity between them.
 
@@ -1288,10 +1291,11 @@ class SplineObject:
         """
 
         # for single-value input, wrap it into a list
-        knots_list = ensure_scalars(knots)
+        knots_list = ensure_scalars(knot)
 
         # error test input
         direction_index = check_direction(direction, self.pardim)
+        assert not self.periodic(direction_index)
 
         p = self.order(direction_index)
         results: list[Self] = []
@@ -1303,18 +1307,6 @@ class SplineObject:
             if continuity == np.inf:
                 continuity = p - 1
             splitting_obj.insert_knot([k] * (continuity + 1), direction_index)
-
-        b = splitting_obj.bases[direction_index]
-        if b.periodic > -1:
-            mu = bisect_left(b.knots, knots_list[0])
-            b.roll(mu)
-            splitting_obj.controlpoints = np.roll(splitting_obj.controlpoints, -mu, direction_index)
-            b.knots = b.knots[:-b.periodic-1]
-            b.periodic = -1
-            if len(knots_list) > 1:
-                return splitting_obj.split(knots_list[1:], direction_index)
-            else:
-                return splitting_obj
 
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
@@ -1348,6 +1340,33 @@ class SplineObject:
         results.append(self.self_constructor(bases, cp, rational=splitting_obj.rational, raw=True))
 
         return results
+
+    def split(self, knots: ScalarOrScalars, direction: Direction = 0) -> Union[Self, list[Self]]:
+        """Split an object into two or more separate representations with C0
+        continuity between them.
+
+        :param knots: The splitting points
+        :type knots: float or [float]
+        :param direction: Parametric direction
+        :type direction: int
+        :return: The new objects
+        :rtype: [SplineObject]
+        """
+        direction_index = check_direction(direction, self.pardim)
+        if self.periodic(direction_index):
+            knots_list = ensure_scalars(knots)
+            split_obj = self.split_periodic(knots_list[0], direction)
+            if len(knots_list) > 1:
+                return split_obj.split_nonperiodic(knots_list[1:], direction)
+            return split_obj
+        return self.split_nonperiodic(knots, direction)
+
+    def split_many(self, knots: ScalarOrScalars, direction: Direction = 0) -> list[Self]:
+        """Like split, but always returns a list."""
+        split_obj = self.split(knots, direction)
+        if isinstance(split_obj, list):
+            return split_obj
+        return [split_obj]
 
     def make_periodic(self, continuity: Optional[int] = None, direction: Direction = 0) -> Self:
         """Make the spline object periodic in a given parametric direction.

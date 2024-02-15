@@ -1,12 +1,16 @@
 __doc__ = 'Implementation of various smoothing operations on a per-controlpoint level.'
 
+from typing import Optional, Literal
+
 from scipy import ndimage
 import numpy as np
 
 from . import check_direction
+from ..splineobject import SplineObject
+from ..types import Direction
 
 
-def smooth(obj, comp=None):
+def smooth(obj: SplineObject, comp: Optional[Direction] = None) -> None:
     """Smooth an object by setting the interior control points to the average of
     itself and all neighbours (e.g. 9 for surfaces, 27 for volumes). The edges
     are kept unchanged, and any rational weights are kept unchanged.
@@ -17,8 +21,6 @@ def smooth(obj, comp=None):
     :type comp: int or None
     """
     n = obj.shape
-    if comp is not None:
-        comp = check_direction(comp, len(obj))
 
     averaging_mask  = np.ones([3]*len(n)+[1])
     averaging_mask /= averaging_mask.size
@@ -40,9 +42,10 @@ def smooth(obj, comp=None):
     if obj.rational:
         interior.append(slice(0,-1,None))
     elif comp is not None:
-        interior.append(slice(comp,comp+1,None))
+        cix = check_direction(comp, obj.dimension)
+        interior.append(slice(cix,cix+1,None))
     else:
         interior.append(slice(None,None,None))
 
-    interior = tuple(interior)
-    obj.controlpoints[interior] =  new_controlpoints[interior]
+    ix = tuple(interior)
+    obj.controlpoints[ix] = new_controlpoints[ix]

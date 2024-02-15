@@ -2,17 +2,22 @@
 
 __doc__ = 'Implementation of image based mesh generation.'
 
+from pathlib import Path
+from itertools import chain
 from math import sqrt
-import warnings
+from typing import Union, cast
 
 import numpy as np
 
+from ..curve import Curve
 from ..basis import BSplineBasis
+from ..surface import Surface
 from .. import curve_factory, surface_factory
+from ..types import FArray, IArray, Scalar
 
 
-def get_corners(X, L=50, R=30, D=15):
-    """Detects corners of traced outlines using the SAM04 algorithm.
+def get_corners(X: FArray, L: int = 50, R: float = 30, D: float = 15) -> IArray:
+    """Detect corners of traced outlines using the SAM04 algorithm.
 
     The outline is assumed to constitute a discrete closed curve where each
     point is included just once. Increasing `D` and `R` will give the same
@@ -34,10 +39,10 @@ def get_corners(X, L=50, R=30, D=15):
     for i in range(1,n+1):
         if i+L <= n:
             k = i+L
-            index = np.array(range(i+1,k))
+            index = np.arange(i+1, k)
         else:
             k = i+L-n
-            index = np.array(list(range(i+1,n+1)) + list(range(1,k)))
+            index = np.fromiter(chain(range(i+1, n+1), range(1,k)), dtype=int)
 
         M = X[k-1,:]-X[i-1,:]
 
@@ -52,14 +57,9 @@ def get_corners(X, L=50, R=30, D=15):
         if Y > d[index[I]-1]:
             d[index[I]-1] = Y
 
-    I = np.where(d > 0)[0]
     # Rejects candidates which do not meet the lower metric bound D.
-    index  = d <  D
-    index2 = d >= D
-    d[index] = 0
-    C = np.array(range(n))
-    C = C[index2]
-
+    d[d < D] = 0
+    C = np.arange(n)[d >= 0]
 
     # Rejects corners that are too close to a corner with larger metric.
     l = len(C)
@@ -99,7 +99,7 @@ def get_corners(X, L=50, R=30, D=15):
     return C
 
 
-def image_curves(filename):
+def image_curves(filename: Union[Path, str]) -> list[Curve]:
     """Generate B-spline curves corresponding to the edges in a black/white
     mask image.
 
@@ -109,11 +109,11 @@ def image_curves(filename):
     """
     import cv2
 
-    im = cv2.imread(filename)
+    im = cv2.imread(str(filename))
 
     # initialize image holders
-    imGrey   = np.zeros((len(im),   len(im[0])),   np.uint8)
-    imBlack  = np.zeros((len(im),   len(im[0])),   np.uint8)
+    imGrey = np.zeros((len(im), len(im[0])), dtype=np.uint8)
+    imBlack = np.zeros((len(im), len(im[0])), dtype=np.uint8)
 
     # convert to greyscale image
     cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
@@ -122,15 +122,11 @@ def image_curves(filename):
     cv2.threshold(imGrey, 128, 255, cv2.THRESH_BINARY, imBlack)
 
     # find contour curves in image
-    if cv2.__version__[0] == '3':
-        warnings.warn(FutureWarning('openCV v.3 will eventually be discontinued. Please update your version: \"pip install opencv-python --upgrade\"'))
-        [_, contours, _] = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-    else:
-        [contours, _]    = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     result = []
     for i in range(len(contours)-1):   # for all contours (except the last one which is the edge)
-        pts = contours[i][:,0,:]       # I have no idea why there needs to be a 0 here
+        pts = cast(FArray, contours[i][:,0,:])       # I have no idea why there needs to be a 0 here
         for j in range(len(pts)):      # invert y-axis since images are stored the other way around
             pts[j][1] = len(im[0])-pts[j][1]
 
@@ -140,7 +136,7 @@ def image_curves(filename):
             corners = get_corners(pts)            # recompute corners, since previous sem might be smooth
 
         n = len(pts)
-        parpt = list(range(n))
+        parpt: list[float] = list(range(n))
         for i in range(n):
             parpt[i] = float(parpt[i]) / (n-1)
 
@@ -154,7 +150,7 @@ def image_curves(filename):
         # - up to a max of 100(ish) control points for large models
 
         # start off with a uniform(ish) knot vector
-        knot = []
+        knot: list[Scalar] = []
         nStart = min(n//10, 90)
         for i in range(nStart+1):
             knot.append(int(1.0*i*(n-1)/nStart))
@@ -191,7 +187,8 @@ def image_curves(filename):
 
     return result
 
-def image_height(filename, N=[30,30], p=[4,4]):
+
+def image_height(filename: Union[str, Path], N: tuple[int, int] = (30, 30), p: tuple[int, int] = (4,4)) -> Surface:
     """Generate a B-spline surface approximation given by the heightmap in a
     grayscale image.
 
@@ -204,22 +201,22 @@ def image_height(filename, N=[30,30], p=[4,4]):
 
     import cv2
 
-    im = cv2.imread(filename)
+    im = cv2.imread(str(filename))
 
     width  = len(im[0])
     height = len(im)
 
     # initialize image holder
-    imGrey = np.zeros((height, width), np.uint8)
+    imGrey = np.zeros((height, width), dtype=np.uint8)
 
     # convert to greyscale image
     cv2.cvtColor(im, cv2.COLOR_RGB2GRAY, imGrey)
 
     # guess uniform evaluation points and knot vectors
-    u = list(range(width))
-    v = list(range(height))
-    knot1 = [0]*(p[0]-1) + list(range(N[0]-p[0]+2)) + [N[0]-p[0]+1]*(p[0]-1)
-    knot2 = [0]*(p[1]-1) + list(range(N[1]-p[1]+2)) + [N[1]-p[1]+1]*(p[1]-1)
+    u: list[float] = list(range(width))
+    v: list[float] = list(range(height))
+    knot1: list[float] = [0.0]*(p[0]-1) + list(range(N[0]-p[0]+2)) + [N[0]-p[0]+1]*(p[0]-1)
+    knot2: list[float] = [0.0]*(p[1]-1) + list(range(N[1]-p[1]+2)) + [N[1]-p[1]+1]*(p[1]-1)
 
     # normalize all values to be in range [0, 1]
     u     = [float(i)/u[-1]     for i in u]
@@ -228,17 +225,16 @@ def image_height(filename, N=[30,30], p=[4,4]):
     knot2 = [float(i)/knot2[-1] for i in knot2]
 
     # flip and reverse image so coordinate (0,0) is at lower-left corner
-    imGrey = imGrey.T  / 255.0
-    imGrey = np.flip(imGrey, axis=1)
-    x,y    = np.meshgrid(u,v, indexing='ij')
-    pts   = np.stack([x,y,imGrey], axis=2)
+    imGreyF = np.flip(imGrey.T  / 255.0, axis=1)
+    x,y = np.meshgrid(u,v, indexing='ij')
+    pts = np.stack([x,y,imGreyF], axis=2)
 
     basis1 = BSplineBasis(p[0], knot1)
     basis2 = BSplineBasis(p[1], knot2)
 
-    return surface_factory.least_square_fit(pts,[basis1, basis2], [u,v])
+    return surface_factory.least_square_fit(pts, [basis1, basis2], [u,v])
 
-def image_convex_surface(filename):
+def image_convex_surface(filename: Union[Path, str]) -> Surface:
     """Generate a single B-spline surface corresponding to convex black domain
     of a black/white mask image. The algorithm traces the boundary and searches
     for 4 natural corner points. It will then generate 4 boundary curves which
@@ -249,20 +245,20 @@ def image_convex_surface(filename):
     :rtype: :class:`splipy.Surface`
     """
     # generate boundary curve
-    crv = image_curves(filename)
+    curves = image_curves(filename)
 
     # error test input
-    if len(crv) != 1:
+    if len(curves) != 1:
         raise RuntimeError('Error: image_convex_surface expects a single closed curve. Multiple curves detected')
 
-    crv = crv[0]
+    crv = curves[0]
 
     # parametric value of corner candidates. These are all in the range [0,1] and both 0 and 1 is present
     kinks = crv.get_kinks()
 
     # generate 4 corners
     if len(kinks) == 2:
-        corners = [0, .25, .5, .75]
+        corners = [0.0, .25, .5, .75]
 
     elif len(kinks) == 3:
         corners = [0, (0+kinks[1])/2, kinks[1], (1+kinks[1])/2]
@@ -271,16 +267,16 @@ def image_convex_surface(filename):
         if kinks[1]-kinks[0] > kinks[2]-kinks[1] and kinks[1]-kinks[0] > kinks[3]-kinks[2]:
             corners = [0, (kinks[0]+kinks[1])/2] + kinks[1:3]
         elif kinks[2]-kinks[1] > kinks[3]-kinks[2]:
-            corners = [0, kinks[1], (kinks[1]+kinks[2])/2], kinks[2]
+            corners = [0, kinks[1], (kinks[1]+kinks[2])/2, kinks[2]]
         else:
             corners = [0] + kinks[1:3] + [(kinks[2]+kinks[3])/2]
 
     else:
         while len(kinks) > 5:
-            max_span   = 0
+            max_span = 0.0
             max_span_i = 0
             for i in range(1,len(kinks)-1):
-                max_span   = max(max_span, kinks[i+1]-kinks[i-1])
+                max_span = max(max_span, kinks[i+1]-kinks[i-1])
                 max_span_i = i
             del kinks[max_span_i]
         corners = kinks[0:4]
