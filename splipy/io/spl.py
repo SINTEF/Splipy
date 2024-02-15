@@ -1,6 +1,10 @@
 from itertools import islice
+from pathlib import Path
+from typing import Union, TextIO, Type, Optional, Iterator
+from types import TracebackType
 
 import numpy as np
+from typing_extensions import Self
 
 from ..curve import Curve
 from ..surface import Surface
@@ -13,21 +17,29 @@ from .master import MasterIO
 
 class SPL(MasterIO):
 
-    def __init__(self, filename):
-        if not filename.endswith('.spl'):
-            filename += '.spl'
-        self.filename = filename
-        self.trimming_curves = []
+    filename: str
+    fstream: TextIO
 
-    def __enter__(self):
-        self.fstream = open(self.filename, 'r')
+    def __init__(self, filename: Union[Path, str]) -> None:
+        self.filename = str(filename)
+
+    def __enter__(self) -> Self:
+        self.fstream = open(self.filename, 'r').__enter__()
         return self
 
-    def lines(self):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
+        self.fstream.__exit__(exc_type, exc_val, exc_tb)
+
+    def lines(self) -> Iterator[str]:
         for line in self.fstream:
             yield line.split('#', maxsplit=1)[0].strip()
 
-    def read(self):
+    def read(self) -> list[SplineObject]:
         lines = self.lines()
 
         version = next(lines).split()
@@ -46,19 +58,12 @@ class SPL(MasterIO):
         knots = [[float(k) for k in islice(lines, nkts)] for nkts in nknots]
         bases = [BSplineBasis(p, kts, -1) for p, kts in zip(orders, knots)]
 
-        cpts = np.array([float(k) for k in islice(lines, totcoeffs * physdim)])
+        cpts = np.array([float(k) for k in islice(lines, totcoeffs * physdim)], dtype=float)
         cpts = cpts.reshape(physdim, *(ncoeffs[::-1])).transpose()
 
-        if pardim == 1:
-            patch = Curve(*bases, controlpoints=cpts, raw=True)
-        elif pardim == 2:
-            patch = Surface(*bases, controlpoints=cpts, raw=True)
-        elif pardim == 3:
-            patch = Volume(*bases, controlpoints=cpts, raw=True)
+        if 1 <= pardim <= 3:
+            patch = SplineObject.constructor(pardim)(bases, cpts, raw=True)
         else:
             patch = SplineObject(bases, controlpoints=cpts, raw=True)
 
         return [patch]
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.fstream.close()
