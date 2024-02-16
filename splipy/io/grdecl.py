@@ -198,7 +198,7 @@ class GRDECL(MasterIO):
         while len(numbers) < ntot:
             numbers += next(self.fstream).split()
         numbers = numbers[:ntot]  # strip away any '/' characters at the end of the line
-        # # return np.array(numbers, dtype=dtype)
+        return np.array(numbers, dtype=dtype)
 
     def read(self):
         for line in self.fstream:
@@ -231,7 +231,7 @@ class GRDECL(MasterIO):
                 warnings.showwarning(
                     f'Unkown keyword "{line.split()[0]}" encountered in file',
                     SyntaxWarning,
-                    self.filename,
+                    str(self.filename),
                     self.line_number,
                     line=[],
                 )
