@@ -600,7 +600,7 @@ def manipulate(
 
     if vectorized:
         x = crv(t)
-        arg_names = inspect.getargspec(f).args
+        arg_names = inspect.getfullargspec(f).args
         argc = len(arg_names)
         argv = [0] * argc
         for j in range(argc):
@@ -630,7 +630,7 @@ def manipulate(
         destination = np.zeros((len(crv), crv.dimension))
         for t1, i in zip(t, range(len(t))):
             x = crv(t1)
-            arg_names = inspect.getargspec(f).args
+            arg_names = inspect.getfullargspec(f).args
             argc = len(arg_names)
             argv = [0] * argc
             for j in range(argc):
