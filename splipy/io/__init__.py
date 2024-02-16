@@ -15,6 +15,7 @@ has_cv2 = find_spec("cv2")
 has_grdecl = has_cv2
 if has_grdecl:
     from .grdecl import GRDECL  # noqa
+
     __all__.append("GRDECL")
 
 
@@ -22,4 +23,5 @@ if has_grdecl:
 has_rhino = find_spec("rhino3dm")
 if has_rhino:
     from .threedm import ThreeDM  # noqa
+
     __all__.append("ThreeDM")
