@@ -35,7 +35,7 @@ pytest:
 
 .PHONY: mypy
 mypy:
-	poetry run mypy $(package)
+	poetry run mypy
 
 .PHONY: lint-check
 lint-check:

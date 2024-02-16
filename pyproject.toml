@@ -108,6 +108,7 @@ ignore = [
 
 [tool.mypy]
 plugins = ["numpy.typing.mypy_plugin"]
+files = ["splipy/**/*.py"]
 disallow_untyped_defs = true
 disallow_any_unimported = true
 no_implicit_optional = true
