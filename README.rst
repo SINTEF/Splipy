@@ -75,6 +75,30 @@ Don't upload wheels to PyPI manually. They are built by CI runners whenever a
 new version is tagged (see below).
 
 
+Tests
+-----
+
+To run the tests, use::
+
+    make test
+
+To run specific parts of the tests, use::
+
+    make pytest
+    make mypy
+    make lint-check
+
+The lint-check stage of the tests will complain about linter and style errors.
+Some of these can be fixed automatically. To do this, run::
+
+    make lint
+    make format
+
+For benchmarks::
+
+    make benchmark
+
+
 Documentation
 -------------
 
@@ -87,18 +111,6 @@ To push generated docs online on the ``gh-pages`` branch, run the helper script:
     python push_documentation.py [remote]
 
 where ``remote`` is the name of the remote to push to. If not given, it will be asked.
-
-
-Tests
------
-
-To run the tests, use::
-
-    make test
-
-For benchmarks::
-
-    make bench
 
 
 Releasing
