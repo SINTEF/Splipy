@@ -24,6 +24,7 @@ from typing import (
 )
 
 import numpy as np
+from numpy.typing import NDArray
 from typing_extensions import Self, Unpack
 
 from .basis import BSplineBasis
@@ -42,9 +43,12 @@ from .utils import (
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike
 
-    from .types import Direction, FArray, IArray, Scalar, ScalarOrScalars, Scalars, SectionElt, SectionKwargs
+    from .types import Direction, FArray, Scalar, ScalarOrScalars, Scalars, SectionElt, SectionKwargs
 
 __all__ = ["SplineObject"]
+
+
+IPArray = NDArray[np.intp]
 
 
 def _transpose_fix(pardim: int, direction: int) -> tuple[int, ...]:
@@ -1461,7 +1465,7 @@ class SplineObject:
             n *= b.num_functions()
         return n
 
-    def _unravel_flat_index(self, i: Union[slice, SupportsIndex]) -> tuple[IArray, ...]:
+    def _unravel_flat_index(self, i: Union[slice, SupportsIndex]) -> tuple[IPArray, ...]:
         """Unravels a flat index i to multi-indexes.
 
         :param i: Flat index
