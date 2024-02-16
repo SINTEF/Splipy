@@ -67,6 +67,7 @@ ruff = "^0.2.1"
 mypy = "^1.8.0"
 rhino3dm = "^8.0.1"
 opencv-python = "^4.9.0.80"
+h5py = "^3.10.0"
 
 [build-system]
 requires = ["poetry-core", "cython", "numpy", "wheel", "setuptools"]
