@@ -1,16 +1,19 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Union, Sequence, Type, Optional
-from types import TracebackType
-from pathlib import Path
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 from typing_extensions import Self
 
-from ..splineobject import SplineObject
-from ..splinemodel import SplineModel
+if TYPE_CHECKING:
+    from pathlib import Path
+    from types import TracebackType
+
+    from splipy.splinemodel import SplineModel
+    from splipy.splineobject import SplineObject
 
 
 class MasterIO(ABC):
-
     def __init__(self, filename: Union[str, Path]) -> None:
         """Create an IO object attached to a file.
 
@@ -25,9 +28,9 @@ class MasterIO(ABC):
     @abstractmethod
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None:
         ...
 

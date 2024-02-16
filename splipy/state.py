@@ -1,19 +1,20 @@
 """This module handles the global Splipy state."""
 
-from typing import TypedDict, Iterator
-from contextlib import contextmanager
 import sys
+from contextlib import contextmanager
+from typing import Iterator, TypedDict
 
 from typing_extensions import Unpack
 
-
-states = ['controlpoint_relative_tolerance',
-          'controlpoint_absolute_tolerance',
-          'parametric_relative_tolerance',
-          'parametric_absolute_tolerance',
-          'knot_tolerance',
-          'unlimited']
-__all__ = states + ['state']
+states = [
+    "controlpoint_relative_tolerance",
+    "controlpoint_absolute_tolerance",
+    "parametric_relative_tolerance",
+    "parametric_absolute_tolerance",
+    "knot_tolerance",
+    "unlimited",
+]
+__all__ = states + ["state"]
 
 
 controlpoint_absolute_tolerance = 1e-8

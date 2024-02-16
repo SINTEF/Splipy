@@ -1,32 +1,38 @@
-from pathlib import Path
-from typing import Union, Literal, Optional, Type, Sequence, Iterator, cast, Iterable, Protocol
-from types import TracebackType
-from itertools import chain
+from __future__ import annotations
 
-from typing_extensions import Self
+from itertools import chain
+from typing import TYPE_CHECKING, Iterable, Iterator, Optional, Protocol, Sequence, Union, cast
 
 import numpy as np
 import rhino3dm as rhino
+from typing_extensions import Self
 
-from ..splinemodel import SplineModel
-from ..splineobject import SplineObject
-from ..curve import Curve
-from ..surface import Surface
-from ..basis import BSplineBasis
-from ..types import FArray
-from .. import curve_factory
+from splipy import curve_factory
+from splipy.basis import BSplineBasis
+from splipy.curve import Curve
+from splipy.surface import Surface
+
 from .master import MasterIO
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from types import TracebackType
+
+    from splipy.splinemodel import SplineModel
+    from splipy.splineobject import SplineObject
+    from splipy.types import FArray
 
 
 # The rhino3dm library has incomplete type information. In particular, some
 # classes which are iterable and support the sequence protocol don't advertise
 # that fact. All the casting and the protocols here are just to fix that.
-# TODO: Remove all this cruft if Rhino ever fixes their types.
+# TODO(Eivind): Remove all this cruft if Rhino ever fixes their types.
 class Point:
     X: float
     Y: float
     Z: float
     W: float
+
 
 class CurvePointList(Protocol):
     def __getitem__(self, i: int) -> Point:
@@ -35,13 +41,13 @@ class CurvePointList(Protocol):
     def __len__(self) -> int:
         ...
 
+
 class SurfacePointList(Protocol):
     def __getitem__(self, i: tuple[int, int]) -> Point:
         ...
 
 
 class ThreeDM(MasterIO):
-
     filename: str
     trimming_curves: list
     fstream: rhino.File3dm
@@ -56,14 +62,14 @@ class ThreeDM(MasterIO):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None:
         pass
 
     def write(self, obj: Union[SplineObject, SplineModel, Sequence[SplineObject]]) -> None:
-        raise IOError('Writing to 3DM not supported')
+        raise OSError("Writing to 3DM not supported")
 
     def read(self) -> list[SplineObject]:
         result: list[SplineObject] = []
@@ -115,16 +121,16 @@ class ThreeDM(MasterIO):
         basisu = BSplineBasis(nsrf.OrderU, knotsu, -1)
         basisv = BSplineBasis(nsrf.OrderV, knotsv, -1)
 
-        cpts: FArray = np.ndarray((nsrf.Points.CountU*nsrf.Points.CountV, 3 + nsrf.IsRational), dtype=float)
+        cpts: FArray = np.ndarray((nsrf.Points.CountU * nsrf.Points.CountV, 3 + nsrf.IsRational), dtype=float)
         points = cast(SurfacePointList, nsrf.Points)
         for v in range(nsrf.Points.CountV):
             count_u = nsrf.Points.CountU
             for u in range(count_u):
-                cpts[u+v*count_u,0] = points[u,v].X
-                cpts[u+v*count_u,1] = points[u,v].Y
-                cpts[u+v*count_u,2] = points[u,v].Z
+                cpts[u + v * count_u, 0] = points[u, v].X
+                cpts[u + v * count_u, 1] = points[u, v].Y
+                cpts[u + v * count_u, 2] = points[u, v].Z
                 if nsrf.IsRational:
-                    cpts[u+v*count_u,3] = points[u,v].W
+                    cpts[u + v * count_u, 3] = points[u, v].W
 
         return Surface(basisu, basisv, cpts, nsrf.IsRational)
 
@@ -137,12 +143,12 @@ class ThreeDM(MasterIO):
 
         points = cast(CurvePointList, ncrv.Points)
         cpts: FArray = np.ndarray((len(points), ncrv.Dimension + ncrv.IsRational))
-        for u in range(0,len(points)):
-            cpts[u,0] = points[u].X
-            cpts[u,1] = points[u].Y
+        for u in range(0, len(points)):
+            cpts[u, 0] = points[u].X
+            cpts[u, 1] = points[u].Y
             if ncrv.Dimension > 2:
-                cpts[u,2] = points[u].Z
+                cpts[u, 2] = points[u].Z
             if ncrv.IsRational:
-                cpts[u,3] = points[u].W
+                cpts[u, 3] = points[u].W
 
         return Curve(basis, cpts, ncrv.IsRational)

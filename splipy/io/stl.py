@@ -1,20 +1,25 @@
+from __future__ import annotations
+
 import struct
 from abc import ABC, abstractmethod
-from typing import Union, Optional, Type, Sequence, TextIO, BinaryIO, cast
-from types import TracebackType
 from pathlib import Path
+from typing import TYPE_CHECKING, BinaryIO, Optional, Sequence, TextIO, Union, cast
 
 import numpy as np
 from typing_extensions import Self
 
-from ..surface import Surface
-from ..volume import Volume
-from ..utils import ensure_listlike
-from ..splinemodel import SplineModel
-from ..splineobject import SplineObject
-from ..types import Scalars
+from splipy.splinemodel import SplineModel
+from splipy.surface import Surface
+from splipy.types import Scalars
+from splipy.utils import ensure_listlike
+from splipy.volume import Volume
 
 from .master import MasterIO
+
+if TYPE_CHECKING:
+    from types import TracebackType
+
+    from splipy.splineobject import SplineObject
 
 
 ASCII_FACET = """facet normal 0 0 0
@@ -26,7 +31,7 @@ endloop
 endfacet
 """
 
-BINARY_HEADER ="80sI"
+BINARY_HEADER = "80sI"
 BINARY_FACET = "12fH"
 
 
@@ -34,7 +39,6 @@ Face = Sequence[Scalars]
 
 
 class StlWriter(ABC):
-
     @abstractmethod
     def _write_header(self) -> None:
         ...
@@ -60,10 +64,10 @@ class StlWriter(ABC):
         elif len(face) == 3:
             self._write(face)
         else:
-            raise ValueError('only 3 or 4 vertices for each face')
+            raise ValueError("only 3 or 4 vertices for each face")
 
     def add_faces(self, faces: Sequence[Face]) -> None:
-        """ Add many faces. """
+        """Add many faces."""
         for face in faces:
             self.add_face(face)
 
@@ -103,49 +107,56 @@ class BinaryStlWriter(StlWriter):
 
     def _write_header(self) -> None:
         self.fp.seek(0)
-        self.fp.write(struct.pack(BINARY_HEADER, b'Python Binary STL Writer', self.counter))
+        self.fp.write(struct.pack(BINARY_HEADER, b"Python Binary STL Writer", self.counter))
 
     def _write(self, face: Face) -> None:
         self.counter += 1
         data = [
-            0., 0., 0.,
-            face[0][0], face[0][1], face[0][2],
-            face[1][0], face[1][1], face[1][2],
-            face[2][0], face[2][1], face[2][2],
-            0
+            0.0,
+            0.0,
+            0.0,
+            face[0][0],
+            face[0][1],
+            face[0][2],
+            face[1][0],
+            face[1][1],
+            face[1][2],
+            face[2][0],
+            face[2][1],
+            face[2][2],
+            0,
         ]
         self.fp.write(struct.pack(BINARY_FACET, *data))
 
 
 class STL(MasterIO):
-
-    filename: str
+    filename: Path
     binary: bool
 
     writer: Union[BinaryStlWriter, AsciiStlWriter]
 
     def __init__(self, filename: Union[str, Path], binary: bool = True) -> None:
-        self.filename = str(filename)
+        self.filename = Path(filename)
         self.binary = binary
 
     def __enter__(self) -> Self:
         if self.binary:
-            self.writer = BinaryStlWriter(open(self.filename, 'wb'))
+            self.writer = BinaryStlWriter(self.filename.open("wb"))
         else:
-            self.writer = AsciiStlWriter(open(self.filename, 'w'))
+            self.writer = AsciiStlWriter(self.filename.open("w"))
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None:
         self.writer.close()
         self.writer.fp.__exit__(exc_type, exc_val, exc_tb)
 
     def read(self) -> list[SplineObject]:
-        raise IOError('Reading STL not supported')
+        raise OSError("Reading STL not supported")
 
     def write(
         self,
@@ -153,16 +164,16 @@ class STL(MasterIO):
         n: Optional[Union[int, Sequence[int]]] = None,
     ) -> None:
         if isinstance(obj, SplineModel):
-            if obj.pardim == 3: # volume model
+            if obj.pardim == 3:  # volume model
                 for node in obj.boundary():
                     self.write_surface(cast(Surface, node.obj), n)
-            elif obj.pardim == 2: # surface model
+            elif obj.pardim == 2:  # surface model
                 for surface in obj:
                     self.write_surface(cast(Surface, surface), n)
 
         elif isinstance(obj, Volume):
             for face in obj.faces():
-                if face is not None: # happens with periodic volumes
+                if face is not None:  # happens with periodic volumes
                     self.write_surface(face, n)
 
         elif isinstance(obj, Surface):
@@ -173,7 +184,7 @@ class STL(MasterIO):
                 self.write(o)
 
         else:
-            raise ValueError('Unsopported object for STL format')
+            raise ValueError("Unsopported object for STL format")
 
     def write_surface(
         self,
@@ -185,7 +196,7 @@ class STL(MasterIO):
         #   2. linear splines, only picks knots
         #   3. general splines choose 2*order-1 per knot span
         if n is not None:
-            n = ensure_listlike(n,2)
+            n = ensure_listlike(n, 2)
 
         if n is not None:
             u = np.linspace(surface.start(0), surface.end(0), n[0])
@@ -194,7 +205,7 @@ class STL(MasterIO):
         else:
             knots = surface.knots(0)
             p = surface.order(0)
-            ut = [np.linspace(k0,k1, 2*p-3, endpoint=False) for (k0,k1) in zip(knots[:-1], knots[1:])]
+            ut = [np.linspace(k0, k1, 2 * p - 3, endpoint=False) for (k0, k1) in zip(knots[:-1], knots[1:])]
             ut = [point for element in ut for point in element] + list(knots)
             u = np.sort(ut)
 
@@ -205,16 +216,20 @@ class STL(MasterIO):
         else:
             knots = surface.knots(1)
             p = surface.order(1)
-            vt = [np.linspace(k0,k1, 2*p-3, endpoint=False) for (k0,k1) in zip(knots[:-1], knots[1:])]
+            vt = [np.linspace(k0, k1, 2 * p - 3, endpoint=False) for (k0, k1) in zip(knots[:-1], knots[1:])]
             vt = [point for element in vt for point in element] + list(knots)
             v = np.sort(vt)
 
         # perform evaluation and make sure that we have 3 components (in case of 2D geometries)
-        x = surface(u,v)
+        x = surface(u, v)
         if x.shape[2] != 3:
-            x.resize((x.shape[0],x.shape[1],3))
+            x.resize((x.shape[0], x.shape[1], 3))
 
         # compute tiny quad pieces
-        faces = [[x[i,j], x[i,j+1], x[i+1,j+1], x[i+1,j]] for i in range(x.shape[0]-1) for j in range(x.shape[1]-1)]
+        faces = [
+            [x[i, j], x[i, j + 1], x[i + 1, j + 1], x[i + 1, j]]
+            for i in range(x.shape[0] - 1)
+            for j in range(x.shape[1] - 1)
+        ]
 
         self.writer.add_faces(faces)

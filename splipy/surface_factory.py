@@ -1,31 +1,48 @@
-# -*- coding: utf-8 -*-
-
 """Handy utilities for creating surfaces."""
 
-from math import pi, sqrt, atan2
+from __future__ import annotations
+
 import inspect
-from os.path import dirname, realpath, join
-from typing import Union, Literal, cast, Callable, Any, Sequence, overload, Optional
 from itertools import chain, repeat
+from math import atan2, pi, sqrt
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Sequence, Union, cast, overload
 
 import numpy as np
 
+from . import curve_factory, state
 from .basis import BSplineBasis
 from .curve import Curve
 from .surface import Surface
 from .utils import rotate_local_x_axis
-from .utils.nutils import controlpoints, multiplicities, degree
 from .utils.curve import curve_length_parametrization
-from .types import Scalar, Scalars, FArray
-from . import curve_factory, state
+from .utils.nutils import controlpoints, degree, multiplicities
 
-__all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus', 'edge_curves',
-           'thicken', 'sweep', 'loft', 'interpolate', 'least_square_fit', 'teapot']
+if TYPE_CHECKING:
+    from .types import FArray, Scalar, Scalars
+
+
+__all__ = [
+    "square",
+    "disc",
+    "sphere",
+    "extrude",
+    "revolve",
+    "cylinder",
+    "torus",
+    "edge_curves",
+    "thicken",
+    "sweep",
+    "loft",
+    "interpolate",
+    "least_square_fit",
+    "teapot",
+]
 
 
 def square(
     size: Union[Scalar, tuple[Scalar, Scalar]] = 1,
-    lower_left: Scalars = (0,0),
+    lower_left: Scalars = (0, 0),
 ) -> Surface:
     """Create a square with parametric origin at *(0,0)*.
 
@@ -45,10 +62,10 @@ def square(
 
 def disc(
     r: Scalar = 1,
-    center: Scalars = (0,0,0),
-    normal: Scalars = (0,0,1),
-    type: Literal["radial", "square"] = 'radial',
-    xaxis: Scalars = (1,0,0),
+    center: Scalars = (0, 0, 0),
+    normal: Scalars = (0, 0, 1),
+    type: Literal["radial", "square"] = "radial",
+    xaxis: Scalars = (1, 0, 0),
 ) -> Surface:
     """Create a circular disc. The *type* parameter distinguishes between
     different parametrizations.
@@ -61,15 +78,15 @@ def disc(
     :return: The disc
     :rtype: Surface
     """
-    if type == 'radial':
+    if type == "radial":
         c1 = curve_factory.circle(r, center=center, normal=normal, xaxis=xaxis)
         c2 = (c1 * 0).flip_and_move_plane_geometry(center, normal)
         result = edge_curves(c2, c1)
         result.swap()
-        result.reparam((0,r), (0,2*pi))
+        result.reparam((0, r), (0, 2 * pi))
         return result
 
-    elif type == 'square':
+    if type == "square":
         w = 1 / sqrt(2)
         cp = np.array(
             [
@@ -90,14 +107,14 @@ def disc(
         result = Surface(basis1, basis2, cp, True)
         return result.flip_and_move_plane_geometry(center, normal)
 
-    else:
-        raise ValueError('invalid type argument')
+    raise ValueError("invalid type argument")
+
 
 def sphere(
     r: Scalar = 1,
-    center: Scalars = (0,0,0),
-    zaxis: Scalars = (0,0,1),
-    xaxis: Scalars = (1,0,0),
+    center: Scalars = (0, 0, 0),
+    zaxis: Scalars = (0, 0, 1),
+    xaxis: Scalars = (1, 0, 0),
 ) -> Surface:
     """Create a spherical shell.
 
@@ -139,7 +156,7 @@ def extrude(curve: Curve, amount: Scalars) -> Surface:
 def revolve(
     curve: Curve,
     theta: Scalar = 2 * pi,
-    axis: Scalars = (0,0,1),
+    axis: Scalars = (0, 0, 1),
 ) -> Surface:
     """Revolve a surface by sweeping a curve in a rotational fashion around
     the *z* axis.
@@ -156,14 +173,14 @@ def revolve(
 
     # align axis with the z-axis
     normal_theta = atan2(axis[1], axis[0])
-    normal_phi   = atan2(sqrt(axis[0]**2 + axis[1]**2), axis[2])
-    curve.rotate(-normal_theta, [0,0,1])
-    curve.rotate(-normal_phi,   [0,1,0])
+    normal_phi = atan2(sqrt(axis[0] ** 2 + axis[1] ** 2), axis[2])
+    curve.rotate(-normal_theta, [0, 0, 1])
+    curve.rotate(-normal_phi, [0, 1, 0])
 
     circle_seg = curve_factory.circle_segment(theta)
 
-    n = len(curve)      # number of control points of the curve
-    m = len(circle_seg) # number of control points of the sweep
+    n = len(curve)  # number of control points of the curve
+    m = len(circle_seg)  # number of control points of the sweep
     cp = np.zeros((m * n, 4))
 
     # loop around the circle and set control points by the traditional 9-point
@@ -171,26 +188,26 @@ def revolve(
     dt = 0.0
     t = 0.0
     for i in range(m):
-        x,y,w = circle_seg[i]
-        dt = atan2(y,x) - t
+        x, y, w = circle_seg[i]
+        dt = atan2(y, x) - t
         t += dt
         curve.rotate(dt)
-        cp[i * n:(i + 1) * n, :] = curve[:]
-        cp[i * n:(i + 1) * n, 2] *= w
-        cp[i * n:(i + 1) * n, 3] *= w
+        cp[i * n : (i + 1) * n, :] = curve[:]
+        cp[i * n : (i + 1) * n, 2] *= w
+        cp[i * n : (i + 1) * n, 3] *= w
     result = Surface(curve.bases[0], circle_seg.bases[0], cp, True)
     # rotate it back again
-    result.rotate(normal_phi, (0,1,0))
-    result.rotate(normal_theta, (0,0,1))
+    result.rotate(normal_phi, (0, 1, 0))
+    result.rotate(normal_theta, (0, 0, 1))
     return result
 
 
 def cylinder(
     r: Scalar = 1,
     h: Scalar = 1,
-    center: Scalars = (0,0,0),
-    axis: Scalars = (0,0,1),
-    xaxis: Scalars = (1,0,0),
+    center: Scalars = (0, 0, 0),
+    axis: Scalars = (0, 0, 1),
+    xaxis: Scalars = (1, 0, 0),
 ) -> Surface:
     """Create a cylinder shell with no top or bottom
 
@@ -202,15 +219,15 @@ def cylinder(
     :return: The cylinder shell
     :rtype: Surface
     """
-    return extrude(curve_factory.circle(r, center, axis, xaxis=xaxis), h*np.array(axis))
+    return extrude(curve_factory.circle(r, center, axis, xaxis=xaxis), h * np.array(axis))
 
 
 def torus(
     minor_r: Scalar = 1,
-    major_r: Scalar = 3 ,
-    center: Scalars = (0,0,0),
-    normal: Scalars = (0,0,1),
-    xaxis: Scalars = (1,0,0)
+    major_r: Scalar = 3,
+    center: Scalars = (0, 0, 0),
+    normal: Scalars = (0, 0, 1),
+    xaxis: Scalars = (1, 0, 0),
 ) -> Surface:
     """Create a torus (doughnut) by revolving a circle of size *minor_r*
     around the *z* axis with radius *major_r*.
@@ -235,20 +252,22 @@ def torus(
 @overload
 def edge_curves(
     curves: Sequence[Curve],
-    type: Literal["coons", "poissson", "elasticity", "finitestrain"] = 'coons',
+    type: Literal["coons", "poissson", "elasticity", "finitestrain"] = "coons",
 ) -> Surface:
     ...
+
 
 @overload
 def edge_curves(
     *curves: Curve,
-    type: Literal["coons", "poissson", "elasticity", "finitestrain"] = 'coons',
+    type: Literal["coons", "poissson", "elasticity", "finitestrain"] = "coons",
 ) -> Surface:
     ...
 
+
 def edge_curves(  # type: ignore[misc]
     *curves: Curve,
-    type: Literal["coons", "poissson", "elasticity", "finitestrain"] = 'coons',
+    type: Literal["coons", "poissson", "elasticity", "finitestrain"] = "coons",
 ) -> Surface:
     """Create the surface defined by the region between the input curves.
 
@@ -256,12 +275,13 @@ def edge_curves(  # type: ignore[misc]
     closed loop around the resulting surface.
 
     :param [Curve] curves: Two or four edge curves
-    :param string type: The method used for interior computation ('coons', 'poisson', 'elasticity' or 'finitestrain')
+    :param string type: The method used for interior computation
+        ('coons', 'poisson', 'elasticity' or 'finitestrain')
     :return: The enclosed surface
     :rtype: Surface
     :raises ValueError: If the length of *curves* is not two or four
     """
-    if len(curves) == 1: # probably gives input as a list-like single variable
+    if len(curves) == 1:  # probably gives input as a list-like single variable
         curves = cast(tuple[Curve], curves[0])
 
     if len(curves) == 2:
@@ -276,51 +296,54 @@ def edge_curves(  # type: ignore[misc]
         linear = BSplineBasis(2)
 
         return Surface(crv1.bases[0], linear, controlpoints, crv1.rational)
-    elif len(curves) == 4:
+
+    if len(curves) == 4:
         # reorganize input curves so they form a directed loop around surface
         rtol = state.controlpoint_relative_tolerance
         atol = state.controlpoint_absolute_tolerance
-        mycurves = [c.clone() for c in curves] # wrap into list and clone all since we're changing them
+        mycurves = [c.clone() for c in curves]  # wrap into list and clone all since we're changing them
         # dim = np.max([c.dimension for c in mycurves])
         # rat = np.any([c.rational  for c in mycurves])
         for i in range(4):
-            for j in range(i+1,4):
+            for j in range(i + 1, 4):
                 Curve.make_splines_compatible(mycurves[i], mycurves[j])
 
-        if not (np.allclose(mycurves[0][-1], mycurves[1][0], rtol=rtol, atol=atol) and
-                np.allclose(mycurves[1][-1], mycurves[2][0], rtol=rtol, atol=atol) and
-                np.allclose(mycurves[2][-1], mycurves[3][0], rtol=rtol, atol=atol) and
-                np.allclose(mycurves[3][-1], mycurves[0][0], rtol=rtol, atol=atol)):
+        if not (
+            np.allclose(mycurves[0][-1], mycurves[1][0], rtol=rtol, atol=atol)
+            and np.allclose(mycurves[1][-1], mycurves[2][0], rtol=rtol, atol=atol)
+            and np.allclose(mycurves[2][-1], mycurves[3][0], rtol=rtol, atol=atol)
+            and np.allclose(mycurves[3][-1], mycurves[0][0], rtol=rtol, atol=atol)
+        ):
             reorder = [mycurves[0]]
             del mycurves[0]
             for j in range(3):
                 found_match = False
                 for i in range(len(mycurves)):
-                    if(np.allclose(reorder[j][-1], mycurves[i][0], rtol=rtol, atol=atol)):
+                    if np.allclose(reorder[j][-1], mycurves[i][0], rtol=rtol, atol=atol):
                         reorder.append(mycurves[i])
                         del mycurves[i]
                         found_match = True
                         break
-                    elif(np.allclose(reorder[j][-1], mycurves[i][-1], rtol=rtol, atol=atol)):
+                    if np.allclose(reorder[j][-1], mycurves[i][-1], rtol=rtol, atol=atol):
                         reorder.append(mycurves[i].reverse())
                         del mycurves[i]
                         found_match = True
                         break
                 if not found_match:
-                    raise RuntimeError('Curves do not form a closed loop (end-points do not match)')
+                    raise RuntimeError("Curves do not form a closed loop (end-points do not match)")
             mycurves = reorder
-        if type == 'coons':
+
+        if type == "coons":
             return coons_patch(*mycurves)
-        elif type == 'poisson':
+        if type == "poisson":
             return poisson_patch(*mycurves)
-        elif type == 'elasticity':
+        if type == "elasticity":
             return elasticity_patch(*mycurves)
-        elif type == 'finitestrain':
+        if type == "finitestrain":
             return finitestrain_patch(*mycurves)
-        else:
-            raise ValueError('Unknown type parameter')
-    else:
-        raise ValueError('Requires two or four input curves')
+        raise ValueError("Unknown type parameter")
+
+    raise ValueError("Requires two or four input curves")
 
 
 def coons_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface:
@@ -348,8 +371,8 @@ def coons_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface
     linear = BSplineBasis(2)
     rat = s1.rational  # using control-points from top/bottom, so need to know if these are rational
     if rat:
-        bottom = bottom.clone().force_rational() # don't mess with the input curve, make clone
-        top.force_rational()                     # this is already a clone
+        bottom = bottom.clone().force_rational()  # don't mess with the input curve, make clone
+        top.force_rational()  # this is already a clone
     s3 = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]], rat)
 
     # in order to add spline surfaces, they need identical parametrization
@@ -365,14 +388,19 @@ def coons_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface
 
 def poisson_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface:
     from nutils import version
-    if int(version[0]) != 4:
-        raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
-    from nutils import mesh, function as fn
+    if int(version[0]) != 4:
+        raise ImportError(
+            "Mismatching nutils version detected, only version 4 supported. "
+            'Upgrade by "pip install --upgrade nutils"'
+        )
+
+    from nutils import function as fn
+    from nutils import mesh
 
     # error test input
     if left.rational or right.rational or top.rational or bottom.rational:
-        raise RuntimeError('poisson_patch not supported for rational splines')
+        raise RuntimeError("poisson_patch not supported for rational splines")
 
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
@@ -393,48 +421,52 @@ def poisson_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surfa
     m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
     m2 = [left.order(0) - left.continuity(k) - 1 for k in k2]
     domain, geom = mesh.rectilinear([k1, k2])
-    basis = domain.basis('spline', [p1-1, p2-1], knotmultiplicities=[m1,m2])
+    basis = domain.basis("spline", [p1 - 1, p2 - 1], knotmultiplicities=[m1, m2])
 
     # assemble system matrix
     grad = basis.grad(geom)
-    outer = fn.outer(grad,grad)
+    outer = fn.outer(grad, grad)
     integrand = outer.sum(-1)
-    matrix = domain.integrate(integrand * fn.J(geom), ischeme='gauss'+str(max(p1,p2)+1))
+    matrix = domain.integrate(integrand * fn.J(geom), ischeme="gauss" + str(max(p1, p2) + 1))
 
     # initialize variables
-    controlpoints = np.zeros((n1,n2,dim))
-    rhs = np.zeros((n1*n2))
-    constraints = np.array([[np.nan]*n2]*n1)
+    controlpoints = np.zeros((n1, n2, dim))
+    rhs = np.zeros(n1 * n2)
+    constraints = np.array([[np.nan] * n2] * n1)
 
     # treat all dimensions independently
     for d in range(dim):
         # add boundary conditions
-        constraints[0, :] = left[:,d]
-        constraints[-1, :] = right[:,d]
-        constraints[:, 0] = bottom[:,d]
-        constraints[:,-1] = top[:,d]
+        constraints[0, :] = left[:, d]
+        constraints[-1, :] = right[:, d]
+        constraints[:, 0] = bottom[:, d]
+        constraints[:, -1] = top[:, d]
 
         # solve system
         lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints))
 
         # wrap results into splipy datastructures
-        controlpoints[:,:,d] = np.reshape(lhs, (n1,n2), order='C')
+        controlpoints[:, :, d] = np.reshape(lhs, (n1, n2), order="C")
 
     return Surface(bottom.bases[0], left.bases[0], controlpoints, bottom.rational, raw=True)
 
 
 def elasticity_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface:
     from nutils import version
-    if int(version[0]) != 4:
-        raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
-    from nutils import mesh, function
+    if int(version[0]) != 4:
+        raise ImportError(
+            "Mismatching nutils version detected, only version 4 supported. "
+            'Upgrade by "pip install --upgrade nutils"'
+        )
+
+    from nutils import function, mesh
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
-        raise RuntimeError('elasticity_patch only supported for planar (2D) geometries')
+        raise RuntimeError("elasticity_patch only supported for planar (2D) geometries")
     if left.rational or right.rational or top.rational or bottom.rational:
-        raise RuntimeError('elasticity_patch not supported for rational splines')
+        raise RuntimeError("elasticity_patch not supported for rational splines")
 
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
@@ -449,62 +481,65 @@ def elasticity_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Su
     p2 = left.order(0)
     n1 = len(bottom)
     n2 = len(left)
-    dim= left.dimension
+    dim = left.dimension
     k1 = bottom.knots(0)
     k2 = left.knots(0)
     m1 = [bottom.order(0) - bottom.continuity(k) - 1 for k in k1]
-    m2 = [left.order(0)   - left.continuity(k)   - 1 for k in k2]
+    m2 = [left.order(0) - left.continuity(k) - 1 for k in k2]
     domain, geom = mesh.rectilinear([k1, k2])
 
     # assemble system matrix
     ns = function.Namespace()
     ns.x = geom
-    ns.basis = domain.basis('spline', degree=[p1-1,p2-1], knotmultiplicities=[m1,m2]).vector(2)
-    ns.eye = np.array([[1,0],[0,1]])
+    ns.basis = domain.basis("spline", degree=[p1 - 1, p2 - 1], knotmultiplicities=[m1, m2]).vector(2)
+    ns.eye = np.array([[1, 0], [0, 1]])
     ns.lmbda = 1
-    ns.mu = .3
+    ns.mu = 0.3
     # ns.u_i = 'basis_ni ?lhs_n'
     # ns.strain_ij = '(u_i,j + u_j,i) / 2'
     # ns.stress_ij = 'lmbda strain_kk eye_ij + 2 mu strain_ij'
-    ns.strain_nij = '(basis_ni,j + basis_nj,i) / 2'
-    ns.stress_nij = 'lmbda strain_nkk eye_ij + 2 mu strain_nij'
+    ns.strain_nij = "(basis_ni,j + basis_nj,i) / 2"
+    ns.stress_nij = "lmbda strain_nkk eye_ij + 2 mu strain_nij"
 
     # construct matrix and right hand-side
-    matrix = domain.integrate(ns.eval_nm('strain_nij stress_mij d:x'), ischeme='gauss'+str(max(p1,p2)+1))
-    rhs = np.zeros((n1*n2*dim,), dtype=float)
+    matrix = domain.integrate(ns.eval_nm("strain_nij stress_mij d:x"), ischeme="gauss" + str(max(p1, p2) + 1))
+    rhs = np.zeros((n1 * n2 * dim,), dtype=float)
 
     # add boundary conditions
-    constraints = np.array([[[np.nan]*n2]*n1]*dim)
+    constraints = np.array([[[np.nan] * n2] * n1] * dim)
     for d in range(dim):
-        constraints[d, 0, :] = left[  :,d]
-        constraints[d,-1, :] = right[ :,d]
-        constraints[d, :, 0] = bottom[:,d]
-        constraints[d, :,-1] = top[   :,d]
+        constraints[d, 0, :] = left[:, d]
+        constraints[d, -1, :] = right[:, d]
+        constraints[d, :, 0] = bottom[:, d]
+        constraints[d, :, -1] = top[:, d]
 
     # solve system
-    lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints, order='C'))
+    lhs = matrix.solve(rhs, constrain=np.ndarray.flatten(constraints, order="C"))
 
     # rewrap results into splipy datastructures
-    controlpoints = np.reshape(lhs, (dim,n1,n2), order='C')
-    controlpoints = controlpoints.swapaxes(0,2)
-    controlpoints = controlpoints.swapaxes(0,1)
+    controlpoints = np.reshape(lhs, (dim, n1, n2), order="C")
+    controlpoints = controlpoints.swapaxes(0, 2)
+    controlpoints = controlpoints.swapaxes(0, 1)
 
     return Surface(bottom.bases[0], left.bases[0], controlpoints, bottom.rational, raw=True)
 
 
 def finitestrain_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface:
     from nutils import version
-    if int(version[0]) != 4:
-        raise ImportError('Mismatching nutils version detected, only version 4 supported. Upgrade by \"pip install --upgrade nutils\"')
 
-    from nutils import mesh, function
-    from nutils import solver
+    if int(version[0]) != 4:
+        raise ImportError(
+            "Mismatching nutils version detected, only version 4 supported. "
+            'Upgrade by "pip install --upgrade nutils"'
+        )
+
+    from nutils import function, mesh, solver
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
-        raise RuntimeError('finitestrain_patch only supported for planar (2D) geometries')
+        raise RuntimeError("finitestrain_patch only supported for planar (2D) geometries")
     if left.rational or right.rational or top.rational or bottom.rational:
-        raise RuntimeError('finitestrain_patch not supported for rational splines')
+        raise RuntimeError("finitestrain_patch not supported for rational splines")
 
     # these are given as a oriented loop, so make all run in positive parametric direction
     top.reverse()
@@ -517,10 +552,10 @@ def finitestrain_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> 
     # create an initial mesh (correct corners) which we will morph into the right one
     p1 = bottom.order(0)
     p2 = left.order(0)
-    p  = max(p1,p2)
+    p = max(p1, p2)
     linear = BSplineBasis(2)
     srf = Surface(linear, linear, [bottom[0], bottom[-1], top[0], top[-1]])
-    srf.raise_order(p1-2, p2-2)
+    srf.raise_order(p1 - 2, p2 - 2)
     for k in bottom.knots(0, True)[p1:-p1]:
         srf.insert_knot(k, 0)
     for k in left.knots(0, True)[p2:-p2]:
@@ -529,27 +564,28 @@ def finitestrain_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> 
     # create computational mesh
     n1 = len(bottom)
     n2 = len(left)
-    dim= left.dimension
+    dim = left.dimension
     domain, geom = mesh.rectilinear(srf.knots())
     ns = function.Namespace()
-    ns.basis = domain.basis('spline', degree(srf), knotmultiplicities=multiplicities(srf)).vector( 2 )
-    ns.phi   = domain.basis('spline', degree(srf), knotmultiplicities=multiplicities(srf))
-    ns.eye       = np.array([[1,0],[0,1]])
-    ns.cp        = controlpoints(srf)
-    ns.x_i       = 'cp_ni phi_n'
-    ns.lmbda     = 1
-    ns.mu        = 1
+    ns.basis = domain.basis("spline", degree(srf), knotmultiplicities=multiplicities(srf)).vector(2)
+    ns.phi = domain.basis("spline", degree(srf), knotmultiplicities=multiplicities(srf))
+    ns.eye = np.array([[1, 0], [0, 1]])
+    ns.cp = controlpoints(srf)
+    ns.x_i = "cp_ni phi_n"
+    ns.lmbda = 1
+    ns.mu = 1
 
     # add total boundary conditions
     # for hard problems these will be taken in steps and multiplied by dt every
     # time (quasi-static iterations)
-    constraints = np.array([[[np.nan]*n2]*n1]*dim)
+    constraints = np.array([[[np.nan] * n2] * n1] * dim)
     for d in range(dim):
-        constraints[d, 0, :] = (left[  :,d] - srf[ 0, :,d])
-        constraints[d,-1, :] = (right[ :,d] - srf[-1, :,d])
-        constraints[d, :, 0] = (bottom[:,d] - srf[ :, 0,d])
-        constraints[d, :,-1] = (top[   :,d] - srf[ :,-1,d])
-    # TODO: Take a close look at the logic below
+        constraints[d, 0, :] = left[:, d] - srf[0, :, d]
+        constraints[d, -1, :] = right[:, d] - srf[-1, :, d]
+        constraints[d, :, 0] = bottom[:, d] - srf[:, 0, d]
+        constraints[d, :, -1] = top[:, d] - srf[:, -1, d]
+
+    # TODO(Kjetil): Take a close look at the logic below
 
     # in order to iterate, we let t0=0 be current configuration and t1=1 our target configuration
     # if solver divergeces (too large deformation), we will try with dt=0.5. If this still
@@ -559,35 +595,36 @@ def finitestrain_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> 
     # t0 = 0
     # t1 = 1
     # while t0 < 1:
-        # dt = t1-t0
-    n  = 10
-    dt = 1/n
+    # dt = t1-t0
+    n = 10
+    dt = 1 / n
     for i in range(n):
         # print(' ==== Quasi-static '+str(t0*100)+'-'+str(t1*100)+' % ====')
-        print(' ==== Quasi-static '+str(i/(n-1)*100)+' % ====')
+        print(" ==== Quasi-static " + str(i / (n - 1) * 100) + " % ====")
 
         # define the non-linear finite strain problem formulation
-        ns.cp        = np.reshape(srf[:,:,:].swapaxes(0,1), (n1*n2, dim), order='F')
-        ns.x_i       = 'cp_ni phi_n'   # geometric mapping (reference geometry)
-        ns.u_i       = 'basis_ki ?w_k' # displacement (unknown coefficients w_k)
-        ns.X_i       = 'x_i + u_i'     # displaced geometry
-        ns.strain_ij = '.5 (u_i,j + u_j,i + u_k,i u_k,j)'
-        ns.stress_ij = 'lmbda strain_kk eye_ij + 2 mu strain_ij'
+        ns.cp = np.reshape(srf[:, :, :].swapaxes(0, 1), (n1 * n2, dim), order="F")
+        ns.x_i = "cp_ni phi_n"  # geometric mapping (reference geometry)
+        ns.u_i = "basis_ki ?w_k"  # displacement (unknown coefficients w_k)
+        ns.X_i = "x_i + u_i"  # displaced geometry
+        ns.strain_ij = ".5 (u_i,j + u_j,i + u_k,i u_k,j)"
+        ns.stress_ij = "lmbda strain_kk eye_ij + 2 mu strain_ij"
 
         # try:
-        residual = domain.integral(ns.eval_n('stress_ij basis_ni,j d:X'), degree=2*p)
-        cons = np.ndarray.flatten(constraints*dt, order='C')
-        lhs = solver.newton('w', residual, constrain=cons).solve(
-                            tol=state.controlpoint_absolute_tolerance, maxiter=8)
+        residual = domain.integral(ns.eval_n("stress_ij basis_ni,j d:X"), degree=2 * p)
+        cons = np.ndarray.flatten(constraints * dt, order="C")
+        lhs = solver.newton("w", residual, constrain=cons).solve(
+            tol=state.controlpoint_absolute_tolerance, maxiter=8
+        )
 
         # store the results on a splipy object and continue
-        cps = lhs.reshape((n2,n1,dim), order='F')
-        srf[:,:,:] += cps.swapaxes(0,1)
+        cps = lhs.reshape((n2, n1, dim), order="F")
+        srf[:, :, :] += cps.swapaxes(0, 1)
 
         # t0 += dt
         # t1 = 1
         # except solver.SolverError: # newton method fail to converge, try a smaller step length 'dt'
-            # t1 = (t1+t0)/2
+        # t1 = (t1+t0)/2
     return srf
 
 
@@ -633,17 +670,17 @@ def thicken(curve: Curve, amount: Union[Scalar, Callable]) -> Surface:
         right_points = np.zeros((n, 2))
         # linear = BSplineBasis(2)
 
-        x = curve.evaluate(t)                 # curve at interpolation points
-        v = curve.derivative(t)               # velocity at interpolation points
-        l = np.sqrt(v[:, 0]**2 + v[:, 1]**2)  # normalizing factor for velocity
+        x = curve.evaluate(t)  # curve at interpolation points
+        v = curve.derivative(t)  # velocity at interpolation points
+        l = np.sqrt(v[:, 0] ** 2 + v[:, 1] ** 2)  # normalizing factor for velocity
         for i in range(n):
-            if l[i] < 1e-13: # in case of zero velocity, use neighbour instead
-                if i>0:
-                    v[i,:] = v[i-1,:]
+            if l[i] < 1e-13:  # in case of zero velocity, use neighbour instead
+                if i > 0:
+                    v[i, :] = v[i - 1, :]
                 else:
-                    v[i,:] = v[i+1,:]
+                    v[i, :] = v[i + 1, :]
             else:
-                v[i,:] /= l[i]
+                v[i, :] /= l[i]
 
         if callable(amount):
             arg_names = inspect.signature(amount).parameters
@@ -651,14 +688,14 @@ def thicken(curve: Curve, amount: Union[Scalar, Callable]) -> Surface:
             argv: list[Any] = [0] * argc
             for i in range(n):
                 # build up the list of arguments (in case not all of (x,y,t) are specified)
-                for j,name in enumerate(arg_names):
-                    if name == 'x':
+                for j, name in enumerate(arg_names):
+                    if name == "x":
                         argv[j] = x[i, 0]
-                    elif name == 'y':
+                    elif name == "y":
                         argv[j] = x[i, 1]
-                    elif name == 'z':
+                    elif name == "z":
                         argv[j] = 0.0
-                    elif name == 't':
+                    elif name == "t":
                         argv[j] = t[i]
                 # figure out the distane at this particular point
                 dist = amount(*argv)
@@ -666,21 +703,20 @@ def thicken(curve: Curve, amount: Union[Scalar, Callable]) -> Surface:
                 # store interpolation points
                 right_points[i, 0] = x[i, 0] - v[i, 1] * dist  # x at bottom
                 right_points[i, 1] = x[i, 1] + v[i, 0] * dist  # y at bottom
-                left_points[ i, 0] = x[i, 0] + v[i, 1] * dist  # x at top
-                left_points[ i, 1] = x[i, 1] - v[i, 0] * dist  # y at top
+                left_points[i, 0] = x[i, 0] + v[i, 1] * dist  # x at top
+                left_points[i, 1] = x[i, 1] - v[i, 0] * dist  # y at top
         else:
             right_points[:, 0] = x[:, 0] - v[:, 1] * amount  # x at bottom
             right_points[:, 1] = x[:, 1] + v[:, 0] * amount  # y at bottom
-            left_points[ :, 0] = x[:, 0] + v[:, 1] * amount  # x at top
-            left_points[ :, 1] = x[:, 1] - v[:, 0] * amount  # y at top
+            left_points[:, 0] = x[:, 0] + v[:, 1] * amount  # x at top
+            left_points[:, 1] = x[:, 1] - v[:, 0] * amount  # y at top
         # perform interpolation on each side
         right = curve_factory.interpolate(right_points, curve.bases[0])
-        left  = curve_factory.interpolate(left_points,  curve.bases[0])
+        left = curve_factory.interpolate(left_points, curve.bases[0])
         return edge_curves(right, left)
 
-    else:  # dimension=3, we will create a surrounding tube
-        assert not callable(amount)
-        return sweep(curve, curve_factory.circle(r=amount))
+    assert not callable(amount)
+    return sweep(curve, curve_factory.circle(r=amount))
 
 
 def sweep(path: Curve, shape: Curve) -> Surface:
@@ -703,7 +739,7 @@ def sweep(path: Curve, shape: Curve) -> Surface:
     n1 = b1.num_functions()
     n2 = b2.num_functions()
     # this requires binormals and normals, which only work in 3D, so assume this here
-    X  = np.zeros((n1,n2, 3))
+    X = np.zeros((n1, n2, 3))
     for i in range(n1):
         u = b1.greville(i)
         x = path(u)
@@ -712,9 +748,9 @@ def sweep(path: Curve, shape: Curve) -> Surface:
         for j in range(n2):
             v = b2.greville(j)
             y = shape(v)
-            X[i,j,:] = x + N*y[0] + B*y[1]
+            X[i, j, :] = x + N * y[0] + B * y[1]
 
-    return interpolate(X, [b1,b2])
+    return interpolate(X, [b1, b2])
 
 
 def loft(*curves: Curve) -> Surface:
@@ -756,10 +792,10 @@ def loft(*curves: Curve) -> Surface:
     # clone input, so we don't change those references
     # make sure everything has the same dimension since we need to compute length
     curves = tuple(c.clone().set_dimension(3) for c in curves)
-    if len(curves)==2:
+    if len(curves) == 2:
         return edge_curves(curves)
 
-    elif len(curves) == 3:
+    if len(curves) == 3:
         # can't do cubic spline interpolation, so we'll do quadratic
         basis2 = BSplineBasis(3)
         dist = basis2.greville()
@@ -776,13 +812,13 @@ def loft(*curves: Curve) -> Surface:
 
     n = len(curves)
     for i in range(n):
-        for j in range(i+1,n):
+        for j in range(i + 1, n):
             Curve.make_splines_identical(curves[i], curves[j])
 
     basis1 = curves[0].bases[0]
     m = basis1.num_functions()
-    u = basis1.greville() # parametric interpolation points
-    v = dist              # parametric interpolation points
+    u = basis1.greville()  # parametric interpolation points
+    v = dist  # parametric interpolation points
 
     # compute matrices
     Nu = basis1(u)
@@ -791,17 +827,17 @@ def loft(*curves: Curve) -> Surface:
     Nv_inv = np.linalg.inv(Nv)
 
     # compute interpolation points in physical space
-    x = np.zeros((m,n, curves[0][0].size))
+    x = np.zeros((m, n, curves[0][0].size))
     for i in range(n):
-        x[:,i,:] = Nu @ curves[i].controlpoints
+        x[:, i, :] = Nu @ curves[i].controlpoints
 
     # solve interpolation problem
-    cp = np.tensordot(Nv_inv, x,  axes=(1,1))
-    cp = np.tensordot(Nu_inv, cp, axes=(1,1))
+    cp = np.tensordot(Nv_inv, x, axes=(1, 1))
+    cp = np.tensordot(Nu_inv, cp, axes=(1, 1))
 
     # re-order controlpoints so they match up with Surface constructor
     cp = cp.transpose((1, 0, 2))
-    cp = cp.reshape(n*m, cp.shape[2])
+    cp = cp.reshape(n * m, cp.shape[2])
 
     return Surface(basis1, basis2, cp, curves[0].rational)
 
@@ -826,13 +862,13 @@ def interpolate(x: FArray, bases: Sequence[BSplineBasis], u: Optional[Sequence[S
         x = x.reshape(surf_shape + [dim])
     if u is None:
         u = [b.greville() for b in bases]
-    N_all = [b(t) for b,t in zip(bases, u)]
+    N_all = [b(t) for b, t in zip(bases, u)]
     N_all.reverse()
     cp = x
     for N in N_all:
-        cp = np.tensordot(np.linalg.inv(N), cp, axes=(1,1))
+        cp = np.tensordot(np.linalg.inv(N), cp, axes=(1, 1))
 
-    return Surface(bases[0], bases[1], cp.transpose(1,0,2).reshape((np.prod(surf_shape),dim)))
+    return Surface(bases[0], bases[1], cp.transpose(1, 0, 2).reshape((np.prod(surf_shape), dim)))
 
 
 def least_square_fit(x: FArray, bases: Sequence[BSplineBasis], u: Sequence[Scalars]) -> Surface:
@@ -854,15 +890,15 @@ def least_square_fit(x: FArray, bases: Sequence[BSplineBasis], u: Sequence[Scala
     dim = x.shape[-1]
     if len(x.shape) == 2:
         x = x.reshape(surf_shape + [dim])
-    N_all = [b(t) for b,t in zip(bases, u)]
+    N_all = [b(t) for b, t in zip(bases, u)]
     N_all.reverse()
     cp = x
     for N in N_all:
-        cp = np.tensordot(N.T, cp, axes=(1,1))
+        cp = np.tensordot(N.T, cp, axes=(1, 1))
     for N in N_all:
-        cp = np.tensordot(np.linalg.inv(N.T @ N), cp, axes=(1,1))
+        cp = np.tensordot(np.linalg.inv(N.T @ N), cp, axes=(1, 1))
 
-    return Surface(bases[0], bases[1], cp.transpose(1,0,2).reshape((np.prod(surf_shape),dim)))
+    return Surface(bases[0], bases[1], cp.transpose(1, 0, 2).reshape((np.prod(surf_shape), dim)))
 
 
 def teapot() -> list[Surface]:
@@ -875,17 +911,17 @@ def teapot() -> list[Surface]:
     :return: The utah teapot
     :rtype: List of Surface
     """
-    path = join(dirname(realpath(__file__)), 'templates', 'teapot.bpt')
-    with open(path) as f:
+    path = Path(__file__).parent / "templates" / "teapot.bpt"
+    with path.open("r") as f:
         results = []
         numb_patches = int(f.readline())
         for i in range(numb_patches):
-            p = np.fromstring(f.readline(), dtype=np.uint8, count=2, sep=' ')
-            basis1 = BSplineBasis(p[0]+1)
-            basis2 = BSplineBasis(p[1]+1)
+            p = np.fromstring(f.readline(), dtype=np.uint8, count=2, sep=" ")
+            basis1 = BSplineBasis(p[0] + 1)
+            basis2 = BSplineBasis(p[1] + 1)
 
             ncp = basis1.num_functions() * basis2.num_functions()
-            cp  = [np.fromstring(f.readline(), dtype=float, count=3, sep=' ') for j in range(ncp)]
+            cp = [np.fromstring(f.readline(), dtype=float, count=3, sep=" ") for j in range(ncp)]
             results.append(Surface(basis1, basis2, cp))
 
     return results

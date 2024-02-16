@@ -1,29 +1,41 @@
-# -*- coding: utf-8 -*-
-
 """Handy utilities for creating curves."""
 
-from math import pi, cos, sin, sqrt, ceil
-import copy
+from __future__ import annotations
+
 import inspect
 from enum import IntEnum
-from typing import Optional, overload, Sequence, cast, Literal, Any, Callable
 from itertools import chain
+from math import ceil, pi, sqrt
+from typing import Any, Callable, Literal, Optional, Sequence, cast, overload
 
 import numpy as np
-from numpy.linalg import norm
 import scipy.sparse as sp
 import scipy.sparse.linalg as splinalg
+from numpy.linalg import norm
 
-from .curve import Curve
+from . import state
 from .basis import BSplineBasis
+from .curve import Curve
+from .types import FArray, Scalar, Scalars
 from .utils import rotate_local_x_axis
 from .utils.curve import curve_length_parametrization
-from .types import Scalars, FArray, Scalar
-from . import state
 
-__all__ = ['Boundary', 'line', 'polygon', 'n_gon', 'circle', 'ellipse',
-           'circle_segment_from_three_points', 'circle_segment', 'interpolate',
-           'least_square_fit', 'cubic_curve', 'bezier', 'manipulate', 'fit']
+__all__ = [
+    "Boundary",
+    "line",
+    "polygon",
+    "n_gon",
+    "circle",
+    "ellipse",
+    "circle_segment_from_three_points",
+    "circle_segment",
+    "interpolate",
+    "least_square_fit",
+    "cubic_curve",
+    "bezier",
+    "manipulate",
+    "fit",
+]
 
 
 class Boundary(IntEnum):
@@ -68,9 +80,11 @@ def line(a: Scalars, b: Scalars, relative: bool = False) -> Curve:
 def polygon(points: Sequence[Scalars], /, relative: bool = False, t: Optional[Scalars] = None) -> Curve:
     ...
 
+
 @overload
 def polygon(*points: Scalars, relative: bool = False, t: Optional[Scalars] = None) -> Curve:
     ...
+
 
 def polygon(*points: Scalars, relative: bool = False, t: Optional[Scalars] = None) -> Curve:  # type: ignore[misc]
     """Create a linear interpolation between input points.
@@ -88,11 +102,11 @@ def polygon(*points: Scalars, relative: bool = False, t: Optional[Scalars] = Non
         points = cast(tuple[Scalars], points[0])
 
     knot: FArray
-    if t is None: # establish knot vector based on eucledian length between points
+    if t is None:  # establish knot vector based on eucledian length between points
         knot = np.zeros((2 + len(points),), dtype=float)
         curve_length_parametrization(points, buffer=knot[2:-1])
         knot[-1] = knot[-2]
-    else: # use knot vector given as input argument
+    else:  # use knot vector given as input argument
         knot = np.empty((2 + len(t),), dtype=float)
         knot[1:-1] = t
         knot[0] = t[0]
@@ -109,8 +123,8 @@ def polygon(*points: Scalars, relative: bool = False, t: Optional[Scalars] = Non
 def n_gon(
     n: int = 5,
     r: Scalar = 1,
-    center: Scalars = (0,0,0),
-    normal: Scalars = (0,0,1),
+    center: Scalars = (0, 0, 0),
+    normal: Scalars = (0, 0, 1),
 ) -> Curve:
     """Create a regular polygon of *n* equal sides centered at the origin.
 
@@ -124,13 +138,13 @@ def n_gon(
     :raises ValueError: If *n* < 3
     """
     if r <= 0:
-        raise ValueError('radius needs to be positive')
+        raise ValueError("radius needs to be positive")
     if n < 3:
-        raise ValueError('regular polygons need at least 3 sides')
+        raise ValueError("regular polygons need at least 3 sides")
 
-    angles = np.linspace(0, 2*pi, num=n, endpoint=False)
+    angles = np.linspace(0, 2 * pi, num=n, endpoint=False)
     cp = np.array([r * np.cos(angles), r * np.sin(angles)]).T
-    knot = np.arange(-1, n+2, dtype=float)
+    knot = np.arange(-1, n + 2, dtype=float)
     basis = BSplineBasis(2, knot, 0)
 
     result = Curve(basis, cp)
@@ -139,10 +153,10 @@ def n_gon(
 
 def circle(
     r: Scalar = 1,
-    center: Scalars = (0,0,0),
-    normal: Scalars = (0,0,1),
-    type: Literal["p2C0", "p4C1"] = 'p2C0',
-    xaxis: Scalars = (1,0,0),
+    center: Scalars = (0, 0, 0),
+    normal: Scalars = (0, 0, 1),
+    type: Literal["p2C0", "p4C1"] = "p2C0",
+    xaxis: Scalars = (1, 0, 0),
 ) -> Curve:
     """Create a circle.
 
@@ -156,9 +170,9 @@ def circle(
     :raises ValueError: If radius is not positive
     """
     if r <= 0:
-        raise ValueError('radius needs to be positive')
+        raise ValueError("radius needs to be positive")
 
-    if type == 'p2C0' or type == 'C0p2':
+    if type == "p2C0" or type == "C0p2":
         w = 1.0 / sqrt(2)
         controlpoints = np.array(
             [
@@ -176,31 +190,33 @@ def circle(
         knot = np.array([-1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5], dtype=float) / 4.0 * 2 * pi
         result = Curve(BSplineBasis(3, knot, 0), controlpoints, rational=True)
 
-    elif type.lower() == 'p4c1' or type.lower() == 'c1p4':
-        w = 2*sqrt(2)/3
-        a = 1.0/2/sqrt(2)
-        b = 1.0/6 * (4*sqrt(2)-1)
+    elif type.lower() == "p4c1" or type.lower() == "c1p4":
+        w = 2 * sqrt(2) / 3
+        a = 1.0 / 2 / sqrt(2)
+        b = 1.0 / 6 * (4 * sqrt(2) - 1)
         controlpoints = np.array(
             [
-                [ 1,-a, 1],
-                [ 1, a, 1],
-                [ b, b, w],
-                [ a, 1, 1],
+                [1, -a, 1],
+                [1, a, 1],
+                [b, b, w],
+                [a, 1, 1],
                 [-a, 1, 1],
                 [-b, b, w],
                 [-1, a, 1],
-                [-1,-a, 1],
-                [-b,-b, w],
-                [-a,-1, 1],
-                [ a,-1, 1],
-                [ b,-b, w],
+                [-1, -a, 1],
+                [-b, -b, w],
+                [-a, -1, 1],
+                [a, -1, 1],
+                [b, -b, w],
             ],
             dtype=float,
         )
-        knot = np.array([-1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5], dtype=float) / 4.0 * 2 * pi
+        knot = (
+            np.array([-1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5], dtype=float) / 4.0 * 2 * pi
+        )
         result = Curve(BSplineBasis(5, knot, 1), controlpoints, rational=True)
     else:
-        raise ValueError('Unkown type: %s' %(type))
+        raise ValueError("Unkown type: %s" % (type))
 
     result *= r
     result.rotate(rotate_local_x_axis(xaxis, normal))
@@ -210,10 +226,10 @@ def circle(
 def ellipse(
     r1: Scalar = 1,
     r2: Scalar = 1,
-    center: Scalars = (0,0,0),
-    normal: Scalars = (0,0,1),
-    type: Literal["p2C0", "p4C1"] = 'p2C0',
-    xaxis: Scalars = (1,0,0),
+    center: Scalars = (0, 0, 0),
+    normal: Scalars = (0, 0, 1),
+    type: Literal["p2C0", "p4C1"] = "p2C0",
+    xaxis: Scalars = (1, 0, 0),
 ) -> Curve:
     """Create an ellipse.
 
@@ -228,7 +244,7 @@ def ellipse(
     :raises ValueError: If radius is not positive
     """
     result = circle(type=type)
-    result *= [r1,r2,1]
+    result *= [r1, r2, 1]
     result.rotate(rotate_local_x_axis(xaxis, normal))
     return result.flip_and_move_plane_geometry(center, normal)
 
@@ -242,41 +258,44 @@ def circle_segment_from_three_points(x0: Scalars, x1: Scalars, x2: Scalars) -> C
     :rtype: Curve
     """
     # wrap input into 3d numpy arrays
-    pt0 = np.array([0,0,0], dtype=float)
-    pt1 = np.array([0,0,0], dtype=float)
-    pt2 = np.array([0,0,0], dtype=float)
-    pt0[:len(x0)] = x0
-    pt1[:len(x1)] = x1
-    pt2[:len(x2)] = x2
+    pt0 = np.array([0, 0, 0], dtype=float)
+    pt1 = np.array([0, 0, 0], dtype=float)
+    pt2 = np.array([0, 0, 0], dtype=float)
+    pt0[: len(x0)] = x0
+    pt1[: len(x1)] = x1
+    pt2[: len(x2)] = x2
 
     # figure out normal, center and radius
-    normal = np.cross(pt1-pt0, pt2-pt0)
-    A = np.vstack((2*(pt1-pt0), 2*(pt2-pt0), normal))
+    normal = np.cross(pt1 - pt0, pt2 - pt0)
+    A = np.vstack((2 * (pt1 - pt0), 2 * (pt2 - pt0), normal))
     b = np.array(
         [
-            np.dot(pt1,pt1) - np.dot(pt0,pt0),
-            np.dot(pt2,pt2) - np.dot(pt0,pt0),
-            np.dot(normal,pt0),
+            np.dot(pt1, pt1) - np.dot(pt0, pt0),
+            np.dot(pt2, pt2) - np.dot(pt0, pt0),
+            np.dot(normal, pt0),
         ],
         dtype=float,
     )
-    center = np.linalg.solve(A,b)
-    radius = norm(pt2-center)
-    v2 = pt2-center
-    v1 = pt1-center
-    v0 = pt0-center
-    w0 = pt0-pt2
-    w1 = pt1-pt2
+    center = np.linalg.solve(A, b)
+    radius = norm(pt2 - center)
+    v2 = pt2 - center
+    v1 = pt1 - center
+    v0 = pt0 - center
+    w0 = pt0 - pt2
+    w1 = pt1 - pt2
     w2 = np.cross(w0, w1)
-    normal = np.cross(v0,v2)
+    normal = np.cross(v0, v2)
     len_v2 = norm(v2)
     len_v0 = norm(v0)
-    theta  = np.arccos(np.dot(v2,v0) / len_v2 / len_v0)
-    if not all(np.sign(i)==np.sign(j) or abs(i-j) < state.controlpoint_absolute_tolerance for i, j in zip(w2,normal)):
-        theta = 2*pi - theta
+    theta = np.arccos(np.dot(v2, v0) / len_v2 / len_v0)
+    if not all(
+        np.sign(i) == np.sign(j) or abs(i - j) < state.controlpoint_absolute_tolerance
+        for i, j in zip(w2, normal)
+    ):
+        theta = 2 * pi - theta
         normal = -normal
 
-    result = circle_segment(theta, radius, center, np.cross(v0,v1), v0)
+    result = circle_segment(theta, radius, center, np.cross(v0, v1), v0)
 
     # spit out 2D curve if all input points were 2D, otherwise return 3D
     result.set_dimension(max(len(x0), len(x1), len(x2)))
@@ -286,9 +305,9 @@ def circle_segment_from_three_points(x0: Scalars, x1: Scalars, x2: Scalars) -> C
 def circle_segment(
     theta: Scalar,
     r: Scalar = 1,
-    center: Scalars = (0,0,0),
-    normal: Scalars = (0,0,1),
-    xaxis: Scalars = (1,0,0),
+    center: Scalars = (0, 0, 0),
+    normal: Scalars = (0, 0, 1),
+    xaxis: Scalars = (1, 0, 0),
 ) -> Curve:
     """Create a circle segment starting parallel to the rotated x-axis.
 
@@ -305,34 +324,36 @@ def circle_segment(
 
     # Error test input
     if np.abs(theta) > 2 * pi:
-        raise ValueError('theta needs to be in range [-2pi,2pi]')
+        raise ValueError("theta needs to be in range [-2pi,2pi]")
     if r <= 0:
-        raise ValueError('radius needs to be positive')
-    if theta == 2*pi:
+        raise ValueError("radius needs to be positive")
+    if theta == 2 * pi:
         return circle(r, center, normal)
 
     # Build knot vector
     knot_spans = int(ceil(np.abs(theta) / (2 * pi / 3)))
-    knot = np.empty((2*knot_spans + 4,), dtype=float)
+    knot = np.empty((2 * knot_spans + 4,), dtype=float)
     knot[0] = 0
-    knot[1:-1:2] = np.arange(knot_spans+1)
-    knot[2::2] = np.arange(knot_spans+1)
+    knot[1:-1:2] = np.arange(knot_spans + 1)
+    knot[2::2] = np.arange(knot_spans + 1)
     knot[-1] = knot_spans
     knot *= theta / knot_spans
 
     n = (knot_spans - 1) * 2 + 3  # number of control points needed
     dt = float(theta) / knot_spans / 2  # angle step
-    angles = np.linspace(0, dt*n, num=n, endpoint=False)
+    angles = np.linspace(0, dt * n, num=n, endpoint=False)
 
-    cp = np.array([
-        r * np.cos(angles),
-        r * np.sin(angles),
-        1 - (np.arange(n, dtype=int) % 2) * (1 - np.cos(dt)),
-    ]).T
+    cp = np.array(
+        [
+            r * np.cos(angles),
+            r * np.sin(angles),
+            1 - (np.arange(n, dtype=int) % 2) * (1 - np.cos(dt)),
+        ]
+    ).T
 
     if theta < 0:
         cp = cp[::-1]
-        result = Curve(BSplineBasis(3, np.flip(knot,0)), cp, rational=True)
+        result = Curve(BSplineBasis(3, np.flip(knot, 0)), cp, rational=True)
     else:
         result = Curve(BSplineBasis(3, knot), cp, rational=True)
     result.rotate(rotate_local_x_axis(xaxis, normal))
@@ -381,7 +402,7 @@ def least_square_fit(x: Any, basis: BSplineBasis, t: Scalars) -> Curve:
     N = basis.evaluate(t)
 
     # solve interpolation problem
-    controlpoints,_,_,_ = np.linalg.lstsq(N, x, rcond=None)
+    controlpoints, _, _, _ = np.linalg.lstsq(N, x, rcond=None)
 
     return Curve(basis, controlpoints)
 
@@ -416,13 +437,17 @@ def cubic_curve(
     # If periodic input is not closed, make sure we do it now
     append_knots: list[Scalar] = []
     if boundary == Boundary.PERIODIC and not (
-       np.allclose(x[0,:], x[-1,:],
-                   rtol = state.controlpoint_relative_tolerance,
-                   atol = state.controlpoint_absolute_tolerance)):
-        x = np.append(x, [x[0,:]], axis=0)
+        np.allclose(
+            x[0, :],
+            x[-1, :],
+            rtol=state.controlpoint_relative_tolerance,
+            atol=state.controlpoint_absolute_tolerance,
+        )
+    ):
+        x = np.append(x, [x[0, :]], axis=0)
         if t is not None:
             # Augment interpolation knot by euclidian distance to end
-            append_knots = [t[-1] + norm(np.array(x[0,:])- np.array(x[-2,:]))]
+            append_knots = [t[-1] + norm(np.array(x[0, :]) - np.array(x[-2, :]))]
 
     if t is None:
         knot = np.zeros(6 + len(x), dtype=float)
@@ -454,7 +479,7 @@ def cubic_curve(
         # do not duplicate the interpolation at the sem (start=end is the same point)
         # identical points equal singular interpolation matrix
         iknot = iknot[:-1]
-        x = x[:-1,:]
+        x = x[:-1, :]
     else:
         basis = BSplineBasis(4, knot)
     N = basis(iknot, sparse=True)  # left-hand-side matrix
@@ -483,7 +508,7 @@ def cubic_curve(
         x = np.vstack([x, np.zeros((new, x.shape[1]))])
 
     # Solve system to get controlpoints
-    cp = splinalg.spsolve(N,x)
+    cp = splinalg.spsolve(N, x)
     cp = cp.reshape(x.shape)
 
     # Wrap it all into a curve and return
@@ -509,10 +534,10 @@ def bezier(pts: Any, quadratic: bool = False, relative: bool = False) -> Curve:
     n = (len(pts) - 1) // (p - 1)
 
     # Generate uniform knot vector of repeated integers
-    knot = np.empty(((n+1) * (p-1) + 2,), dtype=float)
+    knot = np.empty(((n + 1) * (p - 1) + 2,), dtype=float)
     knot[0] = 0
     for i in range(1, p):
-        knot[i:-1:p-1] = np.arange(n+1)
+        knot[i : -1 : p - 1] = np.arange(n + 1)
     knot[-1] = n
 
     cps = np.array(pts, dtype=float)
@@ -579,23 +604,23 @@ def manipulate(
         argc = len(arg_names)
         argv = [0] * argc
         for j in range(argc):
-            if arg_names[j] == 'x':
+            if arg_names[j] == "x":
                 argv[j] = x
-            elif arg_names[j] == 't':
+            elif arg_names[j] == "t":
                 argv[j] = t
-            elif arg_names[j] == 'v':
+            elif arg_names[j] == "v":
                 c0 = np.array([i for i in range(n) if b.continuity(t[i]) == 0])
                 v = crv.derivative(t, 1)
-                if len(c0)>0:
-                    v[c0,:] = (v[c0,:] + crv.derivative(t[c0], 1, above=False)) / 2.0
+                if len(c0) > 0:
+                    v[c0, :] = (v[c0, :] + crv.derivative(t[c0], 1, above=False)) / 2.0
                 if normalized:
                     v[:] = [vel / norm(vel) for vel in v]
                 argv[j] = v
-            elif arg_names[j] == 'a':
+            elif arg_names[j] == "a":
                 c1 = np.array([i for i in range(n) if b.continuity(t[i]) < 2])
                 a = crv.derivative(t, 2)
-                if len(c1)>0:
-                    a[c1,:] = (a[c1,:] + crv.derivative(t[c1], 2, above=False)) / 2.0
+                if len(c1) > 0:
+                    a[c1, :] = (a[c1, :] + crv.derivative(t[c1], 2, above=False)) / 2.0
                 if normalized:
                     a[:] = [acc / norm(acc) for acc in a]
                 argv[j] = a
@@ -603,17 +628,17 @@ def manipulate(
 
     else:
         destination = np.zeros((len(crv), crv.dimension))
-        for (t1, i) in zip(t, range(len(t))):
+        for t1, i in zip(t, range(len(t))):
             x = crv(t1)
             arg_names = inspect.getargspec(f).args
             argc = len(arg_names)
             argv = [0] * argc
             for j in range(argc):
-                if arg_names[j] == 'x':
+                if arg_names[j] == "x":
                     argv[j] = x
-                elif arg_names[j] == 't':
+                elif arg_names[j] == "t":
                     argv[j] = t1
-                elif arg_names[j] == 'v':
+                elif arg_names[j] == "v":
                     v = crv.derivative(t1, 1)
                     if b.continuity(t1) < 1:
                         v += crv.derivative(t1, 1, above=False)
@@ -621,7 +646,7 @@ def manipulate(
                     if normalized:
                         v /= norm(v)
                     argv[j] = v
-                elif arg_names[j] == 'a':
+                elif arg_names[j] == "a":
                     a = crv.derivative(t1, 2)
                     if b.continuity(t1) < 2:
                         a += crv.derivative(t1, 1, above=False)
@@ -689,7 +714,7 @@ def fit(
         crv2 = curve_factory.fit(move_along_tangent, crv.start(0), crv.end(0))
     """
 
-    b = BSplineBasis(4, np.array([t0,t0,t0,t0, t1,t1,t1,t1], dtype=float))
+    b = BSplineBasis(4, np.array([t0, t0, t0, t0, t1, t1, t1, t1], dtype=float))
     t = np.array(b.greville())
     crv = interpolate(x(t), b, t)
     (err2, maxerr) = crv.error(x)
@@ -699,7 +724,9 @@ def fit(
         return crv
 
     # For all other curves, start with 4 knot spans
-    knot_vector = np.array([t0,t0,t0,t0] + [i/5.0*(t1-t0)+t0 for i in range(1,5)] + [t1,t1,t1,t1], dtype=float)
+    knot_vector = np.array(
+        [t0, t0, t0, t0] + [i / 5.0 * (t1 - t0) + t0 for i in range(1, 5)] + [t1, t1, t1, t1], dtype=float
+    )
     b = BSplineBasis(4, knot_vector)
     t = np.array(b.greville())
     crv = interpolate(x(t), b, t)
@@ -709,22 +736,24 @@ def fit(
     # and not our approximation *crv*, but we don't have the derivative of *x*, so
     # we can't compute it. This seems like a healthy compromise.
     length = crv.length()
-    while np.sqrt(np.sum(err2))/length > rtol and maxerr > atol:
-        knot_span    = crv.knots(0) # knot vector without multiplicities
-        target_error = (rtol*length)**2 / len(err2) # equidistribute error among all knot spans
+    while np.sqrt(np.sum(err2)) / length > rtol and maxerr > atol:
+        knot_span = crv.knots(0)  # knot vector without multiplicities
+        target_error = (rtol * length) ** 2 / len(err2)  # equidistribute error among all knot spans
 
         for i in range(len(err2)):
             # figure out how many new knots we require in this knot interval:
             # if we converge with *scale* and want an error of *target_error*
             # |e|^2 * (1/n)^scale = target_error^2
 
-            conv_order = 4                   # cubic interpolateion is order=4
-            square_conv_order = 2*conv_order # we are computing with square of error
-            scale = square_conv_order + 4    # don't want to converge too quickly in case of highly non-uniform mesh refinement is required
-            n = int(np.ceil(np.exp((np.log(err2[i]) - np.log(target_error))/scale)))
+            conv_order = 4  # cubic interpolateion is order=4
+            square_conv_order = 2 * conv_order  # we are computing with square of error
+            scale = (
+                square_conv_order + 4
+            )  # don't want to converge too quickly in case of highly non-uniform mesh refinement is required
+            n = int(np.ceil(np.exp((np.log(err2[i]) - np.log(target_error)) / scale)))
 
             # add *n* new interior knots to this knot span
-            new_knots = np.linspace(knot_span[i], knot_span[i+1], n+1)
+            new_knots = np.linspace(knot_span[i], knot_span[i + 1], n + 1)
             knot_vector = np.append(knot_vector, new_knots[1:-1])
 
         # build new refined knot vector
@@ -760,9 +789,5 @@ def fit_points(
     :return: Curve Non-uniform cubic B-spline curve
     """
 
-    if t is not None:
-        linear = polygon(x, t=t)
-    else:
-        linear = polygon(x)
-
+    linear = polygon(x, t=t)
     return fit(linear, linear.start(0), linear.end(0), rtol=rtol, atol=atol)

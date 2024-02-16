@@ -1,21 +1,22 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
-from collections.abc import MutableSequence
-from bisect import bisect_right, bisect_left
 import copy
-from typing import Optional, overload, Literal, Union
+from bisect import bisect_left, bisect_right
+from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
 import numpy as np
 from scipy.sparse import csr_matrix
-from typing_extensions import Self
 
-from .utils import ensure_listlike, ensure_scalars
-from .types import FArray, Scalars, ScalarOrScalars, Scalar
 from . import basis_eval, state
+from .utils import ensure_listlike, ensure_scalars
 
-__all__ = ['BSplineBasis']
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
+    from .types import FArray, Scalar, ScalarOrScalars, Scalars
+
+
+__all__ = ["BSplineBasis"]
 
 
 class BSplineBasis:
@@ -46,9 +47,9 @@ class BSplineBasis:
 
         if knots is None:
             self.knots = np.array([0] * order + [1] * order, dtype=float)
-            for i in range(periodic+1):
-                self.knots[   i] = -1
-                self.knots[-i-1] =  2
+            for i in range(periodic + 1):
+                self.knots[i] = -1
+                self.knots[-i - 1] = 2
         else:
             self.knots = np.array(knots, dtype=float)
 
@@ -59,20 +60,23 @@ class BSplineBasis:
 
     def _error_check(self) -> None:
         if self.order < 1:
-            raise ValueError('invalid spline order')
+            raise ValueError("invalid spline order")
 
-        if len(self.knots) < 2*self.order:
-            raise ValueError('knot vector has too few elements')
+        if len(self.knots) < 2 * self.order:
+            raise ValueError("knot vector has too few elements")
 
         if self.periodic >= 0:
             endpt = -self.order - self.periodic
             for i in range(self.order + self.periodic - 1):
-                if np.abs((self.knots[i + 1] - self.knots[i]) - (self.knots[endpt + i ] - self.knots[endpt - 1 + i])) > state.knot_tolerance:
-                    raise ValueError('periodic knot vector is mis-matching at the start/end')
+                diff = np.abs(
+                    (self.knots[i + 1] - self.knots[i]) - (self.knots[endpt + i] - self.knots[endpt - 1 + i])
+                )
+                if diff > state.knot_tolerance:
+                    raise ValueError("periodic knot vector is mis-matching at the start/end")
 
         for i in range(len(self.knots) - 1):
             if self.knots[i + 1] - self.knots[i] < -state.knot_tolerance:
-                raise ValueError('knot vector needs to be non-decreasing')
+                raise ValueError("knot vector needs to be non-decreasing")
 
     def num_functions(self) -> int:
         """Return the number of basis functions in the basis.
@@ -100,10 +104,12 @@ class BSplineBasis:
         return self.knots[-self.order]  # type: ignore[no-any-return]
 
     @overload
-    def greville(self) -> FArray: ...
+    def greville(self) -> FArray:
+        ...
 
     @overload
-    def greville(self, index: int) -> float: ...
+    def greville(self, index: int) -> float:
+        ...
 
     def greville(self, index=None):  # type: ignore[no-untyped-def]
         """Fetch greville points, also known as knot averages:
@@ -113,15 +119,14 @@ class BSplineBasis:
         :return: One, or all of the Greville points
         :rtype: [float] (if *index* is ``None``) or float
         """
-        result = []
         p = self.order
         n = self.num_functions()
         if index is None:
             return np.fromiter(
-                (np.sum(self.knots[i+1:i+p]) / (p-1) for i in range(n)),
+                (np.sum(self.knots[i + 1 : i + p]) / (p - 1) for i in range(n)),
                 dtype=float,
             )
-        return np.sum(self.knots[index+1:index+p]) / (p - 1)
+        return np.sum(self.knots[index + 1 : index + p]) / (p - 1)
 
     def evaluate_sparse(
         self,
@@ -147,10 +152,18 @@ class BSplineBasis:
         t = np.array(t, dtype=float)
         basis_eval.snap(self.knots, t, state.knot_tolerance)
 
-        if self.order <= d: # requesting more derivatives than polymoial degree: return all zeros
+        if self.order <= d:  # requesting more derivatives than polymoial degree: return all zeros
             return csr_matrix((len(t), self.num_functions()))
 
-        data, size = basis_eval.evaluate(self.knots, self.order, t, self.periodic, state.knot_tolerance, d, from_right)
+        data, size = basis_eval.evaluate(
+            self.knots,
+            self.order,
+            t,
+            self.periodic,
+            state.knot_tolerance,
+            d,
+            from_right,
+        )
         return csr_matrix(data, size)
 
     def evaluate_dense(
@@ -181,7 +194,8 @@ class BSplineBasis:
         sparse: Literal[True],
         d: int = 0,
         from_right: bool = True,
-    ) -> csr_matrix: ...
+    ) -> csr_matrix:
+        ...
 
     @overload
     def evaluate(
@@ -190,7 +204,8 @@ class BSplineBasis:
         *,
         d: int = 0,
         from_right: bool = True,
-    ) -> FArray: ...
+    ) -> FArray:
+        ...
 
     @overload
     def evaluate(
@@ -200,9 +215,10 @@ class BSplineBasis:
         sparse: Literal[False],
         d: int = 0,
         from_right: bool = True,
-    ) -> FArray: ...
+    ) -> FArray:
+        ...
 
-    def evaluate(self, t, d = 0, from_right = True, sparse = False):  # type: ignore[no-untyped-def]
+    def evaluate(self, t, d=0, from_right=True, sparse=False):  # type: ignore[no-untyped-def]
         """Evaluate all basis functions in a given set of points.
 
         :param t: The parametric coordinate(s) in which to evaluate
@@ -215,11 +231,7 @@ class BSplineBasis:
             points *i*
         :rtype: numpy.array
         """
-        return (
-            self.evaluate_sparse(t, d, from_right)
-            if sparse else
-            self.evaluate_dense(t, d, from_right)
-        )
+        return self.evaluate_sparse(t, d, from_right) if sparse else self.evaluate_dense(t, d, from_right)
 
     @overload
     def evaluate_old(
@@ -229,7 +241,8 @@ class BSplineBasis:
         sparse: Literal[True],
         d: int = 0,
         from_right: bool = True,
-    ) -> csr_matrix: ...
+    ) -> csr_matrix:
+        ...
 
     @overload
     def evaluate_old(
@@ -239,7 +252,8 @@ class BSplineBasis:
         sparse: Literal[False] = False,
         d: int = 0,
         from_right: bool = True,
-    ) -> FArray: ...
+    ) -> FArray:
+        ...
 
     def evaluate_old(self, t, d=0, from_right=True, sparse=False):  # type: ignore[no-untyped-def]
         """Evaluate all basis functions in a given set of points.
@@ -260,13 +274,13 @@ class BSplineBasis:
 
         p = self.order  # knot vector order
         n_all = len(self.knots) - p  # number of basis functions (without periodicity)
-        n = len(self.knots) - p - (self.periodic+1)  # number of basis functions (with periodicity)
+        n = len(self.knots) - p - (self.periodic + 1)  # number of basis functions (with periodicity)
         m = len(t)
-        data    = np.zeros(m*p)
-        indices = np.zeros(m*p, dtype='int32')
-        indptr  = np.array(range(0,m*p+1,p), dtype='int32')
-        if p <= d: # requesting more derivatives than polymoial degree: return all zeros
-            return np.zeros((m,n))
+        data = np.zeros(m * p)
+        indices = np.zeros(m * p, dtype="int32")
+        indptr = np.array(range(0, m * p + 1, p), dtype="int32")
+        if p <= d:  # requesting more derivatives than polymoial degree: return all zeros
+            return np.zeros((m, n))
         if self.periodic >= 0:
             t = copy.deepcopy(t)
             # Wrap periodic evaluation into domain
@@ -284,37 +298,34 @@ class BSplineBasis:
                 continue
 
             # mu = index of last non-zero basis function
-            if right:
-                mu = bisect_right(self.knots, evalT)
-            else:
-                mu = bisect_left(self.knots, evalT)
+            mu = (bisect_right if right else bisect_left)(self.knots, evalT)
             mu = min(mu, n_all)
 
             M = np.zeros(p)  # temp storage to keep all the function evaluations
             M[-1] = 1  # the last entry is a dummy-zero which is never used
-            for q in range(1, p-d):
+            for q in range(1, p - d):
                 for j in range(p - q - 1, p):
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
-                    if j != p-q-1:
+                    if j != p - q - 1:
                         M[j] = M[j] * float(evalT - self.knots[k]) / (self.knots[k + q] - self.knots[k])
 
-                    if j != p-1:
-                        M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (self.knots[k + q + 1] - self.knots[k + 1])
+                    if j != p - 1:
+                        M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (
+                            self.knots[k + q + 1] - self.knots[k + 1]
+                        )
 
-
-            for q in range(p-d, p):
+            for q in range(p - d, p):
                 for j in range(p - q - 1, p):
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
-                    if j != p-q-1:
+                    if j != p - q - 1:
                         M[j] = M[j] * float(q) / (self.knots[k + q] - self.knots[k])
-                    if j != p-1:
+                    if j != p - 1:
                         M[j] = M[j] - M[j + 1] * float(q) / (self.knots[k + q + 1] - self.knots[k + 1])
 
+            data[i * p : (i + 1) * p] = M
+            indices[i * p : (i + 1) * p] = np.arange(mu - p, mu) % n
 
-            data[i*p:(i+1)*p]    = M
-            indices[i*p:(i+1)*p] = np.arange(mu-p, mu) % n
-
-        N = csr_matrix((data, indices, indptr), (m,n))
+        N = csr_matrix((data, indices, indptr), (m, n))
         return N if sparse else N.toarray()
 
     def integrate(self, t0: Scalar, t1: Scalar) -> FArray:
@@ -325,24 +336,24 @@ class BSplineBasis:
         :return: The integration of all functions over the input domain
         :rtype: numpy.ndarray
         """
-        if self.periodic > -1 and (t0<self.start() or t1>self.end()):
-            raise NotImplementedError('Periodic functions integrated across sem')
+        if self.periodic > -1 and (t0 < self.start() or t1 > self.end()):
+            raise NotImplementedError("Periodic functions integrated across sem")
 
         t0 = max(t0, self.start())
         t1 = min(t1, self.end())
-        p  = self.order
+        p = self.order
         knot = [self.knots[0]] + list(self.knots) + [self.knots[-1]]
         integration_basis = BSplineBasis(p + 1, knot)
         N0 = np.array(integration_basis.evaluate(t0)).flatten()
         N1 = np.array(integration_basis.evaluate(t1)).flatten()
-        N  = [(knot[i+p]-knot[i])*1.0/p * np.sum(N1[i:]-N0[i:]) for i in range(N0.size)]
-        N  = N[1:]
+        N = [(knot[i + p] - knot[i]) * 1.0 / p * np.sum(N1[i:] - N0[i:]) for i in range(N0.size)]
+        N = N[1:]
 
         # collapse periodic functions onto themselves
         if self.periodic > -1:
             for j in range(self.periodic + 1):
                 N[j] += N[-self.periodic - 1 + j]
-            N = N[:-self.periodic-1]
+            N = N[: -self.periodic - 1]
 
         return np.array(N, dtype=float)
 
@@ -356,9 +367,9 @@ class BSplineBasis:
 
         :raises ValueError: If *end* ≤ *start*"""
         if end <= start:
-            raise ValueError('end must be larger than start')
+            raise ValueError("end must be larger than start")
         self.normalize()
-        self *= (end - start)
+        self *= end - start
         self += start
 
     def reverse(self) -> None:
@@ -381,7 +392,7 @@ class BSplineBasis:
             if knot < self.start() or knot > self.end():
                 knot = (knot - self.start()) % (self.end() - self.start()) + self.start()
         elif knot < self.start() or self.end() < knot:
-            raise ValueError('out of range')
+            raise ValueError("out of range")
 
         # First knot that is larger than the right tolerance point
         hi = bisect_left(self.knots, knot + state.knot_tolerance)
@@ -402,8 +413,8 @@ class BSplineBasis:
         n_reps = deg - continuity - 1
         n_copy = deg - n_reps
 
-        head = new_knots[-n_copy-1:-1] - diff
-        tail = new_knots[1:n_copy+1] + diff
+        head = new_knots[-n_copy - 1 : -1] - diff
+        tail = new_knots[1 : n_copy + 1] + diff
 
         new_knots = np.hstack((head, [self.start()] * n_reps, new_knots, [self.end()] * n_reps, tail))
         return BSplineBasis(self.order, new_knots, continuity)
@@ -423,8 +434,8 @@ class BSplineBasis:
                 if abs(k - result[-1]) > state.knot_tolerance:
                     result.append(k)
         else:
-            result = [self.knots[p-1]]
-            for k in self.knots[p-1:-p+1]:
+            result = [self.knots[p - 1]]
+            for k in self.knots[p - 1 : -p + 1]:
                 if abs(k - result[-1]) > state.knot_tolerance:
                     result.append(k)
 
@@ -442,9 +453,9 @@ class BSplineBasis:
         :raises ValueError: If `amount` is negative
         """
         if not isinstance(amount, int):
-            raise TypeError('amount needs to be a non-negative integer')
+            raise TypeError("amount needs to be a non-negative integer")
         if amount < 0:
-            raise ValueError('amount needs to be a non-negative integer')
+            raise ValueError("amount needs to be a non-negative integer")
         if amount == 0:
             return self.clone()
 
@@ -459,8 +470,8 @@ class BSplineBasis:
         if self.periodic > -1:
             # remove excessive ghost knots which appear at both ends of the knot vector
             n0 = bisect_left(knot_spans, self.start())
-            n1 = len(knot_spans) - bisect_left(knot_spans, self.end())   - 1
-            knots = knots[n0*amount : -n1*amount]
+            n1 = len(knot_spans) - bisect_left(knot_spans, self.end()) - 1
+            knots = knots[n0 * amount : -n1 * amount]
 
         return BSplineBasis(self.order + amount, knots, self.periodic)
 
@@ -476,21 +487,23 @@ class BSplineBasis:
         :raises ValueError: If `amount` is negative
         """
         if not isinstance(amount, int):
-            raise TypeError('amount needs to be a non-negative integer')
+            raise TypeError("amount needs to be a non-negative integer")
         if amount < 0:
-            raise ValueError('amount needs to be a non-negative integer')
+            raise ValueError("amount needs to be a non-negative integer")
         if self.order - amount < 2:
-            raise ValueError('cannot lower order to less than linears')
+            raise ValueError("cannot lower order to less than linears")
 
         p = self.order - amount
-        knots_nested = [[k] * max(p-1-self.continuity(k), 1) for k in self.knot_spans(include_ghost_knots=True)]
+        knots_nested = [
+            [k] * max(p - 1 - self.continuity(k), 1) for k in self.knot_spans(include_ghost_knots=True)
+        ]
         knots = [k for sublist in knots_nested for k in sublist]
 
         if self.periodic > -1:
             # remove excessive ghost knots which appear at both ends of the knot vector
             n0 = bisect_left(knots, self.start())
-            n1 = len(knots) - bisect_left(knots, self.end())   - 1
-            knots = knots[n0*amount : -n1*amount]
+            n1 = len(knots) - bisect_left(knots, self.end()) - 1
+            knots = knots[n0 * amount : -n1 * amount]
 
         return BSplineBasis(p, knots, self.periodic)
 
@@ -510,7 +523,7 @@ class BSplineBasis:
             if new_knot < self.start() or new_knot > self.end():
                 new_knot = (new_knot - self.start()) % (self.end() - self.start()) + self.start()
         elif new_knot < self.start() or self.end() < new_knot:
-            raise ValueError('new_knot out of range')
+            raise ValueError("new_knot out of range")
         # mu is the index of last non-zero (old) basis function
         mu = bisect_right(self.knots, new_knot)
         n = self.num_functions()
@@ -523,13 +536,13 @@ class BSplineBasis:
             if self.knots[i + p - 1] <= new_knot and new_knot <= self.knots[i + p]:
                 C[i % (n + 1), i % n] = 1
             else:
-                C[i % (n + 1), i % n] = (new_knot - self.knots[i]) / (
-                    self.knots[i + p - 1] - self.knots[i])
+                C[i % (n + 1), i % n] = (new_knot - self.knots[i]) / (self.knots[i + p - 1] - self.knots[i])
             if self.knots[i] <= new_knot and new_knot <= self.knots[i + 1]:
                 C[(i + 1) % (n + 1), i % n] = 1
             else:
                 C[(i + 1) % (n + 1), i % n] = (self.knots[i + p] - new_knot) / (
-                    self.knots[i + p] - self.knots[i + 1])
+                    self.knots[i + p] - self.knots[i + 1]
+                )
         for i in range(mu, n + 1):
             C[i % (n + 1), (i - 1) % n] = 1
 
@@ -537,18 +550,18 @@ class BSplineBasis:
 
         # make sure that it is correct periodic after knot insertion
         if self.periodic > -1:
-            m  = len(self.knots)
-            r  = self.periodic
-            if mu <= p+r: # need to fix ghost knots on right side
+            m = len(self.knots)
+            r = self.periodic
+            if mu <= p + r:  # need to fix ghost knots on right side
                 k0 = self.knots[0]
-                k1 = self.knots[-p-r-1]
-                for i in range(p+r+1):
-                    self.knots[m-p-r-1+i] = k1 + (self.knots[i]-k0)
-            elif mu >= m-p-r-1: # need to fix ghost knots on left side
-                k0 = self.knots[p+r]
+                k1 = self.knots[-p - r - 1]
+                for i in range(p + r + 1):
+                    self.knots[m - p - r - 1 + i] = k1 + (self.knots[i] - k0)
+            elif mu >= m - p - r - 1:  # need to fix ghost knots on left side
+                k0 = self.knots[p + r]
                 k1 = self.knots[-1]
-                for i in range(p+r+1):
-                    self.knots[i] = k0 - (k1-self.knots[m-p-r-1+i])
+                for i in range(p + r + 1):
+                    self.knots[i] = k0 - (k1 - self.knots[m - p - r - 1 + i])
         return C
 
     def roll(self, new_start: Scalar) -> None:
@@ -563,9 +576,9 @@ class BSplineBasis:
         k = self.periodic
         n = len(self.knots)
         t1 = self.knots[0] - self.knots[-p - k - 1]
-        left  = slice(new_start, n-p-k-1, None)
+        left = slice(new_start, n - p - k - 1, None)
         len_left = left.stop - left.start
-        right = slice(0, n-len_left, None)
+        right = slice(0, n - len_left, None)
 
         # NOTE: This has to be done 'at once' - the slices may overlap
         self.knots[:len_left], self.knots[len_left:] = self.knots[left], self.knots[right] - t1
@@ -574,19 +587,22 @@ class BSplineBasis:
         """Checks if this basis equals another basis, when disregarding
         scaling and translation of the knots vector. I.e. will this basis and
         *bspline* yield the same spline object if paired with identical
-        controlpoints """
+        controlpoints"""
         if self.order != bspline.order or self.periodic != bspline.periodic:
             return False
-        dt  = self.knots[-1]    - self.knots[0]
+        dt = self.knots[-1] - self.knots[0]
         dt2 = bspline.knots[-1] - bspline.knots[0]
         if reverse:
-            return np.allclose( (self.knots[-1]-self.knots[::-1]) / dt,
-                                (bspline.knots-bspline.knots[0]) / dt2,
-                                atol=state.knot_tolerance)
-        else:
-            return np.allclose( (self.knots-self.knots[0]) / dt,
-                                (bspline.knots-bspline.knots[0]) / dt2,
-                                atol=state.knot_tolerance)
+            return np.allclose(
+                (self.knots[-1] - self.knots[::-1]) / dt,
+                (bspline.knots - bspline.knots[0]) / dt2,
+                atol=state.knot_tolerance,
+            )
+        return np.allclose(
+            (self.knots - self.knots[0]) / dt,
+            (bspline.knots - bspline.knots[0]) / dt2,
+            atol=state.knot_tolerance,
+        )
 
     def snap(self, t: Union[MutableSequence[float], FArray]) -> None:
         """Snap evaluation points to knots if they are sufficiently close
@@ -599,10 +615,10 @@ class BSplineBasis:
         n = len(self.knots)
         for j in range(len(t)):
             i = bisect_left(self.knots, t[j])
-            if i < n and abs(self.knots[i]-t[j]) < state.knot_tolerance:
+            if i < n and abs(self.knots[i] - t[j]) < state.knot_tolerance:
                 t[j] = self.knots[i]
-            elif i > 0 and abs(self.knots[i-1]-t[j]) < state.knot_tolerance:
-                t[j] = self.knots[i-1]
+            elif i > 0 and abs(self.knots[i - 1] - t[j]) < state.knot_tolerance:
+                t[j] = self.knots[i - 1]
 
     def clone(self) -> BSplineBasis:
         """Clone the basis."""
@@ -637,7 +653,7 @@ class BSplineBasis:
     __ifloordiv__ = __itruediv__  # integer division (should not distinguish)
 
     def __repr__(self) -> str:
-        result = 'p=' + str(self.order) + ', ' + str(self.knots)
+        result = "p=" + str(self.order) + ", " + str(self.knots)
         if self.periodic > -1:
-            result += ', C' + str(self.periodic) + '-periodic'
+            result += ", C" + str(self.periodic) + "-periodic"
         return result

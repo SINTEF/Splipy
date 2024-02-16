@@ -1,22 +1,13 @@
-.PHONY: install mypy lint fmt fmtcheck doc
+package := splipy
 
+
+# Convenience targets
+
+.PHONY: install
 install:
 	poetry install --with=dev
 
-mypy:
-	poetry run mypy splipy
-
-lint:
-	poetry run ruff splipy
-
-bench:
-	poetry run pytest --benchmark-only
-
-fmtcheck:
-	poetry run black splipy --check
-	poetry run isort splipy --check
-
-
+.PHONY: doc
 doc:
 	$(MAKE) -C doc html
 
@@ -25,14 +16,31 @@ doc:
 
 .PHONY: format
 format:
-	poetry run ruff check --fix splipy
+	poetry run ruff format $(package)
+
+.PHONY: lint
+lint:
+	poetry run ruff check --fix $(package)
 
 
 # Test targets
 
+.PHONY:
+benchmark:
+	poetry run pytest --benchmark-only
+
 .PHONY: pytest
 pytest:
 	poetry run pytest --benchmark-skip
+
+.PHONY: mypy
+mypy:
+	poetry run mypy $(package)
+
+.PHONY: lint-check
+lint-check:
+	poetry run ruff check $(package)
+	poetry run ruff format --check $(package)
 
 .PHONY: examples
 examples:
@@ -45,7 +53,7 @@ examples:
 	poetry run python examples/write.py
 
 .PHONY: test  # most common test commands for everyday development
-test: pytest
+test: pytest mypy lint-check
 
 .PHONY: test-all  # run from CI: the whole kitchen sink
 test-all: test examples

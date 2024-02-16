@@ -1,23 +1,29 @@
-__doc__ = 'Implementation of various refinement schemes.'
+"""Implementation of various refinement schemes."""
+
+from __future__ import annotations
 
 from math import atan, tan
+from typing import TYPE_CHECKING, Sequence, TypeVar, Union
 
 import numpy as np
-from typing import TypeVar, Sequence, Union
 
-from . import ensure_listlike, check_direction
-from ..types import FArray, Scalar, Direction
-from ..splineobject import SplineObject
+from splipy.splineobject import SplineObject
+
+from . import check_direction, ensure_listlike
+
+if TYPE_CHECKING:
+    from splipy.types import Direction, FArray, Scalar
 
 
-# TODO: put control over these tolerances somewhere. Modstate in splipy seems
-#       to be the place for it, but we can't let splipy.utils influence the
-#       structure of splipy.
+# TODO(Kjetil): put control over these tolerances somewhere. Modstate in splipy seems
+# to be the place for it, but we can't let splipy.utils influence the
+# structure of splipy.
 def knot_exists(existing_knots: FArray, new_knot: Scalar) -> np.bool_:
     return np.any(np.isclose(existing_knots, new_knot, atol=1e-7, rtol=1e-10))
 
 
 T = TypeVar("T", bound=SplineObject)
+
 
 def geometric_refine(obj: T, alpha: float, n: int, direction: Direction = 0, reverse: bool = False) -> T:
     """geometric_refine(obj, alpha, n, [direction=0], [reverse=False])
@@ -32,8 +38,8 @@ def geometric_refine(obj: T, alpha: float, n: int, direction: Direction = 0, rev
     :param bool reverse: Set to `True` to refine towards the other end
     """
     # some error tests on input
-    if n<=0:
-        raise ValueError('n should be greater than 0')
+    if n <= 0:
+        raise ValueError("n should be greater than 0")
 
     direction = check_direction(direction, obj.pardim)
     if reverse:
@@ -42,27 +48,27 @@ def geometric_refine(obj: T, alpha: float, n: int, direction: Direction = 0, rev
     # fetch knots
     knots = obj.knots()
     knot_start = knots[direction][0]
-    knot_end   = knots[direction][-1]
+    knot_end = knots[direction][-1]
     dk = knot_end - knot_start
 
     # evaluate the factors
-    n = n+1 # redefine n to be knot spans instead of new internal knots
+    n = n + 1  # redefine n to be knot spans instead of new internal knots
     totProd = 1.0
-    totSum  = 0.0
+    totSum = 0.0
     for i in range(n):
-        totSum  += totProd
+        totSum += totProd
         totProd *= alpha
     d1 = 1.0 / totSum
     knot = d1
 
     # compute knot locations
     new_knots = []
-    for i in range(n-1):
-        k = knot_start + knot*dk
+    for i in range(n - 1):
+        k = knot_start + knot * dk
         if not knot_exists(knots[direction], k):
             new_knots.append(k)
-        knot += alpha*d1
-        d1   *= alpha
+        knot += alpha * d1
+        d1 *= alpha
 
     # do the actual knot insertion
     obj.insert_knot(new_knots, direction)
@@ -85,25 +91,25 @@ def center_refine(obj: T, S: float, n: int, direction: Direction = 0) -> T:
     :param direction: The direction to refine in
     """
     # some error tests on input
-    if n<=0:
-        raise ValueError('n should be greater than 0')
-    assert 0 < S < np.pi/2
+    if n <= 0:
+        raise ValueError("n should be greater than 0")
+    assert 0 < S < np.pi / 2
 
     direction = check_direction(direction, obj.pardim)
 
     # fetch knots
     knots = obj.knots()
     knot_start = knots[direction][0]
-    knot_end   = knots[direction][-1]
+    knot_end = knots[direction][-1]
     dk = knot_end - knot_start
 
     # compute knot locations
     new_knots = []
-    max_tan  = tan(S)
-    for i in range(1,n+1):
-        xi  = -1.0 + 2.0*i/(n+1)
+    max_tan = tan(S)
+    for i in range(1, n + 1):
+        xi = -1.0 + 2.0 * i / (n + 1)
         xi *= S
-        k   = knot_start + (tan(xi)+max_tan)/2/max_tan*dk
+        k = knot_start + (tan(xi) + max_tan) / 2 / max_tan * dk
         if not knot_exists(knots[direction], k):
             new_knots.append(k)
 
@@ -125,24 +131,24 @@ def edge_refine(obj: T, S: float, n: int, direction: Direction = 0) -> T:
     :param direction: The direction to refine in
     """
     # some error tests on input
-    if n<=0:
-        raise ValueError('n should be greater than 0')
+    if n <= 0:
+        raise ValueError("n should be greater than 0")
 
     direction = check_direction(direction, obj.pardim)
 
     # fetch knots
     knots = obj.knots()
     knot_start = knots[direction][0]
-    knot_end   = knots[direction][-1]
+    knot_end = knots[direction][-1]
     dk = knot_end - knot_start
 
     # compute knot locations
     new_knots = []
-    max_atan  = atan(S)
-    for i in range(1,n+1):
-        xi  = -1.0 + 2.0*i/(n+1)
+    max_atan = atan(S)
+    for i in range(1, n + 1):
+        xi = -1.0 + 2.0 * i / (n + 1)
         xi *= S
-        k   = knot_start + (atan(xi)+max_atan)/2/max_atan*dk
+        k = knot_start + (atan(xi) + max_atan) / 2 / max_atan * dk
         if not knot_exists(knots[direction], k):
             new_knots.append(k)
 
@@ -154,12 +160,12 @@ def edge_refine(obj: T, S: float, n: int, direction: Direction = 0) -> T:
 def _splitvector(len: int, parts: int) -> list[int]:
     delta = len // parts
     sizes = [delta for i in range(parts)]
-    remainder = len-parts*delta
-    for i in range(parts-remainder+1, parts):
-        sizes[i] = sizes[i]+1
+    remainder = len - parts * delta
+    for i in range(parts - remainder + 1, parts):
+        sizes[i] = sizes[i] + 1
     result = [0]
-    for i in range(1,parts):
-        result.append(sizes[i]+result[i-1])
+    for i in range(1, parts):
+        result.append(sizes[i] + result[i - 1])
     return result
 
 
@@ -177,7 +183,7 @@ def subdivide(objs: Sequence[T], n: Union[int, Sequence[int]]) -> list[T]:
     :return: New objects
     :rtype: [:class:`splipy.SplineObject`]
     """
-    pardim = objs[0].pardim # 1 for curves, 2 for surfaces, 3 for volumes
+    pardim = objs[0].pardim  # 1 for curves, 2 for surfaces, 3 for volumes
     n = ensure_listlike(n, pardim)
 
     result = list(objs)
@@ -185,11 +191,10 @@ def subdivide(objs: Sequence[T], n: Union[int, Sequence[int]]) -> list[T]:
         # split all objects so far along direction d
         new_results: list[T] = []
         for obj in result:
-            splitting_points = [obj.knots(d)[i] for i in _splitvector(len(obj.knots(d)), n[d]+1)]
+            splitting_points = [obj.knots(d)[i] for i in _splitvector(len(obj.knots(d)), n[d] + 1)]
             new_results += obj.split_many(splitting_points[1:], d)
 
         # only keep the smallest pieces in our result list
         result = new_results
 
     return result
-

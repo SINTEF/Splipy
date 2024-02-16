@@ -1,13 +1,14 @@
+"Implementation of various curve utilities"
+
 from __future__ import annotations
 
-from typing import Sequence, Optional, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 import numpy as np
 
-from ..curve import Curve
-from ..types import Scalars, FArray
-
-__doc__ = 'Implementation of various curve utilities'
+if TYPE_CHECKING:
+    from splipy.curve import Curve
+    from splipy.types import FArray, Scalars
 
 
 def curve_length_parametrization(

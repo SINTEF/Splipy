@@ -1,28 +1,47 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
+from collections.abc import Sized
 from itertools import combinations, product
 from math import atan2, sqrt
-import numpy as np
-from typing import TYPE_CHECKING, SupportsFloat, Literal, TypedDict, Sequence, TypeVar, Union, Iterator, Optional, cast, Any, Hashable, Iterable
-from typing_extensions import Unpack
-from collections.abc import Sized
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Hashable,
+    Iterable,
+    Iterator,
+    Literal,
+    Optional,
+    Sequence,
+    SupportsFloat,
+    TypeVar,
+    Union,
+)
 
-from ..types import Direction, ScalarOrScalars, Scalar, Section, SectionElt, SectionKwargs, SectionLike, Scalars, FArray
+import numpy as np
+from typing_extensions import Unpack
 
 if TYPE_CHECKING:
-    from ..splineobject import SplineObject
-    from ..basis import BSplineBasis
+    from splipy.splineobject import SplineObject
+    from splipy.types import (
+        Direction,
+        FArray,
+        Scalar,
+        ScalarOrScalars,
+        Scalars,
+        Section,
+        SectionElt,
+        SectionKwargs,
+        SectionLike,
+    )
 
 
 def is_right_hand(patch: SplineObject, tol: float = 1e-3) -> bool:
-    param = tuple((a+b)/2 for a,b in zip(patch.start(), patch.end()))
+    param = tuple((a + b) / 2 for a, b in zip(patch.start(), patch.end()))
 
     if patch.dimension == patch.pardim == 3:
-        du = patch.derivative(*param, d=(1,0,0))
-        dv = patch.derivative(*param, d=(0,1,0))
-        dw = patch.derivative(*param, d=(0,0,1))
+        du = patch.derivative(*param, d=(1, 0, 0))
+        dv = patch.derivative(*param, d=(0, 1, 0))
+        dw = patch.derivative(*param, d=(0, 0, 1))
 
         # Normalize
         du = du / np.linalg.norm(du)
@@ -33,8 +52,8 @@ def is_right_hand(patch: SplineObject, tol: float = 1e-3) -> bool:
         return bool(np.dot(dw, np.cross(du, dv)) >= tol)
 
     if patch.dimension == patch.pardim == 2:
-        du = patch.derivative(*param, d=(1,0))
-        dv = patch.derivative(*param, d=(0,1))
+        du = patch.derivative(*param, d=(1, 0))
+        dv = patch.derivative(*param, d=(0, 1))
 
         # Normalize
         du = du / np.linalg.norm(du)
@@ -49,10 +68,14 @@ def rotation_matrix(theta: Scalar, axis: Scalars) -> FArray:
     axis = np.asarray(axis, dtype=float)
     axis /= np.sqrt(np.dot(axis, axis))
     a = np.cos(theta / 2)
-    b, c, d = -axis*np.sin(theta / 2)
-    return np.array([[a*a+b*b-c*c-d*d, 2*(b*c-a*d),     2*(b*d+a*c)],
-                      [2*(b*c+a*d),     a*a+c*c-b*b-d*d, 2*(c*d-a*b)],
-                      [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
+    b, c, d = -axis * np.sin(theta / 2)
+    return np.array(
+        [
+            [a * a + b * b - c * c - d * d, 2 * (b * c - a * d), 2 * (b * d + a * c)],
+            [2 * (b * c + a * d), a * a + c * c - b * b - d * d, 2 * (c * d - a * b)],
+            [2 * (b * d - a * c), 2 * (c * d + a * b), a * a + d * d - b * b - c * c],
+        ]
+    )
 
 
 def sections(src_dim: int, tgt_dim: int) -> Iterator[Section]:
@@ -107,23 +130,23 @@ def check_section(*args: SectionElt, pardim: int = 0, **kwargs: Unpack[SectionKw
     args_list = list(args)
     while len(args_list) < pardim:
         args_list.append(None)
-    if 'u' in kwargs:
-        args_list[0] = kwargs['u']
-    if 'v' in kwargs:
-        args_list[1] = kwargs['v']
-    if 'w' in kwargs:
-        args_list[2] = kwargs['w']
+    if "u" in kwargs:
+        args_list[0] = kwargs["u"]
+    if "v" in kwargs:
+        args_list[1] = kwargs["v"]
+    if "w" in kwargs:
+        args_list[2] = kwargs["w"]
     return tuple(args_list)
 
 
 def check_direction(direction: Direction, pardim: int) -> int:
-    if direction in {0, 'u', 'U'} and 0 < pardim:
+    if direction in {0, "u", "U"} and pardim > 0:
         return 0
-    elif direction in {1, 'v', 'V'} and 1 < pardim:
+    if direction in {1, "v", "V"} and pardim > 1:
         return 1
-    elif direction in {2, 'w', 'W'} and 2 < pardim:
+    if direction in {2, "w", "W"} and pardim > 2:
         return 2
-    raise ValueError('Invalid direction')
+    raise ValueError("Invalid direction")
 
 
 def is_singleton(x: Any) -> bool:
@@ -142,6 +165,7 @@ def ensure_scalars(x: Union[ScalarOrScalars, tuple[Scalar]], dups: int = 1) -> l
 
 T = TypeVar("T", covariant=True)
 
+
 def ensure_listlike(x: Union[T, Sequence[T]], dups: int = 1) -> list[T]:
     """Wraps x in a list if it's not list-like."""
     if isinstance(x, Sequence):
@@ -152,25 +176,25 @@ def ensure_listlike(x: Union[T, Sequence[T]], dups: int = 1) -> list[T]:
     return [x] * dups
 
 
-def rotate_local_x_axis(xaxis: Scalars = (1,0,0), normal: Scalars = (0,0,1)) -> float:
+def rotate_local_x_axis(xaxis: Scalars = (1, 0, 0), normal: Scalars = (0, 0, 1)) -> float:
     # rotate xaxis vector back to reference domain (r=1, around origin)
     theta = atan2(normal[1], normal[0])
-    phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
-    R1 = rotation_matrix(-theta, (0,0,1))
-    R2 = rotation_matrix(-phi,   (0,1,0))
-    if len(xaxis) != 3: # typically 2D geometries
+    phi = atan2(sqrt(normal[0] ** 2 + normal[1] ** 2), normal[2])
+    R1 = rotation_matrix(-theta, (0, 0, 1))
+    R2 = rotation_matrix(-phi, (0, 1, 0))
+    if len(xaxis) != 3:  # typically 2D geometries
         xaxis = [xaxis[0], xaxis[1], 0]
     xaxis_array = np.array([xaxis], dtype=float).dot(R1).dot(R2)
     # xaxis = xaxis.dot(R1).dot(R2)
     # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
     # treating it as such is the closest projection, which makes perfect sense
-    return float(np.arctan2(xaxis_array[0,1], xaxis_array[0,0]))
+    return float(np.arctan2(xaxis_array[0, 1], xaxis_array[0, 0]))
 
 
 def reshape(
     cps: FArray,
     newshape: tuple[int, ...],
-    order: Literal["F", "C"] = 'C',
+    order: Literal["F", "C"] = "C",
     ncomps: Optional[int] = None,
 ) -> FArray:
     """Like numpy's reshape, but preserves control points of several dimensions
@@ -188,18 +212,19 @@ def reshape(
     if ncomps is None:
         ncomps = int(cps.size // npts)
 
-    if order == 'C':
+    if order == "C":
         shape = list(newshape) + [ncomps]
-    elif order == 'F':
+    elif order == "F":
         shape = list(newshape[::-1]) + [ncomps]
     cps = np.reshape(cps, shape)
-    if order == 'F':
+    if order == "F":
         spec = list(range(len(newshape)))[::-1] + [len(newshape)]
         cps = cps.transpose(spec)
     return cps
 
 
 H = TypeVar("H", bound=Hashable)
+
 
 def uniquify(iterator: Iterable[H]) -> Iterator[H]:
     """Iterates over all elements in `iterator`, removing duplicates."""
@@ -228,70 +253,90 @@ def raise_order_1D(
     :param T: knot vector
     :param P: weighted NURBS coefficients
     :param int m: number of degree elevations
-    :param int periodic: Number of continuous derivatives at start and end. -1 is not periodic, 0 is continuous, etc.
+    :param int periodic: Number of continuous derivatives at start and end.
+        -1 is not periodic, 0 is continuous, etc.
     :return Q: new control points
     """
 
-    from ..basis import BSplineBasis
+    from splipy.basis import BSplineBasis
 
-    u = np.unique(T[k-1:-k+1])
+    u = np.unique(T[k - 1 : -k + 1])
     S = u.size - 1
-    d = P.shape[0] # dimension of spline
+    d = P.shape[0]  # dimension of spline
 
     # Find multiplicity of the knot vector T
     b = BSplineBasis(k, T)
-    z = [k-1-b.continuity(t0) for t0 in b.knot_spans()]
-    
-    # Step 1: Find Pt_i^j
-    Pt = np.zeros((d,n+1,k))
-    Pt[:,:,0] = P
-    Pt = np.concatenate((Pt,Pt[:,0:periodic+1,:]),axis=1)
-    n += periodic+1
+    z = [k - 1 - b.continuity(t0) for t0 in b.knot_spans()]
 
-    beta = np.cumsum(z[1:-1],dtype=int)
-    beta = np.insert(beta,0,0) # include the empty sum (=0)
-    for l in range(1,k):
-        for i in range(0,n+1-l):
-            if T[i+l] < T[i+k]:
-                Pt[:,i,l] = (Pt[:,i+1,l-1] - Pt[:,i,l-1])/(T[i+k]-T[i+l])
+    # Step 1: Find Pt_i^j
+    Pt = np.zeros((d, n + 1, k))
+    Pt[:, :, 0] = P
+    Pt = np.concatenate((Pt, Pt[:, 0 : periodic + 1, :]), axis=1)
+    n += periodic + 1
+
+    beta = np.cumsum(z[1:-1], dtype=int)
+    beta = np.insert(beta, 0, 0)  # include the empty sum (=0)
+    for l in range(1, k):
+        for i in range(0, n + 1 - l):
+            if T[i + l] < T[i + k]:
+                Pt[:, i, l] = (Pt[:, i + 1, l - 1] - Pt[:, i, l - 1]) / (T[i + k] - T[i + l])
 
     # Step 2: Create new knot vector Tb
-    nb = n + S*m
-    Tb = np.zeros(nb+m+k+1)
-    Tb[:k-1] = T[:k-1]
-    Tb[-k+1:] = T[-k+1:]
-    j = k-1
-    for i in range(0,len(z)):
-        Tb[j:j+z[i]+m] = u[i]
-        j = j+z[i]+m
-    
-    # Step 3: Find boundary values of Qt_i^j
-    Qt = np.zeros((d,nb+1,k))
-    l_arr = np.array(range(1,k))
-    alpha = np.cumprod((k-l_arr)/(k+m-l_arr))
-    alpha = np.insert(alpha,0,1) # include the empty product (=1)
-    indices = range(0,k)
-    Qt[:,0,indices] = np.multiply(Pt[:,0,indices],np.reshape(alpha[indices],(1,1,k))) # (21)
-    for p in range(0,S):
-        indices = range(k-z[p],k)
-        Qt[:,beta[p]+p*m,indices] = np.multiply(Pt[:,beta[p],indices],np.reshape(alpha[indices],(1,1,z[p]))) # (22)
-    
-    for p in range(0,S):
-        idx = beta[p]+p*m
-        Qt[:,idx+1:m+idx+1,k-1] = np.repeat(Qt[:,idx:idx+1,k-1],m,axis=1) # (23)
-    
-    # Step 4: Find remaining values of Qt_i^j
-    for j in range(k-1,0,-1):
-        for i in range(0,nb):
-            if Tb[i+k+m] > Tb[i+j]:
-                Qt[:,i+1,j-1] = Qt[:,i,j-1] + (Tb[i+k+m] - Tb[i+j])*Qt[:,i,j] #(20) with Qt replacing Pt
+    nb = n + S * m
+    Tb = np.zeros(nb + m + k + 1)
+    Tb[: k - 1] = T[: k - 1]
+    Tb[-k + 1 :] = T[-k + 1 :]
+    j = k - 1
+    for i in range(0, len(z)):
+        Tb[j : j + z[i] + m] = u[i]
+        j = j + z[i] + m
 
-    return Qt[:,:,0]
+    # Step 3: Find boundary values of Qt_i^j
+    Qt = np.zeros((d, nb + 1, k))
+    l_arr = np.array(range(1, k))
+    alpha = np.cumprod((k - l_arr) / (k + m - l_arr))
+    alpha = np.insert(alpha, 0, 1)  # include the empty product (=1)
+    indices = range(0, k)
+    Qt[:, 0, indices] = np.multiply(Pt[:, 0, indices], np.reshape(alpha[indices], (1, 1, k)))  # (21)
+    for p in range(0, S):
+        indices = range(k - z[p], k)
+        Qt[:, beta[p] + p * m, indices] = np.multiply(
+            Pt[:, beta[p], indices], np.reshape(alpha[indices], (1, 1, z[p]))
+        )  # (22)
+
+    for p in range(0, S):
+        idx = beta[p] + p * m
+        Qt[:, idx + 1 : m + idx + 1, k - 1] = np.repeat(Qt[:, idx : idx + 1, k - 1], m, axis=1)  # (23)
+
+    # Step 4: Find remaining values of Qt_i^j
+    for j in range(k - 1, 0, -1):
+        for i in range(0, nb):
+            if Tb[i + k + m] > Tb[i + j]:
+                Qt[:, i + 1, j - 1] = (
+                    Qt[:, i, j - 1] + (Tb[i + k + m] - Tb[i + j]) * Qt[:, i, j]
+                )  # (20) with Qt replacing Pt
+
+    return Qt[:, :, 0]
+
 
 __all__ = [
-    'nutils', 'refinement', 'image', 'NACA', 'curve', 'smooth',
-    'rotation_matrix', 'sections', 'section_from_index', 'section_to_index',
-    'check_section', 'check_direction', 'ensure_flatlist', 'is_singleton',
-    'ensure_listlike', 'rotate_local_x_axis', 'flip_and_move_plane_geometry',
-    'reshape','raise_order_1D'
+    "nutils",
+    "refinement",
+    "image",
+    "NACA",
+    "curve",
+    "smooth",
+    "rotation_matrix",
+    "sections",
+    "section_from_index",
+    "section_to_index",
+    "check_section",
+    "check_direction",
+    "ensure_flatlist",
+    "is_singleton",
+    "ensure_listlike",
+    "rotate_local_x_axis",
+    "flip_and_move_plane_geometry",
+    "reshape",
+    "raise_order_1D",
 ]

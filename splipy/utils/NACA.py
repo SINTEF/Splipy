@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-
-import numpy as np
 from math import sqrt
 
-from ..curve import Curve
-from ..basis import BSplineBasis
-from .. import surface_factory
+import numpy as np
 
-__all__ = ['camber', 'NACA']
+from splipy import surface_factory
+from splipy.basis import BSplineBasis
+from splipy.curve import Curve
+
+__all__ = ["camber", "NACA"]
 
 
 def camber(M: float, P: float, order: int = 5) -> Curve:
@@ -38,13 +37,13 @@ def camber(M: float, P: float, order: int = 5) -> Curve:
     for i in range(n):
         if t[i] <= P:
             if order > 4:
-                x[i, 0] = t[i]**2 / P
+                x[i, 0] = t[i] ** 2 / P
             else:
                 x[i, 0] = t[i]
             x[i, 1] = M / P / P * (2 * P * x[i, 0] - x[i, 0] * x[i, 0])
         else:
             if order > 4:
-                x[i, 0] = (t[i]**2 - 2 * t[i] + P) / (P - 1)
+                x[i, 0] = (t[i] ** 2 - 2 * t[i] + P) / (P - 1)
             else:
                 x[i, 0] = t[i]
             x[i, 1] = M / (1 - P) / (1 - P) * (1 - 2 * P + 2 * P * x[i, 0] - x[i, 0] * x[i, 0])

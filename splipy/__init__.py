@@ -1,18 +1,18 @@
 from .basis import BSplineBasis
-from .splineobject import SplineObject
 from .curve import Curve
-from .surface import Surface
-from .volume import Volume
-from .trimmedsurface import TrimmedSurface
 from .splinemodel import SplineModel
+from .splineobject import SplineObject
+from .surface import Surface
+from .trimmedsurface import TrimmedSurface
+from .volume import Volume
 
-__version__ = '1.8.2'
+__version__ = "1.8.2"
 __all__ = [
-    'BSplineBasis',
-    'SplineObject',
-    'Curve',
-    'Surface',
-    'Volume',
-    'TrimmedSurface',
-    'SplineModel',
+    "BSplineBasis",
+    "SplineObject",
+    "Curve",
+    "Surface",
+    "Volume",
+    "TrimmedSurface",
+    "SplineModel",
 ]
