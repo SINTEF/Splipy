@@ -172,16 +172,18 @@ class Surface(SplineObject):
             dH2dv= d0ud2v[:,:,i] * W - d0ud0v[:,:,i] * d2Wdv
             G1   = dH1du*W - 2*H1*dWdu
             G2   = dH2dv*W - 2*H2*dWdv
-            if derivs == (1,0):
+
+            if derivs == [1,0]:
                 result[:,:,i] = H1 / W/W
-            elif derivs == (0,1):
+            elif derivs == [0,1]:
                 result[:,:,i] = H2 / W/W
-            elif derivs == (1,1):
+            elif derivs == [1,1]:
                 result[:,:,i] = (dH1dv*W - 2*H1*dWdv) /W/W/W
-            elif derivs == (2,0):
+            elif derivs == [2,0]:
                 result[:,:,i] = G1 /W/W/W
-            elif derivs == (0,2):
+            elif derivs == [0,2]:
                 result[:,:,i] = G2 /W/W/W
+
             if np.sum(derivs) > 2:
                 d2ud1v = _evaluate([dNus[2], dNvs[1]], self.controlpoints, tensor)
                 d1ud2v = _evaluate([dNus[1], dNvs[2]], self.controlpoints, tensor)
@@ -200,13 +202,13 @@ class Surface(SplineObject):
                 dG2du   = d2H2duv*W + dH2dv*dWdu - 2*dH2du*dWdv - 2*H2*d2Wduv
                 dG2dv   = d2H2dv *W + dH2dv*dWdv - 2*dH2dv*dWdv - 2*H2*d2Wdv
 
-                if derivs == (3,0):
+                if derivs == [3,0]:
                     result[:,:,i] = (dG1du*W -3*G1*dWdu) /W/W/W/W
-                elif derivs == (0,3):
+                elif derivs == [0,3]:
                     result[:,:,i] = (dG2dv*W -3*G2*dWdv) /W/W/W/W
-                elif derivs == (2,1):
+                elif derivs == [2,1]:
                     result[:,:,i] = (dG1dv*W -3*G1*dWdv) /W/W/W/W
-                elif derivs == (1,2):
+                elif derivs == [1,2]:
                     result[:,:,i] = (dG2du*W -3*G2*dWdu) /W/W/W/W
 
         # Squeeze the singleton dimensions if we only have one point

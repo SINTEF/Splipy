@@ -1,7 +1,11 @@
 """This module handles the global Splipy state."""
 
+from typing import TypedDict, Iterator
 from contextlib import contextmanager
 import sys
+
+from typing_extensions import Unpack
+
 
 states = ['controlpoint_relative_tolerance',
           'controlpoint_absolute_tolerance',
@@ -31,8 +35,17 @@ unlimited = 1e4
 """Since splipy insists on finite parametric domains, we define 'unbounded' here"""
 
 
+class StateKwargs(TypedDict, total=False):
+    controlpoint_absolute_tolerance: float
+    controlpoint_relative_tolerance: float
+    parametric_absolute_tolerance: float
+    parametric_relative_tolerance: float
+    knot_tolerance: float
+    unlimited: float
+
+
 @contextmanager
-def state(**kwargs):
+def state(**kwargs: Unpack[StateKwargs]) -> Iterator[None]:
     """A context manager for running code in a modified state.
 
     This takes an arbitrary number of keyword arguments, which correspond to
@@ -58,8 +71,9 @@ def state(**kwargs):
     for k, v in kwargs.items():
         setattr(module, k, v)
 
-    yield
-
-    # Return settings to their previous values
-    for k, v in before.items():
-        setattr(module, k, v)
+    try:
+        yield
+    finally:
+        # Return settings to their previous values
+        for k, v in before.items():
+            setattr(module, k, v)

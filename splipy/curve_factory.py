@@ -16,7 +16,7 @@ import scipy.sparse.linalg as splinalg
 
 from .curve import Curve
 from .basis import BSplineBasis
-from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from .utils import rotate_local_x_axis
 from .utils.curve import curve_length_parametrization
 from .types import Scalars, FArray, Scalar
 from . import state

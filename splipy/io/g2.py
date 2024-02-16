@@ -15,7 +15,7 @@ from ..splineobject import SplineObject
 from ..splinemodel import SplineModel
 from ..basis import BSplineBasis
 from ..trimmedsurface import TrimmedSurface
-from ..utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from ..utils import rotate_local_x_axis
 from .. import surface_factory, curve_factory, state
 
 from .master import MasterIO
@@ -250,7 +250,7 @@ class G2(MasterIO):
 
         result = Surface() * [param_u[1]-param_u[0], param_v[1]-param_v[0]] + [param_u[0],param_v[0]]
         result.rotate(rotate_local_x_axis(x_axis, normal))
-        result = flip_and_move_plane_geometry(result,center,normal)
+        result = result.flip_and_move_plane_geometry(center,normal)
         result.reparam(param_u, param_v)
         if swap:
             result.swap()

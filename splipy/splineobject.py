@@ -15,7 +15,7 @@ from .basis import BSplineBasis
 from .types import Direction, Scalars, Scalar, FArray, IArray, ScalarOrScalars, SectionElt
 from .utils import (
     reshape, rotation_matrix, is_singleton, ensure_listlike,
-    check_direction, ensure_flatlist, check_section, sections,
+    check_direction, check_section, sections,
     raise_order_1D, ensure_scalars, SectionKwargs,
 )
 
@@ -971,8 +971,7 @@ class SplineObject:
         dim = self.dimension
         rat = self.rational
         n = len(self)  # number of control points
-        s = ensure_flatlist(args)
-        s = ensure_scalars(s, dups=3)
+        s = ensure_scalars(args, dups=3)
 
         # set up the scaling matrix
         scale_matrix = np.identity(dim + rat)

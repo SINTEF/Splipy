@@ -89,6 +89,10 @@ mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
 module = "splipy.io.grdecl"
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = "splipy.utils.bisect"
+ignore_errors = true
+
 [tool.bumpversion]
 current_version = "1.8.2"
 allow_dirty = false

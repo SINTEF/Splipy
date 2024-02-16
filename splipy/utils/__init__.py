@@ -5,21 +5,18 @@ from __future__ import annotations
 from itertools import combinations, product
 from math import atan2, sqrt
 import numpy as np
-from typing import TYPE_CHECKING, SupportsFloat, Literal, TypedDict, Sequence, TypeVar, Union, Iterator
+from typing import TYPE_CHECKING, SupportsFloat, Literal, TypedDict, Sequence, TypeVar, Union, Iterator, Optional, cast, Any, Hashable, Iterable
 from typing_extensions import Unpack
+from collections.abc import Sized
 
-try:
-    from collections.abc import Sized
-except ImportError:
-    from collections import Sized
-
-from ..types import Direction, ScalarOrScalars, Scalar, Section, SectionElt, SectionKwargs, SectionLike
+from ..types import Direction, ScalarOrScalars, Scalar, Section, SectionElt, SectionKwargs, SectionLike, Scalars, FArray
 
 if TYPE_CHECKING:
+    from ..splineobject import SplineObject
     from ..basis import BSplineBasis
 
 
-def is_right_hand(patch, tol=1e-3):
+def is_right_hand(patch: SplineObject, tol: float = 1e-3) -> bool:
     param = tuple((a+b)/2 for a,b in zip(patch.start(), patch.end()))
 
     if patch.dimension == patch.pardim == 3:
@@ -33,7 +30,7 @@ def is_right_hand(patch, tol=1e-3):
         dw = dw / np.linalg.norm(dw)
 
         # Compare cross product
-        return np.dot(dw, np.cross(du, dv)) >= tol
+        return bool(np.dot(dw, np.cross(du, dv)) >= tol)
 
     if patch.dimension == patch.pardim == 2:
         du = patch.derivative(*param, d=(1,0))
@@ -43,19 +40,22 @@ def is_right_hand(patch, tol=1e-3):
         du = du / np.linalg.norm(du)
         dv = dv / np.linalg.norm(dv)
 
-        return np.cross(du, dv) >= tol
+        return bool(np.cross(du, dv) >= tol)
 
     raise ValueError("Right-handedness only defined for 2D or 3D patches in 2D or 3D space, respectively")
 
-def rotation_matrix(theta, axis):
-    axis = axis / np.sqrt(np.dot(axis, axis))
+
+def rotation_matrix(theta: Scalar, axis: Scalars) -> FArray:
+    axis = np.asarray(axis, dtype=float)
+    axis /= np.sqrt(np.dot(axis, axis))
     a = np.cos(theta / 2)
     b, c, d = -axis*np.sin(theta / 2)
     return np.array([[a*a+b*b-c*c-d*d, 2*(b*c-a*d),     2*(b*d+a*c)],
                       [2*(b*c+a*d),     a*a+c*c-b*b-d*d, 2*(c*d-a*b)],
                       [2*(b*d-a*c),     2*(c*d+a*b),     a*a+d*d-b*b-c*c]])
 
-def sections(src_dim, tgt_dim) -> Iterator[Section]:
+
+def sections(src_dim: int, tgt_dim: int) -> Iterator[Section]:
     """Generate all boundary sections from a source dimension to a target
     dimension. For example, `sections(3,1)` generates all edges on a volume.
 
@@ -67,13 +67,15 @@ def sections(src_dim, tgt_dim) -> Iterator[Section]:
     nfixed = src_dim - tgt_dim
     for fixed in combinations(range(src_dim), r=nfixed):
         # Enumerate all {0,-1}^n over the fixed directions
-        for indices in product([0, -1], repeat=nfixed):
-            args = [None] * src_dim
+        values: list[Literal[-1, 0]] = [0, -1]
+        for indices in product(values, repeat=nfixed):
+            args: list[Literal[-1, 0, None]] = [None] * src_dim
             for f, i in zip(fixed, indices[::-1]):
                 args[f] = i
             yield tuple(args)
 
-def section_from_index(src_dim, tgt_dim, i) -> Section:
+
+def section_from_index(src_dim: int, tgt_dim: int, i: int) -> Section:
     """Return the i'th section from a source dimension to a target dimension.
 
     See :func:`splipy.Utils.sections` for more information.
@@ -81,6 +83,8 @@ def section_from_index(src_dim, tgt_dim, i) -> Section:
     for j, s in enumerate(sections(src_dim, tgt_dim)):
         if i == j:
             return s
+    assert False
+
 
 def section_to_index(section: SectionLike) -> int:
     """Return the index corresponding to a section."""
@@ -89,6 +93,8 @@ def section_to_index(section: SectionLike) -> int:
     for i, t in enumerate(sections(src_dim, tgt_dim)):
         if tuple(section) == tuple(t):
             return i
+    assert False
+
 
 def check_section(*args: SectionElt, pardim: int = 0, **kwargs: Unpack[SectionKwargs]) -> Section:
     """check_section(u, v, ...)
@@ -98,16 +104,20 @@ def check_section(*args: SectionElt, pardim: int = 0, **kwargs: Unpack[SectionKw
     The keyword argument `pardim` *must* be provided. The return value is a
     section as described in :func:`splipy.Utils.sections`.
     """
-    args = list(args)
-    while len(args) < pardim:
-        args.append(None)
-    for k in set(kwargs.keys()) & set('uvw'):
-        index = 'uvw'.index(k)
-        args[index] = kwargs[k]
-    return args
+    args_list = list(args)
+    while len(args_list) < pardim:
+        args_list.append(None)
+    if 'u' in kwargs:
+        args_list[0] = kwargs['u']
+    if 'v' in kwargs:
+        args_list[1] = kwargs['v']
+    if 'w' in kwargs:
+        args_list[2] = kwargs['w']
+    return tuple(args_list)
+
 
 def check_direction(direction: Direction, pardim: int) -> int:
-    if   direction in {0, 'u', 'U'} and 0 < pardim:
+    if direction in {0, 'u', 'U'} and 0 < pardim:
         return 0
     elif direction in {1, 'v', 'V'} and 1 < pardim:
         return 1
@@ -115,15 +125,11 @@ def check_direction(direction: Direction, pardim: int) -> int:
         return 2
     raise ValueError('Invalid direction')
 
-def ensure_flatlist(x):
-    """Flattens a multi-list x to a single index list."""
-    if isinstance(x[0], Sized):
-        return x[0]
-    return x
 
-def is_singleton(x):
+def is_singleton(x: Any) -> bool:
     """Checks if x is list-like."""
     return not isinstance(x, Sized)
+
 
 def ensure_scalars(x: Union[ScalarOrScalars, tuple[Scalar]], dups: int = 1) -> list[float]:
     if isinstance(x, SupportsFloat) and not isinstance(x, np.ndarray):
@@ -133,21 +139,20 @@ def ensure_scalars(x: Union[ScalarOrScalars, tuple[Scalar]], dups: int = 1) -> l
         retval.extend(float(x[-1]) for _ in range(dups - len(retval)))
     return retval
 
+
 T = TypeVar("T", covariant=True)
 
 def ensure_listlike(x: Union[T, Sequence[T]], dups: int = 1) -> list[T]:
     """Wraps x in a list if it's not list-like."""
-    try:
-        while len(x) < dups:
-            x = list(x)
-            x.append(x[-1])
-        return x
-    except TypeError:
-        return [x] * dups
-    except IndexError:
-        return []
+    if isinstance(x, Sequence):
+        y = list(x)
+        while len(y) < dups:
+            y.append(y[-1])
+        return y
+    return [x] * dups
 
-def rotate_local_x_axis(xaxis=(1,0,0), normal=(0,0,1)):
+
+def rotate_local_x_axis(xaxis: Scalars = (1,0,0), normal: Scalars = (0,0,1)) -> float:
     # rotate xaxis vector back to reference domain (r=1, around origin)
     theta = atan2(normal[1], normal[0])
     phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
@@ -155,31 +160,19 @@ def rotate_local_x_axis(xaxis=(1,0,0), normal=(0,0,1)):
     R2 = rotation_matrix(-phi,   (0,1,0))
     if len(xaxis) != 3: # typically 2D geometries
         xaxis = [xaxis[0], xaxis[1], 0]
-    xaxis = np.array([xaxis])
-    xaxis = xaxis.dot(R1).dot(R2)
+    xaxis_array = np.array([xaxis], dtype=float).dot(R1).dot(R2)
+    # xaxis = xaxis.dot(R1).dot(R2)
     # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
     # treating it as such is the closest projection, which makes perfect sense
-    return atan2(xaxis[0,1], xaxis[0,0])
+    return float(np.arctan2(xaxis_array[0,1], xaxis_array[0,0]))
 
 
-# O = TypeVar("O", bound=SplineObject)
-
-def flip_and_move_plane_geometry(obj, center=(0,0,0), normal=(0,0,1)):
-    """re-orients a planar geometry by moving it to a different location and
-    tilting it"""
-    # don't touch it if not needed. translate or scale operations may force
-    # object into 3D space
-    if not np.allclose(normal, np.array([0,0,1])):
-        theta = atan2(normal[1], normal[0])
-        phi   = atan2(sqrt(normal[0]**2+normal[1]**2), normal[2])
-        obj.rotate(phi,   (0,1,0))
-        obj.rotate(theta, (0,0,1))
-    if not np.allclose(center, 0):
-        obj.translate(center)
-    return obj
-
-
-def reshape(cps, newshape, order='C', ncomps=None):
+def reshape(
+    cps: FArray,
+    newshape: tuple[int, ...],
+    order: Literal["F", "C"] = 'C',
+    ncomps: Optional[int] = None,
+) -> FArray:
     """Like numpy's reshape, but preserves control points of several dimensions
     that are stored contiguously.
 
@@ -193,10 +186,7 @@ def reshape(cps, newshape, order='C', ncomps=None):
     """
     npts = np.prod(newshape)
     if ncomps is None:
-        try:
-            ncomps = cps.size // npts
-        except AttributeError:
-            ncomps = len(cps) // npts
+        ncomps = int(cps.size // npts)
 
     if order == 'C':
         shape = list(newshape) + [ncomps]
@@ -208,18 +198,31 @@ def reshape(cps, newshape, order='C', ncomps=None):
         cps = cps.transpose(spec)
     return cps
 
-def uniquify(iterator):
+
+H = TypeVar("H", bound=Hashable)
+
+def uniquify(iterator: Iterable[H]) -> Iterator[H]:
     """Iterates over all elements in `iterator`, removing duplicates."""
-    seen = set()
+    seen: set[H] = set()
     for i in iterator:
         if i in seen:
             continue
         seen.add(i)
         yield i
 
-def raise_order_1D(n, k, T, P, m, periodic):
-    """ Implementation of method in "Efficient Degree Elevation and Knot Insertion
-        for B-spline Curves using Derivatives" by Qi-Xing Huang a Shi-Min Hu, Ralph R Martin. Only the case of open knot vector is fully implemented
+
+def raise_order_1D(
+    n: int,
+    k: int,
+    T: FArray,
+    P: FArray,
+    m: int,
+    periodic: int,
+) -> FArray:
+    """Implementation of method in "Efficient Degree Elevation and Knot Insertion
+    for B-spline Curves using Derivatives" by Qi-Xing Huang a Shi-Min Hu, Ralph R Martin.
+    Only the case of open knot vector is fully implemented.
+
     :param int n: (n+1) is the number of initial basis functions
     :param int k: spline order
     :param T: knot vector
@@ -242,7 +245,7 @@ def raise_order_1D(n, k, T, P, m, periodic):
     # Step 1: Find Pt_i^j
     Pt = np.zeros((d,n+1,k))
     Pt[:,:,0] = P
-    Pt = np.concatenate((Pt,Pt[:,0:periodic+1,:]),axis=1) 
+    Pt = np.concatenate((Pt,Pt[:,0:periodic+1,:]),axis=1)
     n += periodic+1
 
     beta = np.cumsum(z[1:-1],dtype=int)
@@ -252,12 +255,12 @@ def raise_order_1D(n, k, T, P, m, periodic):
             if T[i+l] < T[i+k]:
                 Pt[:,i,l] = (Pt[:,i+1,l-1] - Pt[:,i,l-1])/(T[i+k]-T[i+l])
 
-    # Step 2: Create new knot vector Tb 
+    # Step 2: Create new knot vector Tb
     nb = n + S*m
     Tb = np.zeros(nb+m+k+1)
     Tb[:k-1] = T[:k-1]
     Tb[-k+1:] = T[-k+1:]
-    j = k-1 
+    j = k-1
     for i in range(0,len(z)):
         Tb[j:j+z[i]+m] = u[i]
         j = j+z[i]+m

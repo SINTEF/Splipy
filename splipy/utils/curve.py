@@ -4,6 +4,7 @@ from typing import Sequence, Optional, Union
 
 import numpy as np
 
+from ..curve import Curve
 from ..types import Scalars, FArray
 
 __doc__ = 'Implementation of various curve utilities'
@@ -34,7 +35,7 @@ def curve_length_parametrization(
     return knots
 
 
-def get_curve_points(curve):
+def get_curve_points(curve: Curve) -> FArray:
     """Evaluate the curve in all its knots.
 
     :param curve: The curve

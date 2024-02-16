@@ -44,6 +44,8 @@ class Namespace:
 def outer(x: Function, y: Function) -> Function:
     ...
 
-
 def J(x: Function) -> Function:
+    ...
+
+def matmat(x: Function, y: NDArray[float_]) -> Function:
     ...

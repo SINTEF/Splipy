@@ -12,7 +12,7 @@ from .basis import BSplineBasis
 from .curve import Curve
 from .surface import Surface
 from .volume import Volume
-from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from .utils import rotate_local_x_axis
 from .utils.curve import curve_length_parametrization
 from .types import Scalar, Scalars, FArray
 from . import curve_factory, surface_factory

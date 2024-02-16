@@ -13,7 +13,7 @@ import numpy as np
 from .basis import BSplineBasis
 from .curve import Curve
 from .surface import Surface
-from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from .utils import rotate_local_x_axis
 from .utils.nutils import controlpoints, multiplicities, degree
 from .utils.curve import curve_length_parametrization
 from .types import Scalar, Scalars, FArray
@@ -25,7 +25,7 @@ __all__ = ['square', 'disc', 'sphere', 'extrude', 'revolve', 'cylinder', 'torus'
 
 def square(
     size: Union[Scalar, tuple[Scalar, Scalar]] = 1,
-    lower_left: Scalars = (0,0)
+    lower_left: Scalars = (0,0),
 ) -> Surface:
     """Create a square with parametric origin at *(0,0)*.
 
