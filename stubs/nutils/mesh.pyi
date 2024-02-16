@@ -1,4 +1,5 @@
 from typing import Sequence, Literal
+from typing_extensions import Self
 
 from numpy.typing import NDArray
 from numpy import float_
@@ -11,7 +12,7 @@ class Matrix:
     def solve(
         self,
         rhs: NDArray[float_],
-        constrain=NDArray[float_],
+        constrain: NDArray[float_],
     ) -> NDArray[float_]:
         ...
 
