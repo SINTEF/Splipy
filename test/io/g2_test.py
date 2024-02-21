@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from pathlib import Path
+
 from splipy.io import G2
 import splipy.surface_factory as SurfaceFactory
 import splipy.volume_factory as VolumeFactory
@@ -7,12 +9,12 @@ import numpy as np
 import unittest
 import os
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_DIR = Path(__file__).parent
 
 class TestG2(unittest.TestCase):
 
     def test_read_rational_surf(self):
-        with G2(THIS_DIR + '/geometries/torus.g2') as myfile:
+        with G2(THIS_DIR / 'geometries' / 'torus.g2') as myfile:
             surf = myfile.read()
         self.assertEqual(len(surf), 1)
         surf = surf[0]
@@ -22,7 +24,7 @@ class TestG2(unittest.TestCase):
     def test_write_and_read_multipatch_surface(self):
         # write teapot to file and test if its there
         teapot = SurfaceFactory.teapot()
-        with G2('teapot.g2') as myfile:
+        with G2('teapot.g2', 'w') as myfile:
             myfile.write(teapot)
         self.assertTrue(os.path.isfile('teapot.g2'))
 
@@ -37,7 +39,7 @@ class TestG2(unittest.TestCase):
         os.remove('teapot.g2')
 
     def test_read_doublespaced(self):
-        with G2(THIS_DIR + '/geometries/lshape.g2') as myfile: # controlpoints are separated by two spaces
+        with G2(THIS_DIR / 'geometries' / 'lshape.g2') as myfile: # controlpoints are separated by two spaces
             one_surf = myfile.read()
         self.assertEqual(len(one_surf), 1)
         self.assertEqual(one_surf[0].shape[0], 3)
@@ -46,7 +48,7 @@ class TestG2(unittest.TestCase):
     def test_write_and_read_surface(self):
         # write disc to file and test if its there
         disc = SurfaceFactory.disc(type='square')
-        with G2('disc.g2') as myfile:
+        with G2('disc.g2', 'w') as myfile:
             myfile.write(disc)
         self.assertTrue(os.path.isfile('disc.g2'))
 
@@ -64,7 +66,7 @@ class TestG2(unittest.TestCase):
     def test_write_and_read_volume(self):
         # write sphere to file and test if its there
         sphere = VolumeFactory.sphere(type='square')
-        with G2('sphere.g2') as myfile:
+        with G2('sphere.g2', 'w') as myfile:
             myfile.write(sphere)
         self.assertTrue(os.path.isfile('sphere.g2'))
 
@@ -80,7 +82,7 @@ class TestG2(unittest.TestCase):
         os.remove('sphere.g2')
 
     def test_read_elementary_curves(self):
-        with G2(THIS_DIR + '/geometries/elementary_curves.g2') as myfile:
+        with G2(THIS_DIR / 'geometries' / 'elementary_curves.g2') as myfile:
             my_curves = myfile.read()
 
         self.assertEqual(len(my_curves), 3)
@@ -106,7 +108,7 @@ class TestG2(unittest.TestCase):
         self.assertTrue(np.allclose(line[0], [1,0,0]))
 
     def test_read_elementary_surfaces(self):
-        with G2(THIS_DIR + '/geometries/elementary_surfaces.g2') as myfile:
+        with G2(THIS_DIR / 'geometries' / 'elementary_surfaces.g2') as myfile:
             my_surfaces = myfile.read()
 
         self.assertEqual(len(my_surfaces), 4)
@@ -134,7 +136,7 @@ class TestG2(unittest.TestCase):
     def test_from_step(self):
         # quite large nasty g2 file which contains cylinders, planes, trimming etc
 
-        with G2(THIS_DIR + '/geometries/winglet_from_step.g2') as myfile:
+        with G2(THIS_DIR / 'geometries' / 'winglet_from_step.g2') as myfile:
             my_surfaces = myfile.read()
             trim_curves = myfile.trimming_curves
 

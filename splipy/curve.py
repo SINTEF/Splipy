@@ -1,16 +1,21 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from itertools import chain
 from bisect import bisect_left, bisect_right
+from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Union, cast, overload
 
 import numpy as np
 import scipy.sparse.linalg as splinalg
+from typing_extensions import Self
 
 from .basis import BSplineBasis
 from .splineobject import SplineObject
-from .utils import ensure_listlike, is_singleton
+from .utils import ensure_listlike, ensure_scalars, is_singleton
 
-__all__ = ['Curve']
+if TYPE_CHECKING:
+    from .types import Direction, FArray, Scalar, ScalarOrScalars, Scalars
+
+
+__all__ = ["Curve"]
 
 
 class Curve(SplineObject):
@@ -20,8 +25,14 @@ class Curve(SplineObject):
 
     _intended_pardim = 1
 
-    def __init__(self, basis=None, controlpoints=None, rational=False, **kwargs):
-        """  Construct a curve with the given basis and control points.
+    def __init__(
+        self,
+        basis: Optional[BSplineBasis] = None,
+        controlpoints: Any = None,
+        rational: bool = False,
+        raw: bool = False,
+    ) -> None:
+        """Construct a curve with the given basis and control points.
 
         The default is to create a linear one-element mapping from (0,1) to the
         unit interval.
@@ -32,10 +43,10 @@ class Curve(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Curve, self).__init__([basis], controlpoints, rational, **kwargs)
+        super().__init__([basis], controlpoints, rational=rational, raw=raw)
 
-    def evaluate(self, *params):
-        """  Evaluate the object at given parametric values.
+    def evaluate(self, params: ScalarOrScalars, tensor: bool = True) -> FArray:  # type: ignore[override]
+        """Evaluate the object at given parametric values.
 
         This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
         the number of evaluation points in direction *i*, and *dim* is the
@@ -49,14 +60,15 @@ class Curve(SplineObject):
         :return: Geometry coordinates
         :rtype: numpy.array
         """
-        squeeze = is_singleton(params[0])
-        params = [ensure_listlike(p) for p in params]
 
-        self._validate_domain(*params)
+        squeeze = is_singleton(params)
+        params_list = ensure_scalars(params)
+
+        self._validate_domain(params_list)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
-        N = self.bases[0].evaluate(params[0], sparse=True)
+        N = self.bases[0].evaluate(params_list, sparse=True)
         result = N @ self.controlpoints
 
         # For rational objects, we divide out the weights, which are stored in the
@@ -72,8 +84,14 @@ class Curve(SplineObject):
 
         return result
 
-    def derivative(self, t, d=1, above=True, tensor=True):
-        """  Evaluate the derivative of the curve at the given parametric values.
+    def derivative(  # type: ignore[override]
+        self,
+        t: ScalarOrScalars,
+        d: Union[int, Sequence[int]] = 1,
+        above: Union[bool, Sequence[bool]] = True,
+        tensor: bool = True,
+    ) -> FArray:
+        """Evaluate the derivative of the curve at the given parametric values.
 
         This function returns an *n* × *dim* array, where *n* is the number of
         evaluation points, and *dim* is the physical dimension of the curve.
@@ -89,43 +107,47 @@ class Curve(SplineObject):
         :return: Derivative array
         :rtype: numpy.array
         """
-        if not is_singleton(d):
-            d = d[0]
+        d = ensure_listlike(d)[0]
+        above = ensure_listlike(above)[0]
         if not self.rational or d < 2 or d > 3:
-            return super(Curve, self).derivative(t, d=d, above=above, tensor=tensor)
+            return super().derivative(t, d=d, above=above, tensor=tensor)
 
-        t = ensure_listlike(t)
+        t = ensure_scalars(t)
         result = np.zeros((len(t), self.dimension))
 
-        d2 = np.array(self.bases[0].evaluate(t, 2, above) @ self.controlpoints)
-        d1 = np.array(self.bases[0].evaluate(t, 1, above) @ self.controlpoints)
-        d0 = np.array(self.bases[0].evaluate(t) @ self.controlpoints)
-        W  = d0[:, -1]  # W(t)
+        d2 = np.array(self.bases[0].evaluate_dense(t, d=2, from_right=above) @ self.controlpoints)
+        d1 = np.array(self.bases[0].evaluate_dense(t, d=1, from_right=above) @ self.controlpoints)
+        d0 = np.array(self.bases[0].evaluate_dense(t) @ self.controlpoints)
+        W = d0[:, -1]  # W(t)
         W1 = d1[:, -1]  # W'(t)
         W2 = d2[:, -1]  # W''(t)
         if d == 2:
             for i in range(self.dimension):
-                result[:, i] = (d2[:, i] * W * W - 2 * W1 *
-                               (d1[:, i] * W - d0[:, i] * W1) - d0[:, i] * W2 * W) / W / W / W
+                result[:, i] = (
+                    (d2[:, i] * W * W - 2 * W1 * (d1[:, i] * W - d0[:, i] * W1) - d0[:, i] * W2 * W)
+                    / W
+                    / W
+                    / W
+                )
         if d == 3:
-            d3 = np.array(self.bases[0].evaluate(t, 3, above) @ self.controlpoints)
-            W3 = d3[:,-1]    # W'''(t)
-            W6 = W*W*W*W*W*W # W^6
+            d3 = np.array(self.bases[0].evaluate(t, d=3, from_right=above) @ self.controlpoints)
+            W3 = d3[:, -1]  # W'''(t)
+            # W6 = W*W*W*W*W*W # W^6
             for i in range(self.dimension):
-                H  =  d1[:,i]*W                           - d0[:,i]*W1
-                H1 =  d2[:,i]*W                           - d0[:,i]*W2
-                H2 =  d3[:,i]*W + d2[:,i]*W1 - d1[:,i]*W2 - d0[:,i]*W3
-                G  =  H1*W - 2*H*W1
-                G1 =  H2*W - 2*H*W2 - H1*W1
-                result[:, i] = (G1*W - 3*G*W1) /W/W/W/W
+                H = d1[:, i] * W - d0[:, i] * W1
+                H1 = d2[:, i] * W - d0[:, i] * W2
+                H2 = d3[:, i] * W + d2[:, i] * W1 - d1[:, i] * W2 - d0[:, i] * W3
+                G = H1 * W - 2 * H * W1
+                G1 = H2 * W - 2 * H * W2 - H1 * W1
+                result[:, i] = (G1 * W - 3 * G * W1) / W / W / W / W
 
         if result.shape[0] == 1:  # in case of single value input t, return vector instead of matrix
             result = np.array(result[0, :]).reshape(self.dimension)
 
         return result
 
-    def binormal(self, t, above=True):
-        """  Evaluate the normalized binormal of the curve at the given parametric value(s).
+    def binormal(self, t: ScalarOrScalars, above: bool = True) -> FArray:
+        """Evaluate the normalized binormal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
         evaluation points.
@@ -141,27 +163,24 @@ class Curve(SplineObject):
         """
         # error test input
         if self.dimension != 3:
-            raise ValueError('Binormals require dimension = 3')
+            raise ValueError("Binormals require dimension = 3")
 
         # compute derivative
-        dx    = self.derivative(t, d=1, above=above)
-        ddx   = self.derivative(t, d=2, above=above)
+        dx = self.derivative(t, d=1, above=above)
+        ddx = self.derivative(t, d=2, above=above)
 
         # in case of vanishing acceleration, colinear velocity and acceleration,
         # such as linear curves we guess an appropriate binbormal (multiple choice available)
         if len(dx.shape) == 1:
             if np.allclose(ddx, 0):
-                if np.allclose(dx[:2], 0): # dx = [0,0,1]
-                    ddx = np.array([1,0,0])
-                else:
-                    ddx = np.array([0,0,1])
+                ddx = np.array([1, 0, 0]) if np.allclose(dx[:2], 0) else np.array([0, 0, 1])
         else:
             for i in range(ddx.shape[0]):
-                if np.allclose(ddx[i,:], 0):
-                    if np.allclose(dx[i,:2], 0): # dx = [0,0,1]
-                        ddx[i,:] = np.array([1,0,0])
+                if np.allclose(ddx[i, :], 0):
+                    if np.allclose(dx[i, :2], 0):  # dx = [0,0,1]
+                        ddx[i, :] = np.array([1, 0, 0])
                     else:
-                        ddx[i,:] = np.array([0,0,1])
+                        ddx[i, :] = np.array([0, 0, 1])
 
         result = np.cross(dx, ddx)
 
@@ -170,13 +189,13 @@ class Curve(SplineObject):
             return result / np.linalg.norm(result)
 
         # normalize
-        magnitude = np.linalg.norm(result, axis=1)
-        magnitude = magnitude.reshape(-1,1)
+        magnitude: FArray = np.linalg.norm(result, axis=1)
+        magnitude = magnitude.reshape(-1, 1)
 
         return result / magnitude
 
-    def normal(self, t, above=True):
-        """  Evaluate the normal of the curve at the given parametric value(s).
+    def normal(self, t: ScalarOrScalars, above: bool = True) -> FArray:
+        """Evaluate the normal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
         evaluation points.
@@ -192,16 +211,24 @@ class Curve(SplineObject):
         """
         # error test input
         if self.dimension != 3:
-            raise RuntimeError('Normals require dimension = 3')
+            raise RuntimeError("Normals require dimension = 3")
 
         # compute derivative
-        T = self.tangent(t,  above=above)
+        T = self.tangent(t, above=above, direction=0)
         B = self.binormal(t, above=above)
 
-        return np.cross(B,T)
+        return np.cross(B, T)
 
-    def curvature(self, t, above=True):
-        """  Evaluate the curvaure at specified point(s). The curvature is defined as
+    @overload
+    def curvature(self, t: Scalar, above: bool = True) -> float:
+        ...
+
+    @overload
+    def curvature(self, t: Scalars, above: bool = True) -> FArray:
+        ...
+
+    def curvature(self, t, above=True):  # type: ignore[no-untyped-def]
+        """Evaluate the curvaure at specified point(s). The curvature is defined as
 
         .. math:: \\frac{|\\boldsymbol{v}\\times \\boldsymbol{a}|}{|\\boldsymbol{v}|^3}
 
@@ -209,33 +236,38 @@ class Curve(SplineObject):
         :type t: float or [float]
         :param bool above: Evaluation in the limit from above
         :return: Derivative array
-        :rtype: numpy.array
+        :rtype: numpy.array or float
         """
+        squeeze = is_singleton(t)
+
         # compute derivative
         v = self.derivative(t, d=1, above=above)
         a = self.derivative(t, d=2, above=above)
-        w = np.cross(v,a)
+        w = np.cross(v, a)
 
-        if len(v.shape) == 1: # single evaluation point
-            magnitude = np.linalg.norm(w)
-            speed     = np.linalg.norm(v)
-        else:                 # multiple evaluation points
-            if self.dimension == 2:
-                # for 2D-cases np.cross() outputs scalars
-                # (the z-component of the cross product)
-                magnitude = np.abs(w)
-            else:
-                # for 3D, it is vectors
-                magnitude = np.linalg.norm( w,  axis= -1)
+        magnitude: FArray
 
-            speed = np.linalg.norm( v, axis=-1)
+        if v.ndim == 1 and squeeze:  # single evaluation point
+            return np.linalg.norm(w) / np.linalg.norm(v)
 
-        return magnitude / np.power(speed,3)
+        magnitude = np.abs(w) if self.dimension == 2 else np.linalg.norm(w, axis=-1)
+        speed = np.linalg.norm(v, axis=-1)
+        return magnitude / np.power(speed, 3)
 
-    def torsion(self, t, above=True):
-        """  Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
+    @overload
+    def torsion(self, t: Scalar, above: bool = True) -> float:
+        ...
 
-        .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}
+    @overload
+    def torsion(self, t: Scalars, above: bool = True) -> FArray:
+        ...
+
+    def torsion(self, t, above=True):  # type: ignore[no-untyped-def]
+        """Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
+
+        .. math::
+            \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a}) \\cdot
+            (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}
 
         :param t: Parametric coordinates in which to evaluate
         :type t: float or [float]
@@ -243,41 +275,41 @@ class Curve(SplineObject):
         :return: Derivative array
         :rtype: numpy.array
         """
+        squeeze = is_singleton(t)
+
         if self.dimension == 2:
             # no torsion for 2D curves
-            t = ensure_listlike(t)
+            t = ensure_scalars(t)
             return np.zeros(len(t))
-        elif self.dimension == 3:
-            # only allow 3D curves
-            pass
-        else:
-            raise ValueError('dimension must be 2 or 3')
+
+        if self.dimension != 3:
+            raise ValueError("dimension must be 2 or 3")
 
         # compute derivative
-        v  = self.derivative(t, d=1, above=above)
-        a  = self.derivative(t, d=2, above=above)
+        v = self.derivative(t, d=1, above=above)
+        a = self.derivative(t, d=2, above=above)
         da = self.derivative(t, d=3, above=above)
-        w = np.cross(v,a)
+        w = np.cross(v, a)
 
-        if len(v.shape) == 1: # single evaluation point
+        if len(v.shape) == 1 and squeeze:  # single evaluation point
             magnitude = np.linalg.norm(w)
-            nominator = np.dot(w, a)
-        else:                 # multiple evaluation points
-            magnitude = np.linalg.norm( w, axis=-1)
-            nominator = np.array([np.dot(w1,da1) for (w1,da1) in zip(w, da)])
+            numerator = np.dot(w, a)
+        else:  # multiple evaluation points
+            magnitude = np.linalg.norm(w, axis=-1)
+            numerator = np.array([np.dot(w1, da1) for (w1, da1) in zip(w, da)])
 
-        return nominator / np.power(magnitude, 2)
+        return numerator / np.power(magnitude, 2)
 
-    def raise_order(self, amount, direction=None):
-        """  Raise the polynomial order of the curve.
+    def raise_order(self, amount: int, direction: Optional[Direction] = None) -> Self:  # type: ignore[override]
+        """Raise the polynomial order of the curve.
 
         :param int amount: Number of times to raise the order
         :return: self
         """
         if amount < 0:
-            raise ValueError('Raise order requires a non-negative parameter')
-        elif amount == 0:
-            return
+            raise ValueError("Raise order requires a non-negative parameter")
+        if amount == 0:
+            return self
 
         # create the new basis
         newBasis = self.bases[0].raise_order(amount)
@@ -285,7 +317,7 @@ class Curve(SplineObject):
         # set up an interpolation problem. This is in projective space, so no problems for rational cases
         interpolation_pts_t = newBasis.greville()  # parametric interpolation points (t)
         N_old = self.bases[0].evaluate(interpolation_pts_t)
-        N_new = newBasis.evaluate(interpolation_pts_t, sparse=True)
+        N_new = newBasis.evaluate_sparse(interpolation_pts_t)
         interpolation_pts_x = N_old @ self.controlpoints  # projective interpolation points (x,y,z,w)
 
         # solve the interpolation problem
@@ -294,8 +326,8 @@ class Curve(SplineObject):
 
         return self
 
-    def append(self, curve):
-        """  Extend the curve by merging another curve to the end of it.
+    def append(self, curve: Curve) -> Self:
+        """Extend the curve by merging another curve to the end of it.
 
         The curves are glued together in a C0 fashion with enough repeated
         knots. The function assumes that the end of this curve perfectly
@@ -309,7 +341,7 @@ class Curve(SplineObject):
 
         # error test input
         if self.bases[0].periodic > -1 or curve.bases[0].periodic > -1:
-            raise RuntimeError('Cannot append with periodic curves')
+            raise RuntimeError("Cannot append with periodic curves")
 
         # copy input curve so we don't change that one directly
         extending_curve = curve.clone()
@@ -327,14 +359,14 @@ class Curve(SplineObject):
         p = max(p1, p2)
 
         # build new knot vector by merging the two existing ones
-        old_knot = self.knots(direction=0, with_multiplicities=True)
-        add_knot = extending_curve.knots(direction=0, with_multiplicities=True)
+        old_knot = self.knots(0, with_multiplicities=True)
+        add_knot = extending_curve.knots(0, with_multiplicities=True)
         # make sure that the new one starts where the old one stops
         add_knot -= add_knot[0]
         add_knot += old_knot[-1]
         new_knot = np.zeros(len(add_knot) + len(old_knot) - p - 1)
-        new_knot[:len(old_knot) - 1] = old_knot[:-1]
-        new_knot[len(old_knot) - 1:] = add_knot[p:]
+        new_knot[: len(old_knot) - 1] = old_knot[:-1]
+        new_knot[len(old_knot) - 1 :] = add_knot[p:]
 
         # build new control points by merging the two existing matrices
         n1 = len(self)
@@ -349,23 +381,22 @@ class Curve(SplineObject):
 
         return self
 
-    def continuity(self, knot):
-        """  Get the parametric continuity of the curve at a given point. Will
+    def continuity(self, knot: Scalar) -> int:
+        """Get the parametric continuity of the curve at a given point. Will
         return p-1-m, where m is the knot multiplicity and inf between knots"""
         return self.bases[0].continuity(knot)
 
-    def get_kinks(self):
-        """  Get the parametric coordinates at all points which have C0-
+    def get_kinks(self) -> list[float]:
+        """Get the parametric coordinates at all points which have C0-
         continuity"""
-        return [k for k in self.knots(0) if self.continuity(k)<1]
+        return [k for k in self.knots(0) if self.continuity(k) < 1]
 
-    def length(self, t0=None, t1=None):
-        """ Computes the euclidian length of the curve in geometric space
+    def length(self, t0: Optional[Scalar] = None, t1: Optional[Scalar] = None) -> float:
+        """Compute the Euclidean length of the curve in geometric space
 
         .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt
-
         """
-        (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
+        x, w = np.polynomial.legendre.leggauss(self.order(0) + 1)
         knots = self.knots(0)
         # keep only integration boundaries within given start (t0) and stop (t1) interval
         if t0 is not None:
@@ -377,16 +408,16 @@ class Curve(SplineObject):
             knots = knots[:i]
             knots = np.insert(knots, i, t1)
 
-        t = np.array([ (x+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots[:-1], knots[1:]) ])
-        w = np.array([     w/2*(t1-t0)    for t0,t1 in zip(knots[:-1], knots[1:]) ])
-        t = np.ndarray.flatten(t)
-        w = np.ndarray.flatten(w)
+        t = np.array(
+            [(x + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots[:-1], knots[1:])], dtype=float
+        ).flatten()
+        w = np.array([w / 2 * (t1 - t0) for t0, t1 in zip(knots[:-1], knots[1:])], dtype=float).flatten()
         dx = self.derivative(t)
         detJ = np.sqrt(np.sum(dx**2, axis=1))
-        return np.dot(detJ, w)
+        return cast(float, np.dot(detJ, w))
 
-    def rebuild(self, p, n):
-        """  Creates an approximation to this curve by resampling it using a
+    def rebuild(self, p: int, n: int) -> Curve:
+        """Create an approximation to this curve by resampling it using a
         uniform knot vector of order *p* with *n* control points.
 
         :param int p: Polynomial discretization order
@@ -394,6 +425,7 @@ class Curve(SplineObject):
         :return: A new approximate curve
         :rtype: Curve
         """
+
         # establish uniform open knot vector
         knot = [0] * p + list(range(1, n - p + 1)) + [n - p + 1] * p
         basis = BSplineBasis(p, knot)
@@ -401,24 +433,25 @@ class Curve(SplineObject):
         basis.normalize()
         t0 = self.bases[0].start()
         t1 = self.bases[0].end()
-        basis *= (t1 - t0)
+        basis *= t1 - t0
         basis += t0
         # fetch evaluation points and solve interpolation problem
         t = basis.greville()
-        N = basis.evaluate(t, sparse=True)
+        N = basis.evaluate_sparse(t)
         controlpoints = splinalg.spsolve(N, self.evaluate(t))
 
         # return new resampled curve
         return Curve(basis, controlpoints)
 
-    def error(self, target):
-        """  Computes the L2 (squared and per knot span) and max error between
+    def error(self, target: Callable) -> tuple[list[float], float]:
+        """Computes the L2 (squared and per knot span) and max error between
         this curve and a target curve
 
         .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^2(t_1,t_2)}^2 = \\int_{t_1}^{t_2}
             |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|^2 dt, \\quad \\forall \\;\\text{knots}\\;t_1 < t_2
 
-        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\\infty} = \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|
+        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\\infty} =
+            \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|
 
         :param function target: callable function which takes as input a vector
             of evaluation points t and gives as output a matrix x where
@@ -441,20 +474,20 @@ class Curve(SplineObject):
             print('|| e ||_max = ', maxerr)
         """
         knots = self.knots(0)
-        (x,w) = np.polynomial.legendre.leggauss(self.order(0)+1)
-        err2    = []
+        (x, w) = np.polynomial.legendre.leggauss(self.order(0) + 1)
+        err2 = []
         err_inf = 0.0
-        for t0,t1 in zip(knots[:-1], knots[1:]): # for all knot spans
-            tg  = (x+1)/2*(t1-t0)+t0 # evaluation points
-            wg  =   w  /2*(t1-t0)    # integration weights
-            error = self(tg) - target(tg)    # [x-xh, y-yh, z-zh]
-            error = np.sum(error**2, axis=1) # |x-xh|^2
-            err2.append(np.dot(error, wg))   # integrate over domain
+        for t0, t1 in zip(knots[:-1], knots[1:]):  # for all knot spans
+            tg = (x + 1) / 2 * (t1 - t0) + t0  # evaluation points
+            wg = w / 2 * (t1 - t0)  # integration weights
+            error = self(tg) - target(tg)  # [x-xh, y-yh, z-zh]
+            error = np.sum(error**2, axis=1)  # |x-xh|^2
+            err2.append(np.dot(error, wg))  # integrate over domain
             err_inf = max(np.max(np.sqrt(error)), err_inf)
         return (err2, err_inf)
 
-    def __repr__(self):
-        return str(self.bases[0]) + '\n' + str(self.controlpoints)
+    def __repr__(self) -> str:
+        return str(self.bases[0]) + "\n" + str(self.controlpoints)
 
-    def get_derivative_curve(self):
-        return super(Curve, self).get_derivative_spline(0)
+    def get_derivative_curve(self) -> Self:
+        return super().get_derivative_spline(0)

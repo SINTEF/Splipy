@@ -1,29 +1,42 @@
-__doc__ = 'Implementation of various curve utilities'
+"Implementation of various curve utilities"
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 import numpy as np
 
+if TYPE_CHECKING:
+    from splipy.curve import Curve
+    from splipy.types import FArray, Scalars
 
-def curve_length_parametrization(pts, normalize=False):
+
+def curve_length_parametrization(
+    pts: Union[Sequence[Scalars], FArray],
+    normalize: bool = False,
+    buffer: Optional[FArray] = None,
+) -> FArray:
     """Calculate knots corresponding to a curvelength parametrization of a set of
     points.
 
     :param numpy.array pts: A set of points
     :param bool normalize: Whether to normalize the parametrization
+    :param numpy.array buffer: If given, the parametrization is stored in this array.
     :return: The parametrization
     :rtype: [float]
     """
-    knots = [0.0]
-    for i in range(1, pts.shape[0]):
-        knots.append(knots[-1] + np.linalg.norm(pts[i,:] - pts[i-1,:]))
+    points = np.array(pts, dtype=float)
+
+    knots = buffer if buffer is not None else np.empty((len(points) - 1,), dtype=float)
+    knots[:] = np.cumsum(np.linalg.norm(points[1:] - points[:-1], axis=1))
 
     if normalize:
-        length = knots[-1]
-        knots = [k/length for k in knots]
+        knots /= knots[-1]
 
     return knots
 
 
-def get_curve_points(curve):
+def get_curve_points(curve: Curve) -> FArray:
     """Evaluate the curve in all its knots.
 
     :param curve: The curve

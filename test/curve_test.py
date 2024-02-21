@@ -405,7 +405,7 @@ class TestCurve(unittest.TestCase):
         crv.set_dimension(3)
         t = np.linspace(crv.start(0), crv.end(0), 13)
         X = crv(t)
-        T = crv.tangent(t)
+        T, = crv.tangent(t)
         B = crv.binormal(t)
         N = crv.normal(t)
 
@@ -427,7 +427,7 @@ class TestCurve(unittest.TestCase):
             self.assertTrue(np.allclose( b, [0,0,1]) )
 
         # check that evaluations work for single-valued input
-        t = crv.tangent(.23)
+        t, = crv.tangent(.23)
         b = crv.binormal(.23)
         n = crv.normal(.23)
         self.assertEqual(len(t.shape), 1) # is a vector (not matrix)

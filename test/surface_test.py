@@ -545,7 +545,7 @@ class TestSurface(unittest.TestCase):
         # make an ellipse at (2,1)
         surf = sf.disc(3)
         print(surf)
-        surf.scale((3,1))
+        surf.scale(3,1)
         surf += (2,1)
         center = surf.center()
         self.assertEqual(len(center), 2)

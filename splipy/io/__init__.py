@@ -1,30 +1,27 @@
-from .g2  import G2
-from .svg import SVG
+from .g2 import G2
+from .ofoam import OpenFOAM
 from .spl import SPL
 from .stl import STL
-from .ofoam import OpenFOAM
+from .svg import SVG
+
+__all__ = ["G2", "SVG", "SPL", "STL", "OpenFOAM"]
+
+from importlib.util import find_spec
+
+has_cv2 = find_spec("cv2")
 
 
 # GRDECL depends on optional cv2
-try:
-    from .grdecl import GRDECL
-    has_grdecl = True
-except ImportError:
-    has_grdecl = False
+has_grdecl = has_cv2
+if has_grdecl:
+    from .grdecl import GRDECL  # noqa
+
+    __all__.append("GRDECL")
 
 
 # ThreeDM depends on optional rhino3dm
-try:
-    from .threedm import ThreeDM
-    has_rhino = True
-except ImportError:
-    has_rhino = False
-
-
-__all__ = ['G2', 'SVG', 'SPL', 'STL', 'OpenFOAM']
-
-if has_grdecl:
-    __all__.append('GRDECL')
-
+has_rhino = find_spec("rhino3dm")
 if has_rhino:
-    __all__.append('ThreeDM')
+    from .threedm import ThreeDM  # noqa
+
+    __all__.append("ThreeDM")
