@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splipy"
-version = "1.8.2"
+version = "1.9.0"
 description = "Spline modelling library for Python"
 authors = [
     "Kjetil Andre Johannessen <kjetijo@gmail.com>",
@@ -67,7 +67,7 @@ requires = ["poetry-core", "cython", "numpy", "wheel", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.bumpversion]
-current_version = "1.8.2"
+current_version = "1.9.0"
 allow_dirty = false
 commit = true
 tag = true
