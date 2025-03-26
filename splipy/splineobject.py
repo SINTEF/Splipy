@@ -6,7 +6,9 @@ from operator import attrgetter, methodcaller
 from itertools import chain, product
 from bisect import bisect_left
 
-from .basis import BSplineBasis
+from typing import Tuple, List
+
+from .basis import TensorBasis, BSplineBasis
 from .utils import (
     reshape, rotation_matrix, is_singleton, ensure_listlike,
     check_direction, ensure_flatlist, check_section, sections,
@@ -44,6 +46,10 @@ class SplineObject(object):
     object, while infix operators (e.g. ``+``) create new objects.
     """
 
+    basis: TensorBasis
+    controlpoints: np.ndarray
+    dimension: int
+
     def __init__(self, bases=None, controlpoints=None, rational=False, raw=False):
         """  Construct a spline object with the given bases and control points.
 
@@ -59,44 +65,33 @@ class SplineObject(object):
         :param bool raw: If True, skip any control point reordering.
             (For internal use.)
         """
-        bases = [(b.clone() if b else BSplineBasis()) for b in bases]
-        self.bases = bases
+
+        if isinstance(bases, TensorBasis):
+            self.basis = bases
+        else:
+            self.basis = TensorBasis(*(b.clone() if b else BSplineBasis() for b in bases), rational=rational)
+
         if controlpoints is None:
             # `product' produces tuples in row-major format (the last input varies quickest)
             # We want them in column-major format, so we reverse the basis orders, and then
             # also reverse the output tuples
-            controlpoints = [c[::-1] for c in product(*(b.greville() for b in bases[::-1]))]
+            controlpoints = [c[::-1] for c in product(*(b.greville() for b in reversed(self.basis)))]
 
             # Minimum two dimensions
             if len(controlpoints[0]) == 1:
                 controlpoints = [tuple(list(c) + [0.0]) for c in controlpoints]
 
             # Add weight = 1 for identiy-mapping rational splines
-            if rational:
+            if self.basis.rational:
                 controlpoints = [tuple(list(c) + [1.0]) for c in controlpoints]
 
         self.controlpoints = np.array(controlpoints)
-        self.dimension = self.controlpoints.shape[-1] - rational
-        self.rational = rational
 
         if not raw:
-            shape = tuple(b.num_functions() for b in bases)
-            ncomps = self.dimension + rational
-            self.controlpoints = reshape(self.controlpoints, shape, order='F', ncomps=ncomps)
-
-    def _validate_domain(self, *params):
-        """  Check whether the given evaluation parameters are valid.
-
-        :raises ValueError: If the parameters are outside the domain
-        """
-        for b, p in zip(self.bases, params):
-            b.snap(p)
-            if b.periodic < 0:
-                if min(p) < b.start() or b.end() < max(p):
-                    raise ValueError('Evaluation outside parametric domain')
+            self.controlpoints = reshape(self.controlpoints, self.basis.shape, order='F', ncomps=self.raw_dimension)
 
     def evaluate(self, *params, **kwargs):
-        """  Evaluate the object at given parametric values.
+        """Evaluate the object at given parametric values.
 
         If *tensor* is true, evaluation will take place on a tensor product
         grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where
@@ -117,35 +112,11 @@ class SplineObject(object):
         :return: Geometry coordinates
         :rtype: numpy.array
         """
-        squeeze = all(is_singleton(p) for p in params)
-        params = [ensure_listlike(p) for p in params]
-
-        tensor = kwargs.get('tensor', True)
-        if not tensor and len({len(p) for p in params}) != 1:
-            raise ValueError('Parameters must have same length')
-
-        self._validate_domain(*params)
-
-        # Evaluate the corresponding bases at the corresponding points
-        # and build the result array
-        Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
-        result = evaluate(Ns, self.controlpoints, tensor)
-
-        # For rational objects, we divide out the weights, which are stored in the
-        # last coordinate
-        if self.rational:
-            for i in range(self.dimension):
-                result[..., i] /= result[..., -1]
-            result = np.delete(result, self.dimension, -1)
-
-        # Squeeze the singleton dimensions if we only have one point
-        if squeeze:
-            result = result.reshape(self.dimension)
-
-        return result
+        evaluator = self.basis.evaluate(*params, **kwargs)
+        return evaluator(self.controlpoints)
 
     def derivative(self, *params, **kwargs):
-        """  Evaluate the derivative of the object at the given parametric values.
+        """Evaluate the derivative of the object at the given parametric values.
 
         If *tensor* is true, evaluation will take place on a tensor product
         grid, i.e. it will return an *n1* × *n2* × ... × *dim* array, where
@@ -188,48 +159,8 @@ class SplineObject(object):
         :return: Derivatives
         :rtype: numpy.array
         """
-        squeeze = all(is_singleton(p) for p in params)
-        params = [ensure_listlike(p) for p in params]
-
-        derivs = kwargs.get('d', [1] * self.pardim)
-        derivs = ensure_listlike(derivs, self.pardim)
-
-        above = kwargs.get('above', [True] * self.pardim)
-        above = ensure_listlike(above, self.pardim)
-
-        tensor = kwargs.get('tensor', True)
-
-        if not tensor and len({len(p) for p in params}) != 1:
-            raise ValueError('Parameters must have same length')
-
-        self._validate_domain(*params)
-
-        # Evaluate the derivatives of the corresponding bases at the corresponding points
-        # and build the result array
-        dNs = [b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params, derivs, above)]
-        result = evaluate(dNs, self.controlpoints, tensor)
-
-        # For rational curves, we need to use the quotient rule
-        # (n/W)' = (n' W - n W') / W^2 = n'/W - nW'/W^2
-        # * n'(i) = result[..., i]
-        # * W'(i) = result[..., -1]
-        # We evaluate in the regular way to compute n and W.
-        if self.rational:
-            if sum(derivs) > 1:
-                raise RuntimeError('Rational derivative not implemented for order %i' % sum(derivs))
-            Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
-            non_derivative = evaluate(Ns, self.controlpoints, tensor)
-            W = non_derivative[..., -1]  # W
-            Wd = result[..., -1]         # W'
-            for i in range(self.dimension):
-                result[..., i] = result[..., i] / W - non_derivative[..., i] * Wd / W / W
-            result = np.delete(result, self.dimension, -1)
-
-        # Squeeze the singleton dimensions if we only have one point
-        if squeeze:
-            result = result.reshape(self.dimension)
-
-        return result
+        evaluator = self.basis.derivative(*params, **kwargs)
+        return evaluator(self.controlpoints)
 
     def get_derivative_spline(self, direction=None):
         """  Compute the controlpoints associated with the derivative spline object
@@ -268,7 +199,7 @@ class SplineObject(object):
 
         # if no direction is specified, return a tuple with all derivatives
         if direction is None:
-            return tuple([self.get_derivative_spline(dim) for dim in range(self.pardim)])
+            return tuple(self.get_derivative_spline(dim) for dim in range(self.pardim))
         else:
             d = check_direction(direction, self.pardim)
             k = self.knots(d, with_multiplicities=True)
@@ -472,7 +403,7 @@ class SplineObject(object):
             controlpoints = np.transpose(controlpoints,indices)
 
         self.controlpoints = controlpoints
-        self.bases = new_bases
+        self.basis = TensorBasis(*new_bases, rational=self.rational)
         return self
 
     def raise_order_implicit(self, *raises):
@@ -502,7 +433,7 @@ class SplineObject(object):
             result = np.tensordot(np.linalg.inv(n), result, axes=(1, self.pardim-1))
 
         self.controlpoints = result
-        self.bases = new_bases
+        self.basis = TensorBasis(*new_bases, rational=self.rational)
 
         return self
 
@@ -555,10 +486,7 @@ class SplineObject(object):
         :param int direction: Direction in which to get the start.
         :raises ValueError: For invalid direction
         """
-        if direction is None:
-            return tuple(b.start() for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return self.bases[direction].start()
+        return self.basis.start(direction)
 
     def end(self, direction=None):
         """  Return the end of the parametric domain.
@@ -569,10 +497,7 @@ class SplineObject(object):
         :param int direction: Direction in which to get the end.
         :raises ValueError: For invalid direction
         """
-        if direction is None:
-            return tuple(b.end() for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return self.bases[direction].end()
+        return self.basis.end(direction)
 
     def order(self, direction=None):
         """  Return polynomial order (degree + 1).
@@ -584,13 +509,10 @@ class SplineObject(object):
         :param int direction: Direction in which to get the order.
         :raises ValueError: For invalid direction
         """
-        if direction is None:
-            return tuple(b.order for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return self.bases[direction].order
+        return self.basis.order(direction)
 
     def knots(self, direction=None, with_multiplicities=False):
-        """  Return knots vector
+        """Return knots vector
 
         If `direction` is given, returns the knots in that direction, as a
         list. If it is not given, returns the knots of all directions, as a
@@ -601,11 +523,7 @@ class SplineObject(object):
             multiplicities (i.e. repeated).
         :raises ValueError: For invalid direction
         """
-        getter = attrgetter('knots') if with_multiplicities else methodcaller('knot_spans')
-        if direction is None:
-            return tuple(getter(b) for b in self.bases)
-        direction = check_direction(direction, self.pardim)
-        return getter(self.bases[direction])
+        return self.basis.knots(direction, with_multiplicities)
 
     def reverse(self, direction=0):
         """  Swap the direction of a parameter by making it go in the reverse
@@ -629,7 +547,7 @@ class SplineObject(object):
         return self
 
     def swap(self, dir1=0, dir2=1):
-        """  Swaps two parameter directions.
+        """Swap two parameter directions.
 
         This function silently passes for curves.
 
@@ -640,22 +558,14 @@ class SplineObject(object):
         if self.pardim == 1:
             return
 
-        dir1 = check_direction(dir1, self.pardim)
-        dir2 = check_direction(dir2, self.pardim)
-
-        # Reorder control points
-        new_directions = list(range(self.pardim + 1))
-        new_directions[dir1] = dir2
-        new_directions[dir2] = dir1
-        self.controlpoints = self.controlpoints.transpose(new_directions)
-
         # Swap knot vectors
-        self.bases[dir1], self.bases[dir2] = self.bases[dir2], self.bases[dir1]
+        trf = self.basis.swap(dir1, dir2)
+        self.controlpoints = trf(self.controlpoints)
 
         return self
 
     def insert_knot(self, knot, direction=0):
-        """  Insert a new knot into the spline.
+        """Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
         :param knot: The new knot(s) to insert
@@ -1065,7 +975,6 @@ class SplineObject(object):
         while new_dim < dim:
             self.controlpoints = np.delete(self.controlpoints, -2 if self.rational else -1, -1)
             dim -= 1
-        self.dimension = new_dim
 
         return self
 
@@ -1086,7 +995,7 @@ class SplineObject(object):
             dim = self.dimension
             shape = self.controlpoints.shape
             self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), self.pardim)
-            self.rational = 1
+            self.basis.rational = True
 
         return self
 
@@ -1223,10 +1132,20 @@ class SplineObject(object):
 
     @property
     def pardim(self):
-        """  The number of parametric dimensions: 1 for curves, 2 for surfaces, 3
+        """The number of parametric dimensions: 1 for curves, 2 for surfaces, 3
         for volumes, etc.
         """
         return len(self.controlpoints.shape)-1
+
+    @property
+    def dimension(self):
+        """The number of physical dimsensions."""
+        return self.controlpoints.shape[-1] - self.basis.rational
+
+    @property
+    def raw_dimension(self):
+        """The number of components per control point (including weights)."""
+        return self.controlpoints.shape[-1]
 
     def clone(self):
         """Clone the object."""
@@ -1314,9 +1233,17 @@ class SplineObject(object):
         self.controlpoints[unraveled] = cp
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int, ...]:
         """The dimensions of the control point array."""
-        return self.controlpoints.shape[:-1]
+        return self.basis.shape
+
+    @property
+    def rational(self) -> bool:
+        return self.basis.rational
+
+    @property
+    def bases(self) -> List[BSplineBasis]:
+        return list(self.basis)
 
     def __iadd__(self, x):
         self.translate(x)

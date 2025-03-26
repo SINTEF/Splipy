@@ -6,7 +6,7 @@ from bisect import bisect_left, bisect_right
 import numpy as np
 import scipy.sparse.linalg as splinalg
 
-from .basis import BSplineBasis
+from .basis import BSplineBasis, TensorBasis
 from .splineobject import SplineObject
 from .utils import ensure_listlike, is_singleton
 
@@ -52,7 +52,7 @@ class Curve(SplineObject):
         squeeze = is_singleton(params[0])
         params = [ensure_listlike(p) for p in params]
 
-        self._validate_domain(*params)
+        self.basis.validate_domain(*params)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
@@ -294,7 +294,7 @@ class Curve(SplineObject):
 
         # solve the interpolation problem
         self.controlpoints = np.array(splinalg.spsolve(N_new, interpolation_pts_x))
-        self.bases = [newBasis]
+        self.basis = TensorBasis(newBasis, rational=self.rational)
 
         return self
 
@@ -348,7 +348,7 @@ class Curve(SplineObject):
         new_controlpoints[n1:, :] = extending_curve.controlpoints[1:, :]
 
         # update basis and controlpoints
-        self.bases = [BSplineBasis(p, new_knot)]
+        self.basis = TensorBasis(BSplineBasis(p, new_knot), rational=self.rational)
         self.controlpoints = new_controlpoints
 
         return self
