@@ -3,10 +3,9 @@ name: Python package
 on:
   push:
     branches: [ master ]
+    tags: ["*"]
   pull_request:
     branches: [ master ]
-  create:
-    tags:
   workflow_dispatch:
 
 jobs:
@@ -16,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.11', '3.12', '3.13']
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v3
@@ -57,7 +56,7 @@ jobs:
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BUILD: cp39-* cp310-* cp311-* cp312-*
+          CIBW_BUILD: cp311-* cp312-* cp313-*
           CIBW_SKIP: '*musllinux* *i686*'
           # CIBW_BEFORE_BUILD: pip install -r requirements.dev.txt
       - uses: actions/upload-artifact@v3

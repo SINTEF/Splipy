@@ -46,9 +46,9 @@ script = "build_ext.py"
 generate-setup-file = true
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
-numpy = "^1.21"
-scipy = "^1.9"
+python = ">=3.11,<4.0"
+numpy = "^2.0"
+scipy = "^1.10"
 
 [tool.poetry.extras]
 FiniteElement = ["nutils"]
