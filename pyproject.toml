@@ -47,7 +47,7 @@ generate-setup-file = true
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
-numpy = "^2.0"
+numpy = ">=1.25,<3.0"
 scipy = "^1.10"
 
 [tool.poetry.extras]
