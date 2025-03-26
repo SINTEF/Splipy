@@ -97,9 +97,11 @@ class Volume(SplineObject):
         dv = self.derivative(u,v,w, d=(0,1,0))
         dw = self.derivative(u,v,w, d=(0,0,1))
 
-        J  = du[:,:,:,0] * np.cross(dv[:,:,:,1:],   dw[:,:,:,1:]  ) -  \
-             du[:,:,:,1] * np.cross(dv[:,:,:,0::2], dw[:,:,:,0::2]) +  \
-             du[:,:,:,2] * np.cross(dv[:,:,:,:-1],  dw[:,:,:,:-1] )
+        c1 = dv[..., 1] * dw[..., 2] - dv[..., 2] * dw[..., 1]
+        c2 = dv[..., 0] * dw[..., 2] - dv[..., 2] * dw[..., 0]
+        c3 = dv[..., 0] * dw[..., 1] - dv[..., 1] * dw[..., 0]
+
+        J  = du[:,:,:,0] * c1 - du[:,:,:,1] * c2 + du[:,:,:,2] * c3
 
         return np.abs(J).dot(w3).dot(w2).dot(w1)
 

@@ -214,7 +214,11 @@ class Curve(SplineObject):
         # compute derivative
         v = self.derivative(t, d=1, above=above)
         a = self.derivative(t, d=2, above=above)
-        w = np.cross(v,a)
+
+        if self.dimension == 2:
+            w = v[..., 0] * a[..., 1] - v[..., 1] * a[..., 0]
+        else:
+            w = np.cross(v,a)
 
         if len(v.shape) == 1: # single evaluation point
             magnitude = np.linalg.norm(w)
