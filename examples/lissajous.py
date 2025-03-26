@@ -51,7 +51,7 @@ t = np.linspace(crv.start(0), crv.end(0), n);
 x = crv(t)
 
 ### do the  plotting animation
-fig = plt.figure()
+fig = plt.figure(figsize=[10, 10])
 lines = []
 frames = 100        # number of frames in animation
 fps    = n / frames # logical error if fps is not an integer
@@ -59,7 +59,6 @@ for i in range(frames):
     j = np.arange(int(i*fps), int(min((i+1)*fps+1, n-1)))
     l, = plt.plot(x[j,0], x[j,1], color=[1,1,1])
     lines.append(l)
-plt.axis('equal')
 plt.axis([-2, 2, -2, 2])
 
 def animate(i):
