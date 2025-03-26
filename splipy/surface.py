@@ -190,7 +190,6 @@ class Surface(SplineObject):
 
         return result
 
-
     def area(self):
         """ Computes the area of the surface in geometric space """
         # fetch integration points
@@ -212,7 +211,11 @@ class Surface(SplineObject):
         # compute all quantities of interest (i.e. the jacobian)
         du = self.derivative(u,v, d=(1,0))
         dv = self.derivative(u,v, d=(0,1))
-        J  = np.cross(du,dv)
+
+        if self.dimension == 2:
+            J = du[..., 0] * dv[..., 1] - du[..., 1] * dv[..., 0]
+        else:
+            J = np.cross(du,dv)
 
         if self.dimension == 3:
             J = np.sqrt(np.sum(J**2, axis=2))
