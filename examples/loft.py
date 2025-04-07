@@ -5,6 +5,8 @@
 # Date:      February 2021
 #
 
+from pathlib import Path
+
 # Slightly more interesting input geometries. Read more on NACA wing 
 # profiles here: https://en.wikipedia.org/wiki/NACA_airfoil
 from splipy.utils.NACA import NACA
@@ -25,5 +27,6 @@ crv7 = 0.2*NACA(8,3,15) + [-.5,0,9]
 wind_turbine_blade = surface_factory.loft(crv1, crv2, crv3, crv4, crv5, crv6, crv7)
 
 # Dump result as an stl file which can be viewed in for instance Meshlab
-with STL('blade.stl') as myfile:
+path = Path(__file__).parent / "blade.stl"
+with STL(str(path)) as myfile:
     myfile.write(wind_turbine_blade.swap()) # swap() is to make sure normals are pointing out of the object

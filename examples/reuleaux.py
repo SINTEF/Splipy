@@ -6,6 +6,7 @@
 # Date:      March 2016
 #
 
+from pathlib import Path
 from sys import argv
 from splipy import *
 import splipy.curve_factory as curves
@@ -37,7 +38,8 @@ plt.axis('equal')
 if INTERACTIVE:
     plt.show()
 else:
-    plt.savefig('reuleaux-1.png')
+    path = Path(__file__).parent / "reuleaux-1.png"
+    plt.savefig(str(path))
 
 # split the triangle in two, and align this with the y-axis
 two_parts = c.split((c.start(0) + c.end(0)) / 2.0)
@@ -56,4 +58,5 @@ ax.plot_wireframe(x[:,:,0], x[:,:,1], x[:,:,2])
 if INTERACTIVE:
     plt.show()
 else:
-    plt.savefig('reuleaux-2.png')
+    path = Path(__file__).parent / "reuleaux-2.png"
+    plt.savefig(str(path))

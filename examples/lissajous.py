@@ -9,6 +9,7 @@
 #
 
 
+from pathlib import Path
 from sys import argv
 from splipy import curve_factory
 from math import gcd
@@ -16,6 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from math import pi
+
 
 
 INTERACTIVE = "--ci" not in argv[1:]
@@ -80,4 +82,5 @@ if INTERACTIVE:
     plt.show()
 else:
     # save results as an animated gif for web display (PS: this function call is slow)
-    ani.save('lissajous34.gif', writer='imagemagick', fps=30);
+    path = Path(__file__).parent / "lissajous34.gif"
+    ani.save(str(path), writer='imagemagick', fps=30);
