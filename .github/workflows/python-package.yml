@@ -33,7 +33,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel uv
           make sync
-          uv pip install matplotlib
       - name: Test with pytest
         run: |
           make test
