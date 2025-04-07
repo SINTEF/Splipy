@@ -1,3 +1,0 @@
-global-include *.pyx
-global-include *.pxd
-include PyPI_text.md

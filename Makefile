@@ -1,62 +1,50 @@
-.PHONY: install mypy lint fmt fmtcheck doc
+# Convenience targets
 
-install:
-	poetry install --with=dev
+.PHONY: sync
+sync:
+	uv sync --all-packages --group dev
 
-mypy:
-	poetry run mypy splipy
-
-lint:
-	poetry run ruff splipy
-
-bench:
-	poetry run pytest --benchmark-only
-
-fmt:
-	poetry run black splipy
-	poetry run isort splipy
-
-fmtcheck:
-	poetry run black splipy --check
-	poetry run isort splipy --check
-
-
+.PHONY: doc
 doc:
 	$(MAKE) -C doc html
+
+
+# Other targets
+
+.PHONY: bench
+bench:
+	uv run pytest --benchmark-only
 
 
 # Test targets
 
 .PHONY: pytest
 pytest:
-	poetry run pytest --benchmark-skip
+	uv run pytest --benchmark-skip
 
 .PHONY: examples
 examples:
-	poetry run python examples/circle_animation.py --ci
-	poetry run python examples/lissajous.py --ci
-	poetry run python examples/loft.py
-	poetry run python examples/read.py
-	poetry run python examples/reuleaux.py --ci
-	poetry run python examples/trefoil.py
-	poetry run python examples/write.py
+	uv run python examples/circle_animation.py --ci
+	uv run python examples/lissajous.py --ci
+	uv run python examples/loft.py
+	uv run python examples/read.py
+	uv run python examples/reuleaux.py --ci
+	uv run python examples/trefoil.py
+	uv run python examples/write.py
 
-.PHONY: test  # most common test commands for everyday development
-test: pytest
-
-.PHONY: test-all  # run from CI: the whole kitchen sink
-test-all: test examples
+.PHONY: test
+test: pytest examples
 
 
 # Build targets (used from CI)
 
 .PHONY: sdist
 sdist:
-	poetry build -f sdist
+	uv build --all-packages --sdist
 
 .PHONY: wheel
 wheel:
-	poetry build -f wheel
+	uv build --all-packages --wheel
 
 .PHONY: build
 build: sdist wheel

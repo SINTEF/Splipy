@@ -1,11 +1,14 @@
 from bisect import bisect_right, bisect_left
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 import copy
 cimport cython
 
 
-cdef my_bisect_left(np.float_t[:] array, np.float_t value, unsigned int hi):
+cnp.import_array()
+
+
+cdef my_bisect_left(cnp.float_t[:] array, cnp.float_t value, unsigned int hi):
     cdef unsigned int lo = 0
     cdef unsigned int mid
     while lo < hi:
@@ -17,7 +20,7 @@ cdef my_bisect_left(np.float_t[:] array, np.float_t value, unsigned int hi):
     return lo
 
 
-cdef my_bisect_right(np.float_t[:] array, np.float_t value, unsigned int hi):
+cdef my_bisect_right(cnp.float_t[:] array, cnp.float_t value, unsigned int hi):
     cdef unsigned int lo = 0
     cdef unsigned int mid
     while lo < hi:
@@ -30,11 +33,11 @@ cdef my_bisect_right(np.float_t[:] array, np.float_t value, unsigned int hi):
 
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
-def evaluate(np.ndarray[np.float_t, ndim=1] knots_in,
+def evaluate(cnp.ndarray[cnp.float_t, ndim=1] knots_in,
              unsigned int p,
-             np.ndarray[np.float_t, ndim=1] eval_t_in,
+             cnp.ndarray[cnp.float_t, ndim=1] eval_t_in,
              int periodic,
-             np.float_t tol,
+             cnp.float_t tol,
              unsigned int d=0,
              bint from_right=True):
     """  Evaluate all basis functions in a given set of points.
@@ -50,20 +53,20 @@ def evaluate(np.ndarray[np.float_t, ndim=1] knots_in,
     """
 
     # wrap everything into c-type datastructures for optimized performance
-    cdef np.float_t[:] knots = knots_in
+    cdef cnp.float_t[:] knots = knots_in
     cdef unsigned int n_all  = len(knots) - p  # number of basis functions (without periodicity)
     cdef unsigned int n      = len(knots) - p - (periodic+1)  # number of basis functions (with periodicity)
     cdef unsigned int m      = len(eval_t_in)
-    cdef np.float_t start    = knots[p-1]
-    cdef np.float_t end      = knots[n_all]
-    cdef np.float_t evalT
+    cdef cnp.float_t start    = knots[p-1]
+    cdef cnp.float_t end      = knots[n_all]
+    cdef cnp.float_t evalT
     cdef unsigned int mu     = 0
 
-    cdef np.float_t[:] t    = eval_t_in.copy()
-    cdef np.float_t[:] data = np.zeros(m*p, dtype=float)
-    cdef np.int32_t[:] indices  = np.zeros(m*p, dtype=np.int32)
-    cdef np.int32_t[:] indptr   = np.arange(0,m*p+1,p, dtype=np.int32)
-    cdef np.float_t[:] M        = np.zeros(p, dtype=float)  # temp storage to keep all the function evaluations
+    cdef cnp.float_t[:] t    = eval_t_in.copy()
+    cdef cnp.float_t[:] data = np.zeros(m*p, dtype=float)
+    cdef cnp.int32_t[:] indices  = np.zeros(m*p, dtype=np.int32)
+    cdef cnp.int32_t[:] indptr   = np.arange(0,m*p+1,p, dtype=np.int32)
+    cdef cnp.float_t[:] M        = np.zeros(p, dtype=float)  # temp storage to keep all the function evaluations
     cdef unsigned int k,q,j,i
     cdef bint right
 
@@ -122,9 +125,9 @@ def evaluate(np.ndarray[np.float_t, ndim=1] knots_in,
 
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
-def snap(np.ndarray[np.float_t, ndim=1] knots_in,
-         np.ndarray[np.float_t, ndim=1] eval_t_in,
-         np.float_t tolerance):
+def snap(cnp.ndarray[cnp.float_t, ndim=1] knots_in,
+         cnp.ndarray[cnp.float_t, ndim=1] eval_t_in,
+         cnp.float_t tolerance):
     """  Snap evaluation points to knots if they are sufficiently close
     as given in by state.state.knot_tolerance. This will modify the
     input vector eval_t_in.
@@ -136,8 +139,8 @@ def snap(np.ndarray[np.float_t, ndim=1] knots_in,
     # wrap everything into c-type datastructures for optimized performance
     cdef unsigned int i,j
     cdef unsigned int  n     = len(knots_in)
-    cdef np.float_t[:] t     = eval_t_in
-    cdef np.float_t[:] knots = knots_in
+    cdef cnp.float_t[:] t     = eval_t_in
+    cdef cnp.float_t[:] knots = knots_in
     for j in range(len(t)):
         i = my_bisect_left(knots, t[j], n)
         if i < n and abs(knots[i]-t[j]) < tolerance:
