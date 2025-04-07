@@ -5,6 +5,7 @@
 # Institute: Norwegian University of Science and Technology (NTNU)
 # Date:      March 2016
 #
+from pathlib import Path
 from sys import argv
 from splipy import *
 import splipy.curve_factory as curves
@@ -44,4 +45,5 @@ if INTERACTIVE:
     plt.show()
 else:
     # save results as an animated gif for web display (PS: this function call is slow)
-    ani.save('circle.gif', writer='imagemagick', fps=30);
+    path = Path(__file__).parent / "circle.gif"
+    ani.save(str(path), writer='imagemagick', fps=30);

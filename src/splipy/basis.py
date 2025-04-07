@@ -4,10 +4,11 @@ from bisect import bisect_right, bisect_left
 import copy
 
 import numpy as np
+import splipy_core
 from scipy.sparse import csr_matrix
 
 from .utils import ensure_listlike
-from . import basis_eval, state
+from . import state
 
 __all__ = ['BSplineBasis']
 
@@ -123,12 +124,12 @@ class BSplineBasis:
         # for single-value input, wrap it into a list so it don't crash on the loop below
         t = ensure_listlike(t)
         t = np.array(t, dtype=float)
-        basis_eval.snap(self.knots, t, state.knot_tolerance)
+        splipy_core.snap(self.knots, t, state.knot_tolerance)
 
         if self.order <= d: # requesting more derivatives than polymoial degree: return all zeros
             return np.zeros((len(t), self.num_functions()))
 
-        (data, size) = basis_eval.evaluate(self.knots, self.order, t, self.periodic, state.knot_tolerance, d, from_right)
+        (data, size) = splipy_core.evaluate(self.knots, self.order, t, self.periodic, state.knot_tolerance, d, from_right)
 
         N = csr_matrix(data, size)
         if not sparse:
