@@ -10,6 +10,12 @@ on:
 
 jobs:
 
+  debug:
+    name: Debug
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hmarr/debug-action@v3
+
   test:
     name: Test
     runs-on: ${{ matrix.os }}
