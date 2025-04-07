@@ -37,7 +37,7 @@ jobs:
         run: |
           make test
 
-  build_wheels:
+  build_core_wheels:
     name: Build wheels
     needs: [test]
     runs-on: ${{ matrix.os }}
@@ -47,7 +47,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -56,23 +56,23 @@ jobs:
           python -m pip install --upgrade pip wheel uv cibuildwheel
       - name: Build wheels
         run: |
-          python -m cibuildwheel --output-dir wheelhouse
+          python -m cibuildwheel --output-dir dist core/
         env:
           CIBW_BUILD: cp311-* cp312-* cp313-*
           CIBW_SKIP: '*musllinux* *i686*'
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
-          path: ./wheelhouse/*.whl
+          name: core-wheels-${{ matrix.os }}
+          path: ./dist/*.whl
 
-  build_sdist:
-    name: Build sdist
+  build_rest:
+    name: Build sdist and non-compiled wheels
     needs: [test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -81,14 +81,24 @@ jobs:
           python -m pip install --upgrade pip wheel uv
       - name: Build sdist
         run: make sdist
+      - name: Build wheel
+        run: uv build --wheel --package splipy
       - uses: actions/upload-artifact@v4
         with:
-          name: sdist
-          path: ./dist/*.tar.gz
+          name: core-sdist
+          path: ./dist/splipy_core-*.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: splipy-sdist
+          path: ./dist/splipy-*.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: splipy-wheel
+          path: ./dist/*.whl
 
   deploy:
     name: Deploy
-    needs: [build_wheels, build_sdist]
+    needs: [build_core_wheels, build_rest]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -103,17 +113,33 @@ jobs:
 
   test-deploy:
     name: Test Deploy
-    needs: [build_wheels, build_sdist]
+    needs: [build_core_wheels, build_rest]
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: dist-core
+          pattern: core-*
           merge-multiple: true
-      - uses: pypa/gh-action-pypi-publish@v1.4.1
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-splipy
+          pattern: splipy-*
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@v1.12.4
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_core_test_pwd }}
+          packages-dir: dist-core/
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+      - uses: pypa/gh-action-pypi-publish@v1.12.4
         with:
           user: __token__
           password: ${{ secrets.pypi_test_pwd }}
-          repository_url: https://test.pypi.org/legacy/
-          skip_existing: true
+          packages-dir: dist-splipy/
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
