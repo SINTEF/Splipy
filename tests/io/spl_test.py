@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import os
 import unittest
+from pathlib import Path
 
 import numpy as np
 
 from splipy.io import SPL
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_DIR = str(Path(__file__).parent)
 
 
 class TestSPL(unittest.TestCase):

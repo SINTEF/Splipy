@@ -1,66 +1,68 @@
 from __future__ import annotations
 
 import datetime
-import os
 import subprocess
+from pathlib import Path
 
 import numpy as np
-from general import *
+
+from . import general
+
+# Get random generator
+rng = np.random.default_rng()
 
 
 def do_translate(f, dim, pardim):
     obj_name = ["", "crv", "surf", "vol"]
-    amount = np.random.rand(dim) * 10
+    amount = rng.random(dim) * 10
     amount = np.floor(amount * 10) / 10
-    f.write("        %s2 += np." % (obj_name[pardim]) + repr(amount) + "\n")
+    f.write(f"        {obj_name[pardim]}2 += np." + repr(amount) + "\n")
     return amount
 
 
 def expect_translate(amount):
     result = ""
     for i in range(len(amount)):
-        result += "        pt2[...,%d] -= %f\n" % (i, amount[i])
+        result += f"        pt2[...,{i}] -= {amount[i]}\n"
     return result
 
 
 def do_scale(f, dim, pardim):
     obj_name = ["", "crv", "surf", "vol"]
-    amount = np.random.rand(dim) * 10 + 2
+    amount = rng.random(dim) * 10 + 2
     amount = np.floor(amount * 10) / 10
-    f.write("        %s2 *= np." % (obj_name[pardim]) + repr(amount) + "\n")
+    f.write(f"        {obj_name[pardim]}2 *= np." + repr(amount) + "\n")
     return amount
 
 
 def expect_scale(amount):
     result = ""
     for i in range(len(amount)):
-        result += "        pt2[...,%d] /= %f\n" % (i, amount[i])
+        result += f"        pt2[...,{i}] /= {amount[i]}\n"
     return result
 
 
 def do_mirror(f, dim, pardim):
     obj_name = ["", "crv", "surf", "vol"]
-    amount = np.random.randint(0, 3)
+    amount = rng.integers(0, 3)
     axis = [0, 0, 0]
-    axis[amount] = np.random.randint(1, 4)
-    f.write("        %s2.mirror(" % (obj_name[pardim]) + repr(axis) + ")\n")
+    axis[amount] = rng.integers(1, 4)
+    f.write(f"        {obj_name[pardim]}2.mirror(" + repr(axis) + ")\n")
     return amount
 
 
 def expect_mirror(amount):
-    return "        pt2[...,%d] = -pt2[...,%d]\n" % (amount, amount)
+    return f"        pt2[...,{amount}] = -pt2[...,{amount}]\n"
 
 
 # dump large sets of control points
 np.set_printoptions(threshold=np.inf)
-# fetch random state
-state = np.random.get_state()  # might consider dumping this for reproducibility
 # open file and write headers
-f = open("affine_test.py", "w")
+f = Path("affine_test.py").open("w")
 f.write("# --- Automatic generated test file  ---\n")
-f.write("# Generator    : " + os.path.basename(__file__) + "\n")
+f.write("# Generator    : " + Path(__file__).name + "\n")
 f.write("# Date         : " + str(datetime.date.today()) + "\n")
-f.write("# Git revision : " + subprocess.check_output(["git", "rev-parse", "HEAD"]))
+f.write("# Git revision : " + subprocess.check_output(["git", "rev-parse", "HEAD"]).decode())
 f.write("""
 import numpy as np
 from splipy import Volume, Surface, Curve, BSplineBasis
@@ -71,7 +73,7 @@ import unittest
 class TestAffine(unittest.TestCase):
 """)
 
-evaluate = [None, evaluate_curve, evaluate_surface, evaluate_volume]
+evaluate = [None, general.evaluate_curve, general.evaluate_surface, general.evaluate_volume]
 do = [do_translate, do_scale, do_mirror]
 expect = [expect_translate, expect_scale, expect_mirror]
 name = ["translate", "scale", "mirror"]
@@ -81,7 +83,7 @@ for baseP in [2, 5]:
             for periodic in [-1, 0, 1]:
                 for pardim in range(1, 4):
                     for j in range(len(do)):
-                        p = np.array([baseP] * pardim) + np.random.randint(0, 3, pardim)
+                        p = np.array([baseP] * pardim) + rng.integers(0, 3, pardim)
                         if periodic >= p[0] - 1:
                             continue
                         if dim < 3 and pardim > 2:
@@ -89,27 +91,21 @@ for baseP in [2, 5]:
                         if dim < 3 and name[j] == "mirror":
                             continue
                         n = p + 3
-                        n += np.random.randint(-2, 3, pardim)
-                        cp = gen_controlpoints(n, dim, rational, periodic)
-                        knot = [gen_knot(n[i], p[i], (i == 0) * (periodic + 1) - 1) for i in range(pardim)]
+                        n += rng.integers(-2, 3, pardim)
+                        cp = general.gen_controlpoints(n, dim, rational, periodic)
+                        knot = [
+                            general.gen_knot(n[i], p[i], (i == 0) * (periodic + 1) - 1) for i in range(pardim)
+                        ]
                         f.write(
-                            "    def test_%s_" % name[j]
-                            + get_name(n, p, dim, rational, periodic)
+                            f"    def test_{name[j]}_"
+                            + general.get_name(n, p, dim, rational, periodic)
                             + "(self):\n"
                         )
-                        if cp.shape[0] > 30:
-                            cp_str = repr(cp).replace("\n", "")
-                        else:
-                            cp_str = repr(cp)
+                        cp_str = repr(cp).replace("\n", "") if cp.shape[0] > 30 else repr(cp)
                         f.write("        controlpoints = np." + cp_str + "\n")
-                        write_basis(f, p, knot, periodic)
-                        write_object_creation(f, rational, pardim)
-                        if name[j] != "scale":
-                            new_dim = min(
-                                dim + np.random.randint(0, 2), 3
-                            )  # shake it up by sometime requesting 3D-manipulation on 2D geometries
-                        else:
-                            new_dim = dim
+                        general.write_basis(f, p, knot, periodic)
+                        general.write_object_creation(f, rational, pardim)
+                        new_dim = dim if name[j] == "scale" else min(3, dim + rng.integers(0, 2))
                         params = do[j](f, new_dim, pardim)
                         f.write(evaluate[pardim]())
                         f.write(expect[j](params))

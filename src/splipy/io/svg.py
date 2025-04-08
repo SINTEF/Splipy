@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import re
-import xml.etree.ElementTree as etree
+import xml.etree.ElementTree as ET
+from pathlib import Path
 from xml.dom import minidom
 
 import numpy as np
 
-from .. import curve_factory, state
-from ..basis import BSplineBasis
-from ..curve import Curve
-from ..splineobject import SplineObject
-from ..surface import Surface
+from splipy import curve_factory, state
+from splipy.basis import BSplineBasis
+from splipy.curve import Curve
+from splipy.splineobject import SplineObject
+from splipy.surface import Surface
+
 from .master import MasterIO
 
 
@@ -35,7 +37,8 @@ def bezier_representation(curve):
     :returns      : Bezier curve
     :rtype        : Curve
     """
-    # error test input. Another way would be to approximate higher-order curves. Consider looking at Curve.rebuild()
+    # error test input. Another way would be to approximate higher-order curves.
+    # Consider looking at Curve.rebuild()
     if curve.order(0) > 4 or curve.rational:
         raise RuntimeError("Bezier representation, only supported for non-rational curves of order 4 or less")
 
@@ -95,7 +98,8 @@ class SVG(MasterIO):
             boundingbox[2] = max(boundingbox[2], bb[0][1])
             boundingbox[3] = max(boundingbox[3], bb[1][1])
 
-        # compute scaling factors by keeping aspect ratio, and never exceed width or height size (including margins)
+        # compute scaling factors by keeping aspect ratio, and never exceed
+        # width or height size (including margins)
         geometryRatio = float(boundingbox[3] - boundingbox[1]) / (boundingbox[2] - boundingbox[0])
         imageRatio = 1.0 * self.height / self.width
         if geometryRatio > imageRatio:  # scale by y-coordinate
@@ -110,7 +114,7 @@ class SVG(MasterIO):
         self.offset = [marginPixels, marginPixels]
 
         # create xml root tag
-        self.xmlRoot = etree.Element(
+        self.xmlRoot = ET.Element(
             "svg",
             {
                 "xmlns": "http://www.w3.org/2000/svg",
@@ -129,11 +133,13 @@ class SVG(MasterIO):
 
         # if no objects are stored, then we've most likely only called read()
         if len(self.all_objects) > 0:
-            rough_string = etree.tostring(self.xmlRoot)  # entire xml-file on one line
+            rough_string = ET.tostring(self.xmlRoot)  # entire xml-file on one line
             reparsed = minidom.parseString(rough_string)
             result = reparsed.toprettyxml(indent="  ")  # adds newline and inline
-            f = open(self.filename, "w")
+            f = Path(self.filename).open("w")
             f.write(result)
+            return None
+        return None
 
     def write_curve(self, xmlNode, curve, fill="none", stroke="#000000", width=2):
         """Writes a Curve to the xml tree. This will draw a single curve
@@ -151,19 +157,18 @@ class SVG(MasterIO):
         :returns: None
         :rtype  : NoneType
         """
-        curveNode = etree.SubElement(xmlNode, "path")
+        curveNode = ET.SubElement(xmlNode, "path")
         curveNode.attrib["style"] = (
-            "fill:%s;stroke:%s;stroke-width:%dpx;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-            % (fill, stroke, width)
+            f"fill:{fill};stroke:{stroke};stroke-width:{width}px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
         )
         bezier = bezier_representation(curve)
         bezier -= self.center
         bezier *= self.scale
         bezier += self.offset
-        pathString = "M %f,%f C " % (bezier[0][0], self.height + 2 * self.margin - bezier[0][1])
+        pathString = f"M {bezier[0][0]:f},{self.height + 2 * self.margin - bezier[0][1]:f} C "
 
         for i in range(1, len(bezier)):
-            pathString += "%f,%f " % (bezier[i][0], self.height + 2 * self.margin - bezier[i][1])
+            pathString += f"{bezier[i][0]:f},{self.height + 2 * self.margin - bezier[i][1]:f} "
 
         curveNode.attrib["d"] = pathString
 
@@ -195,7 +200,7 @@ class SVG(MasterIO):
             knotlines.append(surface.const_par_curve(k, 1))
 
         # create a group node for all elements corresponding to this surface patch
-        groupNode = etree.SubElement(self.xmlRoot, "g")
+        groupNode = ET.SubElement(self.xmlRoot, "g")
 
         # fill interior with a peach color
         self.write_curve(groupNode, boundary, fill, width=2)
@@ -229,9 +234,9 @@ class SVG(MasterIO):
         self.all_objects.append(obj.clone())
 
     def read(self):
-        tree = etree.parse(self.filename)
+        tree = ET.parse(self.filename)
         root = tree.getroot()
-        parent_map = dict((c, p) for p in tree.iter() for c in p)
+        parent_map = {c: p for p in tree.iter() for c in p}
         if "width" in root.attrib:
             self.width, _ = read_number_and_unit(root.attrib["width"])
             self.height, _ = read_number_and_unit(root.attrib["height"])
@@ -288,12 +293,10 @@ class SVG(MasterIO):
         # and also https://www.w3.org/TR/SVG/paths.html
 
         # figure out the largest polynomial order of this path
-        if re.search("[cCsS]", path):
-            order = 4
-        elif re.search("[qQtTaA]", path):
-            order = 3
+        if re.search("[cCsS]", path) or re.search("[qQtTaA]", path):
+            pass
         else:
-            order = 2
+            pass
         last_curve = None
         result = []
 

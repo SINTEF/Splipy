@@ -184,10 +184,7 @@ class BSplineBasis:
                 continue
 
             # mu = index of last non-zero basis function
-            if right:
-                mu = bisect_right(self.knots, evalT)
-            else:
-                mu = bisect_left(self.knots, evalT)
+            mu = bisect_right(self.knots, evalT) if right else bisect_left(self.knots, evalT)
             mu = min(mu, n_all)
 
             M = np.zeros(p)  # temp storage to keep all the function evaluations
@@ -381,8 +378,8 @@ class BSplineBasis:
 
         if self.periodic > -1:
             # remove excessive ghost knots which appear at both ends of the knot vector
-            n0 = bisect_left(knot_spans, self.start())
-            n1 = len(knot_spans) - bisect_left(knot_spans, self.end()) - 1
+            n0 = bisect_left(knots, self.start())
+            n1 = len(knots) - bisect_left(knots, self.end()) - 1
             knots = knots[n0 * amount : -n1 * amount]
 
         return BSplineBasis(p, knots, self.periodic)

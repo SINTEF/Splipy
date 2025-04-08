@@ -1,5 +1,5 @@
-
 """Handy utilities for creating curves."""
+
 from __future__ import annotations
 
 import copy
@@ -188,7 +188,7 @@ def circle(r=1, center=(0, 0, 0), normal=(0, 0, 1), type="p2C0", xaxis=(1, 0, 0)
         knot = np.array([-1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5]) / 4.0 * 2 * pi
         result = Curve(BSplineBasis(5, knot, 1), controlpoints, True)
     else:
-        raise ValueError("Unkown type: %s" % (type))
+        raise ValueError(f"Unkown type: {type}")
 
     result *= r
     result.rotate(rotate_local_x_axis(xaxis, normal))
@@ -400,7 +400,7 @@ def cubic_curve(x, boundary=Boundary.FREE, t=None, tangents=None):
             # augment interpolation knot by euclidian distance to end
             t = list(t) + [t[-1] + norm(np.array(x[0, :]) - np.array(x[-2, :]))]
 
-    n = len(x)
+    len(x)
     if t is None:
         t = [0.0]
         for x0, x1 in zip(x[:-1, :], x[1:, :]):
@@ -480,10 +480,7 @@ def bezier(pts, quadratic=False, relative=False):
     :rtype: Curve
 
     """
-    if quadratic:
-        p = 3
-    else:
-        p = 4
+    p = 3 if quadratic else 4
     # compute number of intervals
     n = int((len(pts) - 1) / (p - 1))
     # generate uniform knot vector of repeated integers
@@ -669,7 +666,6 @@ def fit(x, t0, t1, rtol=1e-4, atol=0.0):
     while np.sqrt(np.sum(err2)) / length > rtol and maxerr > atol:
         knot_span = crv.knots(0)  # knot vector without multiplicities
         target_error = (rtol * length) ** 2 / len(err2)  # equidistribute error among all knot spans
-        refinements = []
         for i in range(len(err2)):
             # figure out how many new knots we require in this knot interval:
             # if we converge with *scale* and want an error of *target_error*
@@ -714,8 +710,5 @@ def fit_points(x, t=[], rtol=1e-4, atol=0.0):
     :return: Curve Non-uniform cubic B-spline curve
     """
 
-    if len(t) > 0:
-        linear = polygon(x, t=t)
-    else:
-        linear = polygon(x)
+    linear = polygon(x, t=t) if len(t) > 0 else polygon(x)
     return fit(linear, linear.start(0), linear.end(0), rtol=rtol, atol=atol)

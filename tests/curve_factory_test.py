@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import unittest
 from math import cos, pi, sin, sqrt
 
@@ -8,12 +9,7 @@ from numpy.linalg import norm
 
 import splipy.curve_factory as cf
 
-try:
-    import nutils
-
-    has_nutils = True
-except ImportError:
-    has_nutils = False
+has_nutils = bool(importlib.util.find_spec("nutils"))
 
 
 class TestCurveFactory(unittest.TestCase):

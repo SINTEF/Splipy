@@ -80,6 +80,7 @@ def section_from_index(src_dim, tgt_dim, i):
     for j, s in enumerate(sections(src_dim, tgt_dim)):
         if i == j:
             return s
+    return None
 
 
 def section_to_index(section):
@@ -89,6 +90,7 @@ def section_to_index(section):
     for i, t in enumerate(sections(src_dim, tgt_dim)):
         if tuple(section) == tuple(t):
             return i
+    return None
 
 
 def check_section(*args, **kwargs):
@@ -215,16 +217,21 @@ def uniquify(iterator):
 
 
 def raise_order_1D(n, k, T, P, m, periodic):
-    """Implementation of method in "Efficient Degree Elevation and Knot Insertion
-        for B-spline Curves using Derivatives" by Qi-Xing Huang a Shi-Min Hu, Ralph R Martin. Only the case of open knot vector is fully implemented
+    """Implementation of method in "Efficient Degree Elevation and Knot
+    Insertion for B-spline Curves using Derivatives" by Qi-Xing Huang a Shi-Min
+    Hu, Ralph R Martin. Only the case of open knot vector is fully implemented.
+
     :param int n: (n+1) is the number of initial basis functions
     :param int k: spline order
     :param T: knot vector
     :param P: weighted NURBS coefficients
     :param int m: number of degree elevations
-    :param int periodic: Number of continuous derivatives at start and end. -1 is not periodic, 0 is continuous, etc.
+    :param int periodic: Number of continuous derivatives at start and end. -1
+        is not periodic, 0 is continuous, etc.
     :return Q: new control points
     """
+
+    from splipy.basis import BSplineBasis
 
     u = np.unique(T[k - 1 : -k + 1])
     S = u.size - 1

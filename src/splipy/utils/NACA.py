@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from .. import surface_factory
-from ..basis import BSplineBasis
-from ..curve import Curve
+from splipy import surface_factory
+from splipy.basis import BSplineBasis
+from splipy.curve import Curve
 
 __all__ = ["camber", "NACA"]
 

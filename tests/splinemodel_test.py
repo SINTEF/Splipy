@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import unittest
+from pathlib import Path
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from splipy import Surface, Volume, curve_factory, surface_factory, volume_facto
 from splipy.io import G2
 from splipy.splinemodel import IFEMConnection, IFEMWriter, Orientation, SplineModel
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_DIR = Path(__file__).parent
 
 
 class TestOrientation(unittest.TestCase):
@@ -188,13 +188,13 @@ class TestModel(unittest.TestCase):
         self.assertTrue(((faces["owner"] < faces["neighbor"]) | (faces["neighbor"] == -1)).all())
 
         # Where the boundary is named, the neighbor is always -1
-        self.assertTrue((faces[faces["name"] != None]["neighbor"] == -1).all())
+        self.assertTrue((faces[faces["name"] != None]["neighbor"] == -1).all())  # noqa: E711
 
         # On internal faces, the neighbor is always > 0
-        self.assertTrue((faces[faces["name"] == None]["neighbor"] > 0).all())
+        self.assertTrue((faces[faces["name"] == None]["neighbor"] > 0).all())  # noqa: E711
 
         # Boundaries occur the expected number of times
-        self.assertEqual(np.sum(faces["name"] == None), 44)
+        self.assertEqual(np.sum(faces["name"] == None), 44)  # noqa: E711
         self.assertEqual(np.sum(faces["name"] == "uneg"), 8)
         self.assertEqual(np.sum(faces["name"] == "upos"), 8)
         self.assertEqual(np.sum(faces["name"] == "vneg"), 12)
@@ -467,7 +467,7 @@ class TestModel(unittest.TestCase):
 
         for i, ref_topo in enumerate(connections):
             model = SplineModel(3, 3)
-            with G2(THIS_DIR + f"/geometries/cube-8-orient{i}.g2") as myfile:
+            with G2(str(THIS_DIR / "geometries" / f"cube-8-orient{i}.g2")) as myfile:
                 model.add(myfile.read())
 
             writer = IFEMWriter(model)

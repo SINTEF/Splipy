@@ -1,4 +1,5 @@
 """This module handles the global Splipy state."""
+
 from __future__ import annotations
 
 import sys

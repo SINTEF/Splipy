@@ -43,7 +43,7 @@ class ThreeDM(MasterIO):
             self.fstream = File3dm.Read(self.filename)
 
         if self.onlywrite:
-            raise OSError("Could not read from file %s" % (self.filename))
+            raise OSError(f"Could not read from file {self.filename}")
 
         result = []
 

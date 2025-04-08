@@ -1,10 +1,10 @@
-
 """Handy utilities for creating surfaces."""
+
 from __future__ import annotations
 
 import inspect
 from math import atan2, pi, sqrt
-from os.path import dirname, join, realpath
+from pathlib import Path
 
 import numpy as np
 
@@ -211,7 +211,8 @@ def edge_curves(*curves, **kwargs):
     closed loop around the resulting surface.
 
     :param [Curve] curves: Two or four edge curves
-    :param string type: The method used for interior computation ('coons', 'poisson', 'elasticity' or 'finitestrain')
+    :param string type: The method used for interior computation
+        ('coons', 'poisson', 'elasticity' or 'finitestrain')
     :return: The enclosed surface
     :rtype: Surface
     :raises ValueError: If the length of *curves* is not two or four
@@ -236,8 +237,8 @@ def edge_curves(*curves, **kwargs):
         rtol = state.controlpoint_relative_tolerance
         atol = state.controlpoint_absolute_tolerance
         mycurves = [c.clone() for c in curves]  # wrap into list and clone all since we're changing them
-        dim = np.max([c.dimension for c in mycurves])
-        rat = np.any([c.rational for c in mycurves])
+        np.max([c.dimension for c in mycurves])
+        np.any([c.rational for c in mycurves])
         for i in range(4):
             for j in range(i + 1, 4):
                 Curve.make_splines_compatible(mycurves[i], mycurves[j])
@@ -322,9 +323,7 @@ def poisson_patch(bottom, right, top, left):
     from nutils import version
 
     if int(version[0]) != 4:
-        raise ImportError(
-            'Mismatching nutils version detected, only version 4 supported. Upgrade by "pip install --upgrade nutils"'
-        )
+        raise ImportError("Mismatching nutils version detected, only version 4 supported.")
 
     from nutils import function as fn
     from nutils import mesh
@@ -386,9 +385,7 @@ def elasticity_patch(bottom, right, top, left):
     from nutils import version
 
     if int(version[0]) != 4:
-        raise ImportError(
-            'Mismatching nutils version detected, only version 4 supported. Upgrade by "pip install --upgrade nutils"'
-        )
+        raise ImportError("Mismatching nutils version detected, only version 4 supported.")
 
     from nutils import function, mesh
 
@@ -458,9 +455,7 @@ def finitestrain_patch(bottom, right, top, left):
     from nutils import version
 
     if int(version[0]) != 4:
-        raise ImportError(
-            'Mismatching nutils version detected, only version 4 supported. Upgrade by "pip install --upgrade nutils"'
-        )
+        raise ImportError("Mismatching nutils version detected, only version 4 supported.")
 
     from nutils import function, mesh, solver
 
@@ -513,7 +508,7 @@ def finitestrain_patch(bottom, right, top, left):
         constraints[d, -1, :] = right[:, d] - srf[-1, :, d]
         constraints[d, :, 0] = bottom[:, d] - srf[:, 0, d]
         constraints[d, :, -1] = top[:, d] - srf[:, -1, d]
-    # TODO: Take a close look at the logic below
+    # TODO(Kjetil): Take a close look at the logic below
 
     # in order to iterate, we let t0=0 be current configuration and t1=1 our target configuration
     # if solver divergeces (too large deformation), we will try with dt=0.5. If this still
@@ -595,7 +590,7 @@ def thicken(curve, amount):
         n = len(curve)
         left_points = np.zeros((n, 2))
         right_points = np.zeros((n, 2))
-        linear = BSplineBasis(2)
+        BSplineBasis(2)
 
         x = curve.evaluate(t)  # curve at interpolation points
         v = curve.derivative(t)  # velocity at interpolation points
@@ -838,8 +833,8 @@ def teapot():
     :return: The utah teapot
     :rtype: List of Surface
     """
-    path = join(dirname(realpath(__file__)), "templates", "teapot.bpt")
-    with open(path) as f:
+    path = Path(__file__).parent / "templates" / "teapot.bpt"
+    with path.open() as f:
         results = []
         numb_patches = int(f.readline())
         for i in range(numb_patches):

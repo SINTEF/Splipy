@@ -1,4 +1,5 @@
 """Bisection algorithms."""
+
 from __future__ import annotations
 
 
@@ -10,10 +11,7 @@ def insort_right(a, x, lo=0, hi=None, *, key=None):
     Optional args lo (default 0) and hi (default len(a)) bound the
     slice of a to be searched.
     """
-    if key is None:
-        lo = bisect_right(a, x, lo, hi)
-    else:
-        lo = bisect_right(a, key(x), lo, hi, key=key)
+    lo = bisect_right(a, x, lo, hi) if key is None else bisect_right(a, key(x), lo, hi, key=key)
     a.insert(lo, x)
 
 
@@ -60,10 +58,7 @@ def insort_left(a, x, lo=0, hi=None, *, key=None):
     slice of a to be searched.
     """
 
-    if key is None:
-        lo = bisect_left(a, x, lo, hi)
-    else:
-        lo = bisect_left(a, key(x), lo, hi, key=key)
+    lo = bisect_left(a, x, lo, hi) if key is None else bisect_left(a, key(x), lo, hi, key=key)
     a.insert(lo, x)
 
 

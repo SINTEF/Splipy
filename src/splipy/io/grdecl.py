@@ -3,18 +3,19 @@ from __future__ import annotations
 import re
 import warnings
 from itertools import chain, product
+from pathlib import Path
 
 import cv2
 import h5py
 import numpy as np
-from scipy.spatial import Delaunay
-from scipy.spatial.qhull import QhullError
+from scipy.spatial import Delaunay, QhullError
 from tqdm import tqdm
 
-from .. import curve_factory, surface_factory, volume_factory
-from ..basis import BSplineBasis
-from ..utils import ensure_listlike
-from ..volume import Volume
+from splipy import curve_factory, surface_factory, volume_factory
+from splipy.basis import BSplineBasis
+from splipy.utils import ensure_listlike
+from splipy.volume import Volume
+
 from .g2 import G2
 from .master import MasterIO
 
@@ -158,7 +159,7 @@ class GRDECL(MasterIO):
         self.attribute = {}
 
     def __enter__(self):
-        self.fstream = open(self.filename)
+        self.fstream = Path(self.filename).open()
         self.line_number = 0
         return self
 
@@ -238,8 +239,7 @@ class GRDECL(MasterIO):
         b1 = BSplineBasis(2, [0] + [i / nx for i in range(nx + 1)] + [1])
         b2 = BSplineBasis(2, [0] + [i / ny for i in range(ny + 1)] + [1])
         b3 = BSplineBasis(2, [0] + [i / nz for i in range(nz + 1)] + [1])
-        c0_vol = volume_factory.interpolate(X, [b1, b2, b3])
-        return c0_vol
+        return volume_factory.interpolate(X, [b1, b2, b3])
 
     def get_cm1_mesh(self):
         # Create the C^{-1} mesh
@@ -248,8 +248,7 @@ class GRDECL(MasterIO):
         b1 = BSplineBasis(2, sorted(list(range(self.n[0] + 1)) * 2))
         b2 = BSplineBasis(2, sorted(list(range(self.n[1] + 1)) * 2))
         b3 = BSplineBasis(2, sorted(list(range(self.n[2] + 1)) * 2))
-        discont_vol = Volume(b1, b2, b3, Xm1)
-        return discont_vol
+        return Volume(b1, b2, b3, Xm1)
 
     def get_mixed_cont_mesh(self):
         # Create mixed discontinuity mesh: C^0, C^0, C^{-1}
@@ -258,8 +257,7 @@ class GRDECL(MasterIO):
         b1 = BSplineBasis(2, sorted(list(range(self.n[0] + 1)) + [0, self.n[0]]))
         b2 = BSplineBasis(2, sorted(list(range(self.n[1] + 1)) + [0, self.n[1]]))
         b3 = BSplineBasis(2, sorted(list(range(self.n[2] + 1)) * 2))
-        true_vol = Volume(b1, b2, b3, Xz, raw=True)
-        return true_vol
+        return Volume(b1, b2, b3, Xz, raw=True)
 
     def texture(self, p, ngeom, ntexture, method="full", irange=[None, None], jrange=[None, None]):
         # Set the dimensions of geometry and texture map
@@ -283,13 +281,13 @@ class GRDECL(MasterIO):
         i = slice(irange[0], irange[1], None)
         j = slice(jrange[0], jrange[1], None)
         # special case number of evaluation points for full domain
-        if irange[1] == None:
+        if irange[1] is None:
             irange[1] = vol.shape[0]
-        if jrange[1] == None:
+        if jrange[1] is None:
             jrange[1] = vol.shape[1]
-        if irange[0] == None:
+        if irange[0] is None:
             irange[0] = 0
-        if jrange[0] == None:
+        if jrange[0] is None:
             jrange[0] = 0
 
         nu = np.diff(irange)
@@ -336,15 +334,14 @@ class GRDECL(MasterIO):
         volume.reverse(direction=2)
 
         # Point-to-cell mapping
-        # TODO: Optimize more
+        # TODO(?): Optimize more
         eps = 1e-2
         u = [np.linspace(eps, 1 - eps, n) for n in ntexture]
         points = volume(*u).reshape(-1, 3)
         cellids = np.zeros(points.shape[:-1], dtype=int)
-        cell = None
         nx, ny, nz = self.n
         for ptid, point in enumerate(tqdm(points, desc="Inverse mapping")):
-            i, j, k = cell = self.raw.cell_at(point)  # , guess=cell)
+            i, j, k = self.raw.cell_at(point)  # , guess=cell)
             cellid = i * ny * nz + j * nz + k
             cellids[ptid] = cellid
 
@@ -354,11 +351,11 @@ class GRDECL(MasterIO):
         for name in self.attribute:
             data = self.attribute[name][cellids]
 
-            # TODO: This flattens the image if it happens to be 3D (or higher...)
+            # TODO(?): This flattens the image if it happens to be 3D (or higher...)
             # do we need a way to communicate the structure back to the caller?
             # data = data.reshape(-1, data.shape[-1])
 
-            # TODO: This normalizes the image,
+            # TODO(?): This normalizes the image,
             # but we need a way to communicate the ranges back to the caller
             # a, b = min(data.flat), max(data.flat)
             # data = ((data - a) / (b - a) * 255).astype(np.uint8)
@@ -398,7 +395,8 @@ class GRDECL(MasterIO):
             n = data.shape
             img = img.reshape(n[0], n[1] * n[2])
             print(
-                f'  <property file="{name}.png" min="{a}" max="{b}" name="{name}" nx="{n[0]}" ny="{n[1]}" nz="{n[2]}"/>'
+                f'  <property file="{name}.png" min="{a}" max="{b}"'
+                f'name="{name}" nx="{n[0]}" ny="{n[1]}" nz="{n[2]}"/>'
             )
             cv2.imwrite(name + ".png", img)
         print(r"</porotexturematerial>")

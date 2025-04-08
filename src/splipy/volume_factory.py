@@ -1,5 +1,5 @@
-
 """Handy utilities for creating volumes."""
+
 from __future__ import annotations
 
 from math import atan2, pi, sqrt
@@ -236,13 +236,12 @@ def edge_surfaces(*surfaces):
 
         # Volume constructor orders control points in a different way, so we
         # create it from scratch here
-        result = Volume(
+        return Volume(
             surf1.bases[0], surf1.bases[1], BSplineBasis(2), controlpoints, rational=surf1.rational, raw=True
         )
 
-        return result
     if len(surfaces) == 6:
-        if any([surf.rational for surf in surfaces]):
+        if any(surf.rational for surf in surfaces):
             raise RuntimeError("edge_surfaces not supported for rational splines")
 
         # coons patch (https://en.wikipedia.org/wiki/Coons_patch)

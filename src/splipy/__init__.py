@@ -8,4 +8,6 @@ from .surface import Surface
 from .trimmedsurface import TrimmedSurface
 from .volume import Volume
 
+__all__ = ["BSplineBasis", "Curve", "Surface", "Volume", "SplineObject", "SplineModel", "TrimmedSurface"]
+
 __version__ = "1.10.1"

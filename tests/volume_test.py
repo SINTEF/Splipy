@@ -33,17 +33,17 @@ class TestVolume(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            val = vol(-10, 0.5, 0.5)  # evalaute outside parametric domain
+            vol(-10, 0.5, 0.5)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = vol(+10, 0.3, 0.3)  # evalaute outside parametric domain
+            vol(+10, 0.3, 0.3)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = vol(0.5, -10, 0.123)  # evalaute outside parametric domain
+            vol(0.5, -10, 0.123)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = vol(0.5, +10, 0.123)  # evalaute outside parametric domain
+            vol(0.5, +10, 0.123)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = vol(0.5, 0.2, +10)  # evalaute outside parametric domain
+            vol(0.5, 0.2, +10)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = vol(0.5, 0.2, -10)  # evalaute outside parametric domain
+            vol(0.5, 0.2, -10)  # evalaute outside parametric domain
 
     def test_evaluate_nontensor(self):
         vol = Volume(BSplineBasis(7), BSplineBasis(7), BSplineBasis(5))

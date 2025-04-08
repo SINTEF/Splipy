@@ -1,27 +1,31 @@
 from __future__ import annotations
 
 import datetime
-import os
 import subprocess
+from pathlib import Path
 
 import numpy as np
-from general import *
+
+from . import general
+
+# Get random generator
+rng = np.random.default_rng()
 
 
 def rebuild(p, knot):
     obj_name = ["", "crv", "surf", "vol"]
     pardim = len(knot)
-    p += np.random.randint(-1, 2, pardim)
+    p += rng.integers(-1, 2, pardim)
     p = [max(q, 2) for q in p]
     n = [len(k) for k in knot]
     if pardim == 1:
-        n += np.random.randint(300, 350, pardim)
+        n += rng.integers(300, 350, pardim)
     elif pardim == 2:
-        n += np.random.randint(110, 140, pardim)
+        n += rng.integers(110, 140, pardim)
     elif pardim == 3:
-        n += np.random.randint(70, 90, pardim)
-    result = "        %s2 = %s.rebuild(" % (obj_name[pardim], obj_name[pardim])
-    if len(p) == 1 or np.random.random() > 0.75:
+        n += rng.integers(70, 90, pardim)
+    result = f"        {obj_name[pardim]}2 = {obj_name[pardim]}.rebuild("
+    if len(p) == 1 or rng.random() > 0.75:
         result += str(p[0]) + ", " + str(n[0]) + ")"
     else:
         result += repr(list(p)) + ", " + repr(list(n)) + ")"
@@ -31,14 +35,12 @@ def rebuild(p, knot):
 # dump large sets of control points
 np.set_printoptions(threshold=np.inf, linewidth=100)
 np.set_printoptions(threshold=np.inf)
-# fetch random state
-state = np.random.get_state()  # might consider dumping this for reproducibility
 # open file and write headers
-f = open("rebuild_test.py", "w")
+f = Path("rebuild_test.py").open("w")
 f.write("# --- Automatic generated test file  ---\n")
-f.write("# Generator    : " + os.path.basename(__file__) + "\n")
+f.write("# Generator    : " + Path(__file__).name + "\n")
 f.write("# Date         : " + str(datetime.date.today()) + "\n")
-f.write("# Git revision : " + subprocess.check_output(["git", "rev-parse", "HEAD"]))
+f.write("# Git revision : " + subprocess.check_output(["git", "rev-parse", "HEAD"]).decode())
 f.write("""
 import numpy as np
 from splipy import Volume, Surface, Curve, BSplineBasis
@@ -49,30 +51,29 @@ import unittest
 class TestRebuild(unittest.TestCase):
 """)
 
-evaluate = [None, evaluate_curve, evaluate_surface, evaluate_volume]
+evaluate = [None, general.evaluate_curve, general.evaluate_surface, general.evaluate_volume]
 for baseP in [2, 4, 5]:
     for dim in [2, 3]:
         for rational in [True, False]:
             for periodic in [-1, 1]:
                 for pardim in range(1, 4):
-                    p = np.array([baseP] * pardim) + np.random.randint(0, 3, pardim)
+                    p = np.array([baseP] * pardim) + rng.integers(0, 3, pardim)
                     if periodic >= p[0] - 1:
                         continue
                     if dim < 3 and pardim > 2:
                         continue
                     n = p + 3
-                    n += np.random.randint(-2, 3, pardim)
+                    n += rng.integers(-2, 3, pardim)
                     n[0] = np.maximum(2 * (p[0] + periodic), n[0])
-                    cp = gen_controlpoints(n, dim, rational, periodic)
-                    knot = [gen_knot(n[i], p[i], (i == 0) * (periodic + 1) - 1) for i in range(pardim)]
-                    f.write("    def test_" + get_name(n, p, dim, rational, periodic) + "(self):\n")
-                    if cp.shape[0] > 30:
-                        cp_str = repr(cp).replace("\n", "")
-                    else:
-                        cp_str = repr(cp)
+                    cp = general.gen_controlpoints(n, dim, rational, periodic)
+                    knot = [
+                        general.gen_knot(n[i], p[i], (i == 0) * (periodic + 1) - 1) for i in range(pardim)
+                    ]
+                    f.write("    def test_" + general.get_name(n, p, dim, rational, periodic) + "(self):\n")
+                    cp_str = repr(cp).replace("\n", "") if cp.shape[0] > 30 else repr(cp)
                     f.write("        controlpoints = np." + cp_str + "\n")
-                    write_basis(f, p, knot, periodic)
-                    write_object_creation(f, rational, pardim, False)
+                    general.write_basis(f, p, knot, periodic)
+                    general.write_object_creation(f, rational, pardim, False)
                     f.write(rebuild(p, knot))
                     f.write(evaluate[pardim]())
                     precision = 4 - pardim
@@ -82,8 +83,7 @@ for baseP in [2, 4, 5]:
                         precision -= 1
                     precision = max(1, precision)
                     f.write(
-                        "        self.assertAlmostEqual(np.max(np.abs(pt-pt2)), 0.0, places=%d)\n\n"
-                        % (precision)
+                        f"        self.assertAlmostEqual(np.max(np.abs(pt-pt2)), 0.0, places={precision})\n\n"
                     )
 
 f.write("""

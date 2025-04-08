@@ -9,9 +9,9 @@ import numpy as np
 from . import check_direction, ensure_listlike
 
 
-# TODO: put control over these tolerances somewhere. Modstate in splipy seems
-#       to be the place for it, but we can't let splipy.utils influence the
-#       structure of splipy.
+# TODO(Eivind): put control over these tolerances somewhere. Modstate in splipy
+# seems to be the place for it, but we can't let splipy.utils influence the
+# structure of splipy.
 def knot_exists(existing_knots, new_knot):
     return np.any(np.isclose(existing_knots, new_knot, atol=1e-7, rtol=1e-10))
 

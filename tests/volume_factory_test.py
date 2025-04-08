@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import unittest
 from math import pi, sqrt
 
@@ -10,12 +11,7 @@ import splipy.surface_factory as sf
 import splipy.volume_factory as vf
 from splipy import BSplineBasis, Curve, Surface, Volume
 
-try:
-    import nutils
-
-    has_nutils = True
-except ImportError:
-    has_nutils = False
+has_nutils = bool(importlib.util.find_spec("nutils"))
 
 
 class TestVolumeFactory(unittest.TestCase):

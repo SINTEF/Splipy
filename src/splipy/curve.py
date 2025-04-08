@@ -31,7 +31,7 @@ class Curve(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Curve, self).__init__([basis], controlpoints, rational, **kwargs)
+        super().__init__([basis], controlpoints, rational, **kwargs)
 
     def evaluate(self, *params):
         """Evaluate the object at given parametric values.
@@ -91,7 +91,7 @@ class Curve(SplineObject):
         if not is_singleton(d):
             d = d[0]
         if not self.rational or d < 2 or d > 3:
-            return super(Curve, self).derivative(t, d=d, above=above, tensor=tensor)
+            return super().derivative(t, d=d, above=above, tensor=tensor)
 
         t = ensure_listlike(t)
         result = np.zeros((len(t), self.dimension))
@@ -113,7 +113,7 @@ class Curve(SplineObject):
         if d == 3:
             d3 = np.array(self.bases[0].evaluate(t, 3, above) @ self.controlpoints)
             W3 = d3[:, -1]  # W'''(t)
-            W6 = W * W * W * W * W * W  # W^6
+            W * W * W * W * W * W  # W^6
             for i in range(self.dimension):
                 H = d1[:, i] * W - d0[:, i] * W1
                 H1 = d2[:, i] * W - d0[:, i] * W2
@@ -154,10 +154,7 @@ class Curve(SplineObject):
         # such as linear curves we guess an appropriate binbormal (multiple choice available)
         if len(dx.shape) == 1:
             if np.allclose(ddx, 0):
-                if np.allclose(dx[:2], 0):  # dx = [0,0,1]
-                    ddx = np.array([1, 0, 0])
-                else:
-                    ddx = np.array([0, 0, 1])
+                ddx = np.array([1, 0, 0]) if np.allclose(dx[:2], 0) else np.array([0, 0, 1])
         else:
             for i in range(ddx.shape[0]):
                 if np.allclose(ddx[i, :], 0):
@@ -218,22 +215,13 @@ class Curve(SplineObject):
         v = self.derivative(t, d=1, above=above)
         a = self.derivative(t, d=2, above=above)
 
-        if self.dimension == 2:
-            w = v[..., 0] * a[..., 1] - v[..., 1] * a[..., 0]
-        else:
-            w = np.cross(v, a)
+        w = v[..., 0] * a[..., 1] - v[..., 1] * a[..., 0] if self.dimension == 2 else np.cross(v, a)
 
         if len(v.shape) == 1:  # single evaluation point
             magnitude = np.linalg.norm(w)
             speed = np.linalg.norm(v)
         else:  # multiple evaluation points
-            if self.dimension == 2:
-                # for 2D-cases np.cross() outputs scalars
-                # (the z-component of the cross product)
-                magnitude = np.abs(w)
-            else:
-                # for 3D, it is vectors
-                magnitude = np.linalg.norm(w, axis=-1)
+            magnitude = np.abs(w) if self.dimension == 2 else np.linalg.norm(w, axis=-1)
 
             speed = np.linalg.norm(v, axis=-1)
 
@@ -242,7 +230,8 @@ class Curve(SplineObject):
     def torsion(self, t, above=True):
         """Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
 
-        .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}
+        .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot
+            (d\\boldsymbol{a}/dt)}{|\\boldsymbol{v}\\times \\boldsymbol{a}|^2}
 
         :param t: Parametric coordinates in which to evaluate
         :type t: float or [float]
@@ -425,7 +414,8 @@ class Curve(SplineObject):
         .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^2(t_1,t_2)}^2 = \\int_{t_1}^{t_2}
             |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|^2 dt, \\quad \\forall \\;\\text{knots}\\;t_1 < t_2
 
-        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\\infty} = \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|
+        .. math:: ||\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)||_{L^\\infty} =
+            \\max_t |\\boldsymbol{x_h}(t)-\\boldsymbol{x}(t)|
 
         :param function target: callable function which takes as input a vector
             of evaluation points t and gives as output a matrix x where
@@ -464,4 +454,4 @@ class Curve(SplineObject):
         return str(self.bases[0]) + "\n" + str(self.controlpoints)
 
     def get_derivative_curve(self):
-        return super(Curve, self).get_derivative_spline(0)
+        return super().get_derivative_spline(0)

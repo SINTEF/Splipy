@@ -2,18 +2,14 @@
 from __future__ import annotations
 
 import sys
-from os import listdir
-from os.path import abspath, dirname, join
+from pathlib import Path
 from subprocess import CalledProcessError, run
 from tempfile import TemporaryDirectory
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        remote = sys.argv[1]
-    else:
-        remote = input("Name of remote to push documentation to: ")
+    remote = sys.argv[1] if len(sys.argv) > 1 else input("Name of remote to push documentation to: ")
 
-    src = abspath(dirname(__file__))
+    src = Path(__file__).parent
 
     # Ensure that local branch gh-pages exists
     try:
@@ -30,9 +26,9 @@ if __name__ == "__main__":
         run(["git", "checkout", "gh-pages"], cwd=tgt, check=True)
 
         # Copy files from doc/_build/html over
-        build = join(src, "doc", "_build", "html")
-        for c in listdir(build):
-            run(["cp", "-R", join(build, c), tgt])
+        build = src / "doc" / "_build" / "html"
+        for c in build.iterdir():
+            run(["cp", "-R", build / c, tgt])
 
         # Add them all, show git status and commit
         run(["git", "add", "-A"], cwd=tgt, check=True)

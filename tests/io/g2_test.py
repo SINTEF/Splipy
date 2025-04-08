@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import unittest
+from pathlib import Path
 
 import numpy as np
 
@@ -9,7 +9,7 @@ import splipy.surface_factory as SurfaceFactory
 import splipy.volume_factory as VolumeFactory
 from splipy.io import G2
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_DIR = str(Path(__file__).parent)
 
 
 class TestG2(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestG2(unittest.TestCase):
         teapot = SurfaceFactory.teapot()
         with G2("teapot.g2") as myfile:
             myfile.write(teapot)
-        self.assertTrue(os.path.isfile("teapot.g2"))
+        self.assertTrue(Path("teapot.g2").is_file())
 
         # read the written file and compare that it's the same thing
         with G2("teapot.g2") as myfile:
@@ -35,7 +35,7 @@ class TestG2(unittest.TestCase):
             self.assertTrue(np.all(teapot[i].shape == read_teapot[i].shape))
 
         # clean up after us
-        os.remove("teapot.g2")
+        Path("teapot.g2").unlink()
 
     def test_read_doublespaced(self):
         with G2(THIS_DIR + "/geometries/lshape.g2") as myfile:  # controlpoints are separated by two spaces
@@ -49,7 +49,7 @@ class TestG2(unittest.TestCase):
         disc = SurfaceFactory.disc(type="square")
         with G2("disc.g2") as myfile:
             myfile.write(disc)
-        self.assertTrue(os.path.isfile("disc.g2"))
+        self.assertTrue(Path("disc.g2").is_file())
 
         # read the written file and compare that it's the same thing
         with G2("disc.g2") as myfile:
@@ -59,14 +59,14 @@ class TestG2(unittest.TestCase):
         self.assertTrue(np.all(disc.shape == read_disc.shape))
 
         # clean up after us
-        os.remove("disc.g2")
+        Path("disc.g2").unlink()
 
     def test_write_and_read_volume(self):
         # write sphere to file and test if its there
         sphere = VolumeFactory.sphere(type="square")
         with G2("sphere.g2") as myfile:
             myfile.write(sphere)
-        self.assertTrue(os.path.isfile("sphere.g2"))
+        self.assertTrue(Path("sphere.g2").is_file())
 
         # read the written file and compare that it's the same thing
         with G2("sphere.g2") as myfile:
@@ -77,7 +77,7 @@ class TestG2(unittest.TestCase):
         self.assertTrue(sphere.rational == read_sphere.rational)
 
         # clean up after us
-        os.remove("sphere.g2")
+        Path("sphere.g2").unlink()
 
     def test_read_elementary_curves(self):
         with G2(THIS_DIR + "/geometries/elementary_curves.g2") as myfile:

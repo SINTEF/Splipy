@@ -98,9 +98,8 @@ class SplineObject:
         """
         for b, p in zip(self.bases, params):
             b.snap(p)
-            if b.periodic < 0:
-                if min(p) < b.start() or b.end() < max(p):
-                    raise ValueError("Evaluation outside parametric domain")
+            if b.periodic < 0 and (min(p) < b.start() or b.end() < max(p)):
+                raise ValueError("Evaluation outside parametric domain")
 
     def evaluate(self, *params, **kwargs):
         """Evaluate the object at given parametric values.
@@ -223,7 +222,7 @@ class SplineObject:
         # We evaluate in the regular way to compute n and W.
         if self.rational:
             if sum(derivs) > 1:
-                raise RuntimeError("Rational derivative not implemented for order %i" % sum(derivs))
+                raise RuntimeError(f"Rational derivative not implemented for order {sum(derivs)}")
             Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
             non_derivative = evaluate(Ns, self.controlpoints, tensor)
             W = non_derivative[..., -1]  # W
@@ -294,7 +293,7 @@ class SplineObject:
 
         derivative_cps = np.tensordot(C, self.controlpoints, axes=(1, d))
         derivative_cps = derivative_cps.transpose(transpose_fix(self.pardim, d))
-        bases = [b for b in self.bases]
+        bases = list(self.bases)
         bases[d] = BSplineBasis(p, k[1:-1], bases[d].periodic - 1)
 
         # search for the right subclass constructor, i.e. Volume, Surface or Curve
@@ -989,7 +988,8 @@ class SplineObject:
 
         .. math:: \\tilde{x} = \\frac{1}{A} \\int_{v_0}^{v_1} \\int_{u_0}^{u_1} x(u,v) \\; du \\; dv
 
-        and :math:`A=(u_1-u_0)(v_1-v_0)` is the area of the parametric domain :math:`[u_0,u_1]\\times[v_0,v_1]`.
+        and :math:`A=(u_1-u_0)(v_1-v_0)` is the area of the parametric domain
+        :math:`[u_0,u_1]\\times[v_0,v_1]`.
 
         .. warning:: For rational splines, this will integrate in projective
             coordinates, then project the centerpoint. This is as opposed to
@@ -1261,10 +1261,7 @@ class SplineObject:
         # i is int => make sure we deal with negative i properly
         # i is slice => use i.indices to compute the actual indices
         total = len(self)
-        if isinstance(i, int):
-            indexes = [i] if i >= 0 else [total + i]
-        else:
-            indexes = list(range(*i.indices(total)))
+        indexes = ([i] if i >= 0 else [total + i]) if isinstance(i, int) else list(range(*i.indices(total)))
 
         # Convert to multi-indexes
         try:
