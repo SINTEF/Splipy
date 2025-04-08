@@ -1,6 +1,6 @@
 [project]
 name = "splipy"
-version = "1.9.2"
+version = "1.10.0"
 description = "Spline modelling library for Python"
 readme = "PyPI_text.md"
 authors = [
@@ -36,7 +36,7 @@ dev = [
 ]
 
 [tool.bumpversion]
-current_version = "1.9.2"
+current_version = "1.10.0"
 allow_dirty = false
 commit = true
 tag = true

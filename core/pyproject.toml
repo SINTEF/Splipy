@@ -1,6 +1,6 @@
 [project]
 name = "splipy-core"
-version = "1.9.2"
+version = "1.10.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
