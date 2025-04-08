@@ -1,19 +1,21 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import unittest
+
+import numpy as np
 
 from splipy import BSplineBasis
-import numpy as np
-import unittest
 
 
 class TestBasis(unittest.TestCase):
     def test_get_continuity(self):
-        b = BSplineBasis(4, [0, 0, 0, 0, .3, 1, 1, 1.134, 1.134, 1.134, 2, 2, 2, 2])
-        self.assertEqual(b.continuity(.3), 2)
+        b = BSplineBasis(4, [0, 0, 0, 0, 0.3, 1, 1, 1.134, 1.134, 1.134, 2, 2, 2, 2])
+        self.assertEqual(b.continuity(0.3), 2)
         self.assertEqual(b.continuity(1), 1)
         self.assertEqual(b.continuity(1.134), 0)
         self.assertEqual(b.continuity(0), -1)
         self.assertEqual(b.continuity(2), -1)
-        self.assertEqual(b.continuity(.4), np.inf)
+        self.assertEqual(b.continuity(0.4), np.inf)
 
         self.assertEqual(b.continuity(1.000000000000002), 1)
         self.assertEqual(b.continuity(0.999999999999998), 1)
@@ -26,11 +28,11 @@ class TestBasis(unittest.TestCase):
         with self.assertRaises(ValueError):
             BSplineBasis(4, [1, 2, 3, 7, 8], periodic=2)
         with self.assertRaises(ValueError):
-            BSplineBasis(3, [0,0,0,3,2,2,2])
+            BSplineBasis(3, [0, 0, 0, 3, 2, 2, 2])
         with self.assertRaises(ValueError):
-            BSplineBasis(3, [0,1,2,3,5,6], periodic=1)
+            BSplineBasis(3, [0, 1, 2, 3, 5, 6], periodic=1)
         with self.assertRaises(ValueError):
-            BSplineBasis(-1, [0,0,1,1])
+            BSplineBasis(-1, [0, 0, 1, 1])
 
     def test_num_functions(self):
         b = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
@@ -41,15 +43,15 @@ class TestBasis(unittest.TestCase):
     def test_start_end(self):
         b = BSplineBasis(4, [-2, -1, 0, 0, 1, 2, 3, 3, 4, 5], periodic=1)
         self.assertAlmostEqual(b.start(), 0)
-        self.assertAlmostEqual(b.end(),   3)
+        self.assertAlmostEqual(b.end(), 3)
         b = BSplineBasis(3, [0, 1, 1, 2, 3, 4, 4, 6])
         self.assertAlmostEqual(b.start(), 1)
-        self.assertAlmostEqual(b.end(),   4)
+        self.assertAlmostEqual(b.end(), 4)
 
     def test_reverse(self):
-        b = BSplineBasis(3, [0,0,0,1,3,3,6,10,15,21,21,21])
+        b = BSplineBasis(3, [0, 0, 0, 1, 3, 3, 6, 10, 15, 21, 21, 21])
         b.reverse()
-        expect = [0,0,0,6,11,15,18,18,20,21,21,21]
+        expect = [0, 0, 0, 6, 11, 15, 18, 18, 20, 21, 21, 21]
         self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
 
     def test_reparam(self):
@@ -58,7 +60,7 @@ class TestBasis(unittest.TestCase):
         expect = [9, 10, 11, 11, 11, 13, 19, 20, 21, 21, 21, 23, 29]
         self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
         b.reparam()
-        expect = [-.2, -.1, 0, 0, 0, .2, .8, .9, 1.0, 1.0, 1.0, 1.2, 1.8]
+        expect = [-0.2, -0.1, 0, 0, 0, 0.2, 0.8, 0.9, 1.0, 1.0, 1.0, 1.2, 1.8]
         self.assertAlmostEqual(np.linalg.norm(b.knots - expect), 0)
 
     def test_greville(self):
@@ -66,22 +68,22 @@ class TestBasis(unittest.TestCase):
         self.assertAlmostEqual(b.greville(0), 0.0)
         self.assertAlmostEqual(b.greville(1), 1.0 / 3.0)
         self.assertAlmostEqual(b.greville(2), 1.0)
-        self.assertAlmostEqual(b.greville(), [0.0, 1.0/3.0, 1.0, 2.0, 8.0/3.0, 3.0])
+        self.assertAlmostEqual(b.greville(), [0.0, 1.0 / 3.0, 1.0, 2.0, 8.0 / 3.0, 3.0])
 
     def test_raise_order(self):
         # test normal knot vector
-        b  = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
+        b = BSplineBasis(4, [0, 0, 0, 0, 1, 2, 3, 3, 3, 3])
         b2 = b.raise_order(2)
-        expect =  [0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
+        expect = [0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
         self.assertAlmostEqual(np.linalg.norm(b2.knots - expect), 0)
         self.assertEqual(b2.order, 6)
 
         # test periodic knot vector
         b = BSplineBasis(5, [-1, 0, 1, 1, 1, 3, 9, 10, 11, 11, 11, 13, 19], periodic=1)
         b2 = b.raise_order(1)
-        expect =  [0, 0, 1, 1, 1, 1, 3, 3, 9, 9, 10, 10, 11, 11, 11, 11, 13, 13]
+        expect = [0, 0, 1, 1, 1, 1, 3, 3, 9, 9, 10, 10, 11, 11, 11, 11, 13, 13]
         self.assertAlmostEqual(np.linalg.norm(b2.knots - expect), 0)
-        self.assertEqual(b2.order,    6)
+        self.assertEqual(b2.order, 6)
         self.assertEqual(b2.periodic, 1)
 
         with self.assertRaises(ValueError):
@@ -100,16 +102,16 @@ class TestBasis(unittest.TestCase):
             b.roll(19)
 
     def test_getitem(self):
-        b = BSplineBasis(3, [0,0,0,1,2,2,2])
+        b = BSplineBasis(3, [0, 0, 0, 1, 2, 2, 2])
         self.assertEqual(b[0], 0.0)
         self.assertEqual(b[1], 0.0)
         self.assertEqual(b[3], 1.0)
 
     def test_repr(self):
-        major, minor, patch = np.version.version.split('.')
-        if int(major) <=1 and int(minor) <= 13:
-            self.assertEqual(repr(BSplineBasis()), 'p=2, [ 0.  0.  1.  1.]')
-            self.assertEqual(repr(BSplineBasis(periodic=0)), 'p=2, [-1.  0.  1.  2.], C0-periodic')
+        major, minor, patch = np.version.version.split(".")
+        if int(major) <= 1 and int(minor) <= 13:
+            self.assertEqual(repr(BSplineBasis()), "p=2, [ 0.  0.  1.  1.]")
+            self.assertEqual(repr(BSplineBasis(periodic=0)), "p=2, [-1.  0.  1.  2.], C0-periodic")
 
     def test_roll(self):
         b = BSplineBasis(4, [-2, -1, -1, 0, 2, 4, 6.5, 7, 8, 8, 9, 11, 13, 15.5], periodic=2)
@@ -133,46 +135,46 @@ class TestBasis(unittest.TestCase):
     def test_integrate(self):
         # create the linear functions x(t) = [1-t, t] on t=[0,1]
         b = BSplineBasis()
-        self.assertAlmostEqual(b.integrate(0,1)[0], 0.5)
-        self.assertAlmostEqual(b.integrate(0,1)[1], 0.5)
-        self.assertAlmostEqual(b.integrate(.25,.5)[0], 5.0/32)
-        self.assertAlmostEqual(b.integrate(.25,.5)[1], 3.0/32)
+        self.assertAlmostEqual(b.integrate(0, 1)[0], 0.5)
+        self.assertAlmostEqual(b.integrate(0, 1)[1], 0.5)
+        self.assertAlmostEqual(b.integrate(0.25, 0.5)[0], 5.0 / 32)
+        self.assertAlmostEqual(b.integrate(0.25, 0.5)[1], 3.0 / 32)
 
         # create the quadratic functions x(t) = [(1-t)^2, 2t(1-t), t^2] on t=[0,1]
         b = BSplineBasis(3)
-        self.assertAlmostEqual(b.integrate(0,1)[0], 1.0/3)
-        self.assertAlmostEqual(b.integrate(0,1)[1], 1.0/3)
-        self.assertAlmostEqual(b.integrate(0,1)[2], 1.0/3)
-        self.assertAlmostEqual(b.integrate(.25,.5)[0], 19.0/192)
-        self.assertAlmostEqual(b.integrate(.25,.5)[1], 11.0/96)
-        self.assertAlmostEqual(b.integrate(.25,.5)[2], 7.0/192)
+        self.assertAlmostEqual(b.integrate(0, 1)[0], 1.0 / 3)
+        self.assertAlmostEqual(b.integrate(0, 1)[1], 1.0 / 3)
+        self.assertAlmostEqual(b.integrate(0, 1)[2], 1.0 / 3)
+        self.assertAlmostEqual(b.integrate(0.25, 0.5)[0], 19.0 / 192)
+        self.assertAlmostEqual(b.integrate(0.25, 0.5)[1], 11.0 / 96)
+        self.assertAlmostEqual(b.integrate(0.25, 0.5)[2], 7.0 / 192)
 
         # create periodic quadratic functions on [0,3]. This is 3 functions, which are all
         # translated versions of the one below:
         #        | 1/2 t^2          t=[0,1]
         # N[3] = { -t^2 + 3t - 3/2  t=[1,2]
         #        | 1/2 (3-t)^2      t=[2,3]
-        b = BSplineBasis(3, [-2,-1,0,1,2,3,4,5], periodic=1)
-        self.assertEqual(len(b.integrate(0,3)), 3) # returns 3 functions
-        self.assertAlmostEqual(b.integrate(0,3)[0], 1)
-        self.assertAlmostEqual(b.integrate(0,3)[1], 1)
-        self.assertAlmostEqual(b.integrate(0,3)[2], 1)
-        self.assertAlmostEqual(b.integrate(0,1)[0], 1.0/6)
-        self.assertAlmostEqual(b.integrate(0,1)[1], 2.0/3)
-        self.assertAlmostEqual(b.integrate(0,1)[2], 1.0/6)
-        self.assertAlmostEqual(b.integrate(0,2)[0], 2.0/6)
-        self.assertAlmostEqual(b.integrate(0,2)[1], 5.0/6)
-        self.assertAlmostEqual(b.integrate(0,2)[2], 5.0/6)
+        b = BSplineBasis(3, [-2, -1, 0, 1, 2, 3, 4, 5], periodic=1)
+        self.assertEqual(len(b.integrate(0, 3)), 3)  # returns 3 functions
+        self.assertAlmostEqual(b.integrate(0, 3)[0], 1)
+        self.assertAlmostEqual(b.integrate(0, 3)[1], 1)
+        self.assertAlmostEqual(b.integrate(0, 3)[2], 1)
+        self.assertAlmostEqual(b.integrate(0, 1)[0], 1.0 / 6)
+        self.assertAlmostEqual(b.integrate(0, 1)[1], 2.0 / 3)
+        self.assertAlmostEqual(b.integrate(0, 1)[2], 1.0 / 6)
+        self.assertAlmostEqual(b.integrate(0, 2)[0], 2.0 / 6)
+        self.assertAlmostEqual(b.integrate(0, 2)[1], 5.0 / 6)
+        self.assertAlmostEqual(b.integrate(0, 2)[2], 5.0 / 6)
 
     def test_matches(self):
-        b1 = BSplineBasis(3, [0,0,0,1,2,3,4,4,4])
-        b2 = BSplineBasis(3, [1,1,1,2,3,4,5,5,5])
-        b3 = BSplineBasis(4, [1,1,1,2,3,4,5,5,5])
-        b4 = BSplineBasis(4, [2,2,2,4,6,8,10,10,10])
-        b5 = BSplineBasis(3, [-1,0,0,1,2,3,4,4,5], periodic=0)
-        b6 = BSplineBasis(3, [-1,0,0,1,2,3,4,4,5])
-        b7 = BSplineBasis(3, [0,0,0,2,3,3,3])
-        b8 = BSplineBasis(3, [5,5,5,7,11,11,11])
+        b1 = BSplineBasis(3, [0, 0, 0, 1, 2, 3, 4, 4, 4])
+        b2 = BSplineBasis(3, [1, 1, 1, 2, 3, 4, 5, 5, 5])
+        b3 = BSplineBasis(4, [1, 1, 1, 2, 3, 4, 5, 5, 5])
+        b4 = BSplineBasis(4, [2, 2, 2, 4, 6, 8, 10, 10, 10])
+        b5 = BSplineBasis(3, [-1, 0, 0, 1, 2, 3, 4, 4, 5], periodic=0)
+        b6 = BSplineBasis(3, [-1, 0, 0, 1, 2, 3, 4, 4, 5])
+        b7 = BSplineBasis(3, [0, 0, 0, 2, 3, 3, 3])
+        b8 = BSplineBasis(3, [5, 5, 5, 7, 11, 11, 11])
 
         self.assertEqual(b1.matches(b2), True)
         self.assertEqual(b1.matches(b2, reverse=True), True)
@@ -186,7 +188,7 @@ class TestBasis(unittest.TestCase):
         self.assertEqual(b8.matches(b7, reverse=True), True)
 
     def test_make_periodic(self):
-        b = BSplineBasis(4, [1,1,1,1,2,3,4,5,5,5,5])
+        b = BSplineBasis(4, [1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 5])
 
         c = b.make_periodic(0)
         self.assertEqual(c.periodic, 0)
@@ -234,47 +236,73 @@ class TestBasis(unittest.TestCase):
         self.assertAlmostEqual(c.knots[10], 8)
 
     def test_snap(self):
-        b = BSplineBasis(3, [0,0,0, .123, np.pi, 3.5, 4,4,4])
-        t = [0,.123+1e-12, 3, 3.1, 3.14, 3.1415, 3.1415926, 3.500000000000002, 4+1e-12, 4+1e-2]
+        b = BSplineBasis(3, [0, 0, 0, 0.123, np.pi, 3.5, 4, 4, 4])
+        t = [0, 0.123 + 1e-12, 3, 3.1, 3.14, 3.1415, 3.1415926, 3.500000000000002, 4 + 1e-12, 4 + 1e-2]
         b.snap(t)
-        self.assertEqual(   t[0], b[0]) # 0
-        self.assertEqual(   t[1], b[3]) # 0.123
-        self.assertNotEqual(t[2], b[4]) # 3
-        self.assertNotEqual(t[3], b[4]) # 3.1
-        self.assertNotEqual(t[4], b[4]) # 3.14
-        self.assertNotEqual(t[5], b[4]) # 3.1415
-        self.assertNotEqual(t[6], b[4]) # 3.1415926
-        self.assertEqual(   t[7], b[5]) # 3.5
-        self.assertEqual(   t[8], b[6]) # 4.0
-        self.assertNotEqual(t[9], b[6]) # 4.01
+        self.assertEqual(t[0], b[0])  # 0
+        self.assertEqual(t[1], b[3])  # 0.123
+        self.assertNotEqual(t[2], b[4])  # 3
+        self.assertNotEqual(t[3], b[4])  # 3.1
+        self.assertNotEqual(t[4], b[4])  # 3.14
+        self.assertNotEqual(t[5], b[4])  # 3.1415
+        self.assertNotEqual(t[6], b[4])  # 3.1415926
+        self.assertEqual(t[7], b[5])  # 3.5
+        self.assertEqual(t[8], b[6])  # 4.0
+        self.assertNotEqual(t[9], b[6])  # 4.01
 
     def test_bug44(self):
         # https://github.com/sintefmath/Splipy/issues/44
-        b = BSplineBasis(4, [ 0.        , 0.        , 0.        , 0.        , 0.01092385, 0.02200375,
-                              0.03316167, 0.04435861, 0.05526295, 0.0663331 , 0.07748615, 0.08868065,
-                              0.09989588, 0.11080936, 0.12188408, 0.13303942, 0.14423507, 0.15545087,
-                              0.16636463, 0.1774395 , 0.1885949 , 0.19979059, 0.2       , 0.2       ,
-                              0.2       , 0.2     ])
+        b = BSplineBasis(
+            4,
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.01092385,
+                0.02200375,
+                0.03316167,
+                0.04435861,
+                0.05526295,
+                0.0663331,
+                0.07748615,
+                0.08868065,
+                0.09989588,
+                0.11080936,
+                0.12188408,
+                0.13303942,
+                0.14423507,
+                0.15545087,
+                0.16636463,
+                0.1774395,
+                0.1885949,
+                0.19979059,
+                0.2,
+                0.2,
+                0.2,
+                0.2,
+            ],
+        )
         grvl = b.greville()
         # last greville point is 0.20000000000000004, and technically outside domain [0,.2]
         self.assertAlmostEqual(grvl[-1], 0.2)
         # should snap to 0.2 and evaluate to 1 for the last function
-        self.assertAlmostEqual(b(grvl[-1])[-1,-1], 1.0)
+        self.assertAlmostEqual(b(grvl[-1])[-1, -1], 1.0)
 
     def test_periodic_boundary_evaluation(self):
         # Issue #66: "From left evaluations crash on periodic basis"
-        b = BSplineBasis(3, [0,0,0,1,2,3,4,4,4])
+        b = BSplineBasis(3, [0, 0, 0, 1, 2, 3, 4, 4, 4])
         x = b.evaluate(t=0, from_right=False)
-        self.assertAlmostEqual(x[0,0], 0.0)
+        self.assertAlmostEqual(x[0, 0], 0.0)
 
         x = b.evaluate(t=0, from_right=True)
-        self.assertAlmostEqual(x[0,0], 1.0)
+        self.assertAlmostEqual(x[0, 0], 1.0)
 
-        b = BSplineBasis(3, [-1,0,0,1,2,3,4,4,5], periodic=0)
+        b = BSplineBasis(3, [-1, 0, 0, 1, 2, 3, 4, 4, 5], periodic=0)
         x = b.evaluate(t=0, d=1, from_right=False)
-        self.assertAlmostEqual(x[0, 0],  2.0)
-        self.assertAlmostEqual(x[0,-1], -2.0)
+        self.assertAlmostEqual(x[0, 0], 2.0)
+        self.assertAlmostEqual(x[0, -1], -2.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

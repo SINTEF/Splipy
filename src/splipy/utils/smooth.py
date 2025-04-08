@@ -1,7 +1,9 @@
-__doc__ = 'Implementation of various smoothing operations on a per-controlpoint level.'
+from __future__ import annotations
 
-from scipy import ndimage
+__doc__ = "Implementation of various smoothing operations on a per-controlpoint level."
+
 import numpy as np
+from scipy import ndimage
 
 from . import check_direction
 
@@ -20,10 +22,10 @@ def smooth(obj, comp=None):
     if comp is not None:
         comp = check_direction(comp, len(obj))
 
-    averaging_mask  = np.ones([3]*len(n)+[1])
+    averaging_mask = np.ones([3] * len(n) + [1])
     averaging_mask /= averaging_mask.size
 
-    new_controlpoints = ndimage.convolve(obj.controlpoints, averaging_mask, mode='wrap')
+    new_controlpoints = ndimage.convolve(obj.controlpoints, averaging_mask, mode="wrap")
 
     # build up the indexing for the domain 'interior'. This would be
     # controlpoints[1:-1, 1:-1 ,:]        for non-rational surface
@@ -34,15 +36,15 @@ def smooth(obj, comp=None):
     interior = []
     for pardim in range(len(n)):
         if obj.periodic(pardim):
-            interior.append(slice(None,None,None))
+            interior.append(slice(None, None, None))
         else:
-            interior.append(slice(1,-1,None))
+            interior.append(slice(1, -1, None))
     if obj.rational:
-        interior.append(slice(0,-1,None))
+        interior.append(slice(0, -1, None))
     elif comp is not None:
-        interior.append(slice(comp,comp+1,None))
+        interior.append(slice(comp, comp + 1, None))
     else:
-        interior.append(slice(None,None,None))
+        interior.append(slice(None, None, None))
 
     interior = tuple(interior)
-    obj.controlpoints[interior] =  new_controlpoints[interior]
+    obj.controlpoints[interior] = new_controlpoints[interior]

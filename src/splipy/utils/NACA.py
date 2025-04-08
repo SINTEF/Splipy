@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 import numpy as np
 
-from ..curve import Curve
-from ..basis import BSplineBasis
 from .. import surface_factory
+from ..basis import BSplineBasis
+from ..curve import Curve
 
-__all__ = ['camber', 'NACA']
+__all__ = ["camber", "NACA"]
 
 
 def camber(M, P, order=5):
-    """ Create the NACA centerline used for wing profiles. This is given as
+    """Create the NACA centerline used for wing profiles. This is given as
     an exact quadratic piecewise polynomial y(x),
     see http://airfoiltools.com/airfoil/naca4digit. The method will produce
     one of two representations: For order<5 it will create x(t)=t and
@@ -37,13 +37,13 @@ def camber(M, P, order=5):
     for i in range(n):
         if t[i] <= P:
             if order > 4:
-                x[i, 0] = t[i]**2 / P
+                x[i, 0] = t[i] ** 2 / P
             else:
                 x[i, 0] = t[i]
             x[i, 1] = M / P / P * (2 * P * x[i, 0] - x[i, 0] * x[i, 0])
         else:
             if order > 4:
-                x[i, 0] = (t[i]**2 - 2 * t[i] + P) / (P - 1)
+                x[i, 0] = (t[i] ** 2 - 2 * t[i] + P) / (P - 1)
             else:
                 x[i, 0] = t[i]
             x[i, 1] = M / (1 - P) / (1 - P) * (1 - 2 * P + 2 * P * x[i, 0] - x[i, 0] * x[i, 0])
@@ -53,7 +53,7 @@ def camber(M, P, order=5):
 
 
 def NACA(M, P, X, n=40, order=5, closed=False):
-    """ Create the NACA 4 digit airfoil. This is generated as an approximation
+    """Create the NACA 4 digit airfoil. This is generated as an approximation
     through the use of SurfaceFactory.thicken functions.
     :param M: Max camber height (y) given as percentage 0% to 9% of length
     :type  M: Int 0<M<10

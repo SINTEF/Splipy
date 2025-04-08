@@ -1,21 +1,29 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 from collections import Counter, OrderedDict, namedtuple
-from itertools import chain, product, permutations, islice
+from collections.abc import Callable
+from itertools import chain, islice, permutations, product
 from operator import itemgetter
-from typing import Callable, Dict, List, Tuple, Any, Optional
+from typing import Any
 
 import numpy as np
 
-from .splineobject import SplineObject
-from .utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
-from .utils import bisect
 from . import state
+from .splineobject import SplineObject
+from .utils import (
+    bisect,
+    check_section,
+    is_right_hand,
+    section_from_index,
+    section_to_index,
+    sections,
+    uniquify,
+)
 
 try:
     from collections.abc import MutableMapping
 except ImportError:
-    from collections import MutableMapping
+    from collections.abc import MutableMapping
 
 
 def _section_to_index(section):
@@ -25,7 +33,7 @@ def _section_to_index(section):
     return tuple(slice(None) if s is None else s for s in section)
 
 
-face_t = np.dtype([('nodes', int, (4,)), ('owner', int, ()), ('neighbor', int, ()), ('name', object, ())])
+face_t = np.dtype([("nodes", int, (4,)), ("owner", int, ()), ("neighbor", int, ()), ("name", object, ())])
 
 
 class VertexDict(MutableMapping):
@@ -38,10 +46,10 @@ class VertexDict(MutableMapping):
     rtol: float
     atol: float
 
-    _keys: List[Optional[np.ndarray]]
-    _values: List[Any]
+    _keys: list[np.ndarray | None]
+    _values: list[Any]
 
-    lut: Dict[Tuple[int, ...], List[Tuple[int, float]]]
+    lut: dict[tuple[int, ...], list[tuple[int, float]]]
 
     def __init__(self, rtol=1e-5, atol=1e-8):
         # List of (key, value) pairs
@@ -145,15 +153,19 @@ class OrientationError(RuntimeError):
     :class:`splipy.SplineModel.Orientation` indicating an inability to match
     two objects.
     """
+
     pass
+
 
 class TwinError(RuntimeError):
     """A `TwinError` is raised when two objects with identical interfaces
     are added, but different interiors.
     """
+
     pass
 
-class Orientation(object):
+
+class Orientation:
     """An `Orientation` represents a mapping between two coordinate systems: the
     *reference* system and the *actual* or *mapped* system.
 
@@ -194,8 +206,7 @@ class Orientation(object):
 
         # Return the identity orientation if no cpb
         if cpb is None:
-            return cls(tuple(range(pardim)),
-                       tuple(False for _ in range(pardim)))
+            return cls(tuple(range(pardim)), tuple(False for _ in range(pardim)))
 
         # Deal with the easy cases: dimension mismatch, and
         # comparing the shapes as multisets
@@ -234,10 +245,15 @@ class Orientation(object):
             for flip in product([False, True], repeat=pardim):
                 slices = tuple(slice(None, None, -1) if f else slice(None) for f in flip)
                 test_b = transposed[slices + (slice(None),)]
-                if np.allclose(cps_a, test_b,
-                               rtol=state.controlpoint_relative_tolerance,
-                               atol=state.controlpoint_absolute_tolerance):
-                    if all([cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i]) for i in range(pardim)]):
+                if np.allclose(
+                    cps_a,
+                    test_b,
+                    rtol=state.controlpoint_relative_tolerance,
+                    atol=state.controlpoint_absolute_tolerance,
+                ):
+                    if all(
+                        [cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i]) for i in range(pardim)]
+                    ):
                         return cls(perm, flip)
 
         raise OrientationError("Non-matching objects")
@@ -278,7 +294,10 @@ class Orientation(object):
         permuted = tuple(section[d] for d in self.perm)
 
         flipped = ()
-        for s, f, in zip(permuted, self.flip):
+        for (
+            s,
+            f,
+        ) in zip(permuted, self.flip):
             # Flipping only applies to indexed directions, not variable ones
             if f and s is not None:
                 flipped += (0 if s == -1 else -1,)
@@ -336,20 +355,18 @@ class Orientation(object):
             return 0
         if len(self.flip) == 1:
             return int(self.flip[0])
-        elif len(self.flip) == 2:
+        if len(self.flip) == 2:
             ret = 0
             for i, axis in enumerate(self.perm[::-1]):
                 if self.flip[axis]:
                     ret |= 1 << i
-            if tuple(self.perm) == (1,0):
+            if tuple(self.perm) == (1, 0):
                 ret |= 1 << 2
             return ret
-        raise RuntimeError(
-            'IFEM orientation format not supported for pardim {}'.format(len(self.flip))
-        )
+        raise RuntimeError(f"IFEM orientation format not supported for pardim {len(self.flip)}")
 
 
-class TopologicalNode(object):
+class TopologicalNode:
     """A `TopologicalNode` object refers to a single, persistent point in the
     topological graph. It represents some object of dimension `d` (that is, a
     point, an edge, etc.) and it has references to all the other objects it
@@ -463,7 +480,7 @@ class TopologicalNode(object):
         numbers[:] = 0
 
         # Flag control points owned by other top-level objects with -1
-        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim - 1)):
             if node.owner is not self:
                 numbers[_section_to_index(section)] = -1
 
@@ -482,7 +499,7 @@ class TopologicalNode(object):
 
         # Control point numbers for owned children must be communicated to them
         if self.pardim > 0:
-            for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+            for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim - 1)):
                 if node.owner is self or node.owner is self.owner:
                     # Since this runs in a direct line of ownership, we don't need to be concerned with
                     # orientations not matching up.
@@ -490,7 +507,7 @@ class TopologicalNode(object):
 
     def read_cp_numbers(self):
         """Read control point numbers for unowned control points from child nodes."""
-        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim-1)):
+        for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim - 1)):
             if node.owner is not self:
                 # The two sections may not agree on orientation, so we fix this here.
                 ori = Orientation.compute(self.obj.section(*section), node.obj)
@@ -511,7 +528,7 @@ class TopologicalNode(object):
     def faces(self):
         """Return all faces owned by this node, as a list of numpy arrays with dtype `face_t`."""
         assert self.pardim == 3
-        assert self.obj.order() == (2,2,2)
+        assert self.obj.order() == (2, 2, 2)
         shape = [len(kvec) - 1 for kvec in self.obj.knots()]
         ncells = np.prod(shape)
         retval = []
@@ -531,12 +548,12 @@ class TopologicalNode(object):
             # TODO: We assume a right-hand coordinate system here
             nfaces = ncells - nperslice
             faces = np.empty((nfaces,), dtype=face_t)
-            faces['nodes'][:,0] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[:-1])].flatten()
-            faces['nodes'][:,1] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:],  np.s_[:-1])].flatten()
-            faces['nodes'][:,2] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:],  np.s_[1:])].flatten()
-            faces['nodes'][:,3] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[1:])].flatten()
-            faces['owner'] = self.cell_numbers[mkindex(d, np.s_[:-1], np.s_[:], np.s_[:])].flatten()
-            faces['neighbor'] = self.cell_numbers[mkindex(d, np.s_[1:],  np.s_[:], np.s_[:])].flatten()
+            faces["nodes"][:, 0] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[:-1])].flatten()
+            faces["nodes"][:, 1] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:], np.s_[:-1])].flatten()
+            faces["nodes"][:, 2] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[1:], np.s_[1:])].flatten()
+            faces["nodes"][:, 3] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[1:])].flatten()
+            faces["owner"] = self.cell_numbers[mkindex(d, np.s_[:-1], np.s_[:], np.s_[:])].flatten()
+            faces["neighbor"] = self.cell_numbers[mkindex(d, np.s_[1:], np.s_[:], np.s_[:])].flatten()
             retval.append(faces)
 
             # Go through the two boundaries
@@ -548,24 +565,25 @@ class TopologicalNode(object):
                     continue
 
                 faces = np.empty((nperslice,), dtype=face_t)
-                faces['nodes'][:,0] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[:-1])].flatten()
-                faces['nodes'][:,1] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[:-1])].flatten()
-                faces['nodes'][:,2] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[1:])].flatten()
-                faces['nodes'][:,3] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[1:])].flatten()
-                faces['owner'] = self.cell_numbers[mkindex(d, bdindex, np.s_[:], np.s_[:])].flatten()
-                faces['name'] = bdnode.name
+                faces["nodes"][:, 0] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[:-1])].flatten()
+                faces["nodes"][:, 1] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[:-1])].flatten()
+                faces["nodes"][:, 2] = self.cp_numbers[mkindex(d, bdindex, np.s_[1:], np.s_[1:])].flatten()
+                faces["nodes"][:, 3] = self.cp_numbers[mkindex(d, bdindex, np.s_[:-1], np.s_[1:])].flatten()
+                faces["owner"] = self.cell_numbers[mkindex(d, bdindex, np.s_[:], np.s_[:])].flatten()
+                faces["name"] = bdnode.name
 
                 # If we're on the left boundary, the face normal must point in the other direction
                 # NOTE: We copy when swapping here, since we are swapping values which are views into
                 # a mutable array!
                 if bdindex == 0:
-                    faces['nodes'][:,1], faces['nodes'][:,3] = (
-                        faces['nodes'][:,3].copy(), faces['nodes'][:,1].copy()
+                    faces["nodes"][:, 1], faces["nodes"][:, 3] = (
+                        faces["nodes"][:, 3].copy(),
+                        faces["nodes"][:, 1].copy(),
                     )
 
                 # If there's a neighbor on the interface we need neighbouring cell numbers
                 if bdnode.nhigher == 1:
-                    faces['neighbor'] = -1
+                    faces["neighbor"] = -1
                 else:
                     neighbor = next(c for c in bdnode.higher_nodes[3] if c is not self)
 
@@ -581,16 +599,16 @@ class TopologicalNode(object):
 
                     # Get the neighbor cell numbers from the neighbor's perspective, and map them to our system
                     cellidxs = neighbor.cell_numbers[_section_to_index(nb_sec)]
-                    faces['neighbor'] = ori.map_array(cellidxs).flatten()
+                    faces["neighbor"] = ori.map_array(cellidxs).flatten()
 
                 retval.append(faces)
 
         for faces in retval:
-            assert ((faces['owner'] < faces['neighbor']) | (faces['neighbor'] == -1)).all()
+            assert ((faces["owner"] < faces["neighbor"]) | (faces["neighbor"] == -1)).all()
         return retval
 
 
-class NodeView(object):
+class NodeView:
     """A `NodeView` object refers to a *view* to a point in the topological graph.
     It is composed of a node (:class:`splipy.SplineModel.TopologicalNode`) and
     an orientation (:class:`splipy.SplineModel.Orienation`).
@@ -671,7 +689,7 @@ class NodeView(object):
         return tuple(self.section(s) for s in sections(self.pardim, 2))
 
 
-class ObjectCatalogue(object):
+class ObjectCatalogue:
     """An `ObjectCatalogue` maintains a complete topological graph of objects with
     at most `pardim` parametric directions.
     """
@@ -735,7 +753,7 @@ class ObjectCatalogue(object):
                 node = TopologicalNode(obj, [], index=self.count)
                 self.count += 1
                 rval = self.lower.setdefault(cps, node).view()
-                for cb in self.callbacks.get('add', []):
+                for cb in self.callbacks.get("add", []):
                     cb(node)
                 return rval
             return self.lower[cps].view()
@@ -744,9 +762,12 @@ class ObjectCatalogue(object):
         # This involves a recursive call to self.lower.__call__
         lower_nodes = []
         for i in range(0, self.pardim):
-            nodes = tuple(self.lower.lookup(obj.section(*args, unwrap_points=False), add=add,
-                                            raise_on_twins=raise_on_twins).node
-                          for args in sections(self.pardim, i))
+            nodes = tuple(
+                self.lower.lookup(
+                    obj.section(*args, unwrap_points=False), add=add, raise_on_twins=raise_on_twins
+                ).node
+                for args in sections(self.pardim, i)
+            )
             lower_nodes.append(nodes)
 
         # Try looking up the lower-order nodes in the internal dictionary,
@@ -763,8 +784,7 @@ class ObjectCatalogue(object):
         if not candidates:
             if not add:
                 raise KeyError("No such object found")
-            else:
-                return self._add(obj, lower_nodes)
+            return self._add(obj, lower_nodes)
 
         # If there is exactly one candidate, check it
         if len(candidates) == 1:
@@ -829,7 +849,7 @@ class ObjectCatalogue(object):
         perms = set(permutations(lower_nodes[-1]))
         for p in perms:
             self.internal.setdefault(p, []).append(node)
-        for cb in self.callbacks.get('add', []):
+        for cb in self.callbacks.get("add", []):
             cb(node)
         return node.view()
 
@@ -852,15 +872,17 @@ class ObjectCatalogue(object):
 # FIXME: This class is unfinished, and right now it doesn't do much other than
 # wrap ObjectCatalogue
 
-class SplineModel(object):
 
+class SplineModel:
     def __init__(self, pardim=3, dimension=3, objs=[], force_right_hand=False):
         self.pardim = pardim
         self.dimension = dimension
 
         self.force_right_hand = force_right_hand
-        if force_right_hand and (pardim, dimension) not in ((2,2), (3,3)):
-            raise ValueError("Right-handedness only defined for 2D or 3D patches in 2D or 3D space, respectively")
+        if force_right_hand and (pardim, dimension) not in ((2, 2), (3, 3)):
+            raise ValueError(
+                "Right-handedness only defined for 2D or 3D patches in 2D or 3D space, respectively"
+            )
 
         self.catalogue = ObjectCatalogue(pardim)
         self.names = {}
@@ -888,7 +910,7 @@ class SplineModel(object):
         return self.catalogue[obj]
 
     def boundary(self, name=None):
-        for node in self.catalogue.nodes(self.pardim-1):
+        for node in self.catalogue.nodes(self.pardim - 1):
             if node.nhigher == 1 and (name is None or name == node.name):
                 yield node
 
@@ -906,7 +928,7 @@ class SplineModel(object):
         if self.force_right_hand:
             left_inds = [i for i, p in enumerate(objs) if not is_right_hand(p)]
             if left_inds:
-                indices = ', '.join(map(str, left_inds))
+                indices = ", ".join(map(str, left_inds))
                 raise ValueError(f"Possibly left-handed patches detected, indexes {indices}")
 
     def _generate(self, objs, **kwargs):
@@ -917,8 +939,7 @@ class SplineModel(object):
                 # TODO: Mutating exceptions is fishy.
                 if len(err.args) > 1:
                     err.args = (
-                        err.args[0] +
-                        f" This happened while trying to connect patches at indexes"
+                        err.args[0] + f" This happened while trying to connect patches at indexes"
                         f" {err.args[1]} and {i}.",
                     )
                 raise err
@@ -953,19 +974,17 @@ class SplineModel(object):
     def summary(self):
         c = self.catalogue
         while isinstance(c, ObjectCatalogue):
-            print('Dim {}: {}'.format(c.pardim, len(c.top_nodes())))
+            print(f"Dim {c.pardim}: {len(c.top_nodes())}")
             c = c.lower
 
     def write_ifem(self, filename):
         IFEMWriter(self).write(filename)
 
 
-
-IFEMConnection = namedtuple('IFEMConnection', ['master', 'slave', 'midx', 'sidx', 'orient'])
+IFEMConnection = namedtuple("IFEMConnection", ["master", "slave", "midx", "sidx", "orient"])
 
 
 class IFEMWriter:
-
     def __init__(self, model):
         self.model = model
 
@@ -978,14 +997,11 @@ class IFEMWriter:
 
         # For every object in the model...
         for node in self.nodes:
-
             # Loop over its sections of one lower parametric dimension
             # That is, for faces, loop over edges, and for volumes, loop over faces
             for node_sub_idx, sub in enumerate(node.lower_nodes[p - 1]):
-
                 # Iterate over the neighbour nodes
                 for neigh in set(sub.higher_nodes[p]):
-
                     # Only output if the node has a lower ID than the neighbour,
                     # otherwise we'll get this pair when the reverse pair is found
                     if self.node_ids[node] > self.node_ids[neigh]:
@@ -1014,11 +1030,11 @@ class IFEMWriter:
                         orientation = Orientation.compute(node_sub, neigh_sub)
 
                         yield IFEMConnection(
-                            master = self.node_ids[node] + 1,
-                            slave = self.node_ids[neigh] + 1,
-                            midx = node_sub_idx + 1,
-                            sidx = neigh_sub_idx + 1,
-                            orient = orientation.ifem_format,
+                            master=self.node_ids[node] + 1,
+                            slave=self.node_ids[neigh] + 1,
+                            midx=node_sub_idx + 1,
+                            sidx=neigh_sub_idx + 1,
+                            orient=orientation.ifem_format,
                         )
 
     def write(self, filename):
@@ -1028,28 +1044,23 @@ class IFEMWriter:
         ]
 
         for connection in self.connections():
-                lines.append('  <connection master="{}" slave="{}" midx="{}" sidx="{}" orient="{}"/>'.format(
-                    connection.master,
-                    connection.slave,
-                    connection.midx,
-                    connection.sidx,
-                    connection.orient,
-                ))
+            lines.append(
+                f'  <connection master="{connection.master}" slave="{connection.slave}" midx="{connection.midx}" sidx="{connection.sidx}" orient="{connection.orient}"/>'
+            )
 
         lines.extend(["</topology>"])
 
-        with open(filename + '-topology.xinp', 'wb') as f:
-            f.write('\n'.join(lines).encode('utf-8') + b'\n')
+        with open(filename + "-topology.xinp", "wb") as f:
+            f.write("\n".join(lines).encode("utf-8") + b"\n")
 
         lines = [
             "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
             "<topologysets>",
         ]
 
-        names = sorted({
-            node.name for node in self.model.catalogue.nodes(self.model.pardim - 1)
-            if node.name is not None
-        })
+        names = sorted(
+            {node.name for node in self.model.catalogue.nodes(self.model.pardim - 1) if node.name is not None}
+        )
 
         for name in names:
             entries = {}
@@ -1057,24 +1068,28 @@ class IFEMWriter:
                 if node.name != name:
                     continue
                 parent = node.owner
-                sub_idx = next(idx for idx, sub in enumerate(parent.lower_nodes[self.model.pardim - 1]) if sub is node)
+                sub_idx = next(
+                    idx for idx, sub in enumerate(parent.lower_nodes[self.model.pardim - 1]) if sub is node
+                )
                 entries.setdefault(self.node_ids[parent], set()).add(sub_idx)
             if entries:
-                kind = {2: 'face', 1: 'edge', 0: 'vertex'}[self.model.pardim - 1]
-                lines.append('  <set name="{}" type="{}">'.format(name, kind))
+                kind = {2: "face", 1: "edge", 0: "vertex"}[self.model.pardim - 1]
+                lines.append(f'  <set name="{name}" type="{kind}">')
                 for node_id, sub_ids in entries.items():
-                    lines.append('    <item patch="{}">{}</item>'.format(
-                        node_id + 1,
-                        ' '.join(str(i+1) for i in sorted(sub_ids))
-                    ))
-                lines.append('  </set>')
+                    lines.append(
+                        '    <item patch="{}">{}</item>'.format(
+                            node_id + 1, " ".join(str(i + 1) for i in sorted(sub_ids))
+                        )
+                    )
+                lines.append("  </set>")
 
         lines.extend(["</topologysets>"])
 
-        with open(filename + '-topologysets.xinp', 'wb') as f:
-            f.write('\n'.join(lines).encode('utf-8') + b'\n')
+        with open(filename + "-topologysets.xinp", "wb") as f:
+            f.write("\n".join(lines).encode("utf-8") + b"\n")
 
         # Import here to avoid circular dependencies
         from .io import G2
-        with G2(filename + '.g2') as f:
+
+        with G2(filename + ".g2") as f:
             f.write([n.obj for n in self.nodes])

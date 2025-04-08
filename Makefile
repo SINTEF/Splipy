@@ -16,11 +16,31 @@ bench:
 	uv run pytest --benchmark-only
 
 
+# Linting targets
+
+.PHONY: format
+format:
+	uv run ruff format
+
+.PHONY: lint
+lint:
+	uv run ruff check --fix
+
+
 # Test targets
 
 .PHONY: pytest
 pytest:
 	uv run pytest --benchmark-skip
+
+.PHONY: mypy
+mypy:
+	uv run mypy
+
+.PHONY: ruff
+ruff:
+	uv run ruff check
+	uv run ruff format --check
 
 .PHONY: examples
 examples:

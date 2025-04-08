@@ -1,5 +1,7 @@
-class MasterIO(object):
+from __future__ import annotations
 
+
+class MasterIO:
     def __init__(self, filename):
         """Create an IO object attached to a file.
 

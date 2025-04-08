@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from math import pi
 import unittest
+from math import pi
 
 import numpy as np
 
-from splipy import Surface, BSplineBasis
 import splipy.surface_factory as sf
+from splipy import BSplineBasis, Surface
 
 
 class TestSurface(unittest.TestCase):
@@ -41,10 +41,10 @@ class TestSurface(unittest.TestCase):
 
         # test constructor with single basis
         b = BSplineBasis(4)
-        surf = Surface(b,b)
-        surf.insert_knot(.3, 'u') # change one, but not the other
-        self.assertEqual(len(surf.knots('u')), 3)
-        self.assertEqual(len(surf.knots('v')), 2)
+        surf = Surface(b, b)
+        surf.insert_knot(0.3, "u")  # change one, but not the other
+        self.assertEqual(len(surf.knots("u")), 3)
+        self.assertEqual(len(surf.knots("v")), 2)
 
         # TODO: Include a default constructor specifying nothing, or just polynomial degrees, or just knot vectors.
         #       This should create identity mappings
@@ -56,7 +56,7 @@ class TestSurface(unittest.TestCase):
             basis2 = BSplineBasis(2, [0, 0, 1, 1])
             surf = Surface(basis1, basis2, controlpoints)  # illegal knot vector
         with self.assertRaises(ValueError):
-            basis1 = BSplineBasis(2, [0, 0, .5, 1, 1])
+            basis1 = BSplineBasis(2, [0, 0, 0.5, 1, 1])
             basis2 = BSplineBasis(2, [0, 0, 1, 1])
             surf = Surface(basis1, basis2, controlpoints)  # too few controlpoints
         # TODO: Create fail tests for rational surfaces with weights equal to zero
@@ -78,14 +78,13 @@ class TestSurface(unittest.TestCase):
         # creating the mapping:
         #   x(u,v) = u^2*v + u(1-v)
         #   y(u,v) = v
-        controlpoints = [[0, 0], [1.0 / 4, 0], [3.0 / 4, 0], [.75, 0], [0, 1], [0, 1], [.5, 1], [1,
-                                                                                                 1]]
-        basis1 = BSplineBasis(3, [0, 0, 0, .5, 1, 1, 1])
+        controlpoints = [[0, 0], [1.0 / 4, 0], [3.0 / 4, 0], [0.75, 0], [0, 1], [0, 1], [0.5, 1], [1, 1]]
+        basis1 = BSplineBasis(3, [0, 0, 0, 0.5, 1, 1, 1])
         basis2 = BSplineBasis(2, [0, 0, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
 
         # call evaluation at a 5x4 grid of points
-        val = surf([0, .2, .5, .6, 1], [0, .2, .4, 1])
+        val = surf([0, 0.2, 0.5, 0.6, 1], [0, 0.2, 0.4, 1])
         self.assertEqual(len(val.shape), 3)  # result should be wrapped in 3-index tensor
         self.assertEqual(val.shape[0], 5)  # 5 evaluation points in u-direction
         self.assertEqual(val.shape[1], 4)  # 4 evaluation points in v-direction
@@ -109,13 +108,13 @@ class TestSurface(unittest.TestCase):
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            val = surf(-10, .5)  # evalaute outside parametric domain
+            val = surf(-10, 0.5)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf(+10, .3)  # evalaute outside parametric domain
+            val = surf(+10, 0.3)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf(.5, -10)  # evalaute outside parametric domain
+            val = surf(0.5, -10)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf(.5, +10)  # evalaute outside parametric domain
+            val = surf(0.5, +10)  # evalaute outside parametric domain
 
     def test_derivative(self):
         # knot vector [t_1, t_2, ... t_{n+p+1}]
@@ -132,37 +131,36 @@ class TestSurface(unittest.TestCase):
         # creating the mapping:
         #   x(u,v) = u^2*v + u(1-v)
         #   y(u,v) = v
-        controlpoints = [[0, 0], [1.0 / 4, 0], [3.0 / 4, 0], [.75, 0], [0, 1], [0, 1], [.5, 1], [1,
-                                                                                                 1]]
-        basis1 = BSplineBasis(3, [0, 0, 0, .5, 1, 1, 1])
+        controlpoints = [[0, 0], [1.0 / 4, 0], [3.0 / 4, 0], [0.75, 0], [0, 1], [0, 1], [0.5, 1], [1, 1]]
+        basis1 = BSplineBasis(3, [0, 0, 0, 0.5, 1, 1, 1])
         basis2 = BSplineBasis(2, [0, 0, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
 
         # call evaluation at a 5x4 grid of points
-        val = surf.derivative([0, .2, .5, .6, 1], [0, .2, .4, 1], d=(1, 0))
+        val = surf.derivative([0, 0.2, 0.5, 0.6, 1], [0, 0.2, 0.4, 1], d=(1, 0))
         self.assertEqual(len(val.shape), 3)  # result should be wrapped in 3-index tensor
         self.assertEqual(val.shape[0], 5)  # 5 evaluation points in u-direction
         self.assertEqual(val.shape[1], 4)  # 4 evaluation points in v-direction
         self.assertEqual(val.shape[2], 2)  # 2 coordinates (x,y)
 
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(1, 0))[0], .88)  # dx/du=2uv+(1-v)
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(1, 0))[1], 0)  # dy/du=0
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(0, 1))[0], -.16)  # dx/dv=u^2-u
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(0, 1))[1], 1)  # dy/dv=1
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(1, 1))[0], -.60)  # d2x/dudv=2u-1
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(2, 0))[0], 0.40)  # d2x/dudu=2v
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(3, 0))[0], 0.00)  # d3x/du3=0
-        self.assertAlmostEqual(surf.derivative(.2, .2, d=(0, 2))[0], 0.00)  # d2y/dv2=0
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(1, 0))[0], 0.88)  # dx/du=2uv+(1-v)
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(1, 0))[1], 0)  # dy/du=0
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(0, 1))[0], -0.16)  # dx/dv=u^2-u
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(0, 1))[1], 1)  # dy/dv=1
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(1, 1))[0], -0.60)  # d2x/dudv=2u-1
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(2, 0))[0], 0.40)  # d2x/dudu=2v
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(3, 0))[0], 0.00)  # d3x/du3=0
+        self.assertAlmostEqual(surf.derivative(0.2, 0.2, d=(0, 2))[0], 0.00)  # d2y/dv2=0
 
         # test errors and exceptions
         with self.assertRaises(ValueError):
-            val = surf.derivative(-10, .5)  # evalaute outside parametric domain
+            val = surf.derivative(-10, 0.5)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.derivative(+10, .3)  # evalaute outside parametric domain
+            val = surf.derivative(+10, 0.3)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.derivative(.5, -10)  # evalaute outside parametric domain
+            val = surf.derivative(0.5, -10)  # evalaute outside parametric domain
         with self.assertRaises(ValueError):
-            val = surf.derivative(.5, +10)  # evalaute outside parametric domain
+            val = surf.derivative(0.5, +10)  # evalaute outside parametric domain
 
     def test_rational_derivative(self):
         # testing the parametrization x(u,v) = [.5*u^3*(1-v)^3 / ((1-v)^3*(1-u)^3 + .5*u^3*(1-v)^3), 0]
@@ -170,70 +168,92 @@ class TestSurface(unittest.TestCase):
         # d2x/du2 =  -(12*u*(u^5 - 3*u^4 + 2*u^3 + 4*u^2 - 6*u + 2))/(u^3 - 6*u^2 + 6*u - 2)^3
         # d3x/du3 =  (12*(3*u^8 - 12*u^7 + 10*u^6 + 48*u^5 - 156*u^4 + 176*u^3 - 72*u^2 + 4))/(u^3 - 6*u^2 + 6*u - 2)^4
         # dx/dv   =  0
-        controlpoints = [[ 0,0, 1],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [.5,0,.5],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0],
-                         [ 0,0, 0]]
+        controlpoints = [
+            [0, 0, 1],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0.5, 0, 0.5],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+        ]
         basis = BSplineBasis(4)
         surf = Surface(basis, basis, controlpoints, rational=True)
-        def expect_derivative(u,v):
-            return (6*u**2*(u - 1)**2)/(u**3 - 6*u**2 + 6*u - 2)**2
-        def expect_derivative_2(u,v):
-            return -(12*u*(u**5 - 3*u**4 + 2*u**3 + 4*u**2 - 6*u + 2))/(u**3 - 6*u**2 + 6*u - 2)**3
-        def expect_derivative_3(u,v):
-            return (12*(3*u**8 - 12*u**7 + 10*u**6 + 48*u**5 - 156*u**4 + 176*u**3 - 72*u**2 + 4))/(u**3 - 6*u**2 + 6*u - 2)**4
+
+        def expect_derivative(u, v):
+            return (6 * u**2 * (u - 1) ** 2) / (u**3 - 6 * u**2 + 6 * u - 2) ** 2
+
+        def expect_derivative_2(u, v):
+            return (
+                -(12 * u * (u**5 - 3 * u**4 + 2 * u**3 + 4 * u**2 - 6 * u + 2))
+                / (u**3 - 6 * u**2 + 6 * u - 2) ** 3
+            )
+
+        def expect_derivative_3(u, v):
+            return (
+                12 * (3 * u**8 - 12 * u**7 + 10 * u**6 + 48 * u**5 - 156 * u**4 + 176 * u**3 - 72 * u**2 + 4)
+            ) / (u**3 - 6 * u**2 + 6 * u - 2) ** 4
 
         # insert a few more knots to spice things up
-        surf.insert_knot([.3, .51],     0)
-        surf.insert_knot([.41,.53,.92], 1)
+        surf.insert_knot([0.3, 0.51], 0)
+        surf.insert_knot([0.41, 0.53, 0.92], 1)
 
         # test first derivatives
-        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1,0))[0], expect_derivative(0.32, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1,0))[1], 0)
-        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(1,0))[0], expect_derivative(0.71, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(1,0))[0], expect_derivative(0.71, 0.62))
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1, 0))[0], expect_derivative(0.32, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1, 0))[1], 0)
+        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(1, 0))[0], expect_derivative(0.71, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(1, 0))[0], expect_derivative(0.71, 0.62))
 
         # test second derivatives
-        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(2,0))[0], expect_derivative_2(0.32, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(2,0))[0], expect_derivative_2(0.71, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(2,0))[0], expect_derivative_2(0.71, 0.62))
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(2, 0))[0], expect_derivative_2(0.32, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(2, 0))[0], expect_derivative_2(0.71, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(2, 0))[0], expect_derivative_2(0.71, 0.62))
 
         # all cross derivatives vanish in this particular example
-        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1,1))[0], 0)
-        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(2,1))[0], 0)
-        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1,2))[0], 0)
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1, 1))[0], 0)
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(2, 1))[0], 0)
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(1, 2))[0], 0)
 
         # test third derivatives
-        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(3,0))[0], expect_derivative_3(0.32, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(3,0))[0], expect_derivative_3(0.71, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(3,0))[0], expect_derivative_3(0.71, 0.62))
+        self.assertAlmostEqual(surf.derivative(0.32, 0.22, d=(3, 0))[0], expect_derivative_3(0.32, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.22, d=(3, 0))[0], expect_derivative_3(0.71, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.71, 0.62, d=(3, 0))[0], expect_derivative_3(0.71, 0.62))
 
         # swapping u for v and symmetric logic
         surf.swap()
-        self.assertAlmostEqual(surf.derivative(0.22, 0.32, d=(0,2))[0], expect_derivative_2(0.32, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.22, 0.71, d=(0,2))[0], expect_derivative_2(0.71, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.62, 0.71, d=(0,2))[0], expect_derivative_2(0.71, 0.62))
-        self.assertAlmostEqual(surf.derivative(0.22, 0.32, d=(0,3))[0], expect_derivative_3(0.32, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.22, 0.71, d=(0,3))[0], expect_derivative_3(0.71, 0.22))
-        self.assertAlmostEqual(surf.derivative(0.62, 0.71, d=(0,3))[0], expect_derivative_3(0.71, 0.62))
+        self.assertAlmostEqual(surf.derivative(0.22, 0.32, d=(0, 2))[0], expect_derivative_2(0.32, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.22, 0.71, d=(0, 2))[0], expect_derivative_2(0.71, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.62, 0.71, d=(0, 2))[0], expect_derivative_2(0.71, 0.62))
+        self.assertAlmostEqual(surf.derivative(0.22, 0.32, d=(0, 3))[0], expect_derivative_3(0.32, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.22, 0.71, d=(0, 3))[0], expect_derivative_3(0.71, 0.22))
+        self.assertAlmostEqual(surf.derivative(0.62, 0.71, d=(0, 3))[0], expect_derivative_3(0.71, 0.62))
 
     def test_raise_order(self):
         # more or less random 2D surface with p=[2,2] and n=[4,3]
-        controlpoints = [[0, 0], [-1, 1], [0, 2], [1, -1], [1, 0], [1, 1], [2, 1], [2, 2], [2, 3],
-                         [3, 0], [4, 1], [3, 2]]
-        basis1 = BSplineBasis(3, [0, 0, 0, .4, 1, 1, 1])
+        controlpoints = [
+            [0, 0],
+            [-1, 1],
+            [0, 2],
+            [1, -1],
+            [1, 0],
+            [1, 1],
+            [2, 1],
+            [2, 2],
+            [2, 3],
+            [3, 0],
+            [4, 1],
+            [3, 2],
+        ]
+        basis1 = BSplineBasis(3, [0, 0, 0, 0.4, 1, 1, 1])
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
 
@@ -252,9 +272,21 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
 
         # test a rational 2D surface
-        controlpoints = [[0, 0, 1], [-1, 1, .96], [0, 2, 1], [1, -1, 1], [1, 0, .8], [1, 1, 1],
-                         [2, 1, .89], [2, 2, .9], [2, 3, 1], [3, 0, 1], [4, 1, 1], [3, 2, 1]]
-        basis1 = BSplineBasis(3, [0, 0, 0, .4, 1, 1, 1])
+        controlpoints = [
+            [0, 0, 1],
+            [-1, 1, 0.96],
+            [0, 2, 1],
+            [1, -1, 1],
+            [1, 0, 0.8],
+            [1, 1, 1],
+            [2, 1, 0.89],
+            [2, 2, 0.9],
+            [2, 3, 1],
+            [3, 0, 1],
+            [4, 1, 1],
+            [3, 2, 1],
+        ]
+        basis1 = BSplineBasis(3, [0, 0, 0, 0.4, 1, 1, 1])
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints, True)
 
@@ -274,8 +306,20 @@ class TestSurface(unittest.TestCase):
 
     def test_insert_knot(self):
         # more or less random 2D surface with p=[3,2] and n=[4,3]
-        controlpoints = [[0, 0], [-1, 1], [0, 2], [1, -1], [1, 0], [1, 1], [2, 1], [2, 2], [2, 3],
-                         [3, 0], [4, 1], [3, 2]]
+        controlpoints = [
+            [0, 0],
+            [-1, 1],
+            [0, 2],
+            [1, -1],
+            [1, 0],
+            [1, 1],
+            [2, 1],
+            [2, 2],
+            [2, 3],
+            [3, 0],
+            [4, 1],
+            [3, 2],
+        ]
         basis1 = BSplineBasis(4, [0, 0, 0, 0, 2, 2, 2, 2])
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
@@ -283,10 +327,10 @@ class TestSurface(unittest.TestCase):
         # pick some evaluation point (could be anything)
         evaluation_point1 = surf(0.23, 0.37)
 
-        surf.insert_knot(.22,     0)
-        surf.insert_knot(.5,      0)
-        surf.insert_knot(.7,      0)
-        surf.insert_knot(.1,      1)
+        surf.insert_knot(0.22, 0)
+        surf.insert_knot(0.5, 0)
+        surf.insert_knot(0.7, 0)
+        surf.insert_knot(0.1, 1)
         surf.insert_knot(1.0 / 3, 1)
         knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 11)  # 8 to start with, 3 new ones
@@ -299,18 +343,30 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(evaluation_point1[1], evaluation_point2[1])
 
         # test a rational 2D surface
-        controlpoints = [[0, 0, 1], [-1, 1, .96], [0, 2, 1], [1, -1, 1], [1, 0, .8], [1, 1, 1],
-                         [2, 1, .89], [2, 2, .9], [2, 3, 1], [3, 0, 1], [4, 1, 1], [3, 2, 1]]
-        basis1 = BSplineBasis(3, [0, 0, 0, .4, 1, 1, 1])
+        controlpoints = [
+            [0, 0, 1],
+            [-1, 1, 0.96],
+            [0, 2, 1],
+            [1, -1, 1],
+            [1, 0, 0.8],
+            [1, 1, 1],
+            [2, 1, 0.89],
+            [2, 2, 0.9],
+            [2, 3, 1],
+            [3, 0, 1],
+            [4, 1, 1],
+            [3, 2, 1],
+        ]
+        basis1 = BSplineBasis(3, [0, 0, 0, 0.4, 1, 1, 1])
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints, True)
 
         evaluation_point1 = surf(0.23, 0.37)
 
-        surf.insert_knot(.22,     0)
-        surf.insert_knot(.5,      0)
-        surf.insert_knot(.7,      0)
-        surf.insert_knot(.1,      1)
+        surf.insert_knot(0.22, 0)
+        surf.insert_knot(0.5, 0)
+        surf.insert_knot(0.7, 0)
+        surf.insert_knot(0.1, 1)
         surf.insert_knot(1.0 / 3, 1)
         knot1, knot2 = surf.knots(with_multiplicities=True)
         self.assertEqual(len(knot1), 10)  # 7 to start with, 3 new ones
@@ -326,7 +382,7 @@ class TestSurface(unittest.TestCase):
         with self.assertRaises(TypeError):
             surf.insert_knot(1, 2, 3)  # too many arguments
         with self.assertRaises(ValueError):
-            surf.insert_knot("tree-fiddy", .5)  # wrong argument type
+            surf.insert_knot("tree-fiddy", 0.5)  # wrong argument type
         with self.assertRaises(ValueError):
             surf.insert_knot(0, -0.2)  # Outside-domain error
         with self.assertRaises(ValueError):
@@ -334,16 +390,28 @@ class TestSurface(unittest.TestCase):
 
     def test_force_rational(self):
         # more or less random 3D surface with p=[3,2] and n=[4,3]
-        controlpoints = [[0, 0, 1], [-1, 1, 1], [0, 2, 1], [1, -1, 1], [1, 0, 1], [1, 1, 1],
-                         [2, 1, 1], [2, 2, 1], [2, 3, 1], [3, 0, 1], [4, 1, 1], [3, 2, 1]]
+        controlpoints = [
+            [0, 0, 1],
+            [-1, 1, 1],
+            [0, 2, 1],
+            [1, -1, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [2, 1, 1],
+            [2, 2, 1],
+            [2, 3, 1],
+            [3, 0, 1],
+            [4, 1, 1],
+            [3, 2, 1],
+        ]
         basis1 = BSplineBasis(4, [0, 0, 0, 0, 2, 2, 2, 2])
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
 
-        evaluation_point1 = surf(0.23, .66)
+        evaluation_point1 = surf(0.23, 0.66)
         control_point1 = surf[0]
         surf.force_rational()
-        evaluation_point2 = surf(0.23, .66)
+        evaluation_point2 = surf(0.23, 0.66)
         control_point2 = surf[0]
         # ensure that surface has not chcanged, by comparing evaluation of it
         self.assertAlmostEqual(evaluation_point1[0], evaluation_point2[0])
@@ -357,16 +425,28 @@ class TestSurface(unittest.TestCase):
 
     def test_swap(self):
         # more or less random 3D surface with p=[2,2] and n=[4,3]
-        controlpoints = [[0, 0, 1], [-1, 1, 1], [0, 2, 1], [1, -1, 1], [1, 0, .5], [1, 1, 1],
-                         [2, 1, 1], [2, 2, .5], [2, 3, 1], [3, 0, 1], [4, 1, 1], [3, 2, 1]]
-        basis1 = BSplineBasis(3, [0, 0, 0, .64, 2, 2, 2])
+        controlpoints = [
+            [0, 0, 1],
+            [-1, 1, 1],
+            [0, 2, 1],
+            [1, -1, 1],
+            [1, 0, 0.5],
+            [1, 1, 1],
+            [2, 1, 1],
+            [2, 2, 0.5],
+            [2, 3, 1],
+            [3, 0, 1],
+            [4, 1, 1],
+            [3, 2, 1],
+        ]
+        basis1 = BSplineBasis(3, [0, 0, 0, 0.64, 2, 2, 2])
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
 
-        evaluation_point1 = surf(0.23, .56)
+        evaluation_point1 = surf(0.23, 0.56)
         control_point1 = surf[1]  # this is control point i=(1,0), when n=(4,3)
         surf.swap()
-        evaluation_point2 = surf(0.56, .23)
+        evaluation_point2 = surf(0.56, 0.23)
         control_point2 = surf[3]  # this is control point i=(0,1), when n=(3,4)
 
         # ensure that surface has not chcanged, by comparing evaluation of it
@@ -381,8 +461,20 @@ class TestSurface(unittest.TestCase):
 
     def test_split(self):
         # test a rational 2D surface
-        controlpoints = [[0, 0, 1], [-1, 1, .96], [0, 2, 1], [1, -1, 1], [1, 0, .8], [1, 1, 1],
-                         [2, 1, .89], [2, 2, .9], [2, 3, 1], [3, 0, 1], [4, 1, 1], [3, 2, 1]]
+        controlpoints = [
+            [0, 0, 1],
+            [-1, 1, 0.96],
+            [0, 2, 1],
+            [1, -1, 1],
+            [1, 0, 0.8],
+            [1, 1, 1],
+            [2, 1, 0.89],
+            [2, 2, 0.9],
+            [2, 3, 1],
+            [3, 0, 1],
+            [4, 1, 1],
+            [3, 2, 1],
+        ]
         basis1 = BSplineBasis(3, [1, 1, 1, 1.4, 5, 5, 5])
         basis2 = BSplineBasis(3, [2, 2, 2, 7, 7, 7])
         surf = Surface(basis1, basis2, controlpoints, True)
@@ -425,59 +517,59 @@ class TestSurface(unittest.TestCase):
 
     def test_reparam(self):
         # identity mapping, control points generated from knot vector
-        basis1 = BSplineBasis(4, [2,2,2,2,3,6,7,7,7,7])
-        basis2 = BSplineBasis(3, [-3,-3,-3,20,30,31,31,31])
+        basis1 = BSplineBasis(4, [2, 2, 2, 2, 3, 6, 7, 7, 7, 7])
+        basis2 = BSplineBasis(3, [-3, -3, -3, 20, 30, 31, 31, 31])
         surf = Surface(basis1, basis2)
 
-        self.assertAlmostEqual(surf.start(0),  2)
-        self.assertAlmostEqual(surf.end(0),    7)
+        self.assertAlmostEqual(surf.start(0), 2)
+        self.assertAlmostEqual(surf.end(0), 7)
         self.assertAlmostEqual(surf.start(1), -3)
-        self.assertAlmostEqual(surf.end(1),   31)
+        self.assertAlmostEqual(surf.end(1), 31)
 
-        surf.reparam((4,10), (0,9))
-        self.assertAlmostEqual(surf.start(0),  4)
-        self.assertAlmostEqual(surf.end(0),   10)
-        self.assertAlmostEqual(surf.start(1),  0)
-        self.assertAlmostEqual(surf.end(1),    9)
+        surf.reparam((4, 10), (0, 9))
+        self.assertAlmostEqual(surf.start(0), 4)
+        self.assertAlmostEqual(surf.end(0), 10)
+        self.assertAlmostEqual(surf.start(1), 0)
+        self.assertAlmostEqual(surf.end(1), 9)
 
-        surf.reparam((5,11), direction=0)
-        self.assertAlmostEqual(surf.start(0),  5)
-        self.assertAlmostEqual(surf.end(0),   11)
-        self.assertAlmostEqual(surf.start(1),  0)
-        self.assertAlmostEqual(surf.end(1),    9)
+        surf.reparam((5, 11), direction=0)
+        self.assertAlmostEqual(surf.start(0), 5)
+        self.assertAlmostEqual(surf.end(0), 11)
+        self.assertAlmostEqual(surf.start(1), 0)
+        self.assertAlmostEqual(surf.end(1), 9)
 
-        surf.reparam((5,11), direction='v')
-        self.assertAlmostEqual(surf.start(0),  5)
-        self.assertAlmostEqual(surf.end(0),   11)
-        self.assertAlmostEqual(surf.start(1),  5)
-        self.assertAlmostEqual(surf.end(1),   11)
+        surf.reparam((5, 11), direction="v")
+        self.assertAlmostEqual(surf.start(0), 5)
+        self.assertAlmostEqual(surf.end(0), 11)
+        self.assertAlmostEqual(surf.start(1), 5)
+        self.assertAlmostEqual(surf.end(1), 11)
 
-        surf.reparam((-9,9))
+        surf.reparam((-9, 9))
         self.assertAlmostEqual(surf.start(0), -9)
-        self.assertAlmostEqual(surf.end(0),    9)
-        self.assertAlmostEqual(surf.start(1),  0)
-        self.assertAlmostEqual(surf.end(1),    1)
+        self.assertAlmostEqual(surf.end(0), 9)
+        self.assertAlmostEqual(surf.start(1), 0)
+        self.assertAlmostEqual(surf.end(1), 1)
 
         surf.reparam()
-        self.assertAlmostEqual(surf.start(0),  0)
-        self.assertAlmostEqual(surf.end(0),    1)
-        self.assertAlmostEqual(surf.start(1),  0)
-        self.assertAlmostEqual(surf.end(1),    1)
+        self.assertAlmostEqual(surf.start(0), 0)
+        self.assertAlmostEqual(surf.end(0), 1)
+        self.assertAlmostEqual(surf.start(1), 0)
+        self.assertAlmostEqual(surf.end(1), 1)
 
-        surf.reparam((4,10), (0,9))
+        surf.reparam((4, 10), (0, 9))
         surf.reparam(direction=1)
-        self.assertAlmostEqual(surf.start(0),  4)
-        self.assertAlmostEqual(surf.end(0),   10)
-        self.assertAlmostEqual(surf.start(1),  0)
-        self.assertAlmostEqual(surf.end(1),    1)
+        self.assertAlmostEqual(surf.start(0), 4)
+        self.assertAlmostEqual(surf.end(0), 10)
+        self.assertAlmostEqual(surf.start(1), 0)
+        self.assertAlmostEqual(surf.end(1), 1)
 
     def test_periodic_split(self):
         # create a double-periodic spline on the knot vector [-1,0,0,1,1,2,2,3,3,4,4,5]*pi/2
         surf = sf.torus()
 
-        surf2 = surf.split( pi/2, 0) # split on existing knot
-        surf3 = surf.split( 1.23, 1) # split between knots
-        surf4 = surf2.split(pi,   1) # split both periodicities
+        surf2 = surf.split(pi / 2, 0)  # split on existing knot
+        surf3 = surf.split(1.23, 1)  # split between knots
+        surf4 = surf2.split(pi, 1)  # split both periodicities
 
         # check periodicity tags
         self.assertEqual(surf.periodic(0), True)
@@ -490,12 +582,12 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(surf4.periodic(1), False)
 
         # check parametric domain boundaries
-        self.assertAlmostEqual(surf2.start(0),   pi/2)
-        self.assertAlmostEqual(surf2.end(0),   5*pi/2)
-        self.assertAlmostEqual(surf3.start(0),      0)
-        self.assertAlmostEqual(surf3.end(0),     2*pi)
-        self.assertAlmostEqual(surf3.start(1),   1.23)
-        self.assertAlmostEqual(surf3.end(1),   1.23+2*pi)
+        self.assertAlmostEqual(surf2.start(0), pi / 2)
+        self.assertAlmostEqual(surf2.end(0), 5 * pi / 2)
+        self.assertAlmostEqual(surf3.start(0), 0)
+        self.assertAlmostEqual(surf3.end(0), 2 * pi)
+        self.assertAlmostEqual(surf3.start(1), 1.23)
+        self.assertAlmostEqual(surf3.end(1), 1.23 + 2 * pi)
 
         # check knot vector lengths
         self.assertEqual(len(surf2.knots(0, True)), 12)
@@ -506,231 +598,250 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(len(surf4.knots(1, True)), 12)
 
         # check that evaluation is unchanged over a 9x9 grid of shared parametric coordinates
-        u   = np.linspace(pi/2, 2*pi, 9)
-        v   = np.linspace(pi,   2*pi, 9)
-        pt  = surf( u,v)
-        pt2 = surf2(u,v)
-        pt3 = surf3(u,v)
-        pt4 = surf4(u,v)
-        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(pt-pt3), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(pt-pt4), 0.0)
+        u = np.linspace(pi / 2, 2 * pi, 9)
+        v = np.linspace(pi, 2 * pi, 9)
+        pt = surf(u, v)
+        pt2 = surf2(u, v)
+        pt3 = surf3(u, v)
+        pt4 = surf4(u, v)
+        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt - pt3), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt - pt4), 0.0)
 
     def test_make_identical(self):
-        basis1 = BSplineBasis(4, [-1,-1,0,0,1,2,9,9,10,10,11,12], periodic=1)
-        basis2 = BSplineBasis(2, [0,0,.25,1,1])
-        cp    = [[0,0,0,1], [1,0,0,1.1], [2,0,0,1], [0,1,0,.7], [1,1,0,.8], [2,1,0,1], [0,2,0,1], [1,2,0,1.2], [2,2,0,1]]
-        surf1 = Surface(BSplineBasis(3), BSplineBasis(3), cp, True) # rational 3D
-        surf2 = Surface(basis1, basis2)                             # periodic 2D
-        surf1.insert_knot([0.25, .5, .75], direction='v')
+        basis1 = BSplineBasis(4, [-1, -1, 0, 0, 1, 2, 9, 9, 10, 10, 11, 12], periodic=1)
+        basis2 = BSplineBasis(2, [0, 0, 0.25, 1, 1])
+        cp = [
+            [0, 0, 0, 1],
+            [1, 0, 0, 1.1],
+            [2, 0, 0, 1],
+            [0, 1, 0, 0.7],
+            [1, 1, 0, 0.8],
+            [2, 1, 0, 1],
+            [0, 2, 0, 1],
+            [1, 2, 0, 1.2],
+            [2, 2, 0, 1],
+        ]
+        surf1 = Surface(BSplineBasis(3), BSplineBasis(3), cp, True)  # rational 3D
+        surf2 = Surface(basis1, basis2)  # periodic 2D
+        surf1.insert_knot([0.25, 0.5, 0.75], direction="v")
 
-        Surface.make_splines_identical(surf1,surf2)
+        Surface.make_splines_identical(surf1, surf2)
 
         for s in (surf1, surf2):
             self.assertEqual(s.periodic(0), False)
             self.assertEqual(s.periodic(1), False)
-            self.assertEqual(s.dimension,   3)
+            self.assertEqual(s.dimension, 3)
             self.assertEqual(s.rational, True)
-            self.assertEqual(s.order(), (4,3))
+            self.assertEqual(s.order(), (4, 3))
 
             self.assertAlmostEqual(len(s.knots(0, True)), 12)
             self.assertAlmostEqual(len(s.knots(1, True)), 10)
 
-            self.assertEqual(s.bases[1].continuity(.25), 0)
-            self.assertEqual(s.bases[1].continuity(.75), 1)
-            self.assertEqual(s.bases[0].continuity(.2), 2)
-            self.assertEqual(s.bases[0].continuity(.9), 1)
+            self.assertEqual(s.bases[1].continuity(0.25), 0)
+            self.assertEqual(s.bases[1].continuity(0.75), 1)
+            self.assertEqual(s.bases[0].continuity(0.2), 2)
+            self.assertEqual(s.bases[0].continuity(0.9), 1)
 
     def test_center(self):
         # make an ellipse at (2,1)
         surf = sf.disc(3)
         print(surf)
-        surf.scale((3,1))
-        surf += (2,1)
+        surf.scale((3, 1))
+        surf += (2, 1)
         center = surf.center()
         self.assertEqual(len(center), 2)
         self.assertAlmostEqual(center[0], 2.0)
         self.assertAlmostEqual(center[1], 1.0)
 
     def test_reverse(self):
-        basis1 = BSplineBasis(4, [2,2,2,2,3,6,7,7,7,7])
-        basis2 = BSplineBasis(3, [-3,-3,-3,20,30,31,31,31])
-        surf  = Surface(basis1, basis2)
+        basis1 = BSplineBasis(4, [2, 2, 2, 2, 3, 6, 7, 7, 7, 7])
+        basis2 = BSplineBasis(3, [-3, -3, -3, 20, 30, 31, 31, 31])
+        surf = Surface(basis1, basis2)
         surf2 = Surface(basis1, basis2)
         surf3 = Surface(basis1, basis2)
 
-        surf2.reverse('v')
-        surf3.reverse('u')
+        surf2.reverse("v")
+        surf3.reverse("u")
 
         for i in range(6):
             # loop over surf forward, and surf2 backward (in 'v'-direction)
-            for (cp1, cp2) in zip(surf[i,:,:], surf2[i,::-1,:]):
+            for cp1, cp2 in zip(surf[i, :, :], surf2[i, ::-1, :]):
                 self.assertAlmostEqual(cp1[0], cp2[0])
                 self.assertAlmostEqual(cp1[1], cp2[1])
 
         for j in range(5):
             # loop over surf forward, and surf3 backward (in 'u'-direction)
-            for (cp1, cp2) in zip(surf[:,j,:], surf3[::-1,j,:]):
+            for cp1, cp2 in zip(surf[:, j, :], surf3[::-1, j, :]):
                 self.assertAlmostEqual(cp1[0], cp2[0])
                 self.assertAlmostEqual(cp1[1], cp2[1])
 
-
     def test_repr(self):
-        major, minor, patch = np.version.version.split('.')
-        if int(major) <=1 and int(minor) <= 13:
-            self.assertEqual(repr(Surface()), 'p=2, [ 0.  0.  1.  1.]\n'
-                                              'p=2, [ 0.  0.  1.  1.]\n'
-                                              '[ 0.  0.]\n'
-                                              '[ 1.  0.]\n'
-                                              '[ 0.  1.]\n'
-                                              '[ 1.  1.]\n')
-
+        major, minor, patch = np.version.version.split(".")
+        if int(major) <= 1 and int(minor) <= 13:
+            self.assertEqual(
+                repr(Surface()),
+                "p=2, [ 0.  0.  1.  1.]\n"
+                "p=2, [ 0.  0.  1.  1.]\n"
+                "[ 0.  0.]\n"
+                "[ 1.  0.]\n"
+                "[ 0.  1.]\n"
+                "[ 1.  1.]\n",
+            )
 
     def test_edges(self):
         (umin, umax, vmin, vmax) = Surface().edges()
         # check controlpoints
-        self.assertAlmostEqual(umin[0,0], 0)
-        self.assertAlmostEqual(umin[0,1], 0)
-        self.assertAlmostEqual(umin[1,0], 0)
-        self.assertAlmostEqual(umin[1,1], 1)
+        self.assertAlmostEqual(umin[0, 0], 0)
+        self.assertAlmostEqual(umin[0, 1], 0)
+        self.assertAlmostEqual(umin[1, 0], 0)
+        self.assertAlmostEqual(umin[1, 1], 1)
 
-        self.assertAlmostEqual(umax[0,0], 1)
-        self.assertAlmostEqual(umax[0,1], 0)
-        self.assertAlmostEqual(umax[1,0], 1)
-        self.assertAlmostEqual(umax[1,1], 1)
+        self.assertAlmostEqual(umax[0, 0], 1)
+        self.assertAlmostEqual(umax[0, 1], 0)
+        self.assertAlmostEqual(umax[1, 0], 1)
+        self.assertAlmostEqual(umax[1, 1], 1)
 
-        self.assertAlmostEqual(vmin[0,0], 0)
-        self.assertAlmostEqual(vmin[0,1], 0)
-        self.assertAlmostEqual(vmin[1,0], 1)
-        self.assertAlmostEqual(vmin[1,1], 0)
+        self.assertAlmostEqual(vmin[0, 0], 0)
+        self.assertAlmostEqual(vmin[0, 1], 0)
+        self.assertAlmostEqual(vmin[1, 0], 1)
+        self.assertAlmostEqual(vmin[1, 1], 0)
 
         # check a slightly more general surface
-        cp = [[0,0], [.5, -.5], [1, 0],
-              [-.6,1], [1, 1], [2, 1.4],
-              [0,2], [.8, 3], [2, 2.4]]
+        cp = [[0, 0], [0.5, -0.5], [1, 0], [-0.6, 1], [1, 1], [2, 1.4], [0, 2], [0.8, 3], [2, 2.4]]
         surf = Surface(BSplineBasis(3), BSplineBasis(3), cp)
-        edg  = surf.edges()
-        u   = np.linspace(0,1, 9)
-        v   = np.linspace(0,1, 9)
+        edg = surf.edges()
+        u = np.linspace(0, 1, 9)
+        v = np.linspace(0, 1, 9)
 
-        pt  = surf(0,v)
+        pt = surf(0, v)
         pt2 = edg[0](v)
-        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
 
-        pt  = surf(1,v)
+        pt = surf(1, v)
         pt2 = edg[1](v)
-        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
 
-        pt  = surf(u,0).reshape(9,2)
+        pt = surf(u, 0).reshape(9, 2)
         pt2 = edg[2](u)
-        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
 
-        pt  = surf(u,1).reshape(9,2)
+        pt = surf(u, 1).reshape(9, 2)
         pt2 = edg[3](u)
-        self.assertAlmostEqual(np.linalg.norm(pt-pt2), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
 
     def test_normal(self):
         surf = sf.sphere(1)
         surf.swap()
-        u    = np.linspace(surf.start(0) + 1e-3, surf.end(0) - 1e-3, 9)
-        v    = np.linspace(surf.start(1) + 1e-3, surf.end(1) - 1e-3, 9)
+        u = np.linspace(surf.start(0) + 1e-3, surf.end(0) - 1e-3, 9)
+        v = np.linspace(surf.start(1) + 1e-3, surf.end(1) - 1e-3, 9)
 
-        xpts = surf(u,v,tensor=False)
-        npts = surf.normal(u,v,tensor=False)
+        xpts = surf(u, v, tensor=False)
+        npts = surf.normal(u, v, tensor=False)
 
-        self.assertEqual(npts.shape, (9,3))
+        self.assertEqual(npts.shape, (9, 3))
 
         # check that the normal is pointing out of the unit ball on a 9x9 evaluation grid
-        for (x,n) in zip(xpts, npts):
+        for x, n in zip(xpts, npts):
             self.assertAlmostEqual(n[0], x[0])
             self.assertAlmostEqual(n[1], x[1])
             self.assertAlmostEqual(n[2], x[2])
 
-        xpts = surf(u,v)
-        npts = surf.normal(u,v)
+        xpts = surf(u, v)
+        npts = surf.normal(u, v)
 
-        self.assertEqual(npts.shape, (9,9,3))
+        self.assertEqual(npts.shape, (9, 9, 3))
 
         # check that the normal is pointing out of the unit ball on a 9x9 evaluation grid
-        for (i,j) in zip(xpts, npts):
-            for (x,n) in zip(i,j):
+        for i, j in zip(xpts, npts):
+            for x, n in zip(i, j):
                 self.assertAlmostEqual(n[0], x[0])
                 self.assertAlmostEqual(n[1], x[1])
                 self.assertAlmostEqual(n[2], x[2])
 
         # check single value input
-        n = surf.normal(0,0)
+        n = surf.normal(0, 0)
         self.assertEqual(len(n), 3)
 
         # test 2D surface
         s = Surface()
-        n = s.normal(.5,.5)
+        n = s.normal(0.5, 0.5)
         self.assertEqual(len(n), 3)
         self.assertAlmostEqual(n[0], 0.0)
         self.assertAlmostEqual(n[1], 0.0)
         self.assertAlmostEqual(n[2], 1.0)
-        n = s.normal([.25, .5], [.1,.2,.3,.4,.5,.6,.7,.8,.9])
+        n = s.normal([0.25, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
         self.assertEqual(n.shape[0], 2)
         self.assertEqual(n.shape[1], 9)
         self.assertEqual(n.shape[2], 3)
-        self.assertAlmostEqual(n[1,4,0], 0.0)
-        self.assertAlmostEqual(n[1,4,1], 0.0)
-        self.assertAlmostEqual(n[1,4,2], 1.0)
+        self.assertAlmostEqual(n[1, 4, 0], 0.0)
+        self.assertAlmostEqual(n[1, 4, 1], 0.0)
+        self.assertAlmostEqual(n[1, 4, 2], 1.0)
 
-        n = s.normal([.25, .5, .75], [.3, .5, .9], tensor=False)
-        self.assertEqual(n.shape, (3,3))
+        n = s.normal([0.25, 0.5, 0.75], [0.3, 0.5, 0.9], tensor=False)
+        self.assertEqual(n.shape, (3, 3))
         for i in range(3):
             for j in range(2):
-                self.assertAlmostEqual(n[i,j], 0.0)
-            self.assertAlmostEqual(n[i,2], 1.0)
+                self.assertAlmostEqual(n[i, j], 0.0)
+            self.assertAlmostEqual(n[i, 2], 1.0)
 
         # test errors
-        s = Surface(BSplineBasis(3), BSplineBasis(3), [[0]]*9) # 1D-surface
+        s = Surface(BSplineBasis(3), BSplineBasis(3), [[0]] * 9)  # 1D-surface
         with self.assertRaises(RuntimeError):
-            s.normal(.5, .5)
+            s.normal(0.5, 0.5)
 
     def test_area(self):
         s = Surface()
         self.assertAlmostEqual(s.area(), 1.0)
-        s = Surface(controlpoints=[[-2,0,1], [2,0,1], [-1,1,1], [1,1,1]])
+        s = Surface(controlpoints=[[-2, 0, 1], [2, 0, 1], [-1, 1, 1], [1, 1, 1]])
         self.assertAlmostEqual(s.area(), 3.0)
 
     def test_const_par_crv(self):
         # more or less random 2D surface with p=[2,2] and n=[4,3]
-        controlpoints = [[0, 0], [-1, 1], [0, 2], [1, -1], [1, 0], [1, 1], [2, 1], [2, 2], [2, 3],
-                         [3, 0], [4, 1], [3, 2]]
-        basis1 = BSplineBasis(3, [0, 0, 0, .4, 1, 1, 1])
+        controlpoints = [
+            [0, 0],
+            [-1, 1],
+            [0, 2],
+            [1, -1],
+            [1, 0],
+            [1, 1],
+            [2, 1],
+            [2, 2],
+            [2, 3],
+            [3, 0],
+            [4, 1],
+            [3, 2],
+        ]
+        basis1 = BSplineBasis(3, [0, 0, 0, 0.4, 1, 1, 1])
         basis2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
         surf = Surface(basis1, basis2, controlpoints)
         surf.refine(1)
 
         # try general knot in u-direction
-        crv = surf.const_par_curve(0.3, 'u')
-        v = np.linspace(0,1,13)
+        crv = surf.const_par_curve(0.3, "u")
+        v = np.linspace(0, 1, 13)
         self.assertTrue(np.allclose(surf(0.3, v), crv(v)))
 
         # try existing knot in u-direction
-        crv = surf.const_par_curve(0.4, 'u')
-        v = np.linspace(0,1,13)
+        crv = surf.const_par_curve(0.4, "u")
+        v = np.linspace(0, 1, 13)
         self.assertTrue(np.allclose(surf(0.4, v), crv(v)))
 
         # try general knot in v-direction
-        crv = surf.const_par_curve(0.3, 'v')
-        u = np.linspace(0,1,13)
-        self.assertTrue(np.allclose(surf(u, 0.3).reshape(13,2), crv(u)))
+        crv = surf.const_par_curve(0.3, "v")
+        u = np.linspace(0, 1, 13)
+        self.assertTrue(np.allclose(surf(u, 0.3).reshape(13, 2), crv(u)))
 
         # try start-point
-        crv = surf.const_par_curve(0.0, 'v')
-        u = np.linspace(0,1,13)
-        self.assertTrue(np.allclose(surf(u, 0.0).reshape(13,2), crv(u)))
+        crv = surf.const_par_curve(0.0, "v")
+        u = np.linspace(0, 1, 13)
+        self.assertTrue(np.allclose(surf(u, 0.0).reshape(13, 2), crv(u)))
 
         # try end-point
-        crv = surf.const_par_curve(1.0, 'v')
-        u = np.linspace(0,1,13)
-        self.assertTrue(np.allclose(surf(u, 1.0).reshape(13,2), crv(u)))
+        crv = surf.const_par_curve(1.0, "v")
+        u = np.linspace(0, 1, 13)
+        self.assertTrue(np.allclose(surf(u, 1.0).reshape(13, 2), crv(u)))
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
