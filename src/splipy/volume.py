@@ -8,7 +8,7 @@ from .basis import BSplineBasis
 from .splineobject import SplineObject
 from .utils import ensure_listlike, check_direction, sections
 
-__all__ = ['Volume']
+__all__ = ["Volume"]
 
 
 class Volume(SplineObject):
@@ -19,7 +19,7 @@ class Volume(SplineObject):
     _intended_pardim = 3
 
     def __init__(self, basis1=None, basis2=None, basis3=None, controlpoints=None, rational=False, **kwargs):
-        """  Construct a volume with the given basis and control points.
+        """Construct a volume with the given basis and control points.
 
         The default is to create a linear one-element mapping from and to the
         unit cube.
@@ -63,26 +63,26 @@ class Volume(SplineObject):
         :rtype: (Surface)
         """
         boundary_faces = [self.section(*args) for args in sections(3, 2)]
-        for i,b in enumerate(self.bases):
+        for i, b in enumerate(self.bases):
             if b.periodic > -1:
-                boundary_faces[2*i  ] = None
-                boundary_faces[2*i+1] = None
+                boundary_faces[2 * i] = None
+                boundary_faces[2 * i + 1] = None
         return tuple(boundary_faces)
 
     def volume(self):
-        """ Computes the volume of the object in geometric space """
+        """Computes the volume of the object in geometric space"""
         # fetch integration points
-        (x1,w1) = np.polynomial.legendre.leggauss(self.order(0)+1)
-        (x2,w2) = np.polynomial.legendre.leggauss(self.order(1)+1)
-        (x3,w3) = np.polynomial.legendre.leggauss(self.order(2)+1)
+        (x1, w1) = np.polynomial.legendre.leggauss(self.order(0) + 1)
+        (x2, w2) = np.polynomial.legendre.leggauss(self.order(1) + 1)
+        (x3, w3) = np.polynomial.legendre.leggauss(self.order(2) + 1)
         # map points to parametric coordinates (and update the weights)
-        (knots1,knots2,knots3) = self.knots()
-        u  = np.array([ (x1+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots1[:-1], knots1[1:]) ])
-        w1 = np.array([     w1/2*(t1-t0)    for t0,t1 in zip(knots1[:-1], knots1[1:]) ])
-        v  = np.array([ (x2+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots2[:-1], knots2[1:]) ])
-        w2 = np.array([     w2/2*(t1-t0)    for t0,t1 in zip(knots2[:-1], knots2[1:]) ])
-        w  = np.array([ (x3+1)/2*(t1-t0)+t0 for t0,t1 in zip(knots3[:-1], knots3[1:]) ])
-        w3 = np.array([     w3/2*(t1-t0)    for t0,t1 in zip(knots3[:-1], knots3[1:]) ])
+        (knots1, knots2, knots3) = self.knots()
+        u = np.array([(x1 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots1[:-1], knots1[1:])])
+        w1 = np.array([w1 / 2 * (t1 - t0) for t0, t1 in zip(knots1[:-1], knots1[1:])])
+        v = np.array([(x2 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots2[:-1], knots2[1:])])
+        w2 = np.array([w2 / 2 * (t1 - t0) for t0, t1 in zip(knots2[:-1], knots2[1:])])
+        w = np.array([(x3 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots3[:-1], knots3[1:])])
+        w3 = np.array([w3 / 2 * (t1 - t0) for t0, t1 in zip(knots3[:-1], knots3[1:])])
 
         # wrap everything to vectors
         u = np.ndarray.flatten(u)
@@ -93,20 +93,20 @@ class Volume(SplineObject):
         w3 = np.ndarray.flatten(w3)
 
         # compute all quantities of interest (i.e. the jacobian)
-        du = self.derivative(u,v,w, d=(1,0,0))
-        dv = self.derivative(u,v,w, d=(0,1,0))
-        dw = self.derivative(u,v,w, d=(0,0,1))
+        du = self.derivative(u, v, w, d=(1, 0, 0))
+        dv = self.derivative(u, v, w, d=(0, 1, 0))
+        dw = self.derivative(u, v, w, d=(0, 0, 1))
 
         c1 = dv[..., 1] * dw[..., 2] - dv[..., 2] * dw[..., 1]
         c2 = dv[..., 0] * dw[..., 2] - dv[..., 2] * dw[..., 0]
         c3 = dv[..., 0] * dw[..., 1] - dv[..., 1] * dw[..., 0]
 
-        J  = du[:,:,:,0] * c1 - du[:,:,:,1] * c2 + du[:,:,:,2] * c3
+        J = du[:, :, :, 0] * c1 - du[:, :, :, 1] * c2 + du[:, :, :, 2] * c3
 
         return np.abs(J).dot(w3).dot(w2).dot(w1)
 
     def rebuild(self, p, n):
-        """  Creates an approximation to this volume by resampling it using
+        """Creates an approximation to this volume by resampling it using
         uniform knot vectors of order *p* with *n* control points.
 
         :param (int) p: Tuple of polynomial discretization order in each direction
@@ -130,7 +130,7 @@ class Volume(SplineObject):
             basis[i].normalize()
             t0 = old_basis[i].start()
             t1 = old_basis[i].end()
-            basis[i] *= (t1 - t0)
+            basis[i] *= t1 - t0
             basis[i] += t0
 
             # fetch evaluation points and evaluate basis functions
@@ -153,15 +153,15 @@ class Volume(SplineObject):
         return Volume(basis[0], basis[1], basis[2], cp)
 
     def __repr__(self):
-        result = str(self.bases[0]) + '\n'
-        result += str(self.bases[1]) + '\n'
-        result += str(self.bases[2]) + '\n'
+        result = str(self.bases[0]) + "\n"
+        result += str(self.bases[1]) + "\n"
+        result += str(self.bases[2]) + "\n"
         # print legacy controlpoint enumeration
         n1, n2, n3, dim = self.controlpoints.shape
         for k in range(n3):
             for j in range(n2):
                 for i in range(n1):
-                    result += str(self.controlpoints[i, j, k, :]) + '\n'
+                    result += str(self.controlpoints[i, j, k, :]) + "\n"
         return result
 
     get_derivative_volume = SplineObject.get_derivative_spline

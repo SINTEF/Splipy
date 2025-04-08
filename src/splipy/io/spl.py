@@ -12,27 +12,26 @@ from .master import MasterIO
 
 
 class SPL(MasterIO):
-
     def __init__(self, filename):
-        if not filename.endswith('.spl'):
-            filename += '.spl'
+        if not filename.endswith(".spl"):
+            filename += ".spl"
         self.filename = filename
         self.trimming_curves = []
 
     def __enter__(self):
-        self.fstream = open(self.filename, 'r')
+        self.fstream = open(self.filename, "r")
         return self
 
     def lines(self):
         for line in self.fstream:
-            yield line.split('#', maxsplit=1)[0].strip()
+            yield line.split("#", maxsplit=1)[0].strip()
 
     def read(self):
         lines = self.lines()
 
         version = next(lines).split()
-        assert version[0] == 'C'
-        assert version[3] == '0' # No support for rational SPL yet
+        assert version[0] == "C"
+        assert version[3] == "0"  # No support for rational SPL yet
         pardim = int(version[1])
         physdim = int(version[2])
 
@@ -41,7 +40,7 @@ class SPL(MasterIO):
         totcoeffs = int(np.prod(ncoeffs))
         nknots = [a + b for a, b in zip(orders, ncoeffs)]
 
-        next(lines) # Skip spline accuracy
+        next(lines)  # Skip spline accuracy
 
         knots = [[float(k) for k in islice(lines, nkts)] for nkts in nknots]
         bases = [BSplineBasis(p, kts, -1) for p, kts in zip(orders, knots)]

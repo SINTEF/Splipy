@@ -1,5 +1,4 @@
 class MasterIO(object):
-
     def __init__(self, filename):
         """Create an IO object attached to a file.
 

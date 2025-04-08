@@ -1,4 +1,4 @@
-__doc__ = 'Implementation of various curve utilities'
+__doc__ = "Implementation of various curve utilities"
 
 import numpy as np
 
@@ -14,11 +14,11 @@ def curve_length_parametrization(pts, normalize=False):
     """
     knots = [0.0]
     for i in range(1, pts.shape[0]):
-        knots.append(knots[-1] + np.linalg.norm(pts[i,:] - pts[i-1,:]))
+        knots.append(knots[-1] + np.linalg.norm(pts[i, :] - pts[i - 1, :]))
 
     if normalize:
         length = knots[-1]
-        knots = [k/length for k in knots]
+        knots = [k / length for k in knots]
 
     return knots
 
