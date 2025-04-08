@@ -11,6 +11,7 @@ requires-python = ">=3.11,<4.0"
 dependencies = [
     "numpy>=1.25",
     "scipy>=1.10",
+    "splipy-core",
 ]
 
 [build-system]
@@ -85,7 +86,7 @@ filename = "core/src/splipy_core/__init__.py"
 filename = "doc/conf.py"
 
 [tool.uv.sources]
-splipy_core = { workspace = true }
+splipy-core = { workspace = true }
 
 [tool.uv.workspace]
 members = [ "core" ]

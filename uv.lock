@@ -1147,11 +1147,12 @@ wheels = [
 
 [[package]]
 name = "splipy"
-version = "1.9.2"
+version = "1.10.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "scipy" },
+    { name = "splipy-core" },
 ]
 
 [package.dev-dependencies]
@@ -1176,6 +1177,7 @@ rhino = [
 requires-dist = [
     { name = "numpy", specifier = ">=1.25" },
     { name = "scipy", specifier = ">=1.10" },
+    { name = "splipy-core", editable = "core" },
 ]
 
 [package.metadata.requires-dev]
@@ -1192,7 +1194,7 @@ rhino = [{ name = "rhino3dm", specifier = ">=8.17.0" }]
 
 [[package]]
 name = "splipy-core"
-version = "1.9.2"
+version = "1.10.0"
 source = { editable = "core" }
 dependencies = [
     { name = "numpy" },
