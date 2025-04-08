@@ -46,8 +46,9 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(len(surf.knots("u")), 3)
         self.assertEqual(len(surf.knots("v")), 2)
 
-        # TODO: Include a default constructor specifying nothing, or just polynomial degrees, or just knot vectors.
-        #       This should create identity mappings
+        # TODO(Kjetil): Include a default constructor specifying nothing, or
+        # just polynomial degrees, or just knot vectors. This should create
+        # identity mappings.
 
         # test errors and exceptions
         controlpoints = [[0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]]
@@ -59,9 +60,9 @@ class TestSurface(unittest.TestCase):
             basis1 = BSplineBasis(2, [0, 0, 0.5, 1, 1])
             basis2 = BSplineBasis(2, [0, 0, 1, 1])
             surf = Surface(basis1, basis2, controlpoints)  # too few controlpoints
-        # TODO: Create fail tests for rational surfaces with weights equal to zero
-        #       Create fail tests for providing too few control points
-        #       Create fail tests for providing too many control points
+        # TODO(Kjetil): Create fail tests for rational surfaces with weights
+        # equal to zero Create fail tests for providing too few control points
+        # Create fail tests for providing too many control points.
 
     def test_evaluate(self):
         # knot vector [t_1, t_2, ... t_{n+p+1}]
@@ -166,7 +167,7 @@ class TestSurface(unittest.TestCase):
         # testing the parametrization x(u,v) = [.5*u^3*(1-v)^3 / ((1-v)^3*(1-u)^3 + .5*u^3*(1-v)^3), 0]
         # dx/du   =  (6*u^2*(u - 1)^2)/(u^3 - 6*u^2 + 6*u - 2)^2
         # d2x/du2 =  -(12*u*(u^5 - 3*u^4 + 2*u^3 + 4*u^2 - 6*u + 2))/(u^3 - 6*u^2 + 6*u - 2)^3
-        # d3x/du3 =  (12*(3*u^8 - 12*u^7 + 10*u^6 + 48*u^5 - 156*u^4 + 176*u^3 - 72*u^2 + 4))/(u^3 - 6*u^2 + 6*u - 2)^4
+        # d3x/du3 =  (12*(3*u^8 - 12*u^7 + 10*u^6 + 48*u^5 - 156*u^4 + 176*u^3 - 72*u^2 + 4))/(u^3 - 6*u^2 + 6*u - 2)^4  # noqa: E501
         # dx/dv   =  0
         controlpoints = [
             [0, 0, 1],

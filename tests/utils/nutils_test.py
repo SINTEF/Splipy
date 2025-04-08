@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 from splipy import Surface, Volume
-from splipy.utils.nutils import *
+from splipy.utils.nutils import controlpoints, multiplicities
 
 
 class TestNutilsUtils(unittest.TestCase):

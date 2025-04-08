@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-try:
-    from splipy.io import ThreeDM
-
-    has_rhino = True
-except ImportError:
-    has_rhino = False
-
-import os
+import importlib.util
 import unittest
+from pathlib import Path
 
 import numpy as np
 from numpy import cos, pi, sin
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+has_rhino = importlib.util.find_spec("rhino3dm")
+if has_rhino:
+    from splipy.io import ThreeDM
+
+THIS_DIR = str(Path(__file__).parent)
 
 
 class Test3DM(unittest.TestCase):

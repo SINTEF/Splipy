@@ -32,7 +32,7 @@ class Surface(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Surface, self).__init__([basis1, basis2], controlpoints, rational, **kwargs)
+        super().__init__([basis1, basis2], controlpoints, rational, **kwargs)
 
     def normal(self, u, v, above=(True, True), tensor=True):
         """Evaluate the normal of the surface at given parametric values.
@@ -113,7 +113,7 @@ class Surface(SplineObject):
         squeeze = all(is_singleton(t) for t in [u, v])
         derivs = ensure_listlike(d, self.pardim)
         if not self.rational or np.sum(derivs) < 2 or np.sum(derivs) > 3:
-            return super(Surface, self).derivative(u, v, d=derivs, above=above, tensor=tensor)
+            return super().derivative(u, v, d=derivs, above=above, tensor=tensor)
 
         u = ensure_listlike(u)
         v = ensure_listlike(v)
@@ -240,15 +240,9 @@ class Surface(SplineObject):
         du = self.derivative(u, v, d=(1, 0))
         dv = self.derivative(u, v, d=(0, 1))
 
-        if self.dimension == 2:
-            J = du[..., 0] * dv[..., 1] - du[..., 1] * dv[..., 0]
-        else:
-            J = np.cross(du, dv)
+        J = du[..., 0] * dv[..., 1] - du[..., 1] * dv[..., 0] if self.dimension == 2 else np.cross(du, dv)
 
-        if self.dimension == 3:
-            J = np.sqrt(np.sum(J**2, axis=2))
-        else:
-            J = np.abs(J)
+        J = np.sqrt(np.sum(J**2, axis=2)) if self.dimension == 3 else np.abs(J)
         return w1.dot(J).dot(w2)
 
     def edges(self):

@@ -4,8 +4,8 @@ import unittest
 
 import numpy as np
 
-from splipy import *
-from splipy.utils.smooth import *
+from splipy import BSplineBasis, Curve, Surface
+from splipy.utils.smooth import smooth
 
 
 class TestSmooth(unittest.TestCase):

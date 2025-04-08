@@ -1470,7 +1470,7 @@ class TestRebuild(unittest.TestCase):
 
         self.assertAlmostEqual(np.max(np.abs(pt - pt2)), 0.0, places=2)
 
-    def test_curve_2D_p4_rational_C1_periodic(self):
+    def test_curve_2D_p4_rational_C1_periodic_2(self):
         controlpoints = np.array(
             [
                 [97.0, 2.0, 0.9],
@@ -1635,7 +1635,7 @@ class TestRebuild(unittest.TestCase):
 
         self.assertAlmostEqual(np.max(np.abs(pt - pt2)), 0.0, places=2)
 
-    def test_curve_2D_p4(self):
+    def test_curve_2D_p4_2(self):
         controlpoints = np.array(
             [
                 [-3.0, -1.0],
@@ -2760,7 +2760,7 @@ class TestRebuild(unittest.TestCase):
         pt2 = vol2(u, v, w)
         self.assertAlmostEqual(np.max(np.abs(pt - pt2)), 0.0, places=2)
 
-    def test_curve_3D_p4_rational_C1_periodic(self):
+    def test_curve_3D_p4_rational_C1_periodic_2(self):
         controlpoints = np.array(
             [
                 [99.0, -2.0, -2.0, 0.8],
@@ -6525,7 +6525,7 @@ class TestRebuild(unittest.TestCase):
 
         self.assertAlmostEqual(np.max(np.abs(pt - pt2)), 0.0, places=3)
 
-    def test_curve_2D_p5_C1_periodic(self):
+    def test_curve_2D_p5_C1_periodic_2(self):
         controlpoints = np.array(
             [
                 [104.0, -4.0],
@@ -9927,7 +9927,7 @@ class TestRebuild(unittest.TestCase):
         pt2 = crv2(u)
         self.assertAlmostEqual(np.max(np.abs(pt - pt2)), 0.0, places=2)
 
-    def test_surface_3D_p55_C1_periodic(self):
+    def test_surface_3D_p55_C1_periodic_2(self):
         controlpoints = np.array(
             [
                 [62.0, 1.0, -3.0],

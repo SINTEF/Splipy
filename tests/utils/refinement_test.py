@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from splipy import *
-from splipy.utils.refinement import *
+from splipy import Curve, Surface, Volume
+from splipy.utils.refinement import center_refine, edge_refine, geometric_refine, subdivide
 
 
 class TestRefinement(unittest.TestCase):

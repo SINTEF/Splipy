@@ -7,8 +7,8 @@ from math import sqrt
 
 import numpy as np
 
-from .. import curve_factory, surface_factory
-from ..basis import BSplineBasis
+from splipy import curve_factory, surface_factory
+from splipy.basis import BSplineBasis
 
 
 def get_corners(X, L=50, R=30, D=15):
@@ -67,19 +67,13 @@ def get_corners(X, L=50, R=30, D=15):
     j = 0
     while j + 1 < l:
         if abs(C[j] - C[j + 1]) <= R:
-            if d[C[j]] > d[C[j + 1]]:
-                C = np.delete(C, j + 1)
-            else:
-                C = np.delete(C, j)
+            C = np.delete(C, j + 1) if d[C[j]] > d[C[j + 1]] else np.delete(C, j)
             l = l - 1
         else:
             j = j + 1
 
     if l > 0 and abs(C[0] + n - C[-1]) <= R:
-        if d[C[-1]] > d[C[0]]:
-            C = C[1:-1]
-        else:
-            C = C[0:-2]
+        C = C[1:-1] if d[C[-1]] > d[C[0]] else C[0:-2]
 
     # always include end-points in corner list, and never closer than 4 indices
     if 0 not in C:
@@ -124,11 +118,7 @@ def image_curves(filename):
 
     # find contour curves in image
     if cv2.__version__[0] == "3":
-        warnings.warn(
-            FutureWarning(
-                'openCV v.3 will eventually be discontinued. Please update your version: "pip install opencv-python --upgrade"'
-            )
-        )
+        warnings.warn(FutureWarning("OpenCV v.3 will eventually be discontinued. Please upgrade."))
         [_, contours, _] = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     else:
         [contours, _] = cv2.findContours(imBlack, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
@@ -164,7 +154,7 @@ def image_curves(filename):
         for i in range(nStart + 1):
             knot.append(int(1.0 * i * (n - 1) / nStart))
         c = corners.tolist()
-        knot = sorted(list(set(knot + c)))  # unique sorted list
+        knot = sorted(set(knot + c))  # unique sorted list
 
         # make sure there is at least one knot between corners
         newKnot = []

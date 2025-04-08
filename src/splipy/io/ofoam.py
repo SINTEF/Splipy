@@ -2,24 +2,25 @@ from __future__ import annotations
 
 from itertools import groupby
 from operator import itemgetter
-from os import makedirs
-from os.path import exists, isdir, join
+from pathlib import Path
 
 import numpy as np
 
-from ..splinemodel import SplineModel
+from splipy.splinemodel import SplineModel
 
 
 class OpenFOAM:
+    target: Path
+
     def __init__(self, target):
-        self.target = target
+        self.target = Path(target)
 
     def __enter__(self):
         # Create the target directory if it does not exist
-        if not exists(self.target):
-            makedirs(target)
+        if not self.target.exists():
+            self.target.mkdir(parents=True, exist_ok=True)
         # If it does, ensure that it's a directory
-        elif not isdir(self.target):
+        elif not self.target.is_dir():
             raise FileExistsError(f"{self.target} exists and is not a directory")
 
         return self
@@ -31,10 +32,10 @@ class OpenFOAM:
         s = "FoamFile\n{\n"
         s += "    version     2.0;\n"
         s += "    format      ascii;\n"
-        s += "    class       %s;\n" % cls
+        s += f"    class       {cls};\n"
         if note:
-            s += '    note        "%s";\n' % note
-        s += "    object      %s;\n" % obj
+            s += f'    note        "{note}";\n'
+        s += f"    object      {obj};\n"
         s += "}\n"
         return s
 
@@ -50,8 +51,10 @@ class OpenFOAM:
         model.generate_cp_numbers()
         model.generate_cell_numbers()
         faces = model.faces()
-        ninternal = sum(faces["name"] == None)
-        note = f"nPoints: {model.ncps} nCells: {model.ncells} nFaces: {len(faces)} nInternalFaces: {ninternal}"
+        ninternal = sum(faces["name"] is None)
+        note = (
+            f"nPoints: {model.ncps} nCells: {model.ncells} nFaces: {len(faces)} nInternalFaces: {ninternal}"
+        )
 
         # OpenFOAM is very particular about face ordering
         # In order of importance:
@@ -66,7 +69,7 @@ class OpenFOAM:
         faces = np.array(faces)
 
         # Write the points file (vertex coordinates)
-        with open(join(self.target, "points"), "w") as f:
+        with (self.target / "points").open("w") as f:
             f.write(self._header("vectorField", "points"))
             f.write(str(model.ncps) + "\n(\n")
             for pt in model.cps():
@@ -74,7 +77,7 @@ class OpenFOAM:
             f.write(")\n")
 
         # Write the faces file (four vertex indices for each face)
-        with open(join(self.target, "faces"), "w") as f:
+        with (self.target / "faces").open("w") as f:
             f.write(self._header("faceList", "faces"))
             f.write(str(len(faces)) + "\n(\n")
             for face in faces["nodes"]:
@@ -82,13 +85,14 @@ class OpenFOAM:
             f.write(")\n")
 
         # Write the owner and neighbour files (cell indices for each face)
-        with open(join(self.target, "owner"), "w") as f:
+        with (self.target / "owner").open("w") as f:
             f.write(self._header("labelList", "owner", note=note))
             f.write(str(len(faces)) + "\n(\n")
             for owner in faces["owner"]:
                 f.write(str(owner) + "\n")
             f.write(")\n")
-        with open(join(self.target, "neighbour"), "w") as f:
+
+        with (self.target / "neighbour").open("w") as f:
             f.write(self._header("labelList", "neighbour", note=note))
             f.write(str(len(faces)) + "\n(\n")
             for neighbor in faces["neighbor"]:
@@ -96,7 +100,7 @@ class OpenFOAM:
             f.write(")\n")
 
         # Write the boundary file
-        with open(join(self.target, "boundary"), "w") as f:
+        with (self.target / "boundary").open("w") as f:
             f.write(self._header("polyBoundaryMesh", "boundary"))
             f.write(str(len(set(faces["name"])) - 1) + "\n(\n")
             start = 0

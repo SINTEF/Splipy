@@ -1,27 +1,26 @@
 from __future__ import annotations
 
+import importlib.util
 import unittest
 from math import pi
+from pathlib import Path
 
 import numpy as np
 
 from splipy import Curve, Surface
 
-try:
-    import cv2
-
-    has_image = True
-except ImportError:
-    has_image = False
+has_image = bool(importlib.util.find_spec("cv2"))
 
 if has_image:
-    from splipy.utils.image import *
+    from splipy.utils.image import image_convex_surface, image_curves, image_height
+
+THIS_DIR = str(Path(__file__).parent)
 
 
 class TestImage(unittest.TestCase):
     @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_curve(self):
-        crv = image_curves("test/utils/disc.png")
+        crv = image_curves(f"{THIS_DIR}/disc.png")
         self.assertEqual(type(crv), list)
         crv = crv[0]
         self.assertEqual(type(crv), Curve)
@@ -39,7 +38,7 @@ class TestImage(unittest.TestCase):
 
     @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_surface(self):
-        disc = image_convex_surface("test/utils/disc.png")
+        disc = image_convex_surface(f"{THIS_DIR}/disc.png")
         self.assertEqual(type(disc), Surface)
 
         bb = disc.bounding_box()
@@ -50,10 +49,11 @@ class TestImage(unittest.TestCase):
 
     @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_height_disc(self):
-        hill = image_height("test/utils/disc.png", N=[30, 30], p=[3, 3])
+        hill = image_height(f"{THIS_DIR}/disc.png", N=[30, 30], p=[3, 3])
         self.assertEqual(type(hill), Surface)
 
-        # computes \int z(u,v) dxdv where x is an approximation to x={0 inside circle, 1 outside circle}, radius=0.48
+        # computes \int z(u,v) dxdv where x is an approximation to
+        # x={0 inside circle, 1 outside circle}, radius=0.48
         center = hill.center()  # computes integral
         area_under_graph = center[-1]  # look at z-component
         r = 0.484  # same image used for edge detector so need white area between circle edge and image edge
@@ -63,7 +63,7 @@ class TestImage(unittest.TestCase):
 
     @unittest.skipIf(not has_image, "Image module requires OpenCV 2")
     def test_height_orient(self):
-        surf = image_height("test/utils/gray_corners.png")  # rectangular input file
+        surf = image_height(f"{THIS_DIR}/gray_corners.png")  # rectangular input file
         self.assertEqual(type(surf), Surface)
 
         self.assertAlmostEqual(surf[0, 0, 0], 0)  # check x-coordinates

@@ -4,12 +4,14 @@ from math import pi
 
 import numpy as np
 
+rng = np.random.default_rng()
+
 
 def gen_knot(n, p, periodic):
     m = n + (periodic + 2)
     result = [0] * p + range(1, m - p) + [m - p] * p
     result = np.array(result, "float")
-    result[p : m - 1] += (np.random.rand(m - p - 1) - 0.5) * 0.8
+    result[p : m - 1] += (rng.random(m - p - 1) - 0.5) * 0.8
     result = np.round(result * 10) / 10  # set precision to one digit
     for i in range(periodic + 1):
         result[-periodic + i - 1] += result[p + i]
@@ -25,7 +27,7 @@ def gen_cp_curve(n, dim, periodic):
         cp[:, 1] = 100 * np.sin(t[:-1])
     else:
         cp[:, 0] = np.linspace(0, 100, n)
-    cp += (np.random.rand(n, dim) - 0.5) * 10
+    cp += (rng.random((n, dim)) - 0.5) * 10
     return np.floor(cp)
 
 
@@ -41,7 +43,7 @@ def gen_cp_surface(n, dim, periodic):
         y, x = np.meshgrid(np.linspace(0, 100, n[1]), np.linspace(0, 100, n[0]))
         cp[:, :, 0] = x
         cp[:, :, 1] = y
-    cp += (np.random.rand(n[0], n[1], dim) - 0.5) * 10
+    cp += (rng.random((n[0], n[1], dim)) - 0.5) * 10
     return np.floor(cp.transpose(1, 0, 2))
 
 
@@ -60,7 +62,7 @@ def gen_cp_volume(n, dim, periodic):
         cp[:, :, :, 0] = x
         cp[:, :, :, 1] = y
         cp[:, :, :, 2] = z
-    cp += (np.random.rand(n[0], n[1], n[2], dim) - 0.5) * 10
+    cp += (rng.random((n[0], n[1], n[2], dim)) - 0.5) * 10
     return np.floor(cp.transpose(2, 1, 0, 3))
 
 
@@ -78,7 +80,7 @@ def gen_controlpoints(n, dim, rational, periodic):
     cp = np.reshape(cp, (total_n, dim))
 
     if rational:
-        w = np.random.rand(total_n) + 0.5
+        w = rng.random(total_n) + 0.5
         w = np.round(w * 10) / 10
         cp = np.insert(cp, dim, w, 1)
 
@@ -87,7 +89,7 @@ def gen_controlpoints(n, dim, rational, periodic):
 
 def write_basis(f, p, knot, periodic):
     for i in range(len(knot)):
-        f.write("        basis%d = BSplineBasis(" % (i) + str(p[i]) + ", np." + repr(knot[i]))
+        f.write(f"        basis{i} = BSplineBasis(" + str(p[i]) + ", np." + repr(knot[i]))
         if periodic > -1 and i == 0:  # only consider periodicity in the first direction
             f.write("," + str(periodic))
         f.write(")\n")
@@ -108,14 +110,14 @@ def get_name(n, p, dim, rational, periodic):
     if rational:
         result += "_rational"
     if periodic > -1:
-        result += "_C%d_periodic" % periodic
+        result += f"_C{periodic}_periodic"
     return result
 
 
 def raise_order(p):
     result = "        crv2.raise_order(2)\n"
     result += "        p = crv2.order()\n"
-    result += "        self.assertEqual(p, %d)\n" % (p + 2)
+    result += f"        self.assertEqual(p, {p + 2})\n"
     return result
 
 
@@ -135,31 +137,28 @@ def write_object_creation(f, rational, pardim, clone=True):
 
 
 def evaluate_curve():
-    result = """
+    return """
         u    = np.linspace(crv.start(0), crv.end(0), 13)
         pt   = crv(u)
         pt2  = crv2(u)
 """
-    return result
 
 
 def evaluate_surface():
-    result = """
+    return """
         u    = np.linspace(surf.start(0), surf.end(0), 9)
         v    = np.linspace(surf.start(1), surf.end(1), 9)
         pt   = surf(u,v)
         pt2  = surf2(u,v)
 
 """
-    return result
 
 
 def evaluate_volume():
-    result = """
+    return """
         u    = np.linspace(vol.start(0), vol.end(0), 7)
         v    = np.linspace(vol.start(1), vol.end(1), 7)
         w    = np.linspace(vol.start(2), vol.end(2), 7)
         pt   = vol(u,v,w)
         pt2  = vol2(u,v,w)
 """
-    return result

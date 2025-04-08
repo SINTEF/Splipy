@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 from numpy import pi, savetxt
 
-from .. import curve_factory, state, surface_factory
-from ..basis import BSplineBasis
-from ..curve import Curve
-from ..splineobject import SplineObject
-from ..surface import Surface
-from ..trimmedsurface import TrimmedSurface
-from ..utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from ..volume import Volume
+from splipy import curve_factory, state, surface_factory
+from splipy.basis import BSplineBasis
+from splipy.curve import Curve
+from splipy.splineobject import SplineObject
+from splipy.surface import Surface
+from splipy.trimmedsurface import TrimmedSurface
+from splipy.utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from splipy.volume import Volume
+
 from .master import MasterIO
 
 
@@ -22,7 +25,7 @@ class G2(MasterIO):
         return line
 
     def circle(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         r = float(next(self.fstream).strip())
         center = np.array(next(self.fstream).split(), dtype=float)
         normal = np.array(next(self.fstream).split(), dtype=float)
@@ -37,7 +40,7 @@ class G2(MasterIO):
         return result
 
     def ellipse(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         r1 = float(next(self.fstream).strip())
         r2 = float(next(self.fstream).strip())
         center = np.array(next(self.fstream).split(), dtype=float)
@@ -53,7 +56,7 @@ class G2(MasterIO):
         return result
 
     def line(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         start = np.array(next(self.fstream).split(), dtype=float)
         direction = np.array(next(self.fstream).split(), dtype=float)
         finite = next(self.fstream).strip() != "0"
@@ -83,7 +86,7 @@ class G2(MasterIO):
     #           param_v=np.array(next(self.fstream).split(' '), dtype=float)
 
     def cylinder(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         r = float(next(self.fstream).strip())
         center = np.array(next(self.fstream).split(), dtype=float)
         z_axis = np.array(next(self.fstream).split(), dtype=float)
@@ -105,7 +108,7 @@ class G2(MasterIO):
         return result
 
     def disc(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         center = np.array(next(self.fstream).split(), dtype=float)
         r = float(next(self.fstream).strip())
         z_axis = np.array(next(self.fstream).split(), dtype=float)
@@ -128,7 +131,7 @@ class G2(MasterIO):
         return result
 
     def plane(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         center = np.array(next(self.fstream).split(), dtype=float)
         normal = np.array(next(self.fstream).split(), dtype=float)
         x_axis = np.array(next(self.fstream).split(), dtype=float)
@@ -150,13 +153,13 @@ class G2(MasterIO):
         return result
 
     def torus(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         r2 = float(next(self.fstream).strip())
         r1 = float(next(self.fstream).strip())
         center = np.array(next(self.fstream).split(), dtype=float)
         z_axis = np.array(next(self.fstream).split(), dtype=float)
         x_axis = np.array(next(self.fstream).split(), dtype=float)
-        select_out = next(self.fstream).strip() != "0"  # I have no idea what this does :(
+        next(self.fstream).strip() != "0"  # I have no idea what this does :(
         param_u = np.array(next(self.fstream).split(), dtype=float)
         param_v = np.array(next(self.fstream).split(), dtype=float)
         swap = next(self.fstream).strip() != "0"
@@ -168,7 +171,7 @@ class G2(MasterIO):
         return result
 
     def sphere(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         r = float(next(self.fstream).strip())
         center = np.array(next(self.fstream).split(), dtype=float)
         z_axis = np.array(next(self.fstream).split(), dtype=float)
@@ -200,7 +203,7 @@ class G2(MasterIO):
         return cls(*args)
 
     def surface_of_linear_extrusion(self):
-        dim = int(self.read_next_non_whitespace().strip())
+        int(self.read_next_non_whitespace().strip())
         crv = self.splines(1)
         normal = np.array(self.read_next_non_whitespace().split(), dtype=float)
         finite = next(self.fstream).strip() != "0"
@@ -288,9 +291,9 @@ class G2(MasterIO):
     def write(self, obj):
         if not hasattr(self, "fstream"):
             self.onlywrite = True
-            self.fstream = open(self.filename, "w")
+            self.fstream = Path(self.filename).open("w")
         if not self.onlywrite:
-            raise OSError("Could not write to file %s" % (self.filename))
+            raise OSError(f"Could not write to file {self.filename}")
 
         """Write the object in GoTools format. """
         if isinstance(obj[0], SplineObject):  # input SplineModel or list
@@ -305,8 +308,8 @@ class G2(MasterIO):
         self.fstream.write(f"{G2.g2_type[obj.pardim - 1]} 1 0 0\n")
         self.fstream.write(f"{obj.dimension} {int(obj.rational)}\n")
         for b in obj.bases:
-            self.fstream.write("%i %i\n" % (len(b.knots) - b.order, b.order))
-            self.fstream.write(" ".join("%.16g" % k for k in b.knots))
+            self.fstream.write(f"{len(b.knots) - b.order} {b.order}\n")
+            self.fstream.write(" ".join(f"{k:.16g}" for k in b.knots))
             self.fstream.write("\n")
 
         savetxt(
@@ -320,10 +323,10 @@ class G2(MasterIO):
     def read(self):
         if not hasattr(self, "fstream"):
             self.onlywrite = False
-            self.fstream = open(self.filename)
+            self.fstream = Path(self.filename).open()
 
         if self.onlywrite:
-            raise OSError("Could not read from file %s" % (self.filename))
+            raise OSError(f"Could not read from file {self.filename}")
 
         result = []
 

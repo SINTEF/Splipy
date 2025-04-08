@@ -4,9 +4,9 @@ __doc__ = "Implementation of convenience methods with respect to nutils integrat
 
 import numpy as np
 
-from ..curve import Curve
-from ..surface import Surface
-from ..volume import Volume
+from splipy.curve import Curve
+from splipy.surface import Surface
+from splipy.volume import Volume
 
 
 def controlpoints(spline):
@@ -44,5 +44,5 @@ def splipy_to_nutils(spline):
     cp = controlpoints(spline)
     basis = domain.basis("spline", degree=degree(spline), knotmultiplicities=multiplicities(spline))
     geom = function.matmat(basis, cp)
-    # TODO: add correct behaviour for rational and/or periodic geometries
+    # TODO(?): add correct behaviour for rational and/or periodic geometries
     return domain, geom

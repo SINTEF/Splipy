@@ -31,7 +31,7 @@ class Volume(SplineObject):
             control points are interpreted as pre-multiplied with the weight,
             which is the last coordinate)
         """
-        super(Volume, self).__init__([basis1, basis2, basis3], controlpoints, rational, **kwargs)
+        super().__init__([basis1, basis2, basis3], controlpoints, rational, **kwargs)
 
     def edges(self):
         """Return the twelve edges of this volume in order:

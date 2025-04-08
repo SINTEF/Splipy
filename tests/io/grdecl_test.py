@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-try:
+import importlib.util
+import unittest
+from pathlib import Path
+
+has_grdecl = (
+    bool(importlib.util.find_spec("h5py"))
+    and bool(importlib.util.find_spec("cv2"))
+    and bool(importlib.util.find_spec("tqdm"))
+)
+if has_grdecl:
     from splipy.io import GRDECL
 
-    has_grdecl = True
-except ImportError:
-    has_grdecl = False
-
-import os
-import unittest
-
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_DIR = str(Path(__file__).parent)
 
 
 class TestGRDECL(unittest.TestCase):

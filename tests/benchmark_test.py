@@ -44,19 +44,19 @@ def move_operator(spline):
 def grid_evaluate(spline, n):
     # create n x...x n evaluation grid
     u = tuple([np.linspace(u0, u1, n) for u0, u1 in zip(spline.start(), spline.end())])
-    x = spline(*u)  # u has 1, 2 or 3 components
+    spline(*u)  # u has 1, 2 or 3 components
 
 
 def derivative_evaluate(spline, n):
     u = tuple([np.linspace(u0, u1, n) for u0, u1 in zip(spline.start(), spline.end())])
     d = [0] * spline.pardim
     d[0] = 1
-    x = spline.derivative(*u, d=d)  # u has 1, 2 or 3 components
+    spline.derivative(*u, d=d)  # u has 1, 2 or 3 components
 
 
 def tangent_evaluate(spline, n):
     u = tuple([np.linspace(u0, u1, n) for u0, u1 in zip(spline.start(), spline.end())])
-    x = spline.tangent(*u)  # u has 1, 2 or 3 components
+    spline.tangent(*u)  # u has 1, 2 or 3 components
 
 
 @pytest.mark.benchmark(group="knot-insert")

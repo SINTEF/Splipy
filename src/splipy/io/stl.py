@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import struct
+from pathlib import Path
 
 import numpy as np
 
-from ..splinemodel import SplineModel
-from ..surface import Surface
-from ..utils import ensure_listlike
-from ..volume import Volume
+from splipy.splinemodel import SplineModel
+from splipy.surface import Surface
+from splipy.utils import ensure_listlike
+from splipy.volume import Volume
+
 from .master import MasterIO
 
 ASCII_FACET = """facet normal 0 0 0
@@ -107,10 +109,10 @@ class STL(MasterIO):
 
     def __enter__(self):
         if self.binary:
-            fp = open(self.filename, "wb")
+            fp = Path(self.filename).open("wb")
             self.writer = BINARY_STL_Writer(fp)
         else:
-            fp = open(self.filename, "w")
+            fp = Path(self.filename).open("w")
             self.writer = ASCII_STL_Writer(fp)
         return self
 
@@ -139,10 +141,10 @@ class STL(MasterIO):
         #   1. specified with input
         #   2. linear splines, only picks knots
         #   3. general splines choose 2*order-1 per knot span
-        if n != None:
+        if n is not None:
             n = ensure_listlike(n, 2)
 
-        if n != None:
+        if n is not None:
             u = np.linspace(surface.start(0), surface.end(0), n[0])
         elif surface.order(0) == 2:
             u = surface.knots(0)
@@ -153,7 +155,7 @@ class STL(MasterIO):
             u = [point for element in u for point in element] + knots
             u = np.sort(u)
 
-        if n != None:
+        if n is not None:
             v = np.linspace(surface.start(1), surface.end(1), n[1])
         elif surface.order(1) == 2:
             v = surface.knots(1)

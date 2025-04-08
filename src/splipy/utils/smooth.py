@@ -32,7 +32,8 @@ def smooth(obj, comp=None):
     # controlpoints[ :  , 1:-1 ,:]        for surfaces which is periodic in 'u'
     # controlpoints[1:-1, 1:-1 ,:-1]      for rational surfaces
     # controlpoints[1:-1, 1:-1 , 1:-1, :] for non-rational volumes
-    # controlpoints[ :  ,  :   ,  :  , :] for non-rational volumes which is periodic in all three parametric directions
+    # controlpoints[ :  ,  :   ,  :  , :] for non-rational volumes which are
+    #                                     periodic in all three parametric directions
     interior = []
     for pardim in range(len(n)):
         if obj.periodic(pardim):

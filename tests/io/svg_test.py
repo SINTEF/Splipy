@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import os
 import unittest
+from pathlib import Path
 
 import splipy.curve_factory as CurveFactory
 import splipy.surface_factory as SurfaceFactory
 from splipy.io import SVG
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_DIR = str(Path(__file__).parent)
 
 
 class TestSVG(unittest.TestCase):
@@ -50,15 +50,15 @@ class TestSVG(unittest.TestCase):
         crv = CurveFactory.polygon([[0, 0], [1, 0], [1, 1], [0, 1]])
         with SVG("output.svg") as myfile:
             myfile.write(crv)
-        self.assertTrue(os.path.isfile("output.svg"))
-        os.remove("output.svg")
+        self.assertTrue(Path("output.svg").is_file())
+        Path("output.svg").unlink()
 
     def test_write_surface(self):
         srf = SurfaceFactory.disc(type="square").rebuild([4, 4], [7, 7])
         with SVG("output.svg") as myfile:
             myfile.write(srf)
-        self.assertTrue(os.path.isfile("output.svg"))
-        os.remove("output.svg")
+        self.assertTrue(Path("output.svg").is_file())
+        Path("output.svg").unlink()
 
     def test_read_github(self):
         with SVG(THIS_DIR + "/geometries/github.svg") as myfile:

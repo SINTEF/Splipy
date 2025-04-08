@@ -4,6 +4,7 @@ from collections import Counter, OrderedDict, namedtuple
 from collections.abc import Callable
 from itertools import chain, islice, permutations, product
 from operator import itemgetter
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -57,7 +58,7 @@ class VertexDict(MutableMapping):
         self.atol = atol
         self._keys = []
         self._values = []
-        self.lut = dict()
+        self.lut = {}
 
     def _bounds(self, key):
         if key >= self.atol:
@@ -250,11 +251,8 @@ class Orientation:
                     test_b,
                     rtol=state.controlpoint_relative_tolerance,
                     atol=state.controlpoint_absolute_tolerance,
-                ):
-                    if all(
-                        [cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i]) for i in range(pardim)]
-                    ):
-                        return cls(perm, flip)
+                ) and all(cpa.bases[i].matches(cpb.bases[perm[i]], reverse=flip[i]) for i in range(pardim)):
+                    return cls(perm, flip)
 
         raise OrientationError("Non-matching objects")
 
@@ -438,7 +436,7 @@ class TopologicalNode:
 
     def assign_higher(self, node):
         """Add a link to a node of higher dimension."""
-        self.higher_nodes.setdefault(node.pardim, list()).append(node)
+        self.higher_nodes.setdefault(node.pardim, []).append(node)
 
     def view(self, other_obj=None):
         """Return a `NodeView` object of this node.
@@ -450,10 +448,7 @@ class TopologicalNode:
         :raises OrientationError: If the object does not match this node's
             underlying object
         """
-        if other_obj:
-            orientation = Orientation.compute(self.obj, other_obj)
-        else:
-            orientation = Orientation.compute(self.obj)
+        orientation = Orientation.compute(self.obj, other_obj) if other_obj else Orientation.compute(self.obj)
         return NodeView(self, orientation)
 
     def _transfer_ownership(self, new_owner):
@@ -545,7 +540,7 @@ class TopologicalNode:
 
             # First, get all internal faces in this direction
             # The owner (lowest cell index) is guaranteed to be toward the lower end
-            # TODO: We assume a right-hand coordinate system here
+            # TODO(Eivind): We assume a right-hand coordinate system here
             nfaces = ncells - nperslice
             faces = np.empty((nfaces,), dtype=face_t)
             faces["nodes"][:, 0] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[:-1])].flatten()
@@ -597,7 +592,8 @@ class TopologicalNode:
                     # Compute the relative orientation
                     ori = Orientation.compute(bdnode.obj, nb_obj)
 
-                    # Get the neighbor cell numbers from the neighbor's perspective, and map them to our system
+                    # Get the neighbor cell numbers from the neighbor's
+                    # perspective, and map them to our system
                     cellidxs = neighbor.cell_numbers[_section_to_index(nb_sec)]
                     faces["neighbor"] = ori.map_array(cellidxs).flatten()
 
@@ -712,7 +708,7 @@ class ObjectCatalogue:
             self.lower = VertexDict()
 
         # Callbacks for events
-        self.callbacks = dict()
+        self.callbacks = {}
 
     def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]):
         """Add a callback function to be called on a given event."""
@@ -869,7 +865,7 @@ class ObjectCatalogue:
         return self.lower.nodes(pardim)
 
 
-# FIXME: This class is unfinished, and right now it doesn't do much other than
+# TODO(Eivind): This class is unfinished, and right now it doesn't do much other than
 # wrap ObjectCatalogue
 
 
@@ -936,7 +932,7 @@ class SplineModel:
             try:
                 self.catalogue.add(p, **kwargs)
             except OrientationError as err:
-                # TODO: Mutating exceptions is fishy.
+                # TODO(Eivind): Mutating exceptions is fishy.
                 if len(err.args) > 1:
                     err.args = (
                         err.args[0] + f" This happened while trying to connect patches at indexes"
@@ -1045,12 +1041,16 @@ class IFEMWriter:
 
         for connection in self.connections():
             lines.append(
-                f'  <connection master="{connection.master}" slave="{connection.slave}" midx="{connection.midx}" sidx="{connection.sidx}" orient="{connection.orient}"/>'
+                f'  <connection master="{connection.master}"'
+                f' slave="{connection.slave}"'
+                f' midx="{connection.midx}"'
+                f' sidx="{connection.sidx}"'
+                f' orient="{connection.orient}"/>'
             )
 
         lines.extend(["</topology>"])
 
-        with open(filename + "-topology.xinp", "wb") as f:
+        with Path(filename + "-topology.xinp").open("wb") as f:
             f.write("\n".join(lines).encode("utf-8") + b"\n")
 
         lines = [
@@ -1085,7 +1085,7 @@ class IFEMWriter:
 
         lines.extend(["</topologysets>"])
 
-        with open(filename + "-topologysets.xinp", "wb") as f:
+        with Path(filename + "-topologysets.xinp").open("wb") as f:
             f.write("\n".join(lines).encode("utf-8") + b"\n")
 
         # Import here to avoid circular dependencies
