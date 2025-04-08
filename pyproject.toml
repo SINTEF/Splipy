@@ -31,8 +31,10 @@ rhino = [
 dev = [
     "bump-my-version>=1.1.1",
     "matplotlib>=3.10.1",
+    "mypy>=1.15.0",
     "pytest>=8.3.5",
     "pytest-benchmark>=5.1.0",
+    "ruff>=0.11.4",
     "sphinx>=8.2.3",
 ]
 
@@ -84,6 +86,53 @@ filename = "core/src/splipy_core/__init__.py"
 
 [[tool.bumpversion.files]]
 filename = "doc/conf.py"
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin"]
+files = ["src/**/*.py", "tests/**/*.py"]
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+show_error_codes = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+# Add path to stubs directory if you need to write stubs
+mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
+
+[tool.ruff]
+line-length = 110
+include = ["src/**/*.py", "core/**/*.py", "tests/**/*.py", "stubs/**/*.pyi", "push_documentation.py"]
+
+[tool.ruff.lint]
+select = [
+    "F",        # Pyflakes rules
+    "W",        # PyCodeStyle warnings
+    "E",        # PyCodeStyle errors
+    "I",        # Sort imports properly
+    "UP",       # Warn if certain things can changed due to newer Python versions
+    "C4",       # Catch incorrect use of comprehensions, dict, list, etc
+    "FA",       # Enforce from __future__ import annotations
+    "ISC",      # Good use of string concatenation
+    "ICN",      # Use common import conventions
+    "RET",      # Good return practices
+    "SIM",      # Common simplification rules
+    "TID",      # Some good import practices
+    "TCH",      # Enforce importing certain types in a TYPE_CHECKING block
+    "PTH",      # Use pathlib instead of os.path
+    "TD",       # Be diligent with TODO comments
+    "NPY",      # Some numpy-specific things
+]
+ignore = [
+    "E741",     # Ambiguous variable name
+    "SIM115",   # Complains if we use __enter__ inside an __enter__ method
+    "TD003",    # Issue links for each todo comment
+]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
 
 [tool.uv.sources]
 splipy-core = { workspace = true }
