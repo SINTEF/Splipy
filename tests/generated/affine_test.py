@@ -2,11 +2,13 @@
 # Generator    : generate_affine.py
 # Date         : 2016-02-10
 # Git revision : ce198333cbf3bf3a7d964b947e07c74c43df1cdd
+from __future__ import annotations
+
+import unittest
 
 import numpy as np
-from splipy import Volume, Surface, Curve, BSplineBasis
-from math import sqrt
-import unittest
+
+from splipy import BSplineBasis, Curve, Surface, Volume
 
 
 class TestAffine(unittest.TestCase):

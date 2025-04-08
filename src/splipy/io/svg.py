@@ -1,15 +1,16 @@
+from __future__ import annotations
+
+import re
 import xml.etree.ElementTree as etree
 from xml.dom import minidom
-import re
 
 import numpy as np
 
-from ..curve import Curve
-from ..surface import Surface
-from ..splineobject import SplineObject
-from ..basis import BSplineBasis
 from .. import curve_factory, state
-
+from ..basis import BSplineBasis
+from ..curve import Curve
+from ..splineobject import SplineObject
+from ..surface import Surface
 from .master import MasterIO
 
 

@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import unittest
+
+import numpy as np
 
 from splipy import BSplineBasis
-import numpy as np
-import unittest
 
 
 class TestBasis(unittest.TestCase):

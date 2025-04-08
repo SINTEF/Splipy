@@ -1,20 +1,19 @@
-# -*- coding: utf-8 -*-
 
 """Handy utilities for creating surfaces."""
+from __future__ import annotations
 
-from math import pi, sqrt, atan2
 import inspect
-import os
-from os.path import dirname, realpath, join
+from math import atan2, pi, sqrt
+from os.path import dirname, join, realpath
 
 import numpy as np
 
+from . import curve_factory, state
 from .basis import BSplineBasis
 from .curve import Curve
 from .surface import Surface
 from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from .utils.nutils import controlpoints, multiplicities, degree
-from . import curve_factory, state
+from .utils.nutils import controlpoints, degree, multiplicities
 
 __all__ = [
     "square",
@@ -67,7 +66,7 @@ def disc(r=1, center=(0, 0, 0), normal=(0, 0, 1), type="radial", xaxis=(1, 0, 0)
         result.swap()
         result.reparam((0, r), (0, 2 * pi))
         return result
-    elif type == "square":
+    if type == "square":
         w = 1 / sqrt(2)
         cp = [
             [-r * w, -r * w, 1],
@@ -84,8 +83,7 @@ def disc(r=1, center=(0, 0, 0), normal=(0, 0, 1), type="radial", xaxis=(1, 0, 0)
         basis2 = BSplineBasis(3)
         result = Surface(basis1, basis2, cp, True)
         return flip_and_move_plane_geometry(result, center, normal)
-    else:
-        raise ValueError("invalid type argument")
+    raise ValueError("invalid type argument")
 
 
 def sphere(r=1, center=(0, 0, 0), zaxis=(0, 0, 1), xaxis=(1, 0, 0)):
@@ -233,7 +231,7 @@ def edge_curves(*curves, **kwargs):
         linear = BSplineBasis(2)
 
         return Surface(crv1.bases[0], linear, controlpoints, crv1.rational)
-    elif len(curves) == 4:
+    if len(curves) == 4:
         # reorganize input curves so they form a directed loop around surface
         rtol = state.controlpoint_relative_tolerance
         atol = state.controlpoint_absolute_tolerance
@@ -260,7 +258,7 @@ def edge_curves(*curves, **kwargs):
                         del mycurves[i]
                         found_match = True
                         break
-                    elif np.allclose(reorder[j][-1], mycurves[i][-1], rtol=rtol, atol=atol):
+                    if np.allclose(reorder[j][-1], mycurves[i][-1], rtol=rtol, atol=atol):
                         reorder.append(mycurves[i].reverse())
                         del mycurves[i]
                         found_match = True
@@ -270,16 +268,14 @@ def edge_curves(*curves, **kwargs):
             mycurves = reorder
         if type == "coons":
             return coons_patch(*mycurves)
-        elif type == "poisson":
+        if type == "poisson":
             return poisson_patch(*mycurves)
-        elif type == "elasticity":
+        if type == "elasticity":
             return elasticity_patch(*mycurves)
-        elif type == "finitestrain":
+        if type == "finitestrain":
             return finitestrain_patch(*mycurves)
-        else:
-            raise ValueError("Unknown type parameter")
-    else:
-        raise ValueError("Requires two or four input curves")
+        raise ValueError("Unknown type parameter")
+    raise ValueError("Requires two or four input curves")
 
 
 def coons_patch(bottom, right, top, left):
@@ -330,8 +326,8 @@ def poisson_patch(bottom, right, top, left):
             'Mismatching nutils version detected, only version 4 supported. Upgrade by "pip install --upgrade nutils"'
         )
 
-    from nutils import mesh, function as fn
-    from nutils import _, log
+    from nutils import function as fn
+    from nutils import mesh
 
     # error test input
     if left.rational or right.rational or top.rational or bottom.rational:
@@ -366,7 +362,7 @@ def poisson_patch(bottom, right, top, left):
 
     # initialize variables
     controlpoints = np.zeros((n1, n2, dim))
-    rhs = np.zeros((n1 * n2))
+    rhs = np.zeros(n1 * n2)
     constraints = np.array([[np.nan] * n2] * n1)
 
     # treat all dimensions independently
@@ -394,8 +390,7 @@ def elasticity_patch(bottom, right, top, left):
             'Mismatching nutils version detected, only version 4 supported. Upgrade by "pip install --upgrade nutils"'
         )
 
-    from nutils import mesh, function, solver
-    from nutils import _, log
+    from nutils import function, mesh
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
@@ -438,7 +433,7 @@ def elasticity_patch(bottom, right, top, left):
 
     # construct matrix and right hand-side
     matrix = domain.integrate(ns.eval_nm("strain_nij stress_mij d:x"), ischeme="gauss" + str(max(p1, p2) + 1))
-    rhs = np.zeros((n1 * n2 * dim))
+    rhs = np.zeros(n1 * n2 * dim)
 
     # add boundary conditions
     constraints = np.array([[[np.nan] * n2] * n1] * dim)
@@ -467,8 +462,7 @@ def finitestrain_patch(bottom, right, top, left):
             'Mismatching nutils version detected, only version 4 supported. Upgrade by "pip install --upgrade nutils"'
         )
 
-    from nutils import mesh, function
-    from nutils import _, log, solver
+    from nutils import function, mesh, solver
 
     # error test input
     if not (left.dimension == right.dimension == top.dimension == bottom.dimension == 2):
@@ -648,8 +642,8 @@ def thicken(curve, amount):
         left = curve_factory.interpolate(left_points, curve.bases[0])
         return edge_curves(right, left)
 
-    else:  # dimension=3, we will create a surrounding tube
-        return sweep(curve, curve_factory.circle(r=amount))
+    # dimension=3, we will create a surrounding tube
+    return sweep(curve, curve_factory.circle(r=amount))
 
 
 def sweep(path, shape):
@@ -727,7 +721,7 @@ def loft(*curves):
     curves = [c.clone().set_dimension(3) for c in curves]
     if len(curves) == 2:
         return edge_curves(curves)
-    elif len(curves) == 3:
+    if len(curves) == 3:
         # can't do cubic spline interpolation, so we'll do quadratic
         basis2 = BSplineBasis(3)
         dist = basis2.greville()

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from itertools import chain
 from bisect import bisect_left, bisect_right
 
 import numpy as np
@@ -255,7 +254,7 @@ class Curve(SplineObject):
             # no torsion for 2D curves
             t = ensure_listlike(t)
             return np.zeros(len(t))
-        elif self.dimension == 3:
+        if self.dimension == 3:
             # only allow 3D curves
             pass
         else:
@@ -284,8 +283,8 @@ class Curve(SplineObject):
         """
         if amount < 0:
             raise ValueError("Raise order requires a non-negative parameter")
-        elif amount == 0:
-            return
+        if amount == 0:
+            return None
 
         # create the new basis
         newBasis = self.bases[0].raise_order(amount)

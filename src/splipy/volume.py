@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
-from itertools import chain
+from __future__ import annotations
 
 import numpy as np
 
 from .basis import BSplineBasis
 from .splineobject import SplineObject
-from .utils import ensure_listlike, check_direction, sections
+from .utils import ensure_listlike, sections
 
 __all__ = ["Volume"]
 

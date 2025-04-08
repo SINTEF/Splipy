@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from splipy.io import SVG
-import splipy.curve_factory as CurveFactory
-import splipy.surface_factory as SurfaceFactory
-import numpy as np
 import os
 import unittest
+
+import splipy.curve_factory as CurveFactory
+import splipy.surface_factory as SurfaceFactory
+from splipy.io import SVG
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

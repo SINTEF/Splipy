@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 from itertools import islice
 
 import numpy as np
 
+from ..basis import BSplineBasis
 from ..curve import Curve
+from ..splineobject import SplineObject
 from ..surface import Surface
 from ..volume import Volume
-from ..splineobject import SplineObject
-from ..basis import BSplineBasis
-
 from .master import MasterIO
 
 
@@ -19,7 +20,7 @@ class SPL(MasterIO):
         self.trimming_curves = []
 
     def __enter__(self):
-        self.fstream = open(self.filename, "r")
+        self.fstream = open(self.filename)
         return self
 
     def lines(self):

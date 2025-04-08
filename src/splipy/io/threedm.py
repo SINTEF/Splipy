@@ -1,13 +1,27 @@
+from __future__ import annotations
+
 import numpy as np
-from itertools import chain, product
-from splipy import Curve, Surface, BSplineBasis, curve_factory
-from .master import MasterIO
-import splipy.state as state
-from rhino3dm import Brep, File3dm
-from rhino3dm import NurbsCurve, PolylineCurve, Circle, Polyline, BezierCurve, Arc, Line
-from rhino3dm import NurbsSurface, Cylinder, Sphere, Extrusion
+from rhino3dm import (
+    Arc,
+    BezierCurve,
+    Brep,
+    Circle,
+    Cylinder,
+    Extrusion,
+    File3dm,
+    Line,
+    NurbsCurve,
+    NurbsSurface,
+    Polyline,
+    PolylineCurve,
+    Sphere,
+)
 from rhino3dm import Curve as threedmCurve  # name conflict with splipy
 from rhino3dm import Surface as threedmSurface  # name conflict with splipy
+
+from splipy import BSplineBasis, Curve, Surface, curve_factory
+
+from .master import MasterIO
 
 
 class ThreeDM(MasterIO):
@@ -21,7 +35,7 @@ class ThreeDM(MasterIO):
         return self
 
     def write(self, obj):
-        raise IOError("Writing to 3DM not supported")
+        raise OSError("Writing to 3DM not supported")
 
     def read(self):
         if not hasattr(self, "fstream"):
@@ -29,7 +43,7 @@ class ThreeDM(MasterIO):
             self.fstream = File3dm.Read(self.filename)
 
         if self.onlywrite:
-            raise IOError("Could not read from file %s" % (self.filename))
+            raise OSError("Could not read from file %s" % (self.filename))
 
         result = []
 

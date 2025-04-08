@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __doc__ = "Implementation of various curve utilities"
 
 import numpy as np

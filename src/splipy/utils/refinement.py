@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 __doc__ = "Implementation of various refinement schemes."
 
-from math import atan, pi, tan
+from math import atan, tan
 
 import numpy as np
 
-from . import ensure_listlike, check_direction
+from . import check_direction, ensure_listlike
 
 
 # TODO: put control over these tolerances somewhere. Modstate in splipy seems

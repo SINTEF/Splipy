@@ -1,5 +1,8 @@
-import numpy as np
+from __future__ import annotations
+
 from math import pi
+
+import numpy as np
 
 
 def gen_knot(n, p, periodic):

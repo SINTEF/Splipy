@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from math import pi
 import unittest
+from math import pi
 
 import numpy as np
 
-from splipy import Surface, BSplineBasis
 import splipy.surface_factory as sf
+from splipy import BSplineBasis, Surface
 
 
 class TestSurface(unittest.TestCase):

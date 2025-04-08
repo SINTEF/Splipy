@@ -1,16 +1,18 @@
-from splipy import Curve, Surface, Volume, BSplineBasis
+from __future__ import annotations
+
 import numpy as np
-import unittest
 import pytest
+
+from splipy import BSplineBasis, Curve, Surface, Volume
 
 
 def get_spline(spline, n, p, rational=False):
     basis = BSplineBasis(p, [0] * (p - 1) + list(range(n - p + 2)) + [n - p + 1] * (p - 1))
     if spline == "curve":
         return Curve(basis, rational=rational)
-    elif spline == "surface":
+    if spline == "surface":
         return Surface(basis, basis, rational=rational)
-    elif spline == "volume":
+    if spline == "volume":
         return Volume(basis, basis, basis, rational=rational)
     return None
 

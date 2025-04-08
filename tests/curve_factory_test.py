@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from math import pi, sqrt, cos, sin
 import unittest
+from math import cos, pi, sin, sqrt
 
 import numpy as np
 from numpy.linalg import norm
 
-from splipy import BSplineBasis, Curve
 import splipy.curve_factory as cf
 
 try:

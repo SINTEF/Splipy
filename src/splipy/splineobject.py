@@ -1,22 +1,23 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import copy
+from bisect import bisect_left
+from itertools import product
+from operator import attrgetter, methodcaller
 
 import numpy as np
-import copy
-from operator import attrgetter, methodcaller
-from itertools import chain, product
-from bisect import bisect_left
 
 from .basis import BSplineBasis
 from .utils import (
+    check_direction,
+    check_section,
+    ensure_flatlist,
+    ensure_listlike,
+    is_singleton,
+    raise_order_1D,
     reshape,
     rotation_matrix,
-    is_singleton,
-    ensure_listlike,
-    check_direction,
-    ensure_flatlist,
-    check_section,
     sections,
-    raise_order_1D,
 )
 
 __all__ = ["SplineObject"]
@@ -40,7 +41,7 @@ def evaluate(bases, cps, tensor=True):
     return cps
 
 
-class SplineObject(object):
+class SplineObject:
     """Master class for spline objects with arbitrary dimensions.
 
     This class should be subclassed instead of used directly.
@@ -275,35 +276,34 @@ class SplineObject(object):
         # if no direction is specified, return a tuple with all derivatives
         if direction is None:
             return tuple([self.get_derivative_spline(dim) for dim in range(self.pardim)])
+        d = check_direction(direction, self.pardim)
+        k = self.knots(d, with_multiplicities=True)
+        p = self.order(d) - 1
+        n = self.shape[d]
+        if self.bases[d].periodic < 0:
+            C = np.zeros((n - 1, n))
+            for i in range(n - 1):
+                C[i, i] = -float(p) / (k[i + p + 1] - k[i + 1])
+                C[i, i + 1] = float(p) / (k[i + p + 1] - k[i + 1])
         else:
-            d = check_direction(direction, self.pardim)
-            k = self.knots(d, with_multiplicities=True)
-            p = self.order(d) - 1
-            n = self.shape[d]
-            if self.bases[d].periodic < 0:
-                C = np.zeros((n - 1, n))
-                for i in range(n - 1):
-                    C[i, i] = -float(p) / (k[i + p + 1] - k[i + 1])
-                    C[i, i + 1] = float(p) / (k[i + p + 1] - k[i + 1])
-            else:
-                C = np.zeros((n, n))
-                for i in range(n):
-                    ip1 = np.mod(i + 1, n)
-                    C[i, i] = -float(p) / (k[i + p + 1] - k[i + 1])
-                    C[i, ip1] = float(p) / (k[i + p + 1] - k[i + 1])
+            C = np.zeros((n, n))
+            for i in range(n):
+                ip1 = np.mod(i + 1, n)
+                C[i, i] = -float(p) / (k[i + p + 1] - k[i + 1])
+                C[i, ip1] = float(p) / (k[i + p + 1] - k[i + 1])
 
-            derivative_cps = np.tensordot(C, self.controlpoints, axes=(1, d))
-            derivative_cps = derivative_cps.transpose(transpose_fix(self.pardim, d))
-            bases = [b for b in self.bases]
-            bases[d] = BSplineBasis(p, k[1:-1], bases[d].periodic - 1)
+        derivative_cps = np.tensordot(C, self.controlpoints, axes=(1, d))
+        derivative_cps = derivative_cps.transpose(transpose_fix(self.pardim, d))
+        bases = [b for b in self.bases]
+        bases[d] = BSplineBasis(p, k[1:-1], bases[d].periodic - 1)
 
-            # search for the right subclass constructor, i.e. Volume, Surface or Curve
-            constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
-            constructor = constructor[0]
+        # search for the right subclass constructor, i.e. Volume, Surface or Curve
+        constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
+        constructor = constructor[0]
 
-            # return derivative object
-            args = bases + [derivative_cps] + [self.rational]
-            return constructor(*args, raw=True)
+        # return derivative object
+        args = bases + [derivative_cps] + [self.rational]
+        return constructor(*args, raw=True)
 
     def tangent(self, *params, **kwargs):
         """Evaluate the tangents of the object at the given parametric values.
@@ -326,7 +326,7 @@ class SplineObject(object):
         :return: Tangents
         :rtype: tuple<numpy.array>
         """
-        direction = kwargs.get("direction", None)
+        direction = kwargs.get("direction")
         derivative = [0] * self.pardim
 
         above = kwargs.get("above", [True] * self.pardim)
@@ -651,7 +651,7 @@ class SplineObject(object):
         :return: self
         """
         if self.pardim == 1:
-            return
+            return None
 
         dir1 = check_direction(dir1, self.pardim)
         dir2 = check_direction(dir2, self.pardim)
@@ -712,7 +712,7 @@ class SplineObject(object):
         :param int direction: Direction to refine in
         :return: self
         """
-        direction = kwargs.get("direction", None)
+        direction = kwargs.get("direction")
 
         if len(ns) == 1 and direction is not None:
             directions = [check_direction(direction, self.pardim)]
@@ -1140,8 +1140,7 @@ class SplineObject(object):
             b.periodic = -1
             if len(knots) > 1:
                 return splitting_obj.split(knots[1:], direction)
-            else:
-                return splitting_obj
+            return splitting_obj
 
         # search for the right subclass constructor, i.e. Volume, Surface or Curve
         spline_object = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(bases)]
@@ -1194,7 +1193,7 @@ class SplineObject(object):
         if continuity is None:
             continuity = basis.order - 2
         if not -1 <= continuity <= basis.order - 2:
-            raise ValueError("Illegal continuity for basis of order {}: {}".format(continuity, basis.order))
+            raise ValueError(f"Illegal continuity for basis of order {continuity}: {basis.order}")
         if continuity == -1:
             raise ValueError(
                 "Operation not supported. For discontinuous spline spaces, consider SplineObject.split()."

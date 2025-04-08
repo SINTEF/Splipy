@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 import unittest
 from math import pi, sqrt
 
 import numpy as np
 
-from splipy import BSplineBasis, Volume
 import splipy.volume_factory as vf
+from splipy import BSplineBasis, Volume
 
 
 class TestVolume(unittest.TestCase):

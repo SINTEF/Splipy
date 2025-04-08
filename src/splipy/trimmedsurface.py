@@ -1,16 +1,13 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 from math import pi
 
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from .basis import BSplineBasis
-from .curve import Curve
-from .surface import Surface
-from .splineobject import SplineObject
-from .utils import ensure_listlike, check_direction, sections
 from . import state
+from .surface import Surface
+from .utils import sections
 
 __all__ = ["TrimmedSurface"]
 

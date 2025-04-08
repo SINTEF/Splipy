@@ -1,16 +1,14 @@
-# coding:utf-8
+from __future__ import annotations
 
 import struct
 
 import numpy as np
 
-from ..surface import Surface
-from ..volume import Volume
-from ..utils import ensure_listlike
 from ..splinemodel import SplineModel
-
+from ..surface import Surface
+from ..utils import ensure_listlike
+from ..volume import Volume
 from .master import MasterIO
-
 
 ASCII_FACET = """facet normal 0 0 0
 outer loop
@@ -25,7 +23,7 @@ BINARY_HEADER = "80sI"
 BINARY_FACET = "12fH"
 
 
-class ASCII_STL_Writer(object):
+class ASCII_STL_Writer:
     """Export 3D objects build of 3 or 4 vertices as ASCII STL file."""
 
     def __init__(self, stream):

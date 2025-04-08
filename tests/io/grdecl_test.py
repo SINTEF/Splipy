@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 try:
     from splipy.io import GRDECL
@@ -7,9 +7,8 @@ try:
 except ImportError:
     has_grdecl = False
 
-import unittest
 import os
-import numpy as np
+import unittest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

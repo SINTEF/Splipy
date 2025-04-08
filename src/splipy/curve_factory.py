@@ -1,20 +1,20 @@
-# -*- coding: utf-8 -*-
 
 """Handy utilities for creating curves."""
+from __future__ import annotations
 
-from math import pi, cos, sin, sqrt, ceil, atan2
 import copy
 import inspect
+from math import ceil, cos, pi, sin, sqrt
 
 import numpy as np
-from numpy.linalg import norm
 import scipy.sparse as sp
 import scipy.sparse.linalg as splinalg
+from numpy.linalg import norm
 
-from .curve import Curve
-from .basis import BSplineBasis
-from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
 from . import state
+from .basis import BSplineBasis
+from .curve import Curve
+from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
 
 __all__ = [
     "Boundary",

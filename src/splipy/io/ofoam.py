@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 from itertools import groupby
 from operator import itemgetter
-from os.path import exists, isdir, join
 from os import makedirs
+from os.path import exists, isdir, join
 
 import numpy as np
 
 from ..splinemodel import SplineModel
 
 
-class OpenFOAM(object):
+class OpenFOAM:
     def __init__(self, target):
         self.target = target
 
@@ -18,7 +20,7 @@ class OpenFOAM(object):
             makedirs(target)
         # If it does, ensure that it's a directory
         elif not isdir(self.target):
-            raise FileExistsError("{} exists and is not a directory".format(self.target))
+            raise FileExistsError(f"{self.target} exists and is not a directory")
 
         return self
 
@@ -49,9 +51,7 @@ class OpenFOAM(object):
         model.generate_cell_numbers()
         faces = model.faces()
         ninternal = sum(faces["name"] == None)
-        note = "nPoints: {} nCells: {} nFaces: {} nInternalFaces: {}".format(
-            model.ncps, model.ncells, len(faces), ninternal
-        )
+        note = f"nPoints: {model.ncps} nCells: {model.ncells} nFaces: {len(faces)} nInternalFaces: {ninternal}"
 
         # OpenFOAM is very particular about face ordering
         # In order of importance:
@@ -107,8 +107,8 @@ class OpenFOAM(object):
                     continue
                 f.write(name + "\n{\n")
                 f.write("    type patch;\n")
-                f.write("    nFaces {};\n".format(nfaces))
-                f.write("    startFace {};\n".format(start))
+                f.write(f"    nFaces {nfaces};\n")
+                f.write(f"    startFace {start};\n")
                 f.write("}\n")
                 start += nfaces
             f.write(")\n")

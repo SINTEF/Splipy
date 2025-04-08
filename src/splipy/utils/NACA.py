@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 import numpy as np
 
-from ..curve import Curve
-from ..basis import BSplineBasis
 from .. import surface_factory
+from ..basis import BSplineBasis
+from ..curve import Curve
 
 __all__ = ["camber", "NACA"]
 

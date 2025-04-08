@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import os
+import unittest
+
+import numpy as np
 
 from splipy.io import SPL
-import unittest
-import os
-import numpy as np
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

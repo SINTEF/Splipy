@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 __doc__ = "Implementation of various smoothing operations on a per-controlpoint level."
 
-from scipy import ndimage
 import numpy as np
+from scipy import ndimage
 
 from . import check_direction
 

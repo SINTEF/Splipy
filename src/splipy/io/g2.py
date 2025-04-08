@@ -1,17 +1,16 @@
-from itertools import chain, product
+from __future__ import annotations
 
 import numpy as np
-from numpy import sqrt, pi, savetxt
+from numpy import pi, savetxt
 
-from ..curve import Curve
-from ..surface import Surface
-from ..volume import Volume
-from ..splineobject import SplineObject
+from .. import curve_factory, state, surface_factory
 from ..basis import BSplineBasis
+from ..curve import Curve
+from ..splineobject import SplineObject
+from ..surface import Surface
 from ..trimmedsurface import TrimmedSurface
 from ..utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from .. import surface_factory, curve_factory, state
-
+from ..volume import Volume
 from .master import MasterIO
 
 
@@ -229,7 +228,7 @@ class G2(MasterIO):
         elif objtype == 200:
             surface = self.splines(2)
         else:
-            raise IOError("Unsopported trimmed surface or malformed input file")
+            raise OSError("Unsopported trimmed surface or malformed input file")
 
         # for all trimming loops
         numb_loops = int(self.read_next_non_whitespace())
@@ -250,7 +249,7 @@ class G2(MasterIO):
                     elif crv_type == 100:
                         crv = self.splines(1)
                     else:
-                        raise IOError("Unsopported trimming curve or malformed input file")
+                        raise OSError("Unsopported trimming curve or malformed input file")
                     two_curves.append(crv)
 
                 # only keep the parametric version (re-generate physical one if we need it)
@@ -291,7 +290,7 @@ class G2(MasterIO):
             self.onlywrite = True
             self.fstream = open(self.filename, "w")
         if not self.onlywrite:
-            raise IOError("Could not write to file %s" % (self.filename))
+            raise OSError("Could not write to file %s" % (self.filename))
 
         """Write the object in GoTools format. """
         if isinstance(obj[0], SplineObject):  # input SplineModel or list
@@ -303,8 +302,8 @@ class G2(MasterIO):
             if obj.periodic(i):
                 obj = obj.split(obj.start(i), i)
 
-        self.fstream.write("{} 1 0 0\n".format(G2.g2_type[obj.pardim - 1]))
-        self.fstream.write("{} {}\n".format(obj.dimension, int(obj.rational)))
+        self.fstream.write(f"{G2.g2_type[obj.pardim - 1]} 1 0 0\n")
+        self.fstream.write(f"{obj.dimension} {int(obj.rational)}\n")
         for b in obj.bases:
             self.fstream.write("%i %i\n" % (len(b.knots) - b.order, b.order))
             self.fstream.write(" ".join("%.16g" % k for k in b.knots))
@@ -321,10 +320,10 @@ class G2(MasterIO):
     def read(self):
         if not hasattr(self, "fstream"):
             self.onlywrite = False
-            self.fstream = open(self.filename, "r")
+            self.fstream = open(self.filename)
 
         if self.onlywrite:
-            raise IOError("Could not read from file %s" % (self.filename))
+            raise OSError("Could not read from file %s" % (self.filename))
 
         result = []
 
@@ -336,7 +335,7 @@ class G2(MasterIO):
             # read object type
             objtype, major, minor, patch = map(int, line.split())
             if (major, minor, patch) != (1, 0, 0):
-                raise IOError("Unknown G2 format")
+                raise OSError("Unknown G2 format")
 
             # if obj type is in factory methods (cicle, torus etc), create it now
             if objtype in G2.g2_generators:
@@ -347,7 +346,7 @@ class G2(MasterIO):
             # for "normal" splines (Curves, Surfaces, Volumes) create it now
             pardim = [i for i in range(len(G2.g2_type)) if G2.g2_type[i] == objtype]
             if not pardim:
-                raise IOError("Unknown G2 object type {}".format(objtype))
+                raise OSError(f"Unknown G2 object type {objtype}")
             pardim = pardim[0] + 1
             result.append(self.splines(pardim))
 

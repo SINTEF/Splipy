@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
-from operator import itemgetter
-from splipy import Volume, Surface
-from splipy.splinemodel import SplineModel, Orientation, IFEMWriter, IFEMConnection
-from splipy.io import G2
-from splipy import curve_factory, surface_factory, volume_factory
-import unittest
-import numpy as np
+from __future__ import annotations
 
 import os
+import unittest
 
+import numpy as np
+
+from splipy import Surface, Volume, curve_factory, surface_factory, volume_factory
+from splipy.io import G2
+from splipy.splinemodel import IFEMConnection, IFEMWriter, Orientation, SplineModel
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -469,7 +467,7 @@ class TestModel(unittest.TestCase):
 
         for i, ref_topo in enumerate(connections):
             model = SplineModel(3, 3)
-            with G2(THIS_DIR + "/geometries/cube-8-orient{}.g2".format(i)) as myfile:
+            with G2(THIS_DIR + f"/geometries/cube-8-orient{i}.g2") as myfile:
                 model.add(myfile.read())
 
             writer = IFEMWriter(model)

@@ -2,11 +2,13 @@
 # Generator    : generate_derivative_spline.py
 # Date         : 2017-01-23
 # Git revision : b458827cf91658b8da98744b230af11b9c95dd94
+from __future__ import annotations
+
+import unittest
 
 import numpy as np
-from splipy import Volume, Surface, Curve, BSplineBasis
-from math import sqrt
-import unittest
+
+from splipy import BSplineBasis, Curve, Surface, Volume
 
 
 class TestDerivativeSpline(unittest.TestCase):

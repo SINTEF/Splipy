@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import unittest
+from math import pi
+
+import numpy as np
 
 from splipy import Curve, Surface
-from math import pi
-import numpy as np
-import unittest
-import sys
 
 try:
     import cv2

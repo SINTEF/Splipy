@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from math import pi
 import unittest
 
-import numpy as np
-
-from splipy import TrimmedSurface, BSplineBasis
 import splipy.curve_factory as cf
+from splipy import TrimmedSurface
 
 
 class TestSurface(unittest.TestCase):

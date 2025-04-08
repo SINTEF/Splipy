@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
-from subprocess import run, CalledProcessError
-from tempfile import TemporaryDirectory
-from os.path import abspath, dirname, isdir, join
-from os import listdir, remove
-from shutil import copytree, rmtree
 import sys
-
+from os import listdir
+from os.path import abspath, dirname, join
+from subprocess import CalledProcessError, run
+from tempfile import TemporaryDirectory
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -20,7 +19,7 @@ if __name__ == "__main__":
     try:
         run(["git", "rev-parse", "gh-pages"], cwd=src, check=True)
     except CalledProcessError:
-        run(["git", "branch", "gh-pages", "{}/gh-pages".format(remote)], check=True)
+        run(["git", "branch", "gh-pages", f"{remote}/gh-pages"], check=True)
 
     # Ensure that local branch gh-pages is updated
     run(["git", "fetch", remote, "gh-pages:gh-pages"], check=True)

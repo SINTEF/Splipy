@@ -89,7 +89,7 @@ filename = "doc/conf.py"
 
 [tool.mypy]
 plugins = ["numpy.typing.mypy_plugin"]
-files = ["src/**/*.py", "tests/**/*.py"]
+files = ["src/**/*.py", "tests/**/*.py", "push_documentation.py"]
 disallow_untyped_defs = true
 disallow_any_unimported = true
 no_implicit_optional = true
@@ -104,7 +104,7 @@ mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
 
 [tool.ruff]
 line-length = 110
-include = ["src/**/*.py", "core/**/*.py", "tests/**/*.py", "stubs/**/*.pyi", "push_documentation.py"]
+include = ["src/**/*.py", "core/**/*.pyi", "tests/**/*.py", "stubs/**/*.pyi", "push_documentation.py"]
 
 [tool.ruff.lint]
 select = [

@@ -2,11 +2,13 @@
 # Generator    : generate_raise_order.py
 # Date         : 2016-02-01
 # Git revision : 221d808f111c2a4c61e75d16b3b1b5f1d600a6ab
+from __future__ import annotations
+
+import unittest
 
 import numpy as np
-from splipy import Volume, Surface, Curve, BSplineBasis
-from math import sqrt
-import unittest
+
+from splipy import BSplineBasis, Curve, Surface, Volume
 
 
 class TestRaiseOrder(unittest.TestCase):

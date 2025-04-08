@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
 
 """Handy utilities for creating volumes."""
+from __future__ import annotations
 
-from math import pi, sqrt, atan2
+from math import atan2, pi, sqrt
 
 import numpy as np
 
+from . import curve_factory, surface_factory
 from .basis import BSplineBasis
 from .surface import Surface
-from .volume import Volume
 from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
-from . import curve_factory, surface_factory
+from .volume import Volume
 
 __all__ = [
     "cube",
@@ -52,7 +52,7 @@ def sphere(r=1, center=(0, 0, 0), type="radial"):
         shell = surface_factory.sphere(r, center)
         midpoint = shell * 0 + center
         return edge_surfaces(shell, midpoint)
-    elif type == "square":
+    if type == "square":
         # based on the work of James E.Cobb: "Tiling the Sphere with Rational Bezier Patches"
         # University of Utah, July 11, 1988. UUCS-88-009
         b = BSplineBasis(order=5)
@@ -110,8 +110,7 @@ def sphere(r=1, center=(0, 0, 0), type="radial"):
         cp[1:4, 1:4, 1:4, 3] = 1
         ball = Volume(b, b, b, cp, rational=True, raw=True)
         return r * ball + center
-    else:
-        raise ValueError("invalid type argument")
+    raise ValueError("invalid type argument")
 
 
 def revolve(surf, theta=2 * pi, axis=(0, 0, 1)):
@@ -242,7 +241,7 @@ def edge_surfaces(*surfaces):
         )
 
         return result
-    elif len(surfaces) == 6:
+    if len(surfaces) == 6:
         if any([surf.rational for surf in surfaces]):
             raise RuntimeError("edge_surfaces not supported for rational splines")
 
@@ -327,8 +326,7 @@ def edge_surfaces(*surfaces):
         result.controlpoints -= vol_w_edges.controlpoints
 
         return result
-    else:
-        raise ValueError("Requires two or six input surfaces")
+    raise ValueError("Requires two or six input surfaces")
 
 
 def sweep(path, shape):
@@ -413,7 +411,7 @@ def loft(*surfaces):
     surfaces = [s.clone().set_dimension(3) for s in surfaces]
     if len(surfaces) == 2:
         return surface_factory.edge_curves(surfaces)
-    elif len(surfaces) == 3:
+    if len(surfaces) == 3:
         # can't do cubic spline interpolation, so we'll do quadratic
         basis3 = BSplineBasis(3)
         dist = basis3.greville()

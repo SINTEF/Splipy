@@ -1,7 +1,10 @@
-import numpy as np
-import subprocess
+from __future__ import annotations
+
 import datetime
 import os
+import subprocess
+
+import numpy as np
 from general import *
 
 
@@ -101,7 +104,7 @@ for baseP in [2, 5]:
                         f.write("        controlpoints = np." + cp_str + "\n")
                         write_basis(f, p, knot, periodic)
                         write_object_creation(f, rational, pardim)
-                        if name[j] is not "scale":
+                        if name[j] != "scale":
                             new_dim = min(
                                 dim + np.random.randint(0, 2), 3
                             )  # shake it up by sometime requesting 3D-manipulation on 2D geometries

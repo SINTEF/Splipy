@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __doc__ = "Implementation of convenience methods with respect to nutils integration."
 
 import numpy as np
@@ -13,9 +15,9 @@ def controlpoints(spline):
     dim = spline.dimension
     if isinstance(spline, Curve):
         return np.reshape(spline[:, :], (n, dim), order="F")
-    elif isinstance(spline, Surface):
+    if isinstance(spline, Surface):
         return np.reshape(spline[:, :, :].swapaxes(0, 1), (n, dim), order="F")
-    elif isinstance(spline, Volume):
+    if isinstance(spline, Volume):
         return np.reshape(spline[:, :, :, :].swapaxes(0, 2), (n, dim), order="F")
     raise RuntimeError("Non-spline argument detected")
 
@@ -36,7 +38,7 @@ def degree(spline):
 
 def splipy_to_nutils(spline):
     """Returns nutils domain and geometry object for spline mapping given by the argument"""
-    from nutils import mesh, function
+    from nutils import function, mesh
 
     domain, geom = mesh.rectilinear(spline.knots())
     cp = controlpoints(spline)

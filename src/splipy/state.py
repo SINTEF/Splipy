@@ -1,7 +1,8 @@
 """This module handles the global Splipy state."""
+from __future__ import annotations
 
-from contextlib import contextmanager
 import sys
+from contextlib import contextmanager
 
 states = [
     "controlpoint_relative_tolerance",

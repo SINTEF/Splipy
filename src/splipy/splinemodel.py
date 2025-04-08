@@ -1,21 +1,29 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 from collections import Counter, OrderedDict, namedtuple
-from itertools import chain, product, permutations, islice
+from collections.abc import Callable
+from itertools import chain, islice, permutations, product
 from operator import itemgetter
-from typing import Callable, Dict, List, Tuple, Any, Optional
+from typing import Any
 
 import numpy as np
 
-from .splineobject import SplineObject
-from .utils import check_section, sections, section_from_index, section_to_index, uniquify, is_right_hand
-from .utils import bisect
 from . import state
+from .splineobject import SplineObject
+from .utils import (
+    bisect,
+    check_section,
+    is_right_hand,
+    section_from_index,
+    section_to_index,
+    sections,
+    uniquify,
+)
 
 try:
     from collections.abc import MutableMapping
 except ImportError:
-    from collections import MutableMapping
+    from collections.abc import MutableMapping
 
 
 def _section_to_index(section):
@@ -38,10 +46,10 @@ class VertexDict(MutableMapping):
     rtol: float
     atol: float
 
-    _keys: List[Optional[np.ndarray]]
-    _values: List[Any]
+    _keys: list[np.ndarray | None]
+    _values: list[Any]
 
-    lut: Dict[Tuple[int, ...], List[Tuple[int, float]]]
+    lut: dict[tuple[int, ...], list[tuple[int, float]]]
 
     def __init__(self, rtol=1e-5, atol=1e-8):
         # List of (key, value) pairs
@@ -157,7 +165,7 @@ class TwinError(RuntimeError):
     pass
 
 
-class Orientation(object):
+class Orientation:
     """An `Orientation` represents a mapping between two coordinate systems: the
     *reference* system and the *actual* or *mapped* system.
 
@@ -347,7 +355,7 @@ class Orientation(object):
             return 0
         if len(self.flip) == 1:
             return int(self.flip[0])
-        elif len(self.flip) == 2:
+        if len(self.flip) == 2:
             ret = 0
             for i, axis in enumerate(self.perm[::-1]):
                 if self.flip[axis]:
@@ -355,10 +363,10 @@ class Orientation(object):
             if tuple(self.perm) == (1, 0):
                 ret |= 1 << 2
             return ret
-        raise RuntimeError("IFEM orientation format not supported for pardim {}".format(len(self.flip)))
+        raise RuntimeError(f"IFEM orientation format not supported for pardim {len(self.flip)}")
 
 
-class TopologicalNode(object):
+class TopologicalNode:
     """A `TopologicalNode` object refers to a single, persistent point in the
     topological graph. It represents some object of dimension `d` (that is, a
     point, an edge, etc.) and it has references to all the other objects it
@@ -600,7 +608,7 @@ class TopologicalNode(object):
         return retval
 
 
-class NodeView(object):
+class NodeView:
     """A `NodeView` object refers to a *view* to a point in the topological graph.
     It is composed of a node (:class:`splipy.SplineModel.TopologicalNode`) and
     an orientation (:class:`splipy.SplineModel.Orienation`).
@@ -681,7 +689,7 @@ class NodeView(object):
         return tuple(self.section(s) for s in sections(self.pardim, 2))
 
 
-class ObjectCatalogue(object):
+class ObjectCatalogue:
     """An `ObjectCatalogue` maintains a complete topological graph of objects with
     at most `pardim` parametric directions.
     """
@@ -776,8 +784,7 @@ class ObjectCatalogue(object):
         if not candidates:
             if not add:
                 raise KeyError("No such object found")
-            else:
-                return self._add(obj, lower_nodes)
+            return self._add(obj, lower_nodes)
 
         # If there is exactly one candidate, check it
         if len(candidates) == 1:
@@ -866,7 +873,7 @@ class ObjectCatalogue(object):
 # wrap ObjectCatalogue
 
 
-class SplineModel(object):
+class SplineModel:
     def __init__(self, pardim=3, dimension=3, objs=[], force_right_hand=False):
         self.pardim = pardim
         self.dimension = dimension
@@ -967,7 +974,7 @@ class SplineModel(object):
     def summary(self):
         c = self.catalogue
         while isinstance(c, ObjectCatalogue):
-            print("Dim {}: {}".format(c.pardim, len(c.top_nodes())))
+            print(f"Dim {c.pardim}: {len(c.top_nodes())}")
             c = c.lower
 
     def write_ifem(self, filename):
@@ -1038,13 +1045,7 @@ class IFEMWriter:
 
         for connection in self.connections():
             lines.append(
-                '  <connection master="{}" slave="{}" midx="{}" sidx="{}" orient="{}"/>'.format(
-                    connection.master,
-                    connection.slave,
-                    connection.midx,
-                    connection.sidx,
-                    connection.orient,
-                )
+                f'  <connection master="{connection.master}" slave="{connection.slave}" midx="{connection.midx}" sidx="{connection.sidx}" orient="{connection.orient}"/>'
             )
 
         lines.extend(["</topology>"])
@@ -1073,7 +1074,7 @@ class IFEMWriter:
                 entries.setdefault(self.node_ids[parent], set()).add(sub_idx)
             if entries:
                 kind = {2: "face", 1: "edge", 0: "vertex"}[self.model.pardim - 1]
-                lines.append('  <set name="{}" type="{}">'.format(name, kind))
+                lines.append(f'  <set name="{name}" type="{kind}">')
                 for node_id, sub_ids in entries.items():
                     lines.append(
                         '    <item patch="{}">{}</item>'.format(

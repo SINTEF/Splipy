@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from bisect import bisect_right, bisect_left
 import copy
+from bisect import bisect_left, bisect_right
 
 import numpy as np
 import splipy_core
 from scipy.sparse import csr_matrix
 
-from .utils import ensure_listlike
 from . import state
+from .utils import ensure_listlike
 
 __all__ = ["BSplineBasis"]
 
@@ -228,7 +228,7 @@ class BSplineBasis:
         :rtype: list
         """
         if self.periodic > -1 and (t0 < self.start() or t1 > self.end()):
-            raise NotImplemented("Periodic functions integrated across sem")
+            raise NotImplementedError("Periodic functions integrated across sem")
 
         t0 = max(t0, self.start())
         t1 = min(t1, self.end())
@@ -476,12 +476,11 @@ class BSplineBasis:
                 (bspline.knots - bspline.knots[0]) / dt2,
                 atol=state.knot_tolerance,
             )
-        else:
-            return np.allclose(
-                (self.knots - self.knots[0]) / dt,
-                (bspline.knots - bspline.knots[0]) / dt2,
-                atol=state.knot_tolerance,
-            )
+        return np.allclose(
+            (self.knots - self.knots[0]) / dt,
+            (bspline.knots - bspline.knots[0]) / dt2,
+            atol=state.knot_tolerance,
+        )
 
     def snap(self, t):
         """Snap evaluation points to knots if they are sufficiently close

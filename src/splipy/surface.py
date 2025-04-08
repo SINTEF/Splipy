@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 from bisect import bisect_left
-from itertools import chain
 
 import numpy as np
 
 from .basis import BSplineBasis
 from .curve import Curve
 from .splineobject import SplineObject, evaluate
-from .utils import is_singleton, ensure_listlike, check_direction, sections
+from .utils import check_direction, ensure_listlike, is_singleton, sections
 
 __all__ = ["Surface"]
 

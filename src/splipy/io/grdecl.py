@@ -1,31 +1,30 @@
-from itertools import product, chain
+from __future__ import annotations
+
 import re
 import warnings
+from itertools import chain, product
 
-import numpy as np
-from tqdm import tqdm
 import cv2
 import h5py
+import numpy as np
 from scipy.spatial import Delaunay
 from scipy.spatial.qhull import QhullError
+from tqdm import tqdm
 
-from ..surface import Surface
-from ..volume import Volume
-from ..splineobject import SplineObject
+from .. import curve_factory, surface_factory, volume_factory
 from ..basis import BSplineBasis
 from ..utils import ensure_listlike
-from .. import surface_factory, curve_factory, volume_factory
-
-from .master import MasterIO
+from ..volume import Volume
 from .g2 import G2
+from .master import MasterIO
 
 
-class Box(object):
+class Box:
     def __init__(self, x):
         self.x = x
 
 
-class DiscontBoxMesh(object):
+class DiscontBoxMesh:
     def __init__(self, n, coord, zcorn):
         nx, ny, nz = n
 
@@ -159,7 +158,7 @@ class GRDECL(MasterIO):
         self.attribute = {}
 
     def __enter__(self):
-        self.fstream = open(self.filename, "r")
+        self.fstream = open(self.filename)
         self.line_number = 0
         return self
 
@@ -221,7 +220,7 @@ class GRDECL(MasterIO):
                 pass
             elif not re.match("[0-9]", line[0]):
                 warnings.showwarning(
-                    'Unkown keyword "{}" encountered in file'.format(line.split()[0]),
+                    f'Unkown keyword "{line.split()[0]}" encountered in file',
                     SyntaxWarning,
                     self.filename,
                     self.line_number,
@@ -383,7 +382,7 @@ class GRDECL(MasterIO):
         vol, textures = self.texture(p, ngeom, ntexture, method, irange, jrange)
 
         # augment dataset with missing information
-        if "kx" in textures and not "ky" in textures:
+        if "kx" in textures and "ky" not in textures:
             textures["ky"] = textures["kx"]
 
         # print information to png-images and hdf5-files
@@ -399,14 +398,12 @@ class GRDECL(MasterIO):
             n = data.shape
             img = img.reshape(n[0], n[1] * n[2])
             print(
-                '  <property file="{}.png" min="{}" max="{}" name="{}" nx="{}" ny="{}" nz="{}"/>'.format(
-                    name, a, b, name, n[0], n[1], n[2]
-                )
+                f'  <property file="{name}.png" min="{a}" max="{b}" name="{name}" nx="{n[0]}" ny="{n[1]}" nz="{n[2]}"/>'
             )
             cv2.imwrite(name + ".png", img)
         print(r"</porotexturematerial>")
         h5_file.close()
-        print("Written {}".format(h5_filename))
+        print(f"Written {h5_filename}")
 
         with G2("geom.g2") as myfile:
             myfile.write(vol)

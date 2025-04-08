@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from math import pi, sqrt
 import unittest
+from math import pi, sqrt
 
 import numpy as np
 from numpy.linalg import norm
 
-from splipy import BSplineBasis, Curve, Surface
 import splipy.curve_factory as cf
 import splipy.surface_factory as sf
+from splipy import BSplineBasis, Curve, Surface
 
 try:
     import nutils

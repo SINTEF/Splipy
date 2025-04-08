@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from math import sqrt, pi
 import unittest
+from math import pi, sqrt
 
 import numpy as np
 
-from splipy import SplineObject, Curve, BSplineBasis
 import splipy.curve_factory as cf
+from splipy import BSplineBasis, Curve
 
 
 class TestCurve(unittest.TestCase):

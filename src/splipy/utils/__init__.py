@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 from itertools import combinations, product
 from math import atan2, sqrt
+
 import numpy as np
 
 try:
     from collections.abc import Sized
 except ImportError:
-    from collections import Sized
+    from collections.abc import Sized
 
 
 def is_right_hand(patch, tol=1e-3):
@@ -109,11 +110,11 @@ def check_section(*args, **kwargs):
 
 
 def check_direction(direction, pardim):
-    if direction in {0, "u", "U"} and 0 < pardim:
+    if direction in {0, "u", "U"} and pardim > 0:
         return 0
-    elif direction in {1, "v", "V"} and 1 < pardim:
+    if direction in {1, "v", "V"} and pardim > 1:
         return 1
-    elif direction in {2, "w", "W"} and 2 < pardim:
+    if direction in {2, "w", "W"} and pardim > 2:
         return 2
     raise ValueError("Invalid direction")
 

@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import unittest
 
 from splipy import *
 from splipy.utils.refinement import *
-import numpy as np
-import unittest
 
 
 class TestRefinement(unittest.TestCase):

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 try:
     from splipy.io import ThreeDM
@@ -7,12 +7,11 @@ try:
 except ImportError:
     has_rhino = False
 
-import splipy.curve_factory as CurveFactory
-import splipy.surface_factory as SurfaceFactory
-import numpy as np
-from numpy import sin, cos, pi
 import os
 import unittest
+
+import numpy as np
+from numpy import cos, pi, sin
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

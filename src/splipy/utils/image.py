@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 __doc__ = "Implementation of image based mesh generation."
 
-from math import sqrt
-import sys
 import warnings
+from math import sqrt
 
 import numpy as np
 
-from ..basis import BSplineBasis
 from .. import curve_factory, surface_factory
+from ..basis import BSplineBasis
 
 
 def get_corners(X, L=50, R=30, D=15):
@@ -52,7 +51,7 @@ def get_corners(X, L=50, R=30, D=15):
 
         Y = max(dCand)
         I = np.argmax(dCand)
-        if Y > d[index[I] - 1]:
+        if d[index[I] - 1] < Y:
             d[index[I] - 1] = Y
 
     I = np.where(d > 0)[0]

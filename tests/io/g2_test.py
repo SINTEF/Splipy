@@ -1,11 +1,13 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-from splipy.io import G2
+import os
+import unittest
+
+import numpy as np
+
 import splipy.surface_factory as SurfaceFactory
 import splipy.volume_factory as VolumeFactory
-import numpy as np
-import unittest
-import os
+from splipy.io import G2
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+import unittest
+
+import numpy as np
 
 from splipy import *
 from splipy.utils.smooth import *
-import numpy as np
-import unittest
 
 
 class TestSmooth(unittest.TestCase):
