@@ -81,6 +81,9 @@ filename = "src/splipy/__init__.py"
 [[tool.bumpversion.files]]
 filename = "core/src/splipy_core/__init__.py"
 
+[[tool.bumpversion.files]]
+filename = "doc/conf.py"
+
 [tool.uv.sources]
 splipy_core = { workspace = true }
 
