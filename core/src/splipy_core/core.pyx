@@ -8,6 +8,8 @@ cimport cython
 cnp.import_array()
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef my_bisect_left(cnp.float_t[:] array, cnp.float_t value, unsigned int hi):
     cdef unsigned int lo = 0
     cdef unsigned int mid
@@ -20,6 +22,8 @@ cdef my_bisect_left(cnp.float_t[:] array, cnp.float_t value, unsigned int hi):
     return lo
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef my_bisect_right(cnp.float_t[:] array, cnp.float_t value, unsigned int hi):
     cdef unsigned int lo = 0
     cdef unsigned int mid
@@ -32,7 +36,8 @@ cdef my_bisect_right(cnp.float_t[:] array, cnp.float_t value, unsigned int hi):
     return lo
 
 
-@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def evaluate(cnp.ndarray[cnp.float_t, ndim=1] knots_in,
              unsigned int p,
              cnp.ndarray[cnp.float_t, ndim=1] eval_t_in,
@@ -124,7 +129,8 @@ def evaluate(cnp.ndarray[cnp.float_t, ndim=1] knots_in,
     return (data, indices, indptr), (m,n)
 
 
-@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def snap(cnp.ndarray[cnp.float_t, ndim=1] knots_in,
          cnp.ndarray[cnp.float_t, ndim=1] eval_t_in,
          cnp.float_t tolerance):
@@ -147,4 +153,3 @@ def snap(cnp.ndarray[cnp.float_t, ndim=1] knots_in,
             t[j] = knots[i]
         elif i > 0 and abs(knots[i-1]-t[j]) < tolerance:
             t[j] = knots[i-1]
-
