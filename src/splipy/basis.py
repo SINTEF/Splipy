@@ -2,18 +2,20 @@ from __future__ import annotations
 
 import copy
 from bisect import bisect_left, bisect_right
-from itertools import repeat, chain
-from typing import overload, Literal, cast, Self
+from itertools import chain, repeat
+from typing import TYPE_CHECKING, Literal, Self, cast, overload
 
-from deprecated import deprecated
 import numpy as np
 import numpy.typing as npt
 import splipy_core
+from deprecated import deprecated
 from scipy.sparse import csr_matrix
 
 from . import state
 from .utils import ensure_listlike
-from .typing import ArrayLike, ScalarLike, FloatArray
+
+if TYPE_CHECKING:
+    from .typing import ArrayLike, FloatArray, ScalarLike
 
 __all__ = ["BSplineBasis"]
 
@@ -311,11 +313,11 @@ class BSplineBasis:
         sumdiff: npt.NDArray[np.double] = ib_eval[1] - ib_eval[0]
         sumdiff = np.cumsum(sumdiff[::-1])[::-1]
 
-        N = (knots[p+1:-1] - knots[1:-p-1]) / p * sumdiff[1:]
+        N = (knots[p + 1 : -1] - knots[1 : -p - 1]) / p * sumdiff[1:]
 
         # collapse periodic functions onto themselves
         if self.periodic > -1:
-            N[:self.periodic + 1] += N[-self.periodic - 1:]
+            N[: self.periodic + 1] += N[-self.periodic - 1 :]
             N = N[: -self.periodic - 1]
 
         return N
@@ -408,7 +410,7 @@ class BSplineBasis:
         :return: List of unique knots
         :rtype: [float]"""
         p = self.order
-        haystack = self.knots if include_ghost_knots else self.knots[p-1:-p+1]
+        haystack = self.knots if include_ghost_knots else self.knots[p - 1 : -p + 1]
 
         result: list[np.double] = [haystack[0]]
         for k in haystack[1:]:
