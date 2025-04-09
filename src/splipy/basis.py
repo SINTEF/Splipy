@@ -12,7 +12,7 @@ from deprecated import deprecated
 from scipy.sparse import csr_matrix
 
 from . import state
-from .utils import ensure_listlike
+from .utils import ensure_listlike_old
 
 if TYPE_CHECKING:
     from .typing import ArrayLike, FloatArray, ScalarLike
@@ -193,7 +193,7 @@ class BSplineBasis:
             points *i*
         :rtype: numpy.array
         """
-        t_arr = np.atleast_1d(np.asarray(t, dtype=np.double))
+        t_arr = np.atleast_1d(np.asarray(t, dtype=np.float64))
         splipy_core.snap(self.knots, t_arr, state.knot_tolerance)
 
         if self.order <= d:  # requesting more derivatives than polynomial degree: return all zeros
@@ -226,7 +226,7 @@ class BSplineBasis:
         :rtype: numpy.array
         """
         # for single-value input, wrap it into a list so it don't crash on the loop below
-        t = ensure_listlike(t)
+        t = ensure_listlike_old(t)
         self.snap(t)
 
         p = self.order  # knot vector order

@@ -477,7 +477,7 @@ class TestCurve(unittest.TestCase):
         expected_knot = [0, 0, 0, 0, 1, 1, 1, 1.5, 2, 2, 2, 2]
         self.assertEqual(crv3.order(direction=0), 4)
         self.assertEqual(crv3.rational, False)
-        self.assertAlmostEqual(np.linalg.norm(crv3.knots(0, True) - expected_knot), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(crv3.knots(0, with_multiplicities=True) - expected_knot), 0.0)
 
         t = np.linspace(0, 1, 11)
         pt = np.zeros((11, 3))

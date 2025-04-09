@@ -6,7 +6,7 @@ from math import atan, tan
 
 import numpy as np
 
-from . import check_direction, ensure_listlike
+from . import check_direction, ensure_listlike_old
 
 
 # TODO(Eivind): put control over these tolerances somewhere. Modstate in splipy
@@ -175,7 +175,7 @@ def subdivide(objs, n):
     :rtype: [:class:`splipy.SplineObject`]
     """
     pardim = objs[0].pardim  # 1 for curves, 2 for surfaces, 3 for volumes
-    n = ensure_listlike(n, pardim)
+    n = ensure_listlike_old(n, pardim)
 
     result = objs
     for d in range(pardim):

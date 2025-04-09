@@ -7,7 +7,7 @@ import scipy.sparse.linalg as splinalg
 
 from .basis import BSplineBasis
 from .splineobject import SplineObject
-from .utils import ensure_listlike, is_singleton
+from .utils import ensure_listlike_old, is_singleton
 
 __all__ = ["Curve"]
 
@@ -49,9 +49,9 @@ class Curve(SplineObject):
         :rtype: numpy.array
         """
         squeeze = is_singleton(params[0])
-        params = [ensure_listlike(p) for p in params]
+        params = [ensure_listlike_old(p) for p in params]
 
-        self._validate_domain(*params)
+        self._validate_domain_old(*params)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
@@ -93,7 +93,7 @@ class Curve(SplineObject):
         if not self.rational or d < 2 or d > 3:
             return super().derivative(t, d=d, above=above, tensor=tensor)
 
-        t = ensure_listlike(t)
+        t = ensure_listlike_old(t)
         result = np.zeros((len(t), self.dimension))
 
         d2 = np.array(self.bases[0].evaluate(t, 2, above) @ self.controlpoints)
@@ -241,7 +241,7 @@ class Curve(SplineObject):
         """
         if self.dimension == 2:
             # no torsion for 2D curves
-            t = ensure_listlike(t)
+            t = ensure_listlike_old(t)
             return np.zeros(len(t))
         if self.dimension == 3:
             # only allow 3D curves

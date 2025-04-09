@@ -666,9 +666,9 @@ class TestVolume(unittest.TestCase):
             self.assertEqual(v.periodic(2), False)
 
             self.assertEqual(v.order(), (4, 3, 2))
-            self.assertAlmostEqual(len(v.knots(0, True)), 11)
-            self.assertAlmostEqual(len(v.knots(1, True)), 8)
-            self.assertAlmostEqual(len(v.knots(2, True)), 5)
+            self.assertAlmostEqual(len(v.knots(0, with_multiplicities=True)), 11)
+            self.assertAlmostEqual(len(v.knots(1, with_multiplicities=True)), 8)
+            self.assertAlmostEqual(len(v.knots(2, with_multiplicities=True)), 5)
 
     def test_bounding_box(self):
         vol = Volume()
