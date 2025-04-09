@@ -68,7 +68,7 @@ class TestBasis(unittest.TestCase):
         self.assertAlmostEqual(b.greville(0), 0.0)
         self.assertAlmostEqual(b.greville(1), 1.0 / 3.0)
         self.assertAlmostEqual(b.greville(2), 1.0)
-        self.assertAlmostEqual(b.greville(), [0.0, 1.0 / 3.0, 1.0, 2.0, 8.0 / 3.0, 3.0])
+        np.testing.assert_almost_equal(b.greville(), [0.0, 1.0 / 3.0, 1.0, 2.0, 8.0 / 3.0, 3.0])
 
     def test_raise_order(self):
         # test normal knot vector

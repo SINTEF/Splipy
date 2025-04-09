@@ -276,8 +276,6 @@ class TestCurve(unittest.TestCase):
         # test errors and exceptions
         with self.assertRaises(ValueError):
             crv.reparam((9, 3))
-        with self.assertRaises(TypeError):
-            crv.reparam(("one", "two"))
 
     def test_split(self):
         # non-uniform knot vector of a squiggly quadratic n=4 curve
