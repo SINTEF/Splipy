@@ -97,6 +97,7 @@ class SplineObject:
         :raises ValueError: If the parameters are outside the domain
         """
         for b, p in zip(self.bases, params):
+            # TODO(Eivind): Use snap_points instead, then deprecate BSplineBasis.snap
             b.snap(p)
             if b.periodic < 0 and (min(p) < b.start() or b.end() < max(p)):
                 raise ValueError("Evaluation outside parametric domain")

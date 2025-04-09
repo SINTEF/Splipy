@@ -2,7 +2,7 @@
 
 .PHONY: sync
 sync:
-	uv sync --all-packages --group dev
+	uv sync --all-packages --group dev --reinstall
 
 .PHONY: doc
 doc:

@@ -9,6 +9,7 @@ authors = [
 ]
 requires-python = ">=3.11,<4.0"
 dependencies = [
+    "deprecated>=1.2.18",
     "numpy>=1.25",
     "scipy>=1.10",
     "splipy-core",
@@ -35,7 +36,9 @@ dev = [
     "pytest>=8.3.5",
     "pytest-benchmark>=5.1.0",
     "ruff>=0.11.4",
+    "scipy-stubs>=1.15.2.2",
     "sphinx>=8.2.3",
+    "types-deprecated>=1.2.15.20250304",
 ]
 grdecl = [
     "h5py>=3.13.0",
@@ -125,7 +128,7 @@ select = [
     "RET",      # Good return practices
     "SIM",      # Common simplification rules
     "TID",      # Some good import practices
-    "TCH",      # Enforce importing certain types in a TYPE_CHECKING block
+    "TC",       # Enforce importing certain types in a TYPE_CHECKING block
     "PTH",      # Use pathlib instead of os.path
     "TD",       # Be diligent with TODO comments
     "NPY",      # Some numpy-specific things
