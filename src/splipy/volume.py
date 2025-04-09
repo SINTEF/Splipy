@@ -4,7 +4,7 @@ import numpy as np
 
 from .basis import BSplineBasis
 from .splineobject import SplineObject
-from .utils import ensure_listlike, sections
+from .utils import ensure_listlike_old, sections
 
 __all__ = ["Volume"]
 
@@ -112,8 +112,8 @@ class Volume(SplineObject):
         :return: A new approximate volume
         :rtype: Volume
         """
-        p = ensure_listlike(p, dups=3)
-        n = ensure_listlike(n, dups=3)
+        p = ensure_listlike_old(p, dups=3)
+        n = ensure_listlike_old(n, dups=3)
 
         old_basis = [self.bases[0], self.bases[1], self.bases[2]]
         basis = []

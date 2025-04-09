@@ -34,7 +34,7 @@ class TestCurveFactory(unittest.TestCase):
         # test default 5 side n-gon
         c = cf.n_gon()
         self.assertEqual(len(c), 5)
-        self.assertEqual(len(c.knots(0, True)), 8)
+        self.assertEqual(len(c.knots(0, with_multiplicities=True)), 8)
         self.assertEqual(c.order(0), 2)
         # evaluate at second corner (clockwise from (1,0) )
         self.assertAlmostEqual(c.evaluate(c.end(0) / 5.0)[0], cos(2 * pi / 5))
@@ -60,7 +60,7 @@ class TestCurveFactory(unittest.TestCase):
         pts = [[1, 0], [1, 1], [0, 1], [0, 2], [6, 2]]
         c = cf.polygon(pts)
         expected_knots = [0, 0, 1, 2, 3, 9, 9]
-        actual_knots = c.knots(0, True)
+        actual_knots = c.knots(0, with_multiplicities=True)
 
         self.assertEqual(len(c), 5)
         self.assertEqual(c.order(0), 2)

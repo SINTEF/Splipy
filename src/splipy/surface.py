@@ -7,7 +7,7 @@ import numpy as np
 from .basis import BSplineBasis
 from .curve import Curve
 from .splineobject import SplineObject, evaluate
-from .utils import check_direction, ensure_listlike, is_singleton, sections
+from .utils import check_direction, ensure_listlike_old, is_singleton, sections
 
 __all__ = ["Surface"]
 
@@ -111,12 +111,12 @@ class Surface(SplineObject):
         """
 
         squeeze = all(is_singleton(t) for t in [u, v])
-        derivs = ensure_listlike(d, self.pardim)
+        derivs = ensure_listlike_old(d, self.pardim)
         if not self.rational or np.sum(derivs) < 2 or np.sum(derivs) > 3:
             return super().derivative(u, v, d=derivs, above=above, tensor=tensor)
 
-        u = ensure_listlike(u)
-        v = ensure_listlike(v)
+        u = ensure_listlike_old(u)
+        v = ensure_listlike_old(v)
         result = np.zeros((len(u), len(v), self.dimension))
         # dNus = [self.bases[0].evaluate(u, d, above) for d in range(derivs[0]+1)]
         # dNvs = [self.bases[1].evaluate(v, d, above) for d in range(derivs[1]+1)]
@@ -288,8 +288,8 @@ class Surface(SplineObject):
         :return: A new approximate surface
         :rtype: Surface
         """
-        p = ensure_listlike(p, dups=2)
-        n = ensure_listlike(n, dups=2)
+        p = ensure_listlike_old(p, dups=2)
+        n = ensure_listlike_old(n, dups=2)
 
         old_basis = self.bases
         basis = []

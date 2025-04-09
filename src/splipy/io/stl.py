@@ -7,7 +7,7 @@ import numpy as np
 
 from splipy.splinemodel import SplineModel
 from splipy.surface import Surface
-from splipy.utils import ensure_listlike
+from splipy.utils import ensure_listlike_old
 from splipy.volume import Volume
 
 from .master import MasterIO
@@ -142,7 +142,7 @@ class STL(MasterIO):
         #   2. linear splines, only picks knots
         #   3. general splines choose 2*order-1 per knot span
         if n is not None:
-            n = ensure_listlike(n, 2)
+            n = ensure_listlike_old(n, 2)
 
         if n is not None:
             u = np.linspace(surface.start(0), surface.end(0), n[0])

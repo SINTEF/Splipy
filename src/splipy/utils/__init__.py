@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Sequence, Sized
 from itertools import combinations, product
 from math import atan2, sqrt
+from typing import TYPE_CHECKING, TypeVar, Unpack
 
 import numpy as np
 
-try:
-    from collections.abc import Sized
-except ImportError:
-    from collections.abc import Sized
+if TYPE_CHECKING:
+    from splipy.typing import Direction, Section, SectionElement, SectionKwargs
 
 
 def is_right_hand(patch, tol=1e-3):
@@ -93,7 +93,7 @@ def section_to_index(section):
     return None
 
 
-def check_section(*args, **kwargs):
+def check_section(*args: SectionElement, pardim: int, **kwargs: Unpack[SectionKwargs]) -> Section:
     """check_section(u, v, ...)
 
     Parse arguments and return a section spec.
@@ -101,17 +101,16 @@ def check_section(*args, **kwargs):
     The keyword argument `pardim` *must* be provided. The return value is a
     section as described in :func:`splipy.Utils.sections`.
     """
-    pardim = kwargs["pardim"]
-    args = list(args)
-    while len(args) < pardim:
-        args.append(None)
+    args_list = list(args)
+    while len(args_list) < pardim:
+        args_list.append(None)
     for k in set(kwargs.keys()) & set("uvw"):
         index = "uvw".index(k)
-        args[index] = kwargs[k]
-    return args
+        args_list[index] = kwargs[k]
+    return tuple(args_list)
 
 
-def check_direction(direction, pardim):
+def check_direction(direction: Direction, pardim: int) -> int:
     if direction in {0, "u", "U"} and pardim > 0:
         return 0
     if direction in {1, "v", "V"} and pardim > 1:
@@ -133,7 +132,20 @@ def is_singleton(x):
     return not isinstance(x, Sized)
 
 
-def ensure_listlike(x, dups=1):
+T = TypeVar("T")
+
+
+def ensure_listlike(x: T | Sequence[T], dups: int = 1) -> list[T]:
+    if isinstance(x, Sequence):
+        y = list(x)
+        while len(y) < dups:
+            y.append(y[-1])
+        return y
+    return [x] * dups
+
+
+# TODO(Eivind): Remove.
+def ensure_listlike_old(x, dups=1):
     """Wraps x in a list if it's not list-like."""
     try:
         while len(x) < dups:
@@ -307,7 +319,7 @@ __all__ = [
     "check_direction",
     "ensure_flatlist",
     "is_singleton",
-    "ensure_listlike",
+    "ensure_listlike_old",
     "rotate_local_x_axis",
     "flip_and_move_plane_geometry",
     "reshape",

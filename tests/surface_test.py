@@ -591,12 +591,12 @@ class TestSurface(unittest.TestCase):
         self.assertAlmostEqual(surf3.end(1), 1.23 + 2 * pi)
 
         # check knot vector lengths
-        self.assertEqual(len(surf2.knots(0, True)), 12)
-        self.assertEqual(len(surf2.knots(1, True)), 12)
-        self.assertEqual(len(surf3.knots(0, True)), 12)
-        self.assertEqual(len(surf3.knots(1, True)), 14)
-        self.assertEqual(len(surf4.knots(0, True)), 12)
-        self.assertEqual(len(surf4.knots(1, True)), 12)
+        self.assertEqual(len(surf2.knots(0, with_multiplicities=True)), 12)
+        self.assertEqual(len(surf2.knots(1, with_multiplicities=True)), 12)
+        self.assertEqual(len(surf3.knots(0, with_multiplicities=True)), 12)
+        self.assertEqual(len(surf3.knots(1, with_multiplicities=True)), 14)
+        self.assertEqual(len(surf4.knots(0, with_multiplicities=True)), 12)
+        self.assertEqual(len(surf4.knots(1, with_multiplicities=True)), 12)
 
         # check that evaluation is unchanged over a 9x9 grid of shared parametric coordinates
         u = np.linspace(pi / 2, 2 * pi, 9)
@@ -636,8 +636,8 @@ class TestSurface(unittest.TestCase):
             self.assertEqual(s.rational, True)
             self.assertEqual(s.order(), (4, 3))
 
-            self.assertAlmostEqual(len(s.knots(0, True)), 12)
-            self.assertAlmostEqual(len(s.knots(1, True)), 10)
+            self.assertAlmostEqual(len(s.knots(0, with_multiplicities=True)), 12)
+            self.assertAlmostEqual(len(s.knots(1, with_multiplicities=True)), 10)
 
             self.assertEqual(s.bases[1].continuity(0.25), 0)
             self.assertEqual(s.bases[1].continuity(0.75), 1)

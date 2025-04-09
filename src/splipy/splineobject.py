@@ -2,16 +2,18 @@ from __future__ import annotations
 
 import copy
 from bisect import bisect_left
+from collections.abc import Callable, Sequence, Sized
 from itertools import product
 from operator import attrgetter, methodcaller
+from typing import TYPE_CHECKING, ClassVar, Literal, Self, SupportsIndex, Unpack, cast, overload
 
 import numpy as np
+import numpy.typing as npt
 
 from .basis import BSplineBasis
 from .utils import (
     check_direction,
     check_section,
-    ensure_flatlist,
     ensure_listlike,
     is_singleton,
     raise_order_1D,
@@ -20,16 +22,19 @@ from .utils import (
     sections,
 )
 
+if TYPE_CHECKING:
+    from .typing import ArrayLike, Direction, FloatArray, ScalarLike, SectionElement, SectionKwargs
+
 __all__ = ["SplineObject"]
 
 
-def transpose_fix(pardim, direction):
+def transpose_fix(pardim: int, direction: int) -> tuple[int, ...]:
     ret = list(range(1, pardim + 1))
     ret.insert(direction, 0)
     return tuple(ret)
 
 
-def evaluate(bases, cps, tensor=True):
+def evaluate(bases: Sequence[FloatArray], cps: FloatArray, tensor: bool = True) -> FloatArray:
     if tensor:
         idx = len(bases) - 1
         for N in bases[::-1]:
@@ -51,7 +56,36 @@ class SplineObject:
     object, while infix operators (e.g. ``+``) create new objects.
     """
 
-    def __init__(self, bases=None, controlpoints=None, rational=False, raw=False):
+    __slots__ = ["bases", "controlpoints", "dimension", "rational"]
+    bases: list[BSplineBasis]
+    controlpoints: FloatArray
+    dimension: int
+    rational: bool
+
+    _intended_pardim: ClassVar[int]
+
+    @staticmethod
+    def construct_subclass(
+        bases: Sequence[BSplineBasis], controlpoints: FloatArray, rational: bool
+    ) -> SplineObject:
+        for subcls in SplineObject.__subclasses__():
+            if subcls._intended_pardim == len(bases):
+                return subcls(*bases, controlpoints, rational=rational, raw=True)  # type: ignore
+        return SplineObject(bases, controlpoints, rational, raw=True)
+
+    @classmethod
+    def construct_self(cls, bases: Sequence[BSplineBasis], controlpoints: FloatArray, rational: bool) -> Self:
+        if len(bases) != cls._intended_pardim:
+            raise ValueError("Attempted to construct an object with incorrect pardim")
+        return SplineObject.construct_subclass(bases, controlpoints, rational)  # type: ignore
+
+    def __init__(
+        self,
+        bases: Sequence[BSplineBasis | None],
+        controlpoints: ArrayLike | None = None,
+        rational: bool = False,
+        raw: bool = False,
+    ) -> None:
         """Construct a spline object with the given bases and control points.
 
         The default is to create a linear one-element mapping from and to the
@@ -66,43 +100,58 @@ class SplineObject:
         :param bool raw: If True, skip any control point reordering.
             (For internal use.)
         """
-        bases = [(b.clone() if b else BSplineBasis()) for b in bases]
-        self.bases = bases
+        self.bases = [(b.clone() if b else BSplineBasis()) for b in bases]
+
         if controlpoints is None:
             # `product' produces tuples in row-major format (the last input varies quickest)
             # We want them in column-major format, so we reverse the basis orders, and then
             # also reverse the output tuples
-            controlpoints = [c[::-1] for c in product(*(b.greville() for b in bases[::-1]))]
+            cps = np.array(
+                [c[::-1] for c in product(*(b.greville() for b in self.bases[::-1]))], dtype=np.float64
+            )
 
             # Minimum two dimensions
-            if len(controlpoints[0]) == 1:
-                controlpoints = [tuple(list(c) + [0.0]) for c in controlpoints]
+            if cps.shape[-1] == 1:
+                cps = np.hstack([cps, np.zeros_like(cps)])
 
             # Add weight = 1 for identiy-mapping rational splines
             if rational:
-                controlpoints = [tuple(list(c) + [1.0]) for c in controlpoints]
+                cps = np.hstack([cps, np.ones_like(cps[:, :1])])
 
-        self.controlpoints = np.array(controlpoints)
+            self.controlpoints = cps
+        else:
+            self.controlpoints = np.array(controlpoints, dtype=np.float64)
+
         self.dimension = self.controlpoints.shape[-1] - rational
         self.rational = rational
 
         if not raw:
-            shape = tuple(b.num_functions() for b in bases)
+            shape = tuple(b.num_functions() for b in self.bases)
             ncomps = self.dimension + rational
             self.controlpoints = reshape(self.controlpoints, shape, order="F", ncomps=ncomps)
 
-    def _validate_domain(self, *params):
+    def _validate_domain(self, *params: FloatArray) -> None:
+        for b, p in zip(self.bases, params):
+            b.snap_points(p)
+            if b.periodic < 0 and (np.min(p) < b.start() or b.end() < np.max(p)):
+                raise ValueError("Evaluation outside parametric domain")
+
+    # TODO(Eivind): Remove this method
+    def _validate_domain_old(self, *params):  # type: ignore[no-untyped-def]
         """Check whether the given evaluation parameters are valid.
 
         :raises ValueError: If the parameters are outside the domain
         """
         for b, p in zip(self.bases, params):
-            # TODO(Eivind): Use snap_points instead, then deprecate BSplineBasis.snap
             b.snap(p)
             if b.periodic < 0 and (min(p) < b.start() or b.end() < max(p)):
                 raise ValueError("Evaluation outside parametric domain")
 
-    def evaluate(self, *params, **kwargs):
+    def evaluate(
+        self,
+        *params: ArrayLike | ScalarLike,
+        tensor: bool = True,
+    ) -> FloatArray:
         """Evaluate the object at given parametric values.
 
         If *tensor* is true, evaluation will take place on a tensor product
@@ -125,17 +174,16 @@ class SplineObject:
         :rtype: numpy.array
         """
         squeeze = all(is_singleton(p) for p in params)
-        params = [ensure_listlike(p) for p in params]
+        params_np = [np.atleast_1d(np.asarray(t, dtype=np.float64)) for t in params]
 
-        tensor = kwargs.get("tensor", True)
-        if not tensor and len({len(p) for p in params}) != 1:
+        if not tensor and len({len(p) for p in params_np}) != 1:
             raise ValueError("Parameters must have same length")
 
-        self._validate_domain(*params)
+        self._validate_domain(*params_np)
 
         # Evaluate the corresponding bases at the corresponding points
         # and build the result array
-        Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+        Ns = [b.evaluate(p) for b, p in zip(self.bases, params_np)]
         result = evaluate(Ns, self.controlpoints, tensor)
 
         # For rational objects, we divide out the weights, which are stored in the
@@ -151,7 +199,13 @@ class SplineObject:
 
         return result
 
-    def derivative(self, *params, **kwargs):
+    def derivative(
+        self,
+        *params: ArrayLike | ScalarLike,
+        d: int | Sequence[int] = 1,
+        above: bool | Sequence[bool] = True,
+        tensor: bool = True,
+    ) -> FloatArray:
         """Evaluate the derivative of the object at the given parametric values.
 
         If *tensor* is true, evaluation will take place on a tensor product
@@ -196,24 +250,20 @@ class SplineObject:
         :rtype: numpy.array
         """
         squeeze = all(is_singleton(p) for p in params)
-        params = [ensure_listlike(p) for p in params]
-
-        derivs = kwargs.get("d", [1] * self.pardim)
-        derivs = ensure_listlike(derivs, self.pardim)
-
-        above = kwargs.get("above", [True] * self.pardim)
+        params_np = [np.atleast_1d(np.asarray(t, dtype=np.float64)) for t in params]
+        derivs = ensure_listlike(d, self.pardim)
         above = ensure_listlike(above, self.pardim)
 
-        tensor = kwargs.get("tensor", True)
-
-        if not tensor and len({len(p) for p in params}) != 1:
+        if not tensor and len({len(p) for p in params_np}) != 1:
             raise ValueError("Parameters must have same length")
 
-        self._validate_domain(*params)
+        self._validate_domain(*params_np)
 
         # Evaluate the derivatives of the corresponding bases at the corresponding points
         # and build the result array
-        dNs = [b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params, derivs, above)]
+        dNs = [
+            b.evaluate(p, d, from_right) for b, p, d, from_right in zip(self.bases, params_np, derivs, above)
+        ]
         result = evaluate(dNs, self.controlpoints, tensor)
 
         # For rational curves, we need to use the quotient rule
@@ -224,7 +274,7 @@ class SplineObject:
         if self.rational:
             if sum(derivs) > 1:
                 raise RuntimeError(f"Rational derivative not implemented for order {sum(derivs)}")
-            Ns = [b.evaluate(p) for b, p in zip(self.bases, params)]
+            Ns = [b.evaluate(p) for b, p in zip(self.bases, params_np)]
             non_derivative = evaluate(Ns, self.controlpoints, tensor)
             W = non_derivative[..., -1]  # W
             Wd = result[..., -1]  # W'
@@ -238,7 +288,13 @@ class SplineObject:
 
         return result
 
-    def get_derivative_spline(self, direction=None):
+    @overload
+    def get_derivative_spline(self) -> list[SplineObject]: ...
+
+    @overload
+    def get_derivative_spline(self, direction: Direction) -> SplineObject: ...
+
+    def get_derivative_spline(self, direction: Direction | None = None) -> SplineObject | list[SplineObject]:
         """Compute the controlpoints associated with the derivative spline object
 
         If `direction` is given, only the derivatives in that direction are
@@ -269,13 +325,13 @@ class SplineObject:
         :return: Derivative spline
         :rtype: SplineObject
         """
-
         if self.rational:
-            raise RuntimeError("Not working for rational splines")
+            raise RuntimeError("Not supported for rational splines")
 
-        # if no direction is specified, return a tuple with all derivatives
+        # If no direction is specified, return a tuple with all derivatives
         if direction is None:
-            return tuple([self.get_derivative_spline(dim) for dim in range(self.pardim)])
+            return [self.get_derivative_spline(dim) for dim in range(self.pardim)]
+
         d = check_direction(direction, self.pardim)
         k = self.knots(d, with_multiplicities=True)
         p = self.order(d) - 1
@@ -297,15 +353,34 @@ class SplineObject:
         bases = list(self.bases)
         bases[d] = BSplineBasis(p, k[1:-1], bases[d].periodic - 1)
 
-        # search for the right subclass constructor, i.e. Volume, Surface or Curve
-        constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
-        constructor = constructor[0]
+        return SplineObject.construct_subclass(bases, derivative_cps, self.rational)
 
-        # return derivative object
-        args = bases + [derivative_cps] + [self.rational]
-        return constructor(*args, raw=True)
+    @overload
+    def tangent(
+        self,
+        *params: ArrayLike | ScalarLike,
+        direction: Direction,
+        above: bool | Sequence[bool] = True,
+        tensor: bool = True,
+    ) -> FloatArray: ...
 
-    def tangent(self, *params, **kwargs):
+    @overload
+    def tangent(
+        self,
+        *params: ArrayLike | ScalarLike,
+        direction: None = None,
+        above: bool | Sequence[bool] = True,
+        tensor: bool = True,
+    ) -> list[FloatArray]: ...
+
+    def tangent(
+        self,
+        *params: ArrayLike | ScalarLike,
+        direction: Direction | None = None,
+        above: bool | Sequence[bool] = True,
+        tensor: bool = True,
+    ) -> FloatArray | list[FloatArray]:
+        # def tangent(self, *params, **kwargs):
         """Evaluate the tangents of the object at the given parametric values.
 
         If `direction` is given, only the derivatives in that direction are
@@ -326,31 +401,27 @@ class SplineObject:
         :return: Tangents
         :rtype: tuple<numpy.array>
         """
-        direction = kwargs.get("direction")
         derivative = [0] * self.pardim
-
-        above = kwargs.get("above", [True] * self.pardim)
         above = ensure_listlike(above, self.pardim)
-
-        tensor = kwargs.get("tensor", True)
 
         if self.pardim == 1:  # curves
             direction = 0
 
         if direction is None:
-            result = ()
+            result: list[FloatArray] = []
             for i in range(self.pardim):
                 derivative[i] = 1
                 # compute velocity in this direction
                 v = self.derivative(*params, d=derivative, above=above, tensor=tensor)
                 # normalize
                 if len(v.shape) == 1:
-                    speed = np.linalg.norm(v)
+                    v /= np.linalg.norm(v)
                 else:
-                    speed = np.linalg.norm(v, axis=-1)
+                    speed: FloatArray = np.linalg.norm(v, axis=-1)
                     speed = np.reshape(speed, speed.shape + (1,))
+                    v /= speed
                 # store in result tuple
-                result += (v / speed,)
+                result.append(v)
                 derivative[i] = 0
             return result
 
@@ -360,14 +431,40 @@ class SplineObject:
         v = self.derivative(*params, d=derivative, above=above, tensor=tensor)
         # normalize
         if len(v.shape) == 1:
-            speed = np.linalg.norm(v)
-        else:
-            speed = np.linalg.norm(v, axis=-1)
-            speed = np.reshape(speed, speed.shape + (1,))
-
+            return v / np.linalg.norm(v)
+        speed = np.linalg.norm(v, axis=-1)
+        speed = np.reshape(speed, speed.shape + (1,))
         return v / speed
 
-    def section(self, *args, **kwargs):
+    @overload
+    def section(
+        self,
+        *args: SectionElement,
+        **kwargs: Unpack[SectionKwargs],
+    ) -> SplineObject | FloatArray: ...
+
+    @overload
+    def section(
+        self,
+        *args: SectionElement,
+        unwrap_points: Literal[True] = ...,
+        **kwargs: Unpack[SectionKwargs],
+    ) -> SplineObject | FloatArray: ...
+
+    @overload
+    def section(
+        self,
+        *args: SectionElement,
+        unwrap_points: Literal[False] = ...,
+        **kwargs: Unpack[SectionKwargs],
+    ) -> SplineObject: ...
+
+    def section(
+        self,
+        *args: SectionElement,
+        unwrap_points: bool = True,
+        **kwargs: Unpack[SectionKwargs],
+    ) -> SplineObject | FloatArray:
         """Returns a section from the object. A section can be any sub-object of
         parametric dimension not exceeding that of the object. E.g. for a
         volume, sections include vertices, edges, faces, etc.
@@ -405,19 +502,14 @@ class SplineObject:
         :rtype: SplineObject or np.array
         """
         section = check_section(*args, pardim=self.pardim, **kwargs)
-        unwrap_points = kwargs.get("unwrap_points", True)
-
         slices = tuple(slice(None) if p is None else p for p in section)
         bases = [b for b, p in zip(self.bases, section) if p is None]
+
         if bases or not unwrap_points:
-            classes = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(bases)]
-            if classes:
-                args = bases + [self.controlpoints[slices], self.rational]
-                return classes[0](*args, raw=True)
-            return SplineObject(bases, self.controlpoints[slices], self.rational, raw=True)
+            return SplineObject.construct_subclass(bases, self.controlpoints[slices], self.rational)
         return self.controlpoints[slices]
 
-    def set_order(self, *order):
+    def set_order(self, order: int, *args: int) -> Self:
         """Set the polynomial order of the object. If only one argument is
         given, the order is set uniformly over all directions.
 
@@ -425,15 +517,17 @@ class SplineObject:
         :raises ValueError: If the order is reduced in any direction.
         :return: self
         """
-        if len(order) == 1:
-            order = [order[0]] * self.pardim
-        if not all(new >= old for new, old in zip(order, self.order())):
+        if not args:
+            args = (order,) * self.pardim
+        # if len(order) == 1:
+        # order = [order[0]] * self.pardim
+        if not all(new >= old for new, old in zip(args, self.order())):
             raise ValueError("Cannot lower order using set_order")
 
-        diff = [new - old for new, old in zip(order, self.order())]
+        diff = [new - old for new, old in zip(args, self.order())]
         return self.raise_order(*diff)
 
-    def raise_order(self, *raises, direction=None):
+    def raise_order(self, diff: int, *args: int, direction: Direction | None = None) -> Self:
         """Raise the polynomial order of the object. If only one
         argument is given, the order is raised equally over all
         directions, unless the `direction` argument is also given. The
@@ -445,22 +539,25 @@ class SplineObject:
         :param int direction: The direction in which to raise the order.
         :return: self
         """
-        if len(raises) == 1 and direction is None:
-            raises = [raises[0]] * self.pardim
-        elif len(raises) == 1:
+        if not args and direction is None:
+            args = (diff,) * self.pardim
+        elif not args and direction is not None:
             newraises = [0] * self.pardim
-            newraises[check_direction(direction, self.pardim)] = raises[0]
-            raises = newraises
-        if not all(r >= 0 for r in raises):
+            newraises[check_direction(direction, self.pardim)] = diff
+            args = tuple(newraises)
+        else:
+            args = (diff,) + args
+
+        if not all(r >= 0 for r in args):
             raise ValueError("Cannot lower order using raise_order")
-        if all(r == 0 for r in raises):
+        if all(r == 0 for r in args):
             return self
 
         if any(b.continuity(b.knots[0]) < b.order or b.periodic > -1 for b in self.bases):
-            self.raise_order_implicit(*raises)
+            self.raise_order_implicit(*args)
             return self
 
-        new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
+        new_bases = [b.raise_order(r) for b, r in zip(self.bases, args)]
 
         d_p = self.pardim
 
@@ -476,7 +573,7 @@ class SplineObject:
                 self.order(i),
                 self.bases[i].knots,
                 controlpoints,
-                raises[i],
+                args[i],
                 self.bases[i].periodic,
             )
             controlpoints = np.reshape(
@@ -488,7 +585,7 @@ class SplineObject:
         self.bases = new_bases
         return self
 
-    def raise_order_implicit(self, *raises):
+    def raise_order_implicit(self, diff: int, *args: int) -> Self:
         """Raise the polynomial order of the object. If only one argument is
         given, the order is raised equally over all directions.
 
@@ -496,8 +593,8 @@ class SplineObject:
             direction.
         :return: self
         """
-
-        new_bases = [b.raise_order(r) for b, r in zip(self.bases, raises)]
+        args = (diff,) + args if args else (diff,) * self.pardim
+        new_bases = [b.raise_order(r) for b, r in zip(self.bases, args)]
 
         # Set up an interpolation problem
         # This works in projective space, so no special handling for rational objects
@@ -519,7 +616,7 @@ class SplineObject:
 
         return self
 
-    def lower_order(self, *lowers):
+    def lower_order(self, diff: int, *args: int) -> Self:
         """Lower the polynomial order of the object. If only one argument is
         given, the order is lowered equally over all directions.
 
@@ -528,12 +625,12 @@ class SplineObject:
         :return SplineObject: Approximation of the current object on a lower
             order basis
         """
-        if len(lowers) == 1:
-            lowers = [lowers[0]] * self.pardim
-        if all(l == 0 for l in lowers):
+        args = (diff,) + args if args else (diff,) * self.pardim
+
+        if all(l == 0 for l in args):
             return self.clone()
 
-        new_bases = [b.lower_order(l) for b, l in zip(self.bases, lowers)]
+        new_bases = [b.lower_order(l) for b, l in zip(self.bases, args)]
 
         # Set up an interpolation problem
         # This works in projective space, so no special handling for rational objects
@@ -550,15 +647,15 @@ class SplineObject:
         for n in N_new[::-1]:
             new_controlpts = np.tensordot(np.linalg.inv(n), new_controlpts, axes=(1, self.pardim - 1))
 
-        # search for the right subclass constructor, i.e. Volume, Surface or Curve
-        constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
-        constructor = constructor[0]
+        return self.construct_self(new_bases, new_controlpts, self.rational)
 
-        # return approximated object
-        args = new_bases + [new_controlpts] + [self.rational]
-        return constructor(*args, raw=True)
+    @overload
+    def start(self) -> tuple[float, ...]: ...
 
-    def start(self, direction=None):
+    @overload
+    def start(self, direction: Direction) -> float: ...
+
+    def start(self, direction: Direction | None = None) -> float | tuple[float, ...]:
         """Return the start of the parametric domain.
 
         If `direction` is given, returns the start of that direction, as a
@@ -573,7 +670,13 @@ class SplineObject:
         direction = check_direction(direction, self.pardim)
         return self.bases[direction].start()
 
-    def end(self, direction=None):
+    @overload
+    def end(self) -> tuple[float, ...]: ...
+
+    @overload
+    def end(self, direction: Direction) -> float: ...
+
+    def end(self, direction: Direction | None = None) -> float | tuple[float, ...]:
         """Return the end of the parametric domain.
 
         If `direction` is given, returns the end of that direction, as a float.
@@ -587,7 +690,13 @@ class SplineObject:
         direction = check_direction(direction, self.pardim)
         return self.bases[direction].end()
 
-    def order(self, direction=None):
+    @overload
+    def order(self) -> tuple[int, ...]: ...
+
+    @overload
+    def order(self, direction: Direction) -> int: ...
+
+    def order(self, direction: Direction | None = None) -> int | tuple[int, ...]:
         """Return polynomial order (degree + 1).
 
         If `direction` is given, returns the order of that direction, as an
@@ -602,7 +711,18 @@ class SplineObject:
         direction = check_direction(direction, self.pardim)
         return self.bases[direction].order
 
-    def knots(self, direction=None, with_multiplicities=False):
+    @overload
+    def knots(self, *, with_multiplicities: bool = ...) -> tuple[FloatArray, ...]: ...
+
+    @overload
+    def knots(self, direction: Direction, *, with_multiplicities: bool = ...) -> FloatArray: ...
+
+    def knots(
+        self,
+        direction: Direction | None = None,
+        *,
+        with_multiplicities: bool = False,
+    ) -> FloatArray | tuple[FloatArray, ...]:
         """Return knots vector
 
         If `direction` is given, returns the knots in that direction, as a
@@ -614,13 +734,15 @@ class SplineObject:
             multiplicities (i.e. repeated).
         :raises ValueError: For invalid direction
         """
-        getter = attrgetter("knots") if with_multiplicities else methodcaller("knot_spans")
+        getter: Callable[[BSplineBasis], FloatArray] = (
+            attrgetter("knots") if with_multiplicities else methodcaller("knot_spans")
+        )
         if direction is None:
             return tuple(getter(b) for b in self.bases)
         direction = check_direction(direction, self.pardim)
         return getter(self.bases[direction])
 
-    def reverse(self, direction=0):
+    def reverse(self, direction: Direction = 0) -> Self:
         """Swap the direction of a parameter by making it go in the reverse
         direction. The parametric domain remains unchanged.
 
@@ -641,7 +763,7 @@ class SplineObject:
 
         return self
 
-    def swap(self, dir1=0, dir2=1):
+    def swap(self, dir1: Direction = 0, dir2: Direction = 1) -> Self:
         """Swaps two parameter directions.
 
         This function silently passes for curves.
@@ -651,7 +773,7 @@ class SplineObject:
         :return: self
         """
         if self.pardim == 1:
-            return None
+            return self
 
         dir1 = check_direction(dir1, self.pardim)
         dir2 = check_direction(dir2, self.pardim)
@@ -667,7 +789,7 @@ class SplineObject:
 
         return self
 
-    def insert_knot(self, knot, direction=0):
+    def insert_knot(self, knot: ScalarLike | ArrayLike, direction: Direction = 0) -> Self:
         """Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
@@ -679,8 +801,7 @@ class SplineObject:
         shape = self.controlpoints.shape
 
         # for single-value input, wrap it into a list
-        knot = ensure_listlike(knot)
-
+        knot = np.atleast_1d(np.asarray(knot, dtype=np.float64))
         direction = check_direction(direction, self.pardim)
 
         C = np.identity(shape[direction])
@@ -691,7 +812,13 @@ class SplineObject:
 
         return self
 
-    def refine(self, *ns, **kwargs):
+    @overload
+    def refine(self, n: int, *, direction: Direction | None = None) -> Self: ...
+
+    @overload
+    def refine(self, n: int, *ns: int) -> Self: ...
+
+    def refine(self, n: int, *ns: int, direction: Direction | None = None) -> Self:
         """Enrich the spline space by inserting knots into each existing knot
         span.
 
@@ -712,26 +839,43 @@ class SplineObject:
         :param int direction: Direction to refine in
         :return: self
         """
-        direction = kwargs.get("direction")
+        # direction = kwargs.get("direction")
 
-        if len(ns) == 1 and direction is not None:
-            directions = [check_direction(direction, self.pardim)]
+        directions: Sequence[int]
+        args: tuple[int, ...]
+
+        if not ns and direction is not None:
+            args = (n,)
+            directions = (check_direction(direction, self.pardim),)
+        elif ns and direction is not None:
+            raise TypeError("Can't use direction parameter when refining multiple directions")
+        elif not ns:
+            args = (n,) * self.pardim
+            directions = range(self.pardim)
         else:
+            args = (n,) + ns
             directions = range(self.pardim)
 
-        if len(ns) == 1:
-            ns = [ns[0]] * self.pardim
-
-        for n, d in zip(ns, directions):
+        for n, d in zip(args, directions):
             knots = self.knots(direction=d)  # excluding multiple knots
-            new_knots = []
+            new_knots: list[FloatArray] = []
             for k0, k1 in zip(knots[:-1], knots[1:]):
                 new_knots.extend(np.linspace(k0, k1, n + 2)[1:-1])
             self.insert_knot(new_knots, d)
 
         return self
 
-    def reparam(self, *args, **kwargs):
+    @overload
+    def reparam(self, *args: tuple[ScalarLike, ScalarLike]) -> Self: ...
+
+    @overload
+    def reparam(self, arg: tuple[ScalarLike, ScalarLike] = ..., /, *, direction: Direction) -> Self: ...
+
+    def reparam(
+        self,
+        *args: tuple[ScalarLike, ScalarLike],
+        direction: Direction | None = None,
+    ) -> Self:
         """Redefine the parametric domain. This function accepts two calling
         conventions:
 
@@ -748,28 +892,29 @@ class SplineObject:
         :param int direction: The direction to reparametrize
         :return: self
         """
-        if "direction" not in kwargs:
+        if direction is None:
             # Pad the args with (0, 1) for the extra directions
-            args = list(args) + [(0, 1)] * (len(self.bases) - len(args))
-            for b, (start, end) in zip(self.bases, args):
+            bounds = list(args) + [(0, 1)] * (len(self.bases) - len(args))
+            for b, (start, end) in zip(self.bases, bounds):
                 b.reparam(start, end)
+            return self
+
+        direction = check_direction(direction, self.pardim)
+        if len(args) == 0:
+            self.bases[direction].reparam(0, 1)
         else:
-            direction = kwargs["direction"]
-            direction = check_direction(direction, self.pardim)
-            if len(args) == 0:
-                self.bases[direction].reparam(0, 1)
-            else:
-                start, end = args[0]
-                self.bases[direction].reparam(start, end)
+            start, end = args[0]
+            self.bases[direction].reparam(start, end)
 
         return self
 
-    def translate(self, x):
+    def translate(self, x: ArrayLike) -> Self:
         """Translate (i.e. move) the object by a given distance.
 
         :param array-like x: The vector to translate by.
         :return: self
         """
+
         # 3D rational example: create a 4x4 translation matrix
         #
         #  |xw|      |  1   0   0  x1 |   |xw|
@@ -781,6 +926,7 @@ class SplineObject:
         #      in order to formulate translation as a matrix-matrix product
         dim = self.dimension
         rat = self.rational
+        x = np.asarray(x, dtype=np.float64)
         n = len(self)  # number of control points
         if len(x) > dim:  # typical case: requesting movement in z-direction for 2D geometries
             self.set_dimension(len(x))
@@ -790,6 +936,8 @@ class SplineObject:
         translation_matrix = np.identity(dim + 1)
         for i in range(dim):
             translation_matrix[i, -1] = x[i]
+
+        cp: FloatArray
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
         if not self.rational:
@@ -809,7 +957,13 @@ class SplineObject:
 
         return self
 
-    def scale(self, *args):
+    @overload
+    def scale(self, arg: ArrayLike, /) -> Self: ...
+
+    @overload
+    def scale(self, arg: ScalarLike, *args: ScalarLike) -> Self: ...
+
+    def scale(self, arg: ArrayLike | ScalarLike, *args: ScalarLike) -> Self:
         """Scale, or magnify the object by a given amount.
 
         In case of one input argument, the scaling is uniform.
@@ -827,17 +981,25 @@ class SplineObject:
         #
         dim = self.dimension
         rat = self.rational
-        n = len(self)  # number of control points
-        s = ensure_flatlist(args)
-        s = ensure_listlike(s, dups=3)
+        # n = len(self)  # number of control points
+
+        if isinstance(arg, Sized):
+            s = np.asarray(arg, dtype=np.float64)
+        else:
+            ss = [arg, *args]
+            while len(ss) < dim:
+                ss.append(ss[-1])
+            s = np.asarray(ss, dtype=np.float64)
 
         # set up the scaling matrix
         scale_matrix = np.identity(dim + rat)
         for i in range(dim):
             scale_matrix[i, i] = s[i]
 
+        cp: FloatArray
+
         # wrap out the controlpoints to a matrix (down from n-D tensor)
-        cp = np.reshape(self.controlpoints, (n, dim + rat))
+        cp = np.reshape(self.controlpoints, (-1, dim + rat))
 
         # do the actual scaling by matrix-matrix multiplication
         cp = cp @ scale_matrix
@@ -847,7 +1009,7 @@ class SplineObject:
 
         return self
 
-    def rotate(self, theta, normal=(0, 0, 1)):
+    def rotate(self, theta: float, normal: ArrayLike = (0, 0, 1)) -> Self:
         """Rotate the object around an axis.
 
         :param float theta: Angle to rotate about, measured in radians
@@ -865,6 +1027,8 @@ class SplineObject:
         dim = self.dimension
         rat = self.rational
         n = len(self)  # number of control points
+        normal = np.asarray(normal, dtype=np.float64)
+
         if not (normal[0] == 0 and normal[1] == 0):  # rotating a 2D geometry out of the xy-plane
             self.set_dimension(3)
             dim = self.dimension
@@ -875,13 +1039,14 @@ class SplineObject:
                 [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
             ).T  # we do right-multiplication, so we need a transpose
         elif dim == 3:
-            normal = np.array(normal)
             R = rotation_matrix(theta, normal)
         else:
             raise RuntimeError("rotation undefined for geometries other than 2D and 3D")
 
         rot_matrix = np.identity(dim + rat)
         rot_matrix[0:dim, 0:dim] = R
+
+        cp: FloatArray
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
         cp = np.reshape(self.controlpoints, (n, dim + rat))
@@ -894,7 +1059,7 @@ class SplineObject:
 
         return self
 
-    def mirror(self, normal):
+    def mirror(self, normal: ArrayLike) -> Self:
         """Mirror the object around a plane through the origin.
 
         :param array-like normal: The plane normal to mirror about.
@@ -921,12 +1086,14 @@ class SplineObject:
             raise RuntimeError("reflection undefined for geometries other than 3D")
 
         # fixup the input normal to right form
-        normal = np.array(normal)
-        normal = normal / np.sqrt(np.dot(normal, normal))  # normalize it
+        normal = np.asarray(normal, dtype=np.float64)
+        normal /= np.linalg.norm(normal)
 
         # set up the reflection matrix
         reflection_matrix = np.identity(dim + rat)
         reflection_matrix[0:dim, 0:dim] -= 2 * np.outer(normal, normal)
+
+        cp: FloatArray
 
         # wrap out the controlpoints to a matrix (down from n-D tensor)
         cp = np.reshape(self.controlpoints, (n, dim + rat))
@@ -939,7 +1106,7 @@ class SplineObject:
 
         return self
 
-    def project(self, plane):
+    def project(self, plane: Literal["", "x", "y", "z", "xy", "xz", "yz", "xyz"]) -> Self:
         """Projects the geometry onto a plane or axis.
 
         - `project('xy')` will project the object onto the *xy* plane, setting
@@ -959,7 +1126,7 @@ class SplineObject:
 
         return self
 
-    def bounding_box(self):
+    def bounding_box(self) -> list[tuple[float, float]]:
         """Gets the bounding box of a spline object, computed from the
         control-point values. Could be inaccurate for rational splines.
 
@@ -971,12 +1138,17 @@ class SplineObject:
         """
         dim = self.dimension
 
-        result = []
+        result: list[tuple[float, float]] = []
         for i in range(dim):
-            result.append((np.min(self.controlpoints[..., i]), np.max(self.controlpoints[..., i])))
+            result.append(
+                (
+                    float(np.min(self.controlpoints[..., i])),
+                    float(np.max(self.controlpoints[..., i])),
+                )
+            )
         return result
 
-    def center(self):
+    def center(self) -> FloatArray:
         """Gets the center of the domain
 
         For curves this will return :math:`(\\tilde{x}, \\tilde{y},...)`, where
@@ -997,7 +1169,6 @@ class SplineObject:
             integrating the rational functions :math:`\\frac{N_i(t)w_i}{\\sum_j
             N_j(t)w_j}`.
         """
-
         # compute integration of basis functions
         Ns = [b.integrate(b.start(), b.end()) for b in self.bases]
 
@@ -1020,7 +1191,7 @@ class SplineObject:
 
         return result
 
-    def corners(self, order="C"):
+    def corners(self, order: Literal["C", "F"] = "C") -> FloatArray:
         """Return the corner control points.
 
         The `order` parameter determines which order to use, either ``'F'`` or
@@ -1037,12 +1208,12 @@ class SplineObject:
         .. warning:: For rational splines, this will return the corners in
             projective coordinates, including weights.
         """
-        result = np.zeros((2**self.pardim, self.dimension + int(self.rational)))
+        result = np.zeros((2**self.pardim, self.dimension + int(self.rational)), dtype=np.float64)
         for i, args in enumerate(sections(self.pardim, 0)):
-            result[i, :] = self.section(*(args[::-1] if order == "F" else args))
+            result[i, :] = cast("FloatArray", self.section(*(args[::-1] if order == "F" else args)))
         return result
 
-    def lower_periodic(self, periodic, direction=0):
+    def lower_periodic(self, periodic: int, direction: Direction = 0) -> Self:
         """Sets the periodicity of the spline object in the given direction,
         keeping the geometry unchanged.
 
@@ -1064,7 +1235,7 @@ class SplineObject:
 
         return self
 
-    def set_dimension(self, new_dim):
+    def set_dimension(self, new_dim: int) -> Self:
         """Sets the physical dimension of the object. If increased, the new
         components are set to zero.
 
@@ -1083,13 +1254,13 @@ class SplineObject:
 
         return self
 
-    def periodic(self, direction=0):
+    def periodic(self, direction: Direction = 0) -> bool:
         """Returns true if the spline object is periodic in the given parametric direction"""
         direction = check_direction(direction, self.pardim)
 
         return self.bases[direction].periodic > -1
 
-    def force_rational(self):
+    def force_rational(self) -> Self:
         """Force a rational representation of the object.
 
         The weights of a non-rational object will be set to 1.
@@ -1100,11 +1271,11 @@ class SplineObject:
             dim = self.dimension
             shape = self.controlpoints.shape
             self.controlpoints = np.insert(self.controlpoints, dim, np.ones(shape[:-1]), self.pardim)
-            self.rational = 1
+            self.rational = True
 
         return self
 
-    def split(self, knots, direction=0):
+    def split(self, knots: ScalarLike | ArrayLike, direction: Direction = 0) -> Self | list[Self]:
         """Split an object into two or more separate representations with C0
         continuity between them.
 
@@ -1115,10 +1286,7 @@ class SplineObject:
         :return: The new objects
         :rtype: [SplineObject]
         """
-        # for single-value input, wrap it into a list
-        knots = ensure_listlike(knots)
-
-        # error test input
+        knots = np.atleast_1d(np.asarray(knots, dtype=np.float64))
         direction = check_direction(direction, self.pardim)
 
         p = self.order(direction)
@@ -1128,7 +1296,7 @@ class SplineObject:
         # insert knots to produce C{-1} at all splitting points
         for k in knots:
             continuity = bases[direction].continuity(k)
-            if continuity == np.inf:
+            if isinstance(continuity, float):
                 continuity = p - 1
             splitting_obj.insert_knot([k] * (continuity + 1), direction)
 
@@ -1143,9 +1311,9 @@ class SplineObject:
                 return splitting_obj.split(knots[1:], direction)
             return splitting_obj
 
-        # search for the right subclass constructor, i.e. Volume, Surface or Curve
-        spline_object = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(bases)]
-        spline_object = spline_object[0]
+        # # search for the right subclass constructor, i.e. Volume, Surface or Curve
+        # spline_object = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(bases)]
+        # spline_object = spline_object[0]
 
         # everything is available now, just have to find the right index range
         # in the knot vector and controlpoints to store in each separate curve
@@ -1166,8 +1334,7 @@ class SplineObject:
                 cp = splitting_obj.controlpoints[tuple(cp_slice)]
                 bases[direction] = BSplineBasis(p, b.knots[knot_slice])
 
-                args = bases + [cp, splitting_obj.rational]
-                results.append(spline_object(*args, raw=True))
+                results.append(self.construct_self(bases, cp, splitting_obj.rational))
 
                 last_knot_i = mu
                 last_cp_i += n_cp
@@ -1177,18 +1344,16 @@ class SplineObject:
         cp_slice[direction] = slice(last_cp_i, None, None)
         bases[direction] = BSplineBasis(p, b.knots[knot_slice])
         cp = splitting_obj.controlpoints[tuple(cp_slice)]
-        args = bases + [cp, splitting_obj.rational]
-        results.append(spline_object(*args, raw=True))
+        results.append(self.construct_self(bases, cp, splitting_obj.rational))
 
         return results
 
-    def make_periodic(self, continuity=None, direction=0):
+    def make_periodic(self, continuity: int | None = None, direction: Direction = 0) -> Self:
         """Make the spline object periodic in a given parametric direction.
 
         :param int continuity: The continuity along the boundary (default max).
         :param int direction: The direction to ensure continuity in.
         """
-
         direction = check_direction(direction, self.pardim)
         basis = self.bases[direction]
         if continuity is None:
@@ -1205,10 +1370,10 @@ class SplineObject:
         basis = basis.make_periodic(continuity)
 
         # Merge control points
-        index_beg = [slice(None, None, None)] * (self.pardim + 1)
-        index_end = [slice(None, None, None)] * (self.pardim + 1)
-        cps = np.array(self.controlpoints)
-        weights = np.linspace(0, 1, continuity + 1) if continuity > 0 else [0.5]
+        index_beg: list[slice | int] = [slice(None, None, None)] * (self.pardim + 1)
+        index_end: list[slice | int] = [slice(None, None, None)] * (self.pardim + 1)
+        cps = self.controlpoints.copy()
+        weights: Sequence[float] = list(np.linspace(0, 1, continuity + 1)) if continuity > 0 else [0.5]
         for i, j, t in zip(range(continuity + 1), range(-continuity - 1, 0), weights):
             # Weighted average between cps[..., i, ..., :] and cps[..., -c-1+i, ..., :]
             # The weights are chosen so that, for periodic c, the round trip
@@ -1224,34 +1389,29 @@ class SplineObject:
 
         bases = list(self.bases)
         bases[direction] = basis
-        args = bases + [cps] + [self.rational]
-
-        # search for the right subclass constructor, i.e. Volume, Surface or Curve
-        constructor = [c for c in SplineObject.__subclasses__() if c._intended_pardim == len(self.bases)]
-        constructor = constructor[0]
-        return constructor(*args, raw=True)
+        return self.construct_self(bases, cps, self.rational)
 
     @property
-    def pardim(self):
+    def pardim(self) -> int:
         """The number of parametric dimensions: 1 for curves, 2 for surfaces, 3
         for volumes, etc.
         """
         return len(self.controlpoints.shape) - 1
 
-    def clone(self):
+    def clone(self) -> Self:
         """Clone the object."""
         return copy.deepcopy(self)
 
     __call__ = evaluate
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of control points (basis functions) for the object."""
         n = 1
         for b in self.bases:
             n *= b.num_functions()
         return n
 
-    def _unravel_flat_index(self, i):
+    def _unravel_flat_index(self, i: SupportsIndex | slice) -> tuple[npt.NDArray[np.intp], ...]:
         """Unravels a flat index i to multi-indexes.
 
         :param i: Flat index
@@ -1262,7 +1422,11 @@ class SplineObject:
         # i is int => make sure we deal with negative i properly
         # i is slice => use i.indices to compute the actual indices
         total = len(self)
-        indexes = ([i] if i >= 0 else [total + i]) if isinstance(i, int) else list(range(*i.indices(total)))
+        if isinstance(i, slice):
+            indexes = list(range(*i.indices(total)))
+        else:
+            idx = i.__index__()
+            indexes = [idx] if idx >= 0 else [total + idx]
 
         # Convert to multi-indexes
         try:
@@ -1272,7 +1436,7 @@ class SplineObject:
 
         return unraveled
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice | tuple[SupportsIndex | slice, ...]) -> FloatArray:
         """Get the control point at a given index.
 
         Indexing is in column-major order. Examples of supported indexing
@@ -1300,11 +1464,13 @@ class SplineObject:
         unraveled = self._unravel_flat_index(i)
 
         # Singleton dimensions should be squeezed if the input was an int
-        if isinstance(i, int):
-            return self.controlpoints[unraveled][0]
+        if isinstance(i, SupportsIndex):
+            return cast("FloatArray", self.controlpoints[unraveled][0])
         return self.controlpoints[unraveled]
 
-    def __setitem__(self, i, cp):
+    def __setitem__(
+        self, i: SupportsIndex | slice | tuple[SupportsIndex | slice, ...], cp: ArrayLike
+    ) -> None:
         """Set the control points at given indices.
 
         This function supports the same indexing modes as
@@ -1314,64 +1480,65 @@ class SplineObject:
         :param numpy.array cp: New control point(s)
         """
         if isinstance(i, tuple):
-            self.controlpoints[i] = cp
+            self.controlpoints[i] = np.asarray(cp, dtype=np.float64)
             return
 
         unraveled = self._unravel_flat_index(i)
-        self.controlpoints[unraveled] = cp
+        self.controlpoints[unraveled] = np.asarray(cp, dtype=np.float64)
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[int, ...]:
         """The dimensions of the control point array."""
         return self.controlpoints.shape[:-1]
 
-    def __iadd__(self, x):
+    def __iadd__(self, x: ArrayLike) -> Self:
         self.translate(x)
         return self
 
-    def __isub__(self, x):
-        self.translate(-np.array(x))  # can't do -x if x is a list, so we rewrap it here
+    def __isub__(self, x: ArrayLike) -> Self:
+        self.translate(-np.asarray(x, dtype=np.float64))  # can't do -x if x is a list, so we rewrap it here
         return self
 
-    def __imul__(self, x):
+    def __imul__(self, x: ArrayLike | ScalarLike) -> Self:
         self.scale(x)
         return self
 
-    def __itruediv__(self, x):
-        self.scale(1.0 / x)
+    def __itruediv__(self, x: ArrayLike | ScalarLike) -> Self:
+        self.scale(1.0 / np.asarray(x, dtype=np.float64))
         return self
 
     __ifloordiv__ = __itruediv__  # integer division (should not distinguish)
-    __idiv__ = __itruediv__  # python2 compatibility
 
-    def __add__(self, x):
+    def __add__(self, x: ArrayLike) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj += x
         return new_obj
 
-    def __radd__(self, x):
+    def __radd__(self, x: ArrayLike) -> Self:
         return self + x
 
-    def __sub__(self, x):
+    def __sub__(self, x: ArrayLike) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj -= x
         return new_obj
 
-    def __mul__(self, x):
+    def __mul__(self, x: ArrayLike | ScalarLike) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj *= x
         return new_obj
 
-    def __rmul__(self, x):
+    def __rmul__(self, x: ArrayLike | ScalarLike) -> Self:
         return self * x
 
-    def __div__(self, x):
+    def __truediv__(self, x: ArrayLike | ScalarLike) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj /= x
         return new_obj
 
+    __floordiv__ = __truediv__
+
     @classmethod
-    def make_splines_compatible(cls, spline1, spline2):
+    def make_splines_compatible(cls, spline1: SplineObject, spline2: SplineObject) -> None:
         """Ensure that two splines are compatible.
 
         This will manipulate one or both to ensure that they are both rational
@@ -1393,7 +1560,12 @@ class SplineObject:
             spline1.set_dimension(spline2.dimension)
 
     @classmethod
-    def make_splines_identical(cls, spline1, spline2, direction=None):
+    def make_splines_identical(
+        cls,
+        spline1: SplineObject,
+        spline2: SplineObject,
+        direction: Direction | None = None,
+    ) -> None:
         """Ensure that two splines have identical discretization.
 
         This will first make them compatible (see
@@ -1407,7 +1579,7 @@ class SplineObject:
         """
 
         # make sure that rational/dimension is the same
-        SplineObject.make_splines_compatible(spline1, spline2)
+        cls.make_splines_compatible(spline1, spline2)
 
         # If all directions, just call the same method several times
         if direction is None:
@@ -1446,7 +1618,7 @@ class SplineObject:
             c1 = b1.continuity(k)
             c2 = b2.continuity(k)
             if c2 > c1:
-                m = min(c2 - c1, p - 1 - c1)  # c2=np.inf if knot does not exist
+                m = cast("int", min(c2 - c1, p - 1 - c1))  # c2=np.inf if knot does not exist
                 inserts.extend([k] * m)
         spline2.insert_knot(inserts, direction=i)
 
@@ -1455,6 +1627,6 @@ class SplineObject:
             c1 = b1.continuity(k)
             c2 = b2.continuity(k)
             if c1 > c2:
-                m = min(c1 - c2, p - 1 - c2)  # c1=np.inf if knot does not exist
+                m = cast("int", min(c1 - c2, p - 1 - c2))  # c1=np.inf if knot does not exist
                 inserts.extend([k] * m)
         spline1.insert_knot(inserts, direction=i)

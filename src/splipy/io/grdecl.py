@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from splipy import curve_factory, surface_factory, volume_factory
 from splipy.basis import BSplineBasis
-from splipy.utils import ensure_listlike
+from splipy.utils import ensure_listlike_old
 from splipy.volume import Volume
 
 from .g2 import G2
@@ -265,9 +265,9 @@ class GRDECL(MasterIO):
         # ntexture = np.floor(self.n * n)
         # ngeom    = ngeom.astype(np.int32)
         # ntexture = ntexture.astype(np.int32)
-        ngeom = ensure_listlike(ngeom, 3)
-        ntexture = ensure_listlike(ntexture, 3)
-        p = ensure_listlike(p, 3)
+        ngeom = ensure_listlike_old(ngeom, 3)
+        ntexture = ensure_listlike_old(ntexture, 3)
+        p = ensure_listlike_old(p, 3)
 
         # Create the geometry
         ngx, ngy, ngz = ngeom
