@@ -135,13 +135,13 @@ def is_singleton(x):
 T = TypeVar("T")
 
 
-def ensure_listlike(x: T | Sequence[T], dups: int = 1) -> list[T]:
+def ensure_listlike(x: T | Sequence[T], dups: int = 1) -> tuple[T, ...]:
     if isinstance(x, Sequence):
-        y = list(x)
+        y = tuple(x)
         while len(y) < dups:
-            y.append(y[-1])
+            y += (y[-1],)
         return y
-    return [x] * dups
+    return (x,) * dups
 
 
 # TODO(Eivind): Remove.

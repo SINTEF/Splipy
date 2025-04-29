@@ -387,6 +387,14 @@ class BSplineBasis:
         except NotAKnotError:
             return np.inf
 
+    def min_continuity(self, knot: ScalarLike, max: int) -> int:
+        """Get the min of the continuity at a given point and an upper bound.
+
+        :return: min(self.continuity(knot), max)
+        :rtype: int
+        """
+        return cast("int", min(self.continuity(knot), max))
+
     def make_periodic(self, continuity: int) -> BSplineBasis:
         """Create a periodic basis with a given continuity."""
         deg = self.order - 1
