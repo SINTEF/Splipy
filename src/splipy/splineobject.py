@@ -1295,9 +1295,7 @@ class SplineObject:
         bases = self.bases
         # insert knots to produce C{-1} at all splitting points
         for k in knots:
-            continuity = bases[direction].continuity(k)
-            if isinstance(continuity, float):
-                continuity = p - 1
+            continuity = bases[direction].min_continuity(k, p - 1)
             splitting_obj.insert_knot([k] * (continuity + 1), direction)
 
         b = splitting_obj.bases[direction]

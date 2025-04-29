@@ -417,17 +417,17 @@ class TestCurve(unittest.TestCase):
         # insert a few more knots to spice things up
         crv.insert_knot([0.2, 0.71])
 
-        self.assertAlmostEqual(crv.derivative(0.32, 1)[0], expect_derivative(0.32))
-        self.assertAlmostEqual(crv.derivative(0.32, 1)[1], 0)
-        self.assertAlmostEqual(crv.derivative(0.71, 1)[0], expect_derivative(0.71))
+        self.assertAlmostEqual(crv.derivative(0.32, d=1)[0], expect_derivative(0.32))
+        self.assertAlmostEqual(crv.derivative(0.32, d=1)[1], 0)
+        self.assertAlmostEqual(crv.derivative(0.71, d=1)[0], expect_derivative(0.71))
 
-        self.assertAlmostEqual(crv.derivative(0.22, 2)[0], expect_derivative_2(0.22))
-        self.assertAlmostEqual(crv.derivative(0.22, 2)[1], 0)
-        self.assertAlmostEqual(crv.derivative(0.86, 2)[0], expect_derivative_2(0.86))
+        self.assertAlmostEqual(crv.derivative(0.22, d=2)[0], expect_derivative_2(0.22))
+        self.assertAlmostEqual(crv.derivative(0.22, d=2)[1], 0)
+        self.assertAlmostEqual(crv.derivative(0.86, d=2)[0], expect_derivative_2(0.86))
 
-        self.assertAlmostEqual(crv.derivative(0.22, 3)[0], expect_derivative_3(0.22))
-        self.assertAlmostEqual(crv.derivative(0.22, 3)[1], 0)
-        self.assertAlmostEqual(crv.derivative(0.86, 3)[0], expect_derivative_3(0.86))
+        self.assertAlmostEqual(crv.derivative(0.22, d=3)[0], expect_derivative_3(0.22))
+        self.assertAlmostEqual(crv.derivative(0.22, d=3)[1], 0)
+        self.assertAlmostEqual(crv.derivative(0.86, d=3)[0], expect_derivative_3(0.86))
 
     def test_tangent_and_normal(self):
         crv = cf.circle()
