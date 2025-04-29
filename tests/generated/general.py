@@ -1,16 +1,27 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+from itertools import chain, repeat
 from math import pi
+from typing import TextIO
 
 import numpy as np
+
+from splipy.typing import FloatArray
 
 rng = np.random.default_rng()
 
 
-def gen_knot(n, p, periodic):
+def gen_knot(n: int, p: int, periodic: int) -> FloatArray:
     m = n + (periodic + 2)
-    result = [0] * p + range(1, m - p) + [m - p] * p
-    result = np.array(result, "float")
+    result = np.fromiter(
+        chain(
+            repeat(0.0, p),
+            range(1, m - p),
+            repeat(m - p, p),
+        ),
+        dtype=np.float64
+    )
     result[p : m - 1] += (rng.random(m - p - 1) - 0.5) * 0.8
     result = np.round(result * 10) / 10  # set precision to one digit
     for i in range(periodic + 1):
@@ -19,8 +30,8 @@ def gen_knot(n, p, periodic):
     return result
 
 
-def gen_cp_curve(n, dim, periodic):
-    cp = np.zeros((n, dim))
+def gen_cp_curve(n: int, dim: int, periodic: int) -> FloatArray:
+    cp = np.zeros((n, dim), dtype=np.float64)
     if periodic > -1:
         t = np.linspace(0, 2 * pi, n + 1)
         cp[:, 0] = 100 * np.cos(t[:-1])
@@ -31,8 +42,8 @@ def gen_cp_curve(n, dim, periodic):
     return np.floor(cp)
 
 
-def gen_cp_surface(n, dim, periodic):
-    cp = np.zeros((n[0], n[1], dim))
+def gen_cp_surface(n: tuple[int, int], dim: int, periodic: int) -> FloatArray:
+    cp = np.zeros((n[0], n[1], dim), dtype=np.float64)
     if periodic > -1:
         t = np.linspace(0, 2 * pi, n[0] + 1)
         r = np.linspace(60, 100, n[1])
@@ -47,8 +58,8 @@ def gen_cp_surface(n, dim, periodic):
     return np.floor(cp.transpose(1, 0, 2))
 
 
-def gen_cp_volume(n, dim, periodic):
-    cp = np.zeros((n[0], n[1], n[2], dim))
+def gen_cp_volume(n: tuple[int, int, int], dim: int, periodic: int) -> FloatArray:
+    cp = np.zeros((n[0], n[1], n[2], dim), dtype=np.float64)
     if periodic > -1:
         t = np.linspace(0, 2 * pi, n[0] + 1)
         r = np.linspace(50, 100, n[1])
@@ -66,7 +77,12 @@ def gen_cp_volume(n, dim, periodic):
     return np.floor(cp.transpose(2, 1, 0, 3))
 
 
-def gen_controlpoints(n, dim, rational, periodic):
+def gen_controlpoints(
+    n: tuple[int] | tuple[int, int] | tuple[int, int, int],
+    dim: int,
+    rational: bool,
+    periodic: int,
+) -> FloatArray:
     if len(n) == 1:  # curve
         cp = gen_cp_curve(n[0], dim, periodic)
         total_n = n[0]
@@ -87,7 +103,7 @@ def gen_controlpoints(n, dim, rational, periodic):
     return cp
 
 
-def write_basis(f, p, knot, periodic):
+def write_basis(f: TextIO, p: Sequence[int], knot: Sequence[FloatArray], periodic: int) -> None:
     for i in range(len(knot)):
         f.write(f"        basis{i} = BSplineBasis(" + str(p[i]) + ", np." + repr(knot[i]))
         if periodic > -1 and i == 0:  # only consider periodicity in the first direction
@@ -95,7 +111,13 @@ def write_basis(f, p, knot, periodic):
         f.write(")\n")
 
 
-def get_name(n, p, dim, rational, periodic):
+def get_name(
+    n: tuple[int] | tuple[int, int] | tuple[int, int, int],
+    p: Sequence[int],
+    dim: int,
+    rational: bool,
+    periodic: int,
+) -> str:
     result = ""
     if len(n) == 1:
         result += "curve"
@@ -114,14 +136,14 @@ def get_name(n, p, dim, rational, periodic):
     return result
 
 
-def raise_order(p):
+def raise_order(p: int) -> str:
     result = "        crv2.raise_order(2)\n"
     result += "        p = crv2.order()\n"
     result += f"        self.assertEqual(p, {p + 2})\n"
     return result
 
 
-def write_object_creation(f, rational, pardim, clone=True):
+def write_object_creation(f: TextIO, rational: bool, pardim: int, clone: bool = True) -> None:
     if pardim == 1:
         f.write("        crv  = Curve(basis0, controlpoints," + str(rational) + ")\n")
         if clone:
@@ -136,7 +158,7 @@ def write_object_creation(f, rational, pardim, clone=True):
             f.write("        vol2 = vol.clone()\n")
 
 
-def evaluate_curve():
+def evaluate_curve() -> str:
     return """
         u    = np.linspace(crv.start(0), crv.end(0), 13)
         pt   = crv(u)
@@ -144,7 +166,7 @@ def evaluate_curve():
 """
 
 
-def evaluate_surface():
+def evaluate_surface() -> str:
     return """
         u    = np.linspace(surf.start(0), surf.end(0), 9)
         v    = np.linspace(surf.start(1), surf.end(1), 9)
@@ -154,7 +176,7 @@ def evaluate_surface():
 """
 
 
-def evaluate_volume():
+def evaluate_volume() -> str:
     return """
         u    = np.linspace(vol.start(0), vol.end(0), 7)
         v    = np.linspace(vol.start(1), vol.end(1), 7)
