@@ -17,7 +17,7 @@ def raise_order(p):
     pardim = len(p)
     result = ""
     q = rng.integers(1, 4, pardim)
-    result += f"        {obj_name[pardim]}2.raise_order({q[0]}" % (obj_name[pardim], q[0])
+    result += f"        {obj_name[pardim]}2.raise_order({q[0]}"
     for i in range(1, pardim):
         result += f", {q[i]}"
     result += ")\n"
