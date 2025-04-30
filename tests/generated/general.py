@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from itertools import chain, repeat
 from math import pi
-from typing import TextIO
+from typing import TYPE_CHECKING, TextIO
 
 import numpy as np
 
-from splipy.typing import FloatArray
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from splipy.typing import FloatArray
 
 rng = np.random.default_rng()
 
@@ -20,7 +22,7 @@ def gen_knot(n: int, p: int, periodic: int) -> FloatArray:
             range(1, m - p),
             repeat(m - p, p),
         ),
-        dtype=np.float64
+        dtype=np.float64,
     )
     result[p : m - 1] += (rng.random(m - p - 1) - 0.5) * 0.8
     result = np.round(result * 10) / 10  # set precision to one digit
@@ -42,7 +44,7 @@ def gen_cp_curve(n: int, dim: int, periodic: int) -> FloatArray:
     return np.floor(cp)
 
 
-def gen_cp_surface(n: tuple[int, int], dim: int, periodic: int) -> FloatArray:
+def gen_cp_surface(n: Sequence[int], dim: int, periodic: int) -> FloatArray:
     cp = np.zeros((n[0], n[1], dim), dtype=np.float64)
     if periodic > -1:
         t = np.linspace(0, 2 * pi, n[0] + 1)
@@ -58,7 +60,7 @@ def gen_cp_surface(n: tuple[int, int], dim: int, periodic: int) -> FloatArray:
     return np.floor(cp.transpose(1, 0, 2))
 
 
-def gen_cp_volume(n: tuple[int, int, int], dim: int, periodic: int) -> FloatArray:
+def gen_cp_volume(n: Sequence[int], dim: int, periodic: int) -> FloatArray:
     cp = np.zeros((n[0], n[1], n[2], dim), dtype=np.float64)
     if periodic > -1:
         t = np.linspace(0, 2 * pi, n[0] + 1)
@@ -78,7 +80,7 @@ def gen_cp_volume(n: tuple[int, int, int], dim: int, periodic: int) -> FloatArra
 
 
 def gen_controlpoints(
-    n: tuple[int] | tuple[int, int] | tuple[int, int, int],
+    n: Sequence[int],
     dim: int,
     rational: bool,
     periodic: int,
@@ -112,7 +114,7 @@ def write_basis(f: TextIO, p: Sequence[int], knot: Sequence[FloatArray], periodi
 
 
 def get_name(
-    n: tuple[int] | tuple[int, int] | tuple[int, int, int],
+    n: Sequence[int],
     p: Sequence[int],
     dim: int,
     rational: bool,
@@ -145,15 +147,19 @@ def raise_order(p: int) -> str:
 
 def write_object_creation(f: TextIO, rational: bool, pardim: int, clone: bool = True) -> None:
     if pardim == 1:
-        f.write("        crv  = Curve(basis0, controlpoints," + str(rational) + ")\n")
+        f.write("        crv: SplineObject = Curve(basis0, controlpoints," + str(rational) + ")\n")
         if clone:
             f.write("        crv2 = crv.clone()\n")
     elif pardim == 2:
-        f.write("        surf  = Surface(basis0, basis1, controlpoints," + str(rational) + ")\n")
+        f.write("        surf: SplineObject = Surface(basis0, basis1, controlpoints," + str(rational) + ")\n")
         if clone:
             f.write("        surf2 = surf.clone()\n")
     elif pardim == 3:
-        f.write("        vol  = Volume(basis0, basis1, basis2, controlpoints," + str(rational) + ")\n")
+        f.write(
+            "        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints,"
+            + str(rational)
+            + ")\n"
+        )
         if clone:
             f.write("        vol2 = vol.clone()\n")
 

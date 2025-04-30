@@ -12,7 +12,7 @@ from splipy import BSplineBasis, Curve, Surface, Volume
 
 
 class TestInsertKnot(unittest.TestCase):
-    def test_curve_2D_p3_rational(self):
+    def test_curve_2D_p3_rational(self) -> None:
         controlpoints = np.array([[-5.0, 0.0, 1.4], [36.0, -4.0, 1.3], [64.0, -4.0, 0.8], [99.0, -3.0, 0.7]])
         basis0 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 0.8, 2.0, 2.0, 2.0]))
         crv = Curve(basis0, controlpoints, True)
@@ -25,9 +25,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p23_rational(self):
+    def test_surface_2D_p23_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-3.0, 3.0, 1.0],
@@ -69,9 +69,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p4_rational_C0_periodic(self):
+    def test_curve_2D_p4_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [98.0, 1.0, 0.6],
@@ -99,9 +99,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p32_rational_C0_periodic(self):
+    def test_surface_2D_p32_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, 0.0, 1.4],
@@ -158,9 +158,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p4_rational_C2_periodic(self):
+    def test_curve_2D_p4_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, 4.0, 1.1],
@@ -216,9 +216,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p4(self):
+    def test_curve_2D_p4(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -5.0],
@@ -244,9 +244,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p22(self):
+    def test_surface_2D_p22(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, -1.0],
@@ -289,9 +289,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p3_C0_periodic(self):
+    def test_curve_2D_p3_C0_periodic(self) -> None:
         controlpoints = np.array(
             [[104.0, -4.0], [50.0, 90.0], [-54.0, 90.0], [-97.0, 0.0], [-52.0, -85.0], [54.0, -90.0]]
         )
@@ -306,9 +306,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p32_C0_periodic(self):
+    def test_surface_2D_p32_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, 0.0],
@@ -353,9 +353,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p3_C1_periodic(self):
+    def test_curve_2D_p3_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, 3.0],
@@ -381,9 +381,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p32_C1_periodic(self):
+    def test_surface_2D_p32_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [62.0, -5.0],
@@ -430,9 +430,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p42_C2_periodic(self):
+    def test_surface_2D_p42_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, 1.0],
@@ -553,9 +553,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p3_rational(self):
+    def test_curve_3D_p3_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 3.0, 2.0, 1.1],
@@ -579,9 +579,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p23_rational(self):
+    def test_surface_3D_p23_rational(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, 4.0, 4.0, 0.8],
@@ -614,9 +614,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p324_rational(self):
+    def test_volume_3D_p324_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, 0.0, 0.0, 0.6],
@@ -860,9 +860,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p3_rational_C0_periodic(self):
+    def test_curve_3D_p3_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, 3.0, 0.0, 1.1],
@@ -884,9 +884,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p22_rational_C0_periodic(self):
+    def test_surface_3D_p22_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, -1.0, 0.0, 1.0],
@@ -921,9 +921,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p323_rational_C0_periodic(self):
+    def test_volume_3D_p323_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [48.0, 2.0, 2.0, 1.2],
@@ -1145,9 +1145,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p43_rational_C1_periodic(self):
+    def test_surface_3D_p43_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, -1.0, 4.0, 1.3],
@@ -1256,9 +1256,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p422_rational_C2_periodic(self):
+    def test_volume_3D_p422_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [45.0, 4.0, -5.0, 0.9],
@@ -1814,9 +1814,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p2(self):
+    def test_curve_3D_p2(self) -> None:
         controlpoints = np.array(
             [[4.0, -4.0, -2.0], [20.0, -5.0, 4.0], [48.0, -1.0, -2.0], [72.0, -4.0, -4.0], [98.0, 3.0, 1.0]]
         )
@@ -1829,9 +1829,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p44(self):
+    def test_surface_3D_p44(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, 2.0, 3.0],
@@ -1914,9 +1914,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p322(self):
+    def test_volume_3D_p322(self) -> None:
         controlpoints = np.array(
             [
                 [-3.0, 4.0, -1.0],
@@ -2283,9 +2283,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p3_C0_periodic(self):
+    def test_curve_3D_p3_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, -1.0, 3.0],
@@ -2307,9 +2307,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p34_C0_periodic(self):
+    def test_surface_3D_p34_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, -3.0, -4.0],
@@ -2388,9 +2388,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p344_C0_periodic(self):
+    def test_volume_3D_p344_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [49.0, 1.0, -1.0],
@@ -2710,9 +2710,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p4_C2_periodic(self):
+    def test_curve_3D_p4_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, 4.0, -4.0],
@@ -2768,9 +2768,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p5_rational(self):
+    def test_curve_2D_p5_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, -3.0, 1.2],
@@ -2802,9 +2802,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p76_rational(self):
+    def test_surface_2D_p76_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, 2.0, 0.9],
@@ -2950,9 +2950,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p5_rational_C0_periodic(self):
+    def test_curve_2D_p5_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, 1.0, 1.5],
@@ -2984,9 +2984,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p76_rational_C0_periodic(self):
+    def test_surface_2D_p76_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [56.0, -4.0, 1.3],
@@ -3180,9 +3180,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p7_rational_C1_periodic(self):
+    def test_curve_2D_p7_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, -5.0, 1.0],
@@ -3254,9 +3254,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p67_rational_C1_periodic(self):
+    def test_surface_2D_p67_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, -2.0, 0.7],
@@ -3450,9 +3450,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p6_rational_C2_periodic(self):
+    def test_curve_2D_p6_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, -4.0, 0.7],
@@ -3522,9 +3522,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p57_rational_C2_periodic(self):
+    def test_surface_2D_p57_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, -4.0, 1.4],
@@ -3702,9 +3702,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p5(self):
+    def test_curve_2D_p5(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, -5.0],
@@ -3732,9 +3732,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p77(self):
+    def test_surface_2D_p77(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, 2.0],
@@ -3908,9 +3908,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p7_C0_periodic(self):
+    def test_curve_2D_p7_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, 2.0],
@@ -3977,9 +3977,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p75_C0_periodic(self):
+    def test_surface_2D_p75_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 0.0],
@@ -4141,9 +4141,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p6_C1_periodic(self):
+    def test_curve_2D_p6_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, -2.0],
@@ -4208,9 +4208,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p56_C1_periodic(self):
+    def test_surface_2D_p56_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 0.0],
@@ -4379,9 +4379,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p5_C2_periodic(self):
+    def test_curve_2D_p5_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, -3.0],
@@ -4444,9 +4444,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p55_C2_periodic(self):
+    def test_surface_2D_p55_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, -1.0],
@@ -4648,9 +4648,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p7_rational(self):
+    def test_curve_3D_p7_rational(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -2.0, -3.0, 0.8],
@@ -4711,9 +4711,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p76_rational(self):
+    def test_surface_3D_p76_rational(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, -5.0, 4.0, 0.7],
@@ -4859,9 +4859,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p676_rational(self):
+    def test_volume_3D_p676_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, 1.0, -5.0, 0.7],
@@ -5715,9 +5715,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p5_rational_C0_periodic(self):
+    def test_curve_3D_p5_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, -1.0, 2.0, 0.6],
@@ -5749,9 +5749,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p66_rational_C0_periodic(self):
+    def test_surface_3D_p66_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [62.0, -4.0, -2.0, 0.6],
@@ -5896,9 +5896,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p565_rational_C0_periodic(self):
+    def test_volume_3D_p565_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [45.0, -5.0, 3.0, 1.1],
@@ -6714,9 +6714,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p7_rational_C1_periodic(self):
+    def test_curve_3D_p7_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [98.0, 0.0, 0.0, 1.1],
@@ -6788,9 +6788,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p56_rational_C1_periodic(self):
+    def test_surface_3D_p56_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 2.0, 3.0, 0.9],
@@ -6959,9 +6959,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p656_rational_C1_periodic(self):
+    def test_volume_3D_p656_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [49.0, 4.0, -4.0, 1.0],
@@ -8438,9 +8438,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p5_rational_C2_periodic(self):
+    def test_curve_3D_p5_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, 0.0, -4.0, 0.9],
@@ -8503,9 +8503,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p67_rational_C2_periodic(self):
+    def test_surface_3D_p67_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, -4.0, 1.0, 0.8],
@@ -8704,9 +8704,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p766_rational_C2_periodic(self):
+    def test_volume_3D_p766_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [50.0, -2.0, 2.0, 0.7],
@@ -10089,9 +10089,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p5(self):
+    def test_curve_3D_p5(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, -1.0, -5.0],
@@ -10119,9 +10119,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p66(self):
+    def test_surface_3D_p66(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 4.0, -4.0],
@@ -10250,9 +10250,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p665(self):
+    def test_volume_3D_p665(self) -> None:
         controlpoints = np.array(
             [
                 [1.0, 1.0, 2.0],
@@ -10780,9 +10780,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p7_C0_periodic(self):
+    def test_curve_3D_p7_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, 3.0, 1.0],
@@ -10849,9 +10849,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p67_C0_periodic(self):
+    def test_surface_3D_p67_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, 1.0, -3.0],
@@ -11012,9 +11012,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p757_C0_periodic(self):
+    def test_volume_3D_p757_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [45.0, -5.0, -1.0],
@@ -12328,9 +12328,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p6_C1_periodic(self):
+    def test_curve_3D_p6_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 0.0, -2.0],
@@ -12395,9 +12395,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p57_C1_periodic(self):
+    def test_surface_3D_p57_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 4.0, -2.0],
@@ -12595,9 +12595,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p677_C1_periodic(self):
+    def test_volume_3D_p677_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [48.0, -4.0, -1.0],
@@ -14080,9 +14080,9 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p6_C2_periodic(self):
+    def test_curve_3D_p6_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, -2.0, -1.0],
@@ -14152,9 +14152,9 @@ class TestInsertKnot(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p65_C2_periodic(self):
+    def test_surface_3D_p65_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [56.0, -3.0, -5.0],
@@ -14315,9 +14315,9 @@ class TestInsertKnot(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p677_C2_periodic(self):
+    def test_volume_3D_p677_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, 0.0, 1.0],
@@ -16003,7 +16003,7 @@ class TestInsertKnot(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
 
 if __name__ == "__main__":

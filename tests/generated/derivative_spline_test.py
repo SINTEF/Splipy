@@ -8,24 +8,24 @@ import unittest
 
 import numpy as np
 
-from splipy import BSplineBasis, Curve, Surface, Volume
+from splipy import BSplineBasis, Curve, SplineObject, Surface, Volume
 
 
 class TestDerivativeSpline(unittest.TestCase):
-    def test_curve_2D_p2(self):
+    def test_curve_2D_p2(self) -> None:
         controlpoints = np.array([[1.0, -1.0], [35.0, 0.0], [61.0, -4.0], [95.0, -5.0]])
         basis0 = BSplineBasis(2, np.array([0.0, 0.0, 0.7, 1.7, 3.0, 3.0]))
         crv = Curve(basis0, controlpoints, False)
-        crv2 = crv.clone()
+        crv2: SplineObject = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 1)
 
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_2D_p23(self):
+    def test_surface_2D_p23(self) -> None:
         controlpoints = np.array(
             [
                 [1.0, -3.0],
@@ -47,7 +47,7 @@ class TestDerivativeSpline(unittest.TestCase):
         )
         basis0 = BSplineBasis(2, np.array([0.0, 0.0, 1.2, 2.0, 2.0]))
         basis1 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 1.1, 1.8, 3.0, 3.0, 3.0]))
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 1)
@@ -63,10 +63,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_curve_2D_p4_C0_periodic(self):
+    def test_curve_2D_p4_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, 1.0],
@@ -82,7 +82,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis0 = BSplineBasis(
             4, np.array([-0.7, 0.0, 0.0, 0.0, 0.6, 2.2, 2.8, 4.1, 5.3, 6.0, 6.0, 6.0, 6.6]), 0
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 3)
@@ -90,9 +90,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_2D_p22_C0_periodic(self):
+    def test_surface_2D_p22_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, 3.0],
@@ -115,7 +115,7 @@ class TestDerivativeSpline(unittest.TestCase):
         )
         basis0 = BSplineBasis(2, np.array([-0.6, 0.0, 1.1, 2.0, 3.4, 4.0, 5.1]), 0)
         basis1 = BSplineBasis(2, np.array([0.0, 0.0, 1.2, 1.7, 3.0, 3.0]))
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 1)
@@ -131,13 +131,13 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_curve_3D_p3(self):
+    def test_curve_3D_p3(self) -> None:
         controlpoints = np.array([[-1.0, -1.0, 0.0], [29.0, 1.0, -5.0], [68.0, 0.0, 1.0], [104.0, -1.0, 4.0]])
         basis0 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 1.3, 2.0, 2.0, 2.0]))
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 2)
@@ -145,9 +145,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_3D_p43(self):
+    def test_surface_3D_p43(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, 4.0, -4.0],
@@ -196,7 +196,7 @@ class TestDerivativeSpline(unittest.TestCase):
         )
         basis0 = BSplineBasis(4, np.array([0.0, 0.0, 0.0, 0.0, 0.8, 1.7, 2.7, 4.0, 4.0, 4.0, 4.0]))
         basis1 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 1.2, 1.9, 2.8, 4.0, 4.0, 4.0]))
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 3)
@@ -212,10 +212,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_volume_3D_p434(self):
+    def test_volume_3D_p434(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, 1.0, -3.0],
@@ -391,7 +391,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis0 = BSplineBasis(4, np.array([0.0, 0.0, 0.0, 0.0, 1.0, 1.7, 3.0, 3.0, 3.0, 3.0]))
         basis1 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 0.8, 2.0, 2.0, 2.0]))
         basis2 = BSplineBasis(4, np.array([0.0, 0.0, 0.0, 0.0, 1.2, 1.9, 2.8, 4.0, 4.0, 4.0, 4.0]))
-        vol = Volume(basis0, basis1, basis2, controlpoints, False)
+        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints, False)
         vol2 = vol.clone()
         vol2 = vol.get_derivative_spline(0)
         self.assertEqual(vol2.order(direction=0), 3)
@@ -415,11 +415,11 @@ class TestDerivativeSpline(unittest.TestCase):
         dv2 = vol3(u, v, w)
         dw = vol.derivative(u, v, w, d=(0, 0, 1))
         dw2 = vol4(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dw - dw2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dw - dw2)), 0.0)
 
-    def test_curve_3D_p4_C0_periodic(self):
+    def test_curve_3D_p4_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, 0.0, -1.0],
@@ -435,7 +435,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis0 = BSplineBasis(
             4, np.array([-0.9, 0.0, 0.0, 0.0, 0.6, 2.3, 3.1, 4.1, 5.1, 6.0, 6.0, 6.0, 6.6]), 0
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 3)
@@ -443,9 +443,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_3D_p43_C0_periodic(self):
+    def test_surface_3D_p43_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, -2.0, 1.0],
@@ -486,7 +486,7 @@ class TestDerivativeSpline(unittest.TestCase):
             4, np.array([-1.3, 0.0, 0.0, 0.0, 1.2, 1.7, 3.3, 3.9, 4.7, 6.0, 6.0, 6.0, 7.2]), 0
         )
         basis1 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 0.6, 2.0, 2.0, 2.0]))
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 3)
@@ -502,10 +502,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_volume_3D_p334_C0_periodic(self):
+    def test_volume_3D_p334_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [54.0, 1.0, -1.0],
@@ -663,7 +663,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis0 = BSplineBasis(3, np.array([-0.9, 0.0, 0.0, 1.4, 2.0, 3.4, 4.1, 5.0, 5.0, 6.4]), 0)
         basis1 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 1.1, 2.1, 3.0, 3.0, 3.0]))
         basis2 = BSplineBasis(4, np.array([0.0, 0.0, 0.0, 0.0, 0.9, 2.0, 2.0, 2.0, 2.0]))
-        vol = Volume(basis0, basis1, basis2, controlpoints, False)
+        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints, False)
         vol2 = vol.clone()
         vol2 = vol.get_derivative_spline(0)
         self.assertEqual(vol2.order(direction=0), 2)
@@ -687,11 +687,11 @@ class TestDerivativeSpline(unittest.TestCase):
         dv2 = vol3(u, v, w)
         dw = vol.derivative(u, v, w, d=(0, 0, 1))
         dw2 = vol4(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dw - dw2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dw - dw2)), 0.0)
 
-    def test_curve_3D_p4_C1_periodic(self):
+    def test_curve_3D_p4_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 2.0, 0.0],
@@ -711,7 +711,7 @@ class TestDerivativeSpline(unittest.TestCase):
             np.array([-2.2, -1.0, 0.0, 0.0, 0.9, 2.2, 3.1, 4.3, 4.7, 5.8, 6.8, 8.0, 9.0, 9.0, 9.9, 11.2]),
             1,
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 3)
@@ -719,9 +719,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_3D_p44_C1_periodic(self):
+    def test_surface_3D_p44_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, 4.0, -3.0],
@@ -802,7 +802,7 @@ class TestDerivativeSpline(unittest.TestCase):
             1,
         )
         basis1 = BSplineBasis(4, np.array([0.0, 0.0, 0.0, 0.0, 0.9, 2.2, 3.4, 4.0, 4.0, 4.0, 4.0]))
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 3)
@@ -818,10 +818,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_volume_3D_p432_C1_periodic(self):
+    def test_volume_3D_p432_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [50.0, 3.0, -1.0],
@@ -1133,7 +1133,7 @@ class TestDerivativeSpline(unittest.TestCase):
         )
         basis1 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 1.4, 2.2, 2.6, 4.0, 4.0, 4.0]))
         basis2 = BSplineBasis(2, np.array([0.0, 0.0, 0.9, 2.0, 3.4, 4.0, 4.0]))
-        vol = Volume(basis0, basis1, basis2, controlpoints, False)
+        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints, False)
         vol2 = vol.clone()
         vol2 = vol.get_derivative_spline(0)
         self.assertEqual(vol2.order(direction=0), 3)
@@ -1157,11 +1157,11 @@ class TestDerivativeSpline(unittest.TestCase):
         dv2 = vol3(u, v, w)
         dw = vol.derivative(u, v, w, d=(0, 0, 1))
         dw2 = vol4(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dw - dw2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dw - dw2)), 0.0)
 
-    def test_curve_2D_p5(self):
+    def test_curve_2D_p5(self) -> None:
         controlpoints = np.array(
             [
                 [-3.0, -2.0],
@@ -1175,7 +1175,7 @@ class TestDerivativeSpline(unittest.TestCase):
             ]
         )
         basis0 = BSplineBasis(5, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 2.3, 2.8, 4.0, 4.0, 4.0, 4.0, 4.0]))
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 4)
@@ -1183,9 +1183,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_2D_p56(self):
+    def test_surface_2D_p56(self) -> None:
         controlpoints = np.array(
             [
                 [1.0, 3.0],
@@ -1266,7 +1266,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis1 = BSplineBasis(
             6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 2.1, 3.2, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0])
         )
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 4)
@@ -1282,10 +1282,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_curve_2D_p5_C0_periodic(self):
+    def test_curve_2D_p5_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [100.0, 1.0],
@@ -1303,7 +1303,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis0 = BSplineBasis(
             5, np.array([-1.4, 0.0, 0.0, 0.0, 0.0, 0.8, 2.0, 3.3, 4.1, 4.6, 5.6, 7.0, 7.0, 7.0, 7.0, 7.8]), 0
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 4)
@@ -1311,9 +1311,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_2D_p57_C0_periodic(self):
+    def test_surface_2D_p57_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [56.0, -1.0],
@@ -1424,7 +1424,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis1 = BSplineBasis(
             7, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6, 1.9, 3.4, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0])
         )
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 4)
@@ -1440,10 +1440,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_curve_2D_p5_C1_periodic(self):
+    def test_curve_2D_p5_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, 2.0],
@@ -1487,7 +1487,7 @@ class TestDerivativeSpline(unittest.TestCase):
             ),
             1,
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 4)
@@ -1495,9 +1495,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_2D_p66_C1_periodic(self):
+    def test_surface_2D_p66_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, -4.0],
@@ -1631,7 +1631,7 @@ class TestDerivativeSpline(unittest.TestCase):
             1,
         )
         basis1 = BSplineBasis(6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.3, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]))
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 5)
@@ -1647,10 +1647,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_curve_2D_p7_C2_periodic(self):
+    def test_curve_2D_p7_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [97.0, 2.0],
@@ -1709,7 +1709,7 @@ class TestDerivativeSpline(unittest.TestCase):
             ),
             2,
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 6)
@@ -1717,9 +1717,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_2D_p56_C2_periodic(self):
+    def test_surface_2D_p56_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, -5.0],
@@ -1883,7 +1883,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis1 = BSplineBasis(
             6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.1, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0])
         )
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 4)
@@ -1899,10 +1899,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_curve_3D_p5(self):
+    def test_curve_3D_p5(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, -4.0, 4.0],
@@ -1916,7 +1916,7 @@ class TestDerivativeSpline(unittest.TestCase):
             ]
         )
         basis0 = BSplineBasis(5, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.7, 1.9, 2.9, 4.0, 4.0, 4.0, 4.0, 4.0]))
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 4)
@@ -1924,9 +1924,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_3D_p77(self):
+    def test_surface_3D_p77(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, 0.0, 4.0],
@@ -2056,7 +2056,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis1 = BSplineBasis(
             7, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.3, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0])
         )
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 6)
@@ -2072,10 +2072,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_volume_3D_p565(self):
+    def test_volume_3D_p565(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, -1.0, -4.0],
@@ -2419,7 +2419,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis0 = BSplineBasis(5, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.7, 1.6, 2.9, 4.0, 4.0, 4.0, 4.0, 4.0]))
         basis1 = BSplineBasis(6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.7, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]))
         basis2 = BSplineBasis(5, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 2.0, 2.0, 2.0, 2.0, 2.0]))
-        vol = Volume(basis0, basis1, basis2, controlpoints, False)
+        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints, False)
         vol2 = vol.clone()
         vol2 = vol.get_derivative_spline(0)
         self.assertEqual(vol2.order(direction=0), 4)
@@ -2443,11 +2443,11 @@ class TestDerivativeSpline(unittest.TestCase):
         dv2 = vol3(u, v, w)
         dw = vol.derivative(u, v, w, d=(0, 0, 1))
         dw2 = vol4(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dw - dw2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dw - dw2)), 0.0)
 
-    def test_curve_3D_p6_C0_periodic(self):
+    def test_curve_3D_p6_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, 1.0, -1.0],
@@ -2491,7 +2491,7 @@ class TestDerivativeSpline(unittest.TestCase):
             ),
             0,
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 5)
@@ -2499,9 +2499,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_3D_p77_C0_periodic(self):
+    def test_surface_3D_p77_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, -2.0, 0.0],
@@ -2679,7 +2679,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis1 = BSplineBasis(
             7, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.3, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0])
         )
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 6)
@@ -2695,10 +2695,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_volume_3D_p766_C0_periodic(self):
+    def test_volume_3D_p766_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [53.0, -5.0, -2.0],
@@ -3619,7 +3619,7 @@ class TestDerivativeSpline(unittest.TestCase):
             6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 2.0, 3.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0])
         )
         basis2 = BSplineBasis(6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.2, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]))
-        vol = Volume(basis0, basis1, basis2, controlpoints, False)
+        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints, False)
         vol2 = vol.clone()
         vol2 = vol.get_derivative_spline(0)
         self.assertEqual(vol2.order(direction=0), 6)
@@ -3643,11 +3643,11 @@ class TestDerivativeSpline(unittest.TestCase):
         dv2 = vol3(u, v, w)
         dw = vol.derivative(u, v, w, d=(0, 0, 1))
         dw2 = vol4(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dw - dw2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dw - dw2)), 0.0)
 
-    def test_curve_3D_p5_C1_periodic(self):
+    def test_curve_3D_p5_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, -5.0, 0.0],
@@ -3691,7 +3691,7 @@ class TestDerivativeSpline(unittest.TestCase):
             ),
             1,
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 4)
@@ -3699,9 +3699,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_3D_p67_C1_periodic(self):
+    def test_surface_3D_p67_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, -5.0, -4.0],
@@ -3879,7 +3879,7 @@ class TestDerivativeSpline(unittest.TestCase):
         basis1 = BSplineBasis(
             7, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.3, 2.1, 3.3, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0])
         )
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 5)
@@ -3895,10 +3895,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_volume_3D_p765_C1_periodic(self):
+    def test_volume_3D_p765_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, 2.0, 2.0],
@@ -4610,7 +4610,7 @@ class TestDerivativeSpline(unittest.TestCase):
         )
         basis1 = BSplineBasis(6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]))
         basis2 = BSplineBasis(5, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 2.0, 2.0, 2.0, 2.0, 2.0]))
-        vol = Volume(basis0, basis1, basis2, controlpoints, False)
+        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints, False)
         vol2 = vol.clone()
         vol2 = vol.get_derivative_spline(0)
         self.assertEqual(vol2.order(direction=0), 6)
@@ -4634,11 +4634,11 @@ class TestDerivativeSpline(unittest.TestCase):
         dv2 = vol3(u, v, w)
         dw = vol.derivative(u, v, w, d=(0, 0, 1))
         dw2 = vol4(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dw - dw2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dw - dw2)), 0.0)
 
-    def test_curve_3D_p6_C2_periodic(self):
+    def test_curve_3D_p6_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, 0.0, -5.0],
@@ -4692,7 +4692,7 @@ class TestDerivativeSpline(unittest.TestCase):
             ),
             2,
         )
-        crv = Curve(basis0, controlpoints, False)
+        crv: SplineObject = Curve(basis0, controlpoints, False)
         crv2 = crv.clone()
         crv2 = crv.get_derivative_spline(0)
         self.assertEqual(crv2.order(direction=0), 5)
@@ -4700,9 +4700,9 @@ class TestDerivativeSpline(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 11)
         du = crv.derivative(u)
         du2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
 
-    def test_surface_3D_p56_C2_periodic(self):
+    def test_surface_3D_p56_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, -2.0, 0.0],
@@ -4836,7 +4836,7 @@ class TestDerivativeSpline(unittest.TestCase):
             2,
         )
         basis1 = BSplineBasis(6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]))
-        surf = Surface(basis0, basis1, controlpoints, False)
+        surf: SplineObject = Surface(basis0, basis1, controlpoints, False)
         surf2 = surf.clone()
         surf2 = surf.get_derivative_spline(0)
         self.assertEqual(surf2.order(direction=0), 4)
@@ -4852,10 +4852,10 @@ class TestDerivativeSpline(unittest.TestCase):
         dv = surf.derivative(u, v, d=(0, 1))
         dv2 = surf3(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
 
-    def test_volume_3D_p565_C2_periodic(self):
+    def test_volume_3D_p565_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [54.0, 2.0, -1.0],
@@ -5578,7 +5578,7 @@ class TestDerivativeSpline(unittest.TestCase):
         )
         basis1 = BSplineBasis(6, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.2, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]))
         basis2 = BSplineBasis(5, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 1.2, 1.9, 3.0, 3.0, 3.0, 3.0, 3.0]))
-        vol = Volume(basis0, basis1, basis2, controlpoints, False)
+        vol: SplineObject = Volume(basis0, basis1, basis2, controlpoints, False)
         vol2 = vol.clone()
         vol2 = vol.get_derivative_spline(0)
         self.assertEqual(vol2.order(direction=0), 4)
@@ -5602,9 +5602,9 @@ class TestDerivativeSpline(unittest.TestCase):
         dv2 = vol3(u, v, w)
         dw = vol.derivative(u, v, w, d=(0, 0, 1))
         dw2 = vol4(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(du - du2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dv - dv2), 0.0)
-        self.assertAlmostEqual(np.linalg.norm(dw - dw2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(du - du2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dv - dv2)), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(dw - dw2)), 0.0)
 
 
 if __name__ == "__main__":

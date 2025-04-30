@@ -12,7 +12,7 @@ from splipy import BSplineBasis, Curve, Surface, Volume
 
 
 class TestRaiseOrder(unittest.TestCase):
-    def test_curve_2D_p3_rational(self):
+    def test_curve_2D_p3_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, 1.0, 1.0],
@@ -33,9 +33,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p23_rational(self):
+    def test_surface_2D_p23_rational(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, -1.0, 0.8],
@@ -101,9 +101,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p4_rational_C0_periodic(self):
+    def test_curve_2D_p4_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, -4.0, 1.4],
@@ -128,9 +128,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p23_rational_C0_periodic(self):
+    def test_surface_2D_p23_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, 3.0, 1.1],
@@ -168,9 +168,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p4_rational_C1_periodic(self):
+    def test_curve_2D_p4_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 1.0, 0.6],
@@ -198,9 +198,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p42_rational_C1_periodic(self):
+    def test_surface_2D_p42_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, 0.0, 0.8],
@@ -282,9 +282,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p3(self):
+    def test_curve_2D_p3(self) -> None:
         controlpoints = np.array([[0.0, -5.0], [29.0, 1.0], [53.0, -1.0], [75.0, 1.0], [96.0, 3.0]])
         basis0 = BSplineBasis(3, np.array([0.0, 0.0, 0.0, 1.1, 1.7, 3.0, 3.0, 3.0]))
         crv = Curve(basis0, controlpoints, False)
@@ -295,9 +295,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p33(self):
+    def test_surface_2D_p33(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -2.0],
@@ -355,9 +355,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p3_C0_periodic(self):
+    def test_curve_2D_p3_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, 4.0],
@@ -378,9 +378,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p23_C0_periodic(self):
+    def test_surface_2D_p23_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, -1.0],
@@ -426,9 +426,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p3_C1_periodic(self):
+    def test_curve_2D_p3_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 2.0],
@@ -452,9 +452,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p32_C1_periodic(self):
+    def test_surface_2D_p32_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [62.0, -4.0],
@@ -522,9 +522,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p3_rational(self):
+    def test_curve_3D_p3_rational(self) -> None:
         controlpoints = np.array(
             [[2.0, 3.0, 1.0, 1.2], [38.0, 4.0, -5.0, 0.6], [62.0, 0.0, -5.0, 0.9], [102.0, -1.0, 3.0, 0.6]]
         )
@@ -537,9 +537,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p42_rational(self):
+    def test_surface_3D_p42_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 2.0, 3.0, 1.1],
@@ -605,9 +605,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p444_rational(self):
+    def test_volume_3D_p444_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-3.0, -5.0, 3.0, 0.8],
@@ -837,9 +837,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p3_rational_C0_periodic(self):
+    def test_curve_3D_p3_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, 0.0, 2.0, 1.4],
@@ -860,9 +860,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p42_rational_C0_periodic(self):
+    def test_surface_3D_p42_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, -2.0, 3.0, 1.2],
@@ -936,9 +936,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p242_rational_C0_periodic(self):
+    def test_volume_3D_p242_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [53.0, 2.0, 0.0, 1.2],
@@ -1102,9 +1102,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p4_rational_C1_periodic(self):
+    def test_curve_3D_p4_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, -1.0, -5.0, 1.3],
@@ -1132,9 +1132,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p44_rational_C1_periodic(self):
+    def test_surface_3D_p44_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, -4.0, 3.0, 0.7],
@@ -1216,9 +1216,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p42_rational_C2_periodic(self):
+    def test_surface_3D_p42_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 3.0, -5.0, 1.2],
@@ -1322,9 +1322,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p3(self):
+    def test_curve_3D_p3(self) -> None:
         controlpoints = np.array(
             [[0.0, -4.0, 4.0], [25.0, 0.0, 1.0], [46.0, 1.0, -5.0], [76.0, 2.0, -5.0], [98.0, -1.0, 1.0]]
         )
@@ -1337,9 +1337,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p43(self):
+    def test_surface_3D_p43(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, -3.0, -2.0],
@@ -1413,9 +1413,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p344(self):
+    def test_volume_3D_p344(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, 4.0, -2.0],
@@ -1575,9 +1575,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p2_C0_periodic(self):
+    def test_curve_3D_p2_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, 4.0, 3.0],
@@ -1598,9 +1598,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p33_C0_periodic(self):
+    def test_surface_3D_p33_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, -1.0, -1.0],
@@ -1648,9 +1648,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p222_C0_periodic(self):
+    def test_volume_3D_p222_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [49.0, -2.0, 4.0],
@@ -1866,9 +1866,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p3_C1_periodic(self):
+    def test_curve_3D_p3_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [98.0, -1.0, 1.0],
@@ -1892,9 +1892,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p322_C1_periodic(self):
+    def test_volume_3D_p322_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [50.0, -1.0, 4.0],
@@ -2036,9 +2036,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p442_C2_periodic(self):
+    def test_volume_3D_p442_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, -2.0, 0.0],
@@ -2672,9 +2672,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p7_rational(self):
+    def test_curve_2D_p7_rational(self) -> None:
         controlpoints = np.array(
             [
                 [1.0, 3.0, 0.8],
@@ -2725,9 +2725,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p67_rational(self):
+    def test_surface_2D_p67_rational(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, 4.0, 1.4],
@@ -2904,9 +2904,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p7_rational_C0_periodic(self):
+    def test_curve_2D_p7_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, -4.0, 1.3],
@@ -2963,9 +2963,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p55_rational_C0_periodic(self):
+    def test_surface_2D_p55_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [56.0, 1.0, 0.8],
@@ -3087,9 +3087,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p7_rational_C1_periodic(self):
+    def test_curve_2D_p7_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, 4.0, 0.9],
@@ -3151,9 +3151,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p65_rational_C1_periodic(self):
+    def test_surface_2D_p65_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, -5.0, 0.5],
@@ -3342,9 +3342,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p7_rational_C2_periodic(self):
+    def test_curve_2D_p7_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, -1.0, 1.2],
@@ -3411,9 +3411,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p55_rational_C2_periodic(self):
+    def test_surface_2D_p55_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, -2.0, 0.6],
@@ -3558,9 +3558,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p5(self):
+    def test_curve_2D_p5(self) -> None:
         controlpoints = np.array(
             [
                 [1.0, -3.0],
@@ -3582,9 +3582,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p67(self):
+    def test_surface_2D_p67(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 0.0],
@@ -3696,9 +3696,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p6_C0_periodic(self):
+    def test_curve_2D_p6_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, 4.0],
@@ -3750,9 +3750,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p66_C0_periodic(self):
+    def test_surface_2D_p66_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, -5.0],
@@ -3918,9 +3918,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p7_C1_periodic(self):
+    def test_curve_2D_p7_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, 2.0],
@@ -3982,9 +3982,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p67_C1_periodic(self):
+    def test_surface_2D_p67_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, 2.0],
@@ -4145,9 +4145,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_2D_p6_C2_periodic(self):
+    def test_curve_2D_p6_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, 3.0],
@@ -4209,9 +4209,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_2D_p67_C2_periodic(self):
+    def test_surface_2D_p67_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, -2.0],
@@ -4442,9 +4442,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p7_rational(self):
+    def test_curve_3D_p7_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, 1.0, 2.0, 1.1],
@@ -4495,9 +4495,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p67_rational(self):
+    def test_surface_3D_p67_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 1.0, 1.0, 0.8],
@@ -4619,9 +4619,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p667_rational(self):
+    def test_volume_3D_p667_rational(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, -5.0, -1.0, 0.5],
@@ -5858,9 +5858,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p5_rational_C0_periodic(self):
+    def test_curve_3D_p5_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, -4.0, 4.0, 1.4],
@@ -5886,9 +5886,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p55_rational_C0_periodic(self):
+    def test_surface_3D_p55_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, 1.0, 1.0, 1.2],
@@ -5978,9 +5978,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p775_rational_C0_periodic(self):
+    def test_volume_3D_p775_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [48.0, 3.0, -2.0, 1.2],
@@ -6958,9 +6958,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p7_rational_C1_periodic(self):
+    def test_curve_3D_p7_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [97.0, 1.0, -2.0, 1.1],
@@ -7022,9 +7022,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p76_rational_C1_periodic(self):
+    def test_surface_3D_p76_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 2.0, -3.0, 0.9],
@@ -7236,9 +7236,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p765_rational_C1_periodic(self):
+    def test_volume_3D_p765_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, 3.0, 1.0, 1.2],
@@ -8060,9 +8060,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p7_rational_C2_periodic(self):
+    def test_curve_3D_p7_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 4.0, 4.0, 0.6],
@@ -8129,9 +8129,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p56_rational_C2_periodic(self):
+    def test_surface_3D_p56_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, 0.0, 4.0, 1.2],
@@ -8306,9 +8306,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p555_rational_C2_periodic(self):
+    def test_volume_3D_p555_rational_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [46.0, -5.0, 0.0, 1.1],
@@ -9115,9 +9115,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p7(self):
+    def test_curve_3D_p7(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -2.0, -2.0],
@@ -9168,9 +9168,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p65(self):
+    def test_surface_3D_p65(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, 1.0, 4.0],
@@ -9260,9 +9260,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p767(self):
+    def test_volume_3D_p767(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, 0.0, 4.0],
@@ -10391,9 +10391,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p5_C0_periodic(self):
+    def test_curve_3D_p5_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, -3.0, -1.0],
@@ -10419,9 +10419,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p67_C0_periodic(self):
+    def test_surface_3D_p67_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, -1.0, -1.0],
@@ -10563,9 +10563,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p655_C0_periodic(self):
+    def test_volume_3D_p655_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [51.0, 1.0, 1.0],
@@ -11695,9 +11695,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p6_C1_periodic(self):
+    def test_curve_3D_p6_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 2.0, 1.0],
@@ -11754,9 +11754,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p55_C1_periodic(self):
+    def test_surface_3D_p55_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, 4.0, 1.0],
@@ -11922,9 +11922,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p566_C1_periodic(self):
+    def test_volume_3D_p566_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, 2.0, -3.0],
@@ -12812,9 +12812,9 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_curve_3D_p6_C2_periodic(self):
+    def test_curve_3D_p6_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, -1.0, -2.0],
@@ -12876,9 +12876,9 @@ class TestRaiseOrder(unittest.TestCase):
         u = np.linspace(crv.start(0), crv.end(0), 13)
         pt = crv(u)
         pt2 = crv2(u)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_surface_3D_p66_C2_periodic(self):
+    def test_surface_3D_p66_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 1.0, -5.0],
@@ -13074,9 +13074,9 @@ class TestRaiseOrder(unittest.TestCase):
         pt = surf(u, v)
         pt2 = surf2(u, v)
 
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_volume_3D_p556_C2_periodic(self):
+    def test_volume_3D_p556_C2_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [51.0, 4.0, 4.0],
@@ -14135,7 +14135,7 @@ class TestRaiseOrder(unittest.TestCase):
         w = np.linspace(vol.start(2), vol.end(2), 7)
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
 
 if __name__ == "__main__":
