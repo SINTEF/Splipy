@@ -12,7 +12,7 @@ from splipy import BSplineBasis, Curve, Surface, Volume
 
 
 class TestAffine(unittest.TestCase):
-    def test_translate_curve_2D_p2_rational(self):
+    def test_translate_curve_2D_p2_rational(self) -> None:
         controlpoints = np.array(
             [[-5.0, 2.0, 0.7], [21.0, 2.0, 1.2], [46.0, -3.0, 1.2], [78.0, 3.0, 0.9], [95.0, 4.0, 1.2]]
         )
@@ -26,9 +26,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 4.900000
         pt2[..., 1] -= 4.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p3_rational(self):
+    def test_scale_curve_2D_p3_rational(self) -> None:
         controlpoints = np.array(
             [[-5.0, -3.0, 1.1], [20.0, 4.0, 1.4], [51.0, 0.0, 0.6], [72.0, -1.0, 1.1], [99.0, 0.0, 1.3]]
         )
@@ -42,9 +42,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 8.700000
         pt2[..., 1] /= 5.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p43_rational(self):
+    def test_translate_surface_2D_p43_rational(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -4.0, 1.3],
@@ -102,9 +102,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 4.600000
         pt2[..., 1] -= 0.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p33_rational(self):
+    def test_scale_surface_2D_p33_rational(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, 1.0, 0.6],
@@ -157,9 +157,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 3.500000
         pt2[..., 1] /= 4.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p4_rational_C0_periodic(self):
+    def test_translate_curve_2D_p4_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [97.0, -4.0, 1.2],
@@ -187,9 +187,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 2] -= 8.300000
         allZero = pt2
         allZero[..., :-1] -= pt
-        self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(allZero)), 0.0)
 
-    def test_scale_curve_2D_p3_rational_C0_periodic(self):
+    def test_scale_curve_2D_p3_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [97.0, -1.0, 1.4],
@@ -212,9 +212,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 5.400000
         pt2[..., 1] /= 2.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p22_rational_C0_periodic(self):
+    def test_translate_surface_2D_p22_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, 2.0, 0.8],
@@ -244,9 +244,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 4.700000
         pt2[..., 1] -= 9.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p33_rational_C0_periodic(self):
+    def test_scale_surface_2D_p33_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, 0.0, 0.6],
@@ -299,9 +299,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 4.300000
         pt2[..., 1] /= 7.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p3_rational_C1_periodic(self):
+    def test_translate_curve_2D_p3_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, -3.0, 0.6],
@@ -323,9 +323,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 1.800000
         pt2[..., 1] -= 5.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p3_rational_C1_periodic(self):
+    def test_scale_curve_2D_p3_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, -1.0, 1.4],
@@ -350,9 +350,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 5.300000
         pt2[..., 1] /= 7.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p32_rational_C1_periodic(self):
+    def test_translate_surface_2D_p32_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, 1.0, 0.6],
@@ -400,9 +400,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 3.300000
         pt2[..., 1] -= 5.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p43_rational_C1_periodic(self):
+    def test_scale_surface_2D_p43_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, 3.0, 1.5],
@@ -440,9 +440,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 3.700000
         pt2[..., 1] /= 3.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p4(self):
+    def test_translate_curve_2D_p4(self) -> None:
         controlpoints = np.array(
             [[-2.0, 1.0], [16.0, -1.0], [31.0, -2.0], [45.0, -3.0], [63.0, 1.0], [87.0, -2.0], [103.0, -4.0]]
         )
@@ -456,9 +456,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 1.900000
         pt2[..., 1] -= 4.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p4(self):
+    def test_scale_curve_2D_p4(self) -> None:
         controlpoints = np.array(
             [[-3.0, -4.0], [20.0, -3.0], [28.0, 2.0], [54.0, 1.0], [67.0, 0.0], [80.0, 2.0], [104.0, -3.0]]
         )
@@ -472,9 +472,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 2.200000
         pt2[..., 1] /= 8.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p34(self):
+    def test_translate_surface_2D_p34(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, -1.0],
@@ -540,9 +540,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 0.400000
         pt2[..., 1] -= 1.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p44(self):
+    def test_scale_surface_2D_p44(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -4.0],
@@ -595,9 +595,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 7.900000
         pt2[..., 1] /= 9.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p2_C0_periodic(self):
+    def test_translate_curve_2D_p2_C0_periodic(self) -> None:
         controlpoints = np.array([[97.0, 2.0], [31.0, 98.0], [-77.0, 61.0], [-78.0, -62.0], [31.0, -91.0]])
         basis0 = BSplineBasis(2, np.array([-0.9, 0.0, 0.8, 2.0, 2.8, 4.1, 5.0, 5.8]), 0)
         crv = Curve(basis0, controlpoints, False)
@@ -609,9 +609,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 0.500000
         pt2[..., 1] -= 8.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p3_C0_periodic(self):
+    def test_scale_curve_2D_p3_C0_periodic(self) -> None:
         controlpoints = np.array([[102.0, 1.0], [-4.0, 102.0], [-98.0, -3.0], [3.0, -101.0]])
         basis0 = BSplineBasis(3, np.array([-0.8, 0.0, 0.0, 0.8, 2.2, 3.0, 3.0, 3.8]), 0)
         crv = Curve(basis0, controlpoints, False)
@@ -623,9 +623,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 11.000000
         pt2[..., 1] /= 3.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p24_C0_periodic(self):
+    def test_translate_surface_2D_p24_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [62.0, -5.0],
@@ -685,9 +685,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 8.600000
         pt2[..., 1] -= 5.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p34_C0_periodic(self):
+    def test_scale_surface_2D_p34_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, -1.0],
@@ -747,9 +747,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 3.100000
         pt2[..., 1] /= 5.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p4_C1_periodic(self):
+    def test_translate_curve_2D_p4_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, -5.0],
@@ -774,9 +774,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 4.700000
         pt2[..., 1] -= 0.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p43_C1_periodic(self):
+    def test_translate_surface_2D_p43_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [56.0, 2.0],
@@ -819,9 +819,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 8.600000
         pt2[..., 1] -= 0.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p33_C1_periodic(self):
+    def test_scale_surface_2D_p33_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, 0.0],
@@ -859,9 +859,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 3.100000
         pt2[..., 1] /= 8.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p3_rational(self):
+    def test_translate_curve_3D_p3_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, -4.0, 4.0, 1.3],
@@ -883,9 +883,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 5.600000
         pt2[..., 1] -= 5.700000
         pt2[..., 2] -= 2.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p4_rational(self):
+    def test_scale_curve_3D_p4_rational(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, 4.0, -3.0, 1.1],
@@ -909,9 +909,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 9.500000
         pt2[..., 1] /= 11.000000
         pt2[..., 2] /= 2.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p3_rational(self):
+    def test_mirror_curve_3D_p3_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, 3.0, 1.0, 0.7],
@@ -930,9 +930,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p44_rational(self):
+    def test_translate_surface_3D_p44_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 1.0, -1.0, 1.2],
@@ -999,9 +999,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 3.700000
         pt2[..., 1] -= 2.600000
         pt2[..., 2] -= 9.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p43_rational(self):
+    def test_scale_surface_3D_p43_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, 2.0, 2.0, 0.9],
@@ -1076,9 +1076,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 3.200000
         pt2[..., 1] /= 11.400000
         pt2[..., 2] /= 10.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p33_rational(self):
+    def test_mirror_surface_3D_p33_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, 3.0, -5.0, 1.2],
@@ -1123,9 +1123,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 1] = -pt2[..., 1]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p342_rational(self):
+    def test_translate_volume_3D_p342_rational(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, -4.0, -2.0, 1.4],
@@ -1460,9 +1460,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 3.300000
         pt2[..., 1] -= 4.000000
         pt2[..., 2] -= 8.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p332_rational(self):
+    def test_scale_volume_3D_p332_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, 4.0, 1.0, 1.0],
@@ -1770,9 +1770,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 2.200000
         pt2[..., 1] /= 8.100000
         pt2[..., 2] /= 2.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p323_rational(self):
+    def test_mirror_volume_3D_p323_rational(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, 1.0, 0.0, 1.5],
@@ -1910,9 +1910,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p4_rational_C0_periodic(self):
+    def test_translate_curve_3D_p4_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [97.0, -3.0, -3.0, 0.9],
@@ -1939,9 +1939,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.200000
         pt2[..., 1] -= 4.800000
         pt2[..., 2] -= 2.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p3_rational_C0_periodic(self):
+    def test_scale_curve_3D_p3_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, -4.0, 3.0, 0.7],
@@ -1961,9 +1961,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 3.700000
         pt2[..., 1] /= 6.000000
         pt2[..., 2] /= 2.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p3_rational_C0_periodic(self):
+    def test_mirror_curve_3D_p3_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [[98.0, 4.0, -3.0, 1.5], [2.0, 98.0, -4.0, 0.7], [-102.0, 1.0, 3.0, 1.3], [1.0, -98.0, -1.0, 0.7]]
         )
@@ -1976,9 +1976,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p33_rational_C0_periodic(self):
+    def test_translate_surface_3D_p33_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 3.0, 0.0, 1.1],
@@ -2017,9 +2017,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 4.900000
         pt2[..., 1] -= 4.600000
         pt2[..., 2] -= 6.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p23_rational_C0_periodic(self):
+    def test_scale_surface_3D_p23_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, 4.0, 3.0, 0.9],
@@ -2094,9 +2094,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.800000
         pt2[..., 1] /= 9.500000
         pt2[..., 2] /= 4.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p24_rational_C0_periodic(self):
+    def test_mirror_surface_3D_p24_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, 3.0, -4.0, 0.8],
@@ -2155,9 +2155,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p342_rational_C0_periodic(self):
+    def test_translate_volume_3D_p342_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, -3.0, -2.0, 0.5],
@@ -2497,9 +2497,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 5.500000
         pt2[..., 1] -= 3.500000
         pt2[..., 2] -= 9.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p432_rational_C0_periodic(self):
+    def test_scale_volume_3D_p432_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [53.0, -4.0, -3.0, 0.7],
@@ -2591,9 +2591,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 8.200000
         pt2[..., 1] /= 2.100000
         pt2[..., 2] /= 4.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p432_rational_C0_periodic(self):
+    def test_mirror_volume_3D_p432_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [51.0, 4.0, 0.0, 1.0],
@@ -2863,9 +2863,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p3_rational_C1_periodic(self):
+    def test_translate_curve_3D_p3_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [97.0, 4.0, 4.0, 1.3],
@@ -2888,9 +2888,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 8.500000
         pt2[..., 1] -= 8.300000
         pt2[..., 2] -= 9.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p3_rational_C1_periodic(self):
+    def test_scale_curve_3D_p3_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, 2.0, -3.0, 1.0],
@@ -2916,9 +2916,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 4.100000
         pt2[..., 1] /= 5.200000
         pt2[..., 2] /= 11.000000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p3_rational_C1_periodic(self):
+    def test_mirror_curve_3D_p3_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 4.0, 4.0, 0.6],
@@ -2939,9 +2939,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 1] = -pt2[..., 1]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p44_rational_C1_periodic(self):
+    def test_mirror_surface_3D_p44_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [57.0, 0.0, -2.0, 0.7],
@@ -3005,9 +3005,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p434_rational_C1_periodic(self):
+    def test_translate_volume_3D_p434_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [47.0, -2.0, 3.0, 1.1],
@@ -3245,9 +3245,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 1.700000
         pt2[..., 1] -= 2.400000
         pt2[..., 2] -= 7.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p443_rational_C1_periodic(self):
+    def test_mirror_volume_3D_p443_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [53.0, -3.0, 4.0, 0.8],
@@ -3505,9 +3505,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p3(self):
+    def test_translate_curve_3D_p3(self) -> None:
         controlpoints = np.array(
             [
                 [-3.0, -1.0, -2.0],
@@ -3531,9 +3531,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 3.600000
         pt2[..., 1] -= 4.300000
         pt2[..., 2] -= 6.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p2(self):
+    def test_scale_curve_3D_p2(self) -> None:
         controlpoints = np.array([[2.0, -2.0, -2.0], [51.0, -3.0, -4.0], [99.0, -5.0, -2.0]])
         basis0 = BSplineBasis(2, np.array([0.0, 0.0, 1.0, 2.0, 2.0]))
         crv = Curve(basis0, controlpoints, False)
@@ -3546,9 +3546,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 5.800000
         pt2[..., 1] /= 7.000000
         pt2[..., 2] /= 6.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p3(self):
+    def test_mirror_curve_3D_p3(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, -1.0, 1.0],
@@ -3569,9 +3569,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p43(self):
+    def test_translate_surface_3D_p43(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, 0.0, 2.0],
@@ -3626,9 +3626,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 5.100000
         pt2[..., 1] -= 3.700000
         pt2[..., 2] -= 6.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p42(self):
+    def test_scale_surface_3D_p42(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, 4.0, 1.0],
@@ -3677,9 +3677,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 3.200000
         pt2[..., 1] /= 4.300000
         pt2[..., 2] /= 7.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p22(self):
+    def test_mirror_surface_3D_p22(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, -5.0, 2.0],
@@ -3721,9 +3721,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p334(self):
+    def test_translate_volume_3D_p334(self) -> None:
         controlpoints = np.array(
             [
                 [1.0, 1.0, 4.0],
@@ -4127,9 +4127,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.900000
         pt2[..., 1] -= 7.700000
         pt2[..., 2] -= 2.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p232(self):
+    def test_scale_volume_3D_p232(self) -> None:
         controlpoints = np.array(
             [
                 [-1.0, -4.0, -1.0],
@@ -4345,9 +4345,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 2.900000
         pt2[..., 1] /= 3.800000
         pt2[..., 2] /= 11.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p242(self):
+    def test_mirror_volume_3D_p242(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, -4.0, 2.0],
@@ -4505,9 +4505,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p2_C0_periodic(self):
+    def test_translate_curve_3D_p2_C0_periodic(self) -> None:
         controlpoints = np.array(
             [[95.0, -4.0, 2.0], [1.0, 96.0, -4.0], [-101.0, 1.0, 4.0], [4.0, -102.0, 2.0]]
         )
@@ -4522,9 +4522,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 6.200000
         pt2[..., 1] -= 7.500000
         pt2[..., 2] -= 1.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p2_C0_periodic(self):
+    def test_scale_curve_3D_p2_C0_periodic(self) -> None:
         controlpoints = np.array([[103.0, -1.0, -4.0], [-53.0, 89.0, 2.0], [-46.0, -85.0, 3.0]])
         basis0 = BSplineBasis(2, np.array([-0.7, 0.0, 1.3, 2.3, 3.0, 4.3]), 0)
         crv = Curve(basis0, controlpoints, False)
@@ -4537,9 +4537,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.600000
         pt2[..., 1] /= 11.700000
         pt2[..., 2] /= 8.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p3_C0_periodic(self):
+    def test_mirror_curve_3D_p3_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, 3.0, 1.0],
@@ -4558,9 +4558,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p43_C0_periodic(self):
+    def test_translate_surface_3D_p43_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [56.0, 2.0, -3.0],
@@ -4609,9 +4609,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.200000
         pt2[..., 1] -= 2.700000
         pt2[..., 2] -= 2.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p23_C0_periodic(self):
+    def test_scale_surface_3D_p23_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [62.0, -4.0, 1.0],
@@ -4660,9 +4660,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 2.100000
         pt2[..., 1] /= 5.000000
         pt2[..., 2] /= 7.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p44_C0_periodic(self):
+    def test_mirror_surface_3D_p44_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, 0.0, 2.0],
@@ -4735,9 +4735,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 1] = -pt2[..., 1]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p323_C0_periodic(self):
+    def test_translate_volume_3D_p323_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [47.0, -2.0, -3.0],
@@ -4973,9 +4973,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 3.600000
         pt2[..., 1] -= 4.100000
         pt2[..., 2] -= 9.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p322_C0_periodic(self):
+    def test_scale_volume_3D_p322_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [45.0, -4.0, -4.0],
@@ -5075,9 +5075,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 2.700000
         pt2[..., 1] /= 8.200000
         pt2[..., 2] /= 5.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p333_C0_periodic(self):
+    def test_mirror_volume_3D_p333_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [45.0, -5.0, 4.0],
@@ -5415,9 +5415,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p4_C1_periodic(self):
+    def test_scale_curve_3D_p4_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, 1.0, 3.0],
@@ -5442,9 +5442,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 4.700000
         pt2[..., 1] /= 11.400000
         pt2[..., 2] /= 11.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p42_C1_periodic(self):
+    def test_translate_surface_3D_p42_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, -4.0, -3.0],
@@ -5505,9 +5505,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 3.300000
         pt2[..., 1] -= 5.600000
         pt2[..., 2] -= 7.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p44_C1_periodic(self):
+    def test_mirror_surface_3D_p44_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, 0.0, 3.0],
@@ -5578,9 +5578,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p344_C1_periodic(self):
+    def test_translate_volume_3D_p344_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [54.0, -3.0, -2.0],
@@ -5840,9 +5840,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.300000
         pt2[..., 1] -= 6.300000
         pt2[..., 2] -= 6.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p444_C1_periodic(self):
+    def test_scale_volume_3D_p444_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, 3.0, -2.0],
@@ -6200,9 +6200,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 4.100000
         pt2[..., 1] /= 6.600000
         pt2[..., 2] /= 4.000000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p7_rational(self):
+    def test_translate_curve_2D_p7_rational(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, 2.0, 1.1],
@@ -6228,9 +6228,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 1.500000
         pt2[..., 1] -= 1.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p7_rational(self):
+    def test_scale_curve_2D_p7_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, -2.0, 1.2],
@@ -6256,9 +6256,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 7.500000
         pt2[..., 1] /= 8.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p65_rational(self):
+    def test_translate_surface_2D_p65_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, -2.0, 0.7],
@@ -6380,9 +6380,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 9.600000
         pt2[..., 1] -= 2.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p75_rational(self):
+    def test_scale_surface_2D_p75_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-3.0, 4.0, 0.6],
@@ -6494,9 +6494,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 2.700000
         pt2[..., 1] /= 5.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p6_rational_C0_periodic(self):
+    def test_translate_curve_2D_p6_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, 4.0, 0.8],
@@ -6531,9 +6531,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 2] -= 8.700000
         allZero = pt2
         allZero[..., :-1] -= pt
-        self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(allZero)), 0.0)
 
-    def test_scale_curve_2D_p5_rational_C0_periodic(self):
+    def test_scale_curve_2D_p5_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [98.0, 0.0, 1.0],
@@ -6560,9 +6560,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 5.400000
         pt2[..., 1] /= 2.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p57_rational_C0_periodic(self):
+    def test_translate_surface_2D_p57_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, 4.0, 1.4],
@@ -6677,9 +6677,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 2] -= 9.100000
         allZero = pt2
         allZero[..., :-1] -= pt
-        self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(allZero)), 0.0)
 
-    def test_scale_surface_2D_p76_rational_C0_periodic(self):
+    def test_scale_surface_2D_p76_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, -5.0, 1.2],
@@ -6824,9 +6824,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 3.100000
         pt2[..., 1] /= 4.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p5_rational_C1_periodic(self):
+    def test_translate_curve_2D_p5_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [98.0, -1.0, 1.3],
@@ -6852,9 +6852,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 0.400000
         pt2[..., 1] -= 7.000000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p5_rational_C1_periodic(self):
+    def test_scale_curve_2D_p5_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 0.0, 1.4],
@@ -6878,9 +6878,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 4.600000
         pt2[..., 1] /= 7.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p76_rational_C1_periodic(self):
+    def test_translate_surface_2D_p76_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, -1.0, 1.0],
@@ -7040,9 +7040,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 2] -= 0.100000
         allZero = pt2
         allZero[..., :-1] -= pt
-        self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(allZero)), 0.0)
 
-    def test_scale_surface_2D_p76_rational_C1_periodic(self):
+    def test_scale_surface_2D_p76_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, 4.0, 0.6],
@@ -7140,9 +7140,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 8.300000
         pt2[..., 1] /= 7.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p6(self):
+    def test_translate_curve_2D_p6(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, -2.0],
@@ -7172,9 +7172,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 2] -= 4.900000
         allZero = pt2
         allZero[..., :-1] -= pt
-        self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(allZero)), 0.0)
 
-    def test_scale_curve_2D_p7(self):
+    def test_scale_curve_2D_p7(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -2.0],
@@ -7226,9 +7226,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 4.600000
         pt2[..., 1] /= 4.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p66(self):
+    def test_translate_surface_2D_p66(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, 0.0],
@@ -7330,9 +7330,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 3.000000
         pt2[..., 1] -= 9.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p77(self):
+    def test_scale_surface_2D_p77(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, 2.0],
@@ -7485,9 +7485,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 11.700000
         pt2[..., 1] /= 5.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p7_C0_periodic(self):
+    def test_translate_curve_2D_p7_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, 0.0],
@@ -7515,9 +7515,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 6.000000
         pt2[..., 1] -= 5.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p6_C0_periodic(self):
+    def test_scale_curve_2D_p6_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [95.0, 4.0],
@@ -7546,9 +7546,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 2.700000
         pt2[..., 1] /= 2.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p56_C0_periodic(self):
+    def test_translate_surface_2D_p56_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, -2.0],
@@ -7634,9 +7634,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 2] -= 9.400000
         allZero = pt2
         allZero[..., :-1] -= pt
-        self.assertAlmostEqual(np.linalg.norm(allZero), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(allZero)), 0.0)
 
-    def test_scale_surface_2D_p67_C0_periodic(self):
+    def test_scale_surface_2D_p67_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, 4.0],
@@ -7749,9 +7749,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 4.400000
         pt2[..., 1] /= 11.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_2D_p5_C1_periodic(self):
+    def test_translate_curve_2D_p5_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, -5.0],
@@ -7777,9 +7777,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] -= 5.000000
         pt2[..., 1] -= 0.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_2D_p5_C1_periodic(self):
+    def test_scale_curve_2D_p5_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, -5.0],
@@ -7803,9 +7803,9 @@ class TestAffine(unittest.TestCase):
         pt2 = crv2(u)
         pt2[..., 0] /= 10.200000
         pt2[..., 1] /= 5.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_2D_p76_C1_periodic(self):
+    def test_translate_surface_2D_p76_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [64.0, -4.0],
@@ -7921,9 +7921,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] -= 0.600000
         pt2[..., 1] -= 0.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_2D_p55_C1_periodic(self):
+    def test_scale_surface_2D_p55_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, 2.0],
@@ -8005,9 +8005,9 @@ class TestAffine(unittest.TestCase):
 
         pt2[..., 0] /= 2.900000
         pt2[..., 1] /= 4.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p5_rational(self):
+    def test_translate_curve_3D_p5_rational(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 1.0, 3.0, 1.4],
@@ -8029,9 +8029,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 5.900000
         pt2[..., 1] -= 6.500000
         pt2[..., 2] -= 9.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p5_rational(self):
+    def test_scale_curve_3D_p5_rational(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, -3.0, -1.0, 1.5],
@@ -8055,9 +8055,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 8.400000
         pt2[..., 1] /= 2.200000
         pt2[..., 2] /= 5.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p6_rational(self):
+    def test_mirror_curve_3D_p6_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-3.0, 1.0, 3.0, 0.6],
@@ -8083,9 +8083,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p76_rational(self):
+    def test_translate_surface_3D_p76_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, 3.0, -1.0, 1.4],
@@ -8180,9 +8180,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 9.800000
         pt2[..., 1] -= 0.000000
         pt2[..., 2] -= 3.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p76_rational(self):
+    def test_scale_surface_3D_p76_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-4.0, -4.0, 1.0, 0.9],
@@ -8329,9 +8329,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.700000
         pt2[..., 1] /= 4.900000
         pt2[..., 2] /= 5.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p76_rational(self):
+    def test_mirror_surface_3D_p76_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, -1.0, 0.0, 0.6],
@@ -8442,9 +8442,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p676_rational(self):
+    def test_translate_volume_3D_p676_rational(self) -> None:
         controlpoints = np.array(
             [
                 [2.0, -1.0, -4.0, 0.9],
@@ -9361,9 +9361,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 3.400000
         pt2[..., 1] -= 1.300000
         pt2[..., 2] -= 5.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p577_rational(self):
+    def test_scale_volume_3D_p577_rational(self) -> None:
         controlpoints = np.array(
             [
                 [-1.0, 3.0, -1.0, 1.3],
@@ -9867,9 +9867,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 7.800000
         pt2[..., 1] /= 3.500000
         pt2[..., 2] /= 4.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p577_rational(self):
+    def test_mirror_volume_3D_p577_rational(self) -> None:
         controlpoints = np.array(
             [
                 [4.0, 1.0, 0.0, 1.3],
@@ -10996,9 +10996,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p5_rational_C0_periodic(self):
+    def test_translate_curve_3D_p5_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, 4.0, -4.0, 0.5],
@@ -11024,9 +11024,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 0.700000
         pt2[..., 1] -= 1.000000
         pt2[..., 2] -= 8.000000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p6_rational_C0_periodic(self):
+    def test_scale_curve_3D_p6_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [100.0, 3.0, -4.0, 1.4],
@@ -11059,9 +11059,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 4.000000
         pt2[..., 1] /= 7.500000
         pt2[..., 2] /= 7.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p7_rational_C0_periodic(self):
+    def test_mirror_curve_3D_p7_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [104.0, -3.0, 3.0, 1.2],
@@ -11085,9 +11085,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p66_rational_C0_periodic(self):
+    def test_translate_surface_3D_p66_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, -4.0, 2.0, 1.0],
@@ -11174,9 +11174,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.900000
         pt2[..., 1] -= 8.400000
         pt2[..., 2] -= 2.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p75_rational_C0_periodic(self):
+    def test_scale_surface_3D_p75_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, 1.0, 3.0, 1.1],
@@ -11303,9 +11303,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 3.900000
         pt2[..., 1] /= 2.500000
         pt2[..., 2] /= 7.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p76_rational_C0_periodic(self):
+    def test_mirror_surface_3D_p76_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, -2.0, 0.0, 1.3],
@@ -11425,9 +11425,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 1] = -pt2[..., 1]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p777_rational_C0_periodic(self):
+    def test_translate_volume_3D_p777_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [46.0, -3.0, -4.0, 0.6],
@@ -12556,9 +12556,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.800000
         pt2[..., 1] -= 5.300000
         pt2[..., 2] -= 5.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p565_rational_C0_periodic(self):
+    def test_scale_volume_3D_p565_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [49.0, -3.0, 3.0, 1.4],
@@ -13222,9 +13222,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.000000
         pt2[..., 1] /= 8.500000
         pt2[..., 2] /= 6.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p657_rational_C0_periodic(self):
+    def test_mirror_volume_3D_p657_rational_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [46.0, 1.0, 4.0, 0.7],
@@ -13966,9 +13966,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p5_rational_C1_periodic(self):
+    def test_translate_curve_3D_p5_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [102.0, -5.0, 0.0, 1.2],
@@ -13995,9 +13995,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 4.800000
         pt2[..., 1] -= 3.500000
         pt2[..., 2] -= 9.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p7_rational_C1_periodic(self):
+    def test_scale_curve_3D_p7_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [96.0, 2.0, 1.0, 0.9],
@@ -14049,9 +14049,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.300000
         pt2[..., 1] /= 11.600000
         pt2[..., 2] /= 7.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p5_rational_C1_periodic(self):
+    def test_mirror_curve_3D_p5_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [98.0, -3.0, 4.0, 0.7],
@@ -14073,9 +14073,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p56_rational_C1_periodic(self):
+    def test_translate_surface_3D_p56_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, -4.0, 0.0, 0.8],
@@ -14164,9 +14164,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.400000
         pt2[..., 1] -= 3.900000
         pt2[..., 2] -= 2.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p75_rational_C1_periodic(self):
+    def test_scale_surface_3D_p75_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [59.0, -3.0, 1.0, 1.5],
@@ -14297,9 +14297,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.600000
         pt2[..., 1] /= 9.900000
         pt2[..., 2] /= 8.500000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p76_rational_C1_periodic(self):
+    def test_mirror_surface_3D_p76_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [63.0, 1.0, -2.0, 1.1],
@@ -14423,9 +14423,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 1] = -pt2[..., 1]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p757_rational_C1_periodic(self):
+    def test_translate_volume_3D_p757_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, -5.0, -1.0, 0.6],
@@ -15445,9 +15445,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 8.400000
         pt2[..., 1] -= 4.700000
         pt2[..., 2] -= 6.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p565_rational_C1_periodic(self):
+    def test_scale_volume_3D_p565_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [49.0, -2.0, -5.0, 0.6],
@@ -16285,9 +16285,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 7.600000
         pt2[..., 1] /= 9.100000
         pt2[..., 2] /= 10.300000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p757_rational_C1_periodic(self):
+    def test_mirror_volume_3D_p757_rational_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [54.0, -3.0, -4.0, 1.1],
@@ -17438,9 +17438,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p7(self):
+    def test_translate_curve_3D_p7(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, -4.0, -5.0],
@@ -17468,9 +17468,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 4.300000
         pt2[..., 1] -= 5.500000
         pt2[..., 2] -= 7.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p7(self):
+    def test_scale_curve_3D_p7(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 1.0, 3.0],
@@ -17523,9 +17523,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 7.300000
         pt2[..., 1] /= 7.200000
         pt2[..., 2] /= 11.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p7(self):
+    def test_mirror_curve_3D_p7(self) -> None:
         controlpoints = np.array(
             [
                 [0.0, 4.0, -5.0],
@@ -17549,9 +17549,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p77(self):
+    def test_translate_surface_3D_p77(self) -> None:
         controlpoints = np.array(
             [
                 [3.0, -1.0, -2.0],
@@ -17664,9 +17664,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 7.200000
         pt2[..., 1] -= 2.700000
         pt2[..., 2] -= 5.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p77(self):
+    def test_scale_surface_3D_p77(self) -> None:
         controlpoints = np.array(
             [
                 [-1.0, -4.0, -4.0],
@@ -17820,9 +17820,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.600000
         pt2[..., 1] /= 7.700000
         pt2[..., 2] /= 2.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p77(self):
+    def test_mirror_surface_3D_p77(self) -> None:
         controlpoints = np.array(
             [
                 [-2.0, -3.0, 4.0],
@@ -17956,9 +17956,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p656(self):
+    def test_translate_volume_3D_p656(self) -> None:
         controlpoints = np.array(
             [
                 [1.0, 1.0, 2.0],
@@ -18414,9 +18414,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 5.700000
         pt2[..., 1] -= 7.200000
         pt2[..., 2] -= 6.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p557(self):
+    def test_scale_volume_3D_p557(self) -> None:
         controlpoints = np.array(
             [
                 [-1.0, -4.0, -1.0],
@@ -19016,9 +19016,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 4.400000
         pt2[..., 1] /= 7.300000
         pt2[..., 2] /= 6.200000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p777(self):
+    def test_mirror_volume_3D_p777(self) -> None:
         controlpoints = np.array(
             [
                 [-5.0, 1.0, 2.0],
@@ -19842,9 +19842,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 1] = -pt2[..., 1]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p5_C0_periodic(self):
+    def test_translate_curve_3D_p5_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [101.0, 3.0, -1.0],
@@ -19869,9 +19869,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 0.900000
         pt2[..., 1] -= 4.200000
         pt2[..., 2] -= 0.000000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p7_C0_periodic(self):
+    def test_scale_curve_3D_p7_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, -2.0, 1.0],
@@ -19926,9 +19926,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 4.800000
         pt2[..., 1] /= 9.400000
         pt2[..., 2] /= 6.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p7_C0_periodic(self):
+    def test_mirror_curve_3D_p7_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [100.0, 2.0, -5.0],
@@ -19955,9 +19955,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 1] = -pt2[..., 1]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p75_C0_periodic(self):
+    def test_translate_surface_3D_p75_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, 2.0, -1.0],
@@ -20114,9 +20114,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 1.400000
         pt2[..., 1] -= 7.600000
         pt2[..., 2] -= 3.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p67_C0_periodic(self):
+    def test_scale_surface_3D_p67_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [56.0, 2.0, 4.0],
@@ -20254,9 +20254,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 3.200000
         pt2[..., 1] /= 10.200000
         pt2[..., 2] /= 5.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p75_C0_periodic(self):
+    def test_mirror_surface_3D_p75_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [61.0, -3.0, -4.0],
@@ -20376,9 +20376,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p756_C0_periodic(self):
+    def test_translate_volume_3D_p756_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [53.0, -4.0, -1.0],
@@ -21106,9 +21106,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 9.500000
         pt2[..., 1] -= 0.300000
         pt2[..., 2] -= 9.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p675_C0_periodic(self):
+    def test_scale_volume_3D_p675_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [52.0, -3.0, 2.0],
@@ -21854,9 +21854,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 9.200000
         pt2[..., 1] /= 7.100000
         pt2[..., 2] /= 10.600000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p755_C0_periodic(self):
+    def test_mirror_volume_3D_p755_C0_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [46.0, -1.0, -2.0],
@@ -22382,9 +22382,9 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_curve_3D_p5_C1_periodic(self):
+    def test_translate_curve_3D_p5_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [98.0, -2.0, -2.0],
@@ -22409,9 +22409,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 3.400000
         pt2[..., 1] -= 0.200000
         pt2[..., 2] -= 4.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_curve_3D_p7_C1_periodic(self):
+    def test_scale_curve_3D_p7_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [103.0, 4.0, -3.0],
@@ -22442,9 +22442,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 6.200000
         pt2[..., 1] /= 9.400000
         pt2[..., 2] /= 6.900000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_curve_3D_p7_C1_periodic(self):
+    def test_mirror_curve_3D_p7_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [99.0, 2.0, -1.0],
@@ -22470,9 +22470,9 @@ class TestAffine(unittest.TestCase):
         pt = crv(u)
         pt2 = crv2(u)
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_surface_3D_p67_C1_periodic(self):
+    def test_translate_surface_3D_p67_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [55.0, 4.0, 1.0],
@@ -22558,9 +22558,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 6.200000
         pt2[..., 1] -= 4.500000
         pt2[..., 2] -= 9.800000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_surface_3D_p55_C1_periodic(self):
+    def test_scale_surface_3D_p55_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [60.0, -2.0, 4.0],
@@ -22645,9 +22645,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 4.000000
         pt2[..., 1] /= 9.700000
         pt2[..., 2] /= 2.700000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_surface_3D_p66_C1_periodic(self):
+    def test_mirror_surface_3D_p66_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [58.0, 2.0, -4.0],
@@ -22751,9 +22751,9 @@ class TestAffine(unittest.TestCase):
         pt2 = surf2(u, v)
 
         pt2[..., 0] = -pt2[..., 0]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_translate_volume_3D_p655_C1_periodic(self):
+    def test_translate_volume_3D_p655_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [47.0, -5.0, 2.0],
@@ -23381,9 +23381,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] -= 4.600000
         pt2[..., 1] -= 2.000000
         pt2[..., 2] -= 3.100000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_scale_volume_3D_p577_C1_periodic(self):
+    def test_scale_volume_3D_p577_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [48.0, -4.0, -2.0],
@@ -24296,9 +24296,9 @@ class TestAffine(unittest.TestCase):
         pt2[..., 0] /= 9.700000
         pt2[..., 1] /= 6.900000
         pt2[..., 2] /= 11.400000
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
-    def test_mirror_volume_3D_p667_C1_periodic(self):
+    def test_mirror_volume_3D_p667_C1_periodic(self) -> None:
         controlpoints = np.array(
             [
                 [50.0, -1.0, 3.0],
@@ -25015,7 +25015,7 @@ class TestAffine(unittest.TestCase):
         pt = vol(u, v, w)
         pt2 = vol2(u, v, w)
         pt2[..., 2] = -pt2[..., 2]
-        self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
+        self.assertAlmostEqual(float(np.linalg.norm(pt - pt2)), 0.0)
 
 
 if __name__ == "__main__":

@@ -2,17 +2,22 @@ from __future__ import annotations
 
 import datetime
 import subprocess
+import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from . import general
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
 # Get random generator
 rng = np.random.default_rng()
 
 
-def diff_curve():
+def diff_curve() -> str:
     return """
         u    = np.linspace(crv.start(0), crv.end(0), 11)
         du   = crv.derivative(u)
@@ -20,7 +25,7 @@ def diff_curve():
 """
 
 
-def diff_surface():
+def diff_surface() -> str:
     return """
         u    = np.linspace(surf.start(0), surf.end(0), 7)
         v    = np.linspace(surf.start(1), surf.end(1), 7)
@@ -32,7 +37,7 @@ def diff_surface():
 """
 
 
-def diff_volume():
+def diff_volume() -> str:
     return """
         u    = np.linspace(vol.start(0), vol.end(0), 5)
         v    = np.linspace(vol.start(1), vol.end(1), 5)
@@ -46,8 +51,8 @@ def diff_volume():
 """
 
 
-def differentiate(p):
-    obj_name = ["", "crv", "surf", "vol"]
+def differentiate(p: Sequence[int]) -> str:
+    obj_name = ["crv", "surf", "vol"]
     pardim = len(p)
     result = ""
     for i in range(pardim):
@@ -56,15 +61,14 @@ def differentiate(p):
         expected_order[i] = p[i] - 1
         for j in range(pardim):
             result += (
-                f"        self.assertEqual({obj_name[pardim]}{i + 2}"
+                f"        self.assertEqual({obj_name[pardim - 1]}{i + 2}"
                 f".order(direction={j}), {expected_order[j]})\n"
             )
     return result
 
 
 # dump large sets of control points
-np.set_printoptions(threshold=np.inf, linewidth=100)
-np.set_printoptions(threshold=np.inf)
+np.set_printoptions(threshold=sys.maxsize, linewidth=100)
 # open file and write headers
 f = Path("derivative_spline_test.py").open("w")
 f.write("# --- Automatic generated test file  ---\n")
@@ -73,7 +77,7 @@ f.write("# Date         : " + str(datetime.date.today()) + "\n")
 f.write("# Git revision : " + subprocess.check_output(["git", "rev-parse", "HEAD"]).decode())
 f.write("""
 import numpy as np
-from splipy import Volume, Surface, Curve, BSplineBasis
+from splipy import Volume, Surface, Curve, BSplineBasis, SplineObject
 from math import sqrt
 import unittest
 
@@ -81,36 +85,39 @@ import unittest
 class TestDerivativeSpline(unittest.TestCase):
 """)
 
-evaluate = [None, diff_curve, diff_surface, diff_volume]
+evaluate: list[Callable[[], str]] = [diff_curve, diff_surface, diff_volume]
 for baseP in [2, 5]:
     for dim in [2, 3]:
         for rational in [False]:
             for periodic in [-1, 0, 1, 2]:
                 for pardim in range(1, 4):
-                    p = np.array([baseP] * pardim) + rng.integers(0, 3, pardim)
+                    p = tuple(int(x) for x in np.array([baseP] * pardim) + rng.integers(0, 3, pardim))
                     if periodic >= p[0] - 1:
                         continue
                     if dim < 3 and pardim > 2:
                         continue
-                    n = p + 3
-                    n += rng.integers(-2, 1, pardim)
-                    n[0] = np.maximum(2 * (p[0] + periodic), n[0])
+                    n = [int(x) for x in rng.integers(-2, 1, pardim) + p + 3]
+                    n[0] = max(2 * (p[0] + periodic), n[0])
                     cp = general.gen_controlpoints(n, dim, rational, periodic)
                     knot = [
                         general.gen_knot(n[i], p[i], (i == 0) * (periodic + 1) - 1) for i in range(pardim)
                     ]
-                    f.write("    def test_" + general.get_name(n, p, dim, rational, periodic) + "(self):\n")
+                    f.write(
+                        "    def test_"
+                        + general.get_name(n, p, dim, rational, periodic)
+                        + "(self) -> None:\n"
+                    )
                     cp_str = repr(cp).replace("\n", "") if cp.shape[0] > 30 else repr(cp)
                     f.write("        controlpoints = np." + cp_str + "\n")
                     general.write_basis(f, p, knot, periodic)
                     general.write_object_creation(f, rational, pardim)
                     f.write(differentiate(p))
-                    f.write(evaluate[pardim]())
-                    f.write("        self.assertAlmostEqual(np.linalg.norm(du-du2), 0.0)\n")
+                    f.write(evaluate[pardim - 1]())
+                    f.write("        self.assertAlmostEqual(float(np.linalg.norm(du-du2)), 0.0)\n")
                     if pardim > 1:
-                        f.write("        self.assertAlmostEqual(np.linalg.norm(dv-dv2), 0.0)\n")
+                        f.write("        self.assertAlmostEqual(float(np.linalg.norm(dv-dv2)), 0.0)\n")
                     if pardim > 2:
-                        f.write("        self.assertAlmostEqual(np.linalg.norm(dw-dw2), 0.0)\n")
+                        f.write("        self.assertAlmostEqual(float(np.linalg.norm(dw-dw2)), 0.0)\n")
 
 f.write("""
 if __name__ == '__main__':
