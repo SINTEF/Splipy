@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, ClassVar, Self, cast
 import numpy as np
 import scipy.sparse.linalg as splinalg
 
+from . import state
+
 from .basis import BSplineBasis
 from .splineobject import SplineObject
 from .utils import ensure_listlike, is_singleton
@@ -425,6 +427,40 @@ class Curve(SplineObject):
 
         # return new resampled curve
         return Curve(basis, controlpoints)
+
+    def closest_point(self, pt : ArrayLike, t0 : ScalarLike = None) -> tuple[FloatArray, float]:
+        """Computes the closest point on this curve to a given point. This is done by newton iteration
+        and is using the state variables `controlpoint_absolute_tolerance` and `controlpoint_relative_tolerance`
+        to determine convergence; but limited to 15 iterations.
+        :param array-like pt: point to which the closest point on the curve is sought
+        :param float t0: optional starting guess for the parametric location of the closest point
+        :return: the closest point on the curve and its parametric location
+        :rtype: tuple(numpy.array, float)
+    
+        """
+        if t0 is None:
+            dist = [np.linalg.norm(cp-pt) for cp in self.controlpoints]
+        i = np.argmin(dist)
+        t0 = self.bases[0].greville(i)
+        t = t0
+        iter = 0
+        atol = state.controlpoint_absolute_tolerance
+        rtol = state.controlpoint_relative_tolerance
+        F = np.dot(self(t) - pt, self.derivative(t))
+        while np.abs(F) > atol:
+            x = self(t)
+            dx = self.derivative(t)
+            ddx = self.derivative(t, d=2)
+            e  = x - pt
+            dF = np.dot(dx,dx) + np.dot(e, ddx)
+            t -= F / dF
+            t = np.clip(t, self.bases[0].start(), self.bases[0].end())
+            F = np.dot(self(t) - pt, self.derivative(t))
+            iter += 1
+            if iter > 15:
+                print(f'Warning: did not converge in 15 iterations, returning last {t=}, {F=}')
+                break
+        return self(t), t
 
     def error(self, target: Curve) -> tuple[FloatArray, float]:
         """Computes the L2 (squared and per knot span) and max error between
