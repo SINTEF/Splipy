@@ -375,8 +375,11 @@ class Curve(SplineObject):
         .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt
 
         """
-        (x, w) = np.polynomial.legendre.leggauss(self.order(0) + 1)
         knots = self.knots(0)
+        quadrature_points = self.order(0) + 1
+        if len(knots) == 2:
+            quadrature_points *= 2
+        (x, w) = np.polynomial.legendre.leggauss(quadrature_points)
         # keep only integration boundaries within given start (t0) and stop (t1) interval
         if t0 is not None:
             t0 = float(t0)

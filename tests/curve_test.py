@@ -493,6 +493,17 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(crv.length(), 1.0)
         crv = Curve(BSplineBasis(2, [-1, -1, 1, 2, 3, 3]), [[0, 0, 0], [1, 0, 0], [1, 0, 3], [1, 10, 3]])
         self.assertAlmostEqual(crv.length(), 14.0)
+        basis = BSplineBasis(order=4, knots = [0,0,0,0,1,1,1,1])
+        curve = Curve(basis, [[-1,0],[0,1],[0,1],[1,0]])
+        self.assertAlmostEqual(curve.length(), 2.54861512024293, places=4)
+        waves = Curve(basis, [[-1,0],[0,-1],[0,1],[1,0]])
+        self.assertAlmostEqual(waves.length(), 2.3709893215943936, places=3)
+        peak = Curve(basis, [[-1,0],[1,1],[-1,1],[1,0]])
+        self.assertAlmostEqual(peak.length(), 2.54861512024293, places=1)
+        loop = Curve(basis, [[-1,0],[5,1],[-5,1],[1,0]])
+        self.assertAlmostEqual(loop.length(), 6.319416448472324, places=2)
+        zigzack = Curve(basis, [[-1,0],[5,-1],[-5,1],[1,0]])
+        self.assertAlmostEqual(zigzack.length(), 6.131548783913573, places=1)
 
     def test_make_periodic(self):
         my_cps = np.array([[0, -1], [1, 0], [0, 1], [-1, 0], [0, -1]], dtype=float)
