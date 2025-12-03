@@ -15,7 +15,7 @@ from . import state
 from .utils import ensure_listlike_old
 
 if TYPE_CHECKING:
-    from .typing import ArrayLike, FloatArray, ScalarLike
+    from .typing import ArrayLike, FloatArray, Scalar
 
 __all__ = ["BSplineBasis"]
 
@@ -151,7 +151,7 @@ class BSplineBasis:
     @overload
     def evaluate(
         self,
-        t: ArrayLike | ScalarLike,
+        t: ArrayLike | Scalar,
         d: int = 0,
         from_right: bool = ...,
     ) -> npt.NDArray[np.double]: ...
@@ -159,7 +159,7 @@ class BSplineBasis:
     @overload
     def evaluate(
         self,
-        t: ArrayLike | ScalarLike,
+        t: ArrayLike | Scalar,
         d: int = 0,
         from_right: bool = ...,
         sparse: Literal[False] = ...,
@@ -168,7 +168,7 @@ class BSplineBasis:
     @overload
     def evaluate(
         self,
-        t: ArrayLike | ScalarLike,
+        t: ArrayLike | Scalar,
         d: int = 0,
         from_right: bool = ...,
         sparse: Literal[True] = ...,
@@ -176,7 +176,7 @@ class BSplineBasis:
 
     def evaluate(
         self,
-        t: ArrayLike | ScalarLike,
+        t: ArrayLike | Scalar,
         d: int = 0,
         from_right: bool = True,
         sparse: bool = False,
@@ -285,7 +285,7 @@ class BSplineBasis:
         N = csr_matrix((data, indices, indptr), (m, n))
         return N.toarray() if sparse else N
 
-    def integrate(self, t0: ScalarLike, t1: ScalarLike) -> FloatArray:
+    def integrate(self, t0: Scalar, t1: Scalar) -> FloatArray:
         """Integrate all basis functions over a given domain
 
         :param float t0: The parametric starting point
@@ -327,7 +327,7 @@ class BSplineBasis:
         self -= self.start()  # set start-point to 0
         self /= self.end()  # set end-point to 1
 
-    def reparam(self, start: ScalarLike = 0, end: ScalarLike = 1) -> None:
+    def reparam(self, start: Scalar = 0, end: Scalar = 1) -> None:
         """Set the parametric domain to be (start, end)
 
         :raises ValueError: If *end* ≤ *start*
@@ -347,7 +347,7 @@ class BSplineBasis:
         b = self.end()
         self.knots = (self.knots[::-1] - a) / (b - a) * (a - b) + b
 
-    def knot_continuity(self, knot: ScalarLike) -> int:
+    def knot_continuity(self, knot: Scalar) -> int:
         """Get the continuity of the basis functions at a given point.
 
         This is similar to continuity(), but throws an error if the input is not
@@ -375,7 +375,7 @@ class BSplineBasis:
             raise NotAKnotError
         return self.order - (hi - lo) - 1
 
-    def continuity(self, knot: ScalarLike) -> int | float:
+    def continuity(self, knot: Scalar) -> int | float:
         """Get the continuity of the basis functions at a given point.
 
         :return: *p*--*m*--1 at a knot with multiplicity *m*, or ``inf``
@@ -387,7 +387,7 @@ class BSplineBasis:
         except NotAKnotError:
             return np.inf
 
-    def min_continuity(self, knot: ScalarLike, max: int) -> int:
+    def min_continuity(self, knot: Scalar, max: int) -> int:
         """Get the min of the continuity at a given point and an upper bound.
 
         :return: min(self.continuity(knot), max)
@@ -498,7 +498,7 @@ class BSplineBasis:
 
         return BSplineBasis(p, knots, self.periodic)
 
-    def insert_knot(self, new_knot: ScalarLike) -> FloatArray:
+    def insert_knot(self, new_knot: Scalar) -> FloatArray:
         """Inserts a knot in the knot vector.
 
         The return value is a sparse matrix *C* (actually, a dense matrix with
@@ -641,19 +641,19 @@ class BSplineBasis:
         """Returns the knot at a given index."""
         return float(self.knots[i])
 
-    def __iadd__(self, a: ScalarLike) -> Self:
+    def __iadd__(self, a: Scalar) -> Self:
         self.knots += float(a)
         return self
 
-    def __isub__(self, a: ScalarLike) -> Self:
+    def __isub__(self, a: Scalar) -> Self:
         self.knots -= float(a)
         return self
 
-    def __imul__(self, a: ScalarLike) -> Self:
+    def __imul__(self, a: Scalar) -> Self:
         self.knots *= float(a)
         return self
 
-    def __itruediv__(self, a: ScalarLike) -> Self:
+    def __itruediv__(self, a: Scalar) -> Self:
         self.knots /= float(a)
         return self
 

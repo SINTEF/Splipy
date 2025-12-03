@@ -15,7 +15,7 @@ from .utils import ensure_listlike, is_singleton
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from .typing import ArrayLike, Direction, FloatArray, ScalarLike
+    from .typing import ArrayLike, Direction, FloatArray, Scalar
 
 __all__ = ["Curve"]
 
@@ -47,7 +47,7 @@ class Curve(SplineObject):
         """
         super().__init__([basis], controlpoints, rational, raw=raw)
 
-    def evaluate(self, *params: ArrayLike | ScalarLike, tensor: bool = True) -> FloatArray:
+    def evaluate(self, *params: ArrayLike | Scalar, tensor: bool = True) -> FloatArray:
         """Evaluate the object at given parametric values.
 
         This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
@@ -87,7 +87,7 @@ class Curve(SplineObject):
 
     def derivative(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         d: int | Sequence[int] = 1,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -146,7 +146,7 @@ class Curve(SplineObject):
 
         return result
 
-    def binormal(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray:
+    def binormal(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray:
         """Evaluate the normalized binormal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
@@ -194,7 +194,7 @@ class Curve(SplineObject):
 
         return result / magnitude
 
-    def normal(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray:
+    def normal(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray:
         """Evaluate the normal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
@@ -219,7 +219,7 @@ class Curve(SplineObject):
 
         return np.cross(B, T)
 
-    def curvature(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray | float:
+    def curvature(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray | float:
         """Evaluate the curvaure at specified point(s). The curvature is defined as
 
         .. math:: \\frac{|\\boldsymbol{v}\\times \\boldsymbol{a}|}{|\\boldsymbol{v}|^3}
@@ -243,7 +243,7 @@ class Curve(SplineObject):
         speed: FloatArray = np.linalg.norm(v, axis=-1)
         return magnitude / speed**3
 
-    def torsion(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray | float:
+    def torsion(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray | float:
         """Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
 
         .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot
@@ -361,7 +361,7 @@ class Curve(SplineObject):
 
         return self
 
-    def continuity(self, knot: ScalarLike) -> int | float:
+    def continuity(self, knot: Scalar) -> int | float:
         """Get the parametric continuity of the curve at a given point. Will
         return p-1-m, where m is the knot multiplicity and inf between knots"""
         return self.bases[0].continuity(knot)
@@ -371,7 +371,7 @@ class Curve(SplineObject):
         continuity"""
         return np.array([k for k in self.knots(0) if self.continuity(k) < 1], dtype=np.float64)
 
-    def length(self, t0: ScalarLike | None = None, t1: ScalarLike | None = None) -> float:
+    def length(self, t0: Scalar | None = None, t1: Scalar | None = None) -> float:
         """Computes the euclidian length of the curve in geometric space
 
         .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt
@@ -428,7 +428,7 @@ class Curve(SplineObject):
         # return new resampled curve
         return Curve(basis, controlpoints)
 
-    def closest_point(self, pt : ArrayLike, t0 : ScalarLike = None) -> tuple[FloatArray, float]:
+    def closest_point(self, pt : ArrayLike, t0 : Scalar = None) -> tuple[FloatArray, float]:
         """Computes the closest point on this curve to a given point. This is done by newton iteration
         and is using the state variables `controlpoint_absolute_tolerance` and `controlpoint_relative_tolerance`
         to determine convergence; but limited to 15 iterations.
