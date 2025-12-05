@@ -427,6 +427,30 @@ class Curve(SplineObject):
 
         # return new resampled curve
         return Curve(basis, controlpoints)
+    
+    def _closest_point_linear_curve(self, pt: ArrayLike) -> tuple[FloatArray, float]:
+        """Computes the closest point on a linear curve to a given point.
+        :param array-like pt: point to which the closest point on the curve is sought
+        :return: the closest point on the curve and its parametric location
+        :rtype: tuple(numpy.array, float)
+    
+        """
+        knots = self.knots(0)
+        mindist_squared = np.linalg.norm(pt - self.controlpoints[0])**2
+        t = knots[0]
+        for p1,p0,t1,t0 in zip(self.controlpoints[1:], self.controlpoints[:-1],
+                              knots[2:-1], knots[1:-2]):
+            b = p1 - p0
+            a = pt - p0
+            if 0 <= np.dot(a,b) <= np.dot(b,b):
+                dist_squared = np.dot(a,a) - np.dot(a,b)**2 / np.dot(b,b)
+                if dist_squared < mindist_squared:
+                    mindist_squared = dist_squared
+                    t = t0 + (np.dot(a,b) / np.dot(b,b)) * (t1 - t0)
+                if np.dot(p1-pt,p1-p0) < mindist_squared:
+                    mindist_squared = np.dot(p1-pt,p1-pt)
+                    t = t1
+        return self(t),t
 
     def closest_point(self, pt : ArrayLike, t0 : Scalar = None) -> tuple[FloatArray, float]:
         """Computes the closest point on this curve to a given point. This is done by newton iteration
@@ -438,6 +462,9 @@ class Curve(SplineObject):
         :rtype: tuple(numpy.array, float)
     
         """
+        if self.order(0) == 1:
+            return self._closest_point_linear_curve(pt)
+
         if t0 is None:
             dist = [np.linalg.norm(cp-pt) for cp in self.controlpoints]
         i = np.argmin(dist)
@@ -453,12 +480,16 @@ class Curve(SplineObject):
             ddx = self.derivative(t, d=2)
             e  = x - pt
             dF = np.dot(dx,dx) + np.dot(e, ddx)
-            t -= F / dF
+            dt = -F / dF
+            # closest point outside curve definition. Return the closest endpoint
+            if (t==self.bases[0].start() and dt < 0) or (t==self.bases[0].end() and dt > 0):
+                break
+            t += dt
             t = np.clip(t, self.bases[0].start(), self.bases[0].end())
             F = np.dot(self(t) - pt, self.derivative(t))
             iter += 1
             if iter > 15:
-                print(f'Warning: did not converge in 15 iterations, returning last {t=}, {F=}')
+                # print(f'Warning: did not converge in 15 iterations, returning last {t=}, {F=}')
                 break
         return self(t), t
 

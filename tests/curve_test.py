@@ -489,34 +489,55 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
     
     def test_closest_point(self):
+        # quadratic curve x(t) = t(2-t), y(t) = 1-t^2
         crv = Curve(BSplineBasis(3), [[0, 1], [1, 1], [1, 0]])
+
+        # test away from diagonal x=y
         pt, t = crv.closest_point([0.8, 0.8])
         self.assertAlmostEqual(pt[0], 0.75)
         self.assertAlmostEqual(pt[1], 0.75)
         self.assertAlmostEqual(t, 0.5)
 
+        # test other side of diagonal x=y
+        pt, t = crv.closest_point([0.6, 0.6])
+        self.assertAlmostEqual(pt[0], 0.75)
+        self.assertAlmostEqual(pt[1], 0.75)
+        self.assertAlmostEqual(t, 0.5)
+
+        # test endpoint (start)
         pt, t = crv.closest_point([0.0, 0.4])
         self.assertAlmostEqual(pt[0], 0.00)
         self.assertAlmostEqual(pt[1], 1.00)
         self.assertAlmostEqual(t, 0.0)
 
+        # test endpoint (stop)
         pt, t = crv.closest_point([0.0, -0.1])
         self.assertAlmostEqual(pt[0], 1.00)
         self.assertAlmostEqual(pt[1], 0.00)
         self.assertAlmostEqual(t, 1.0)
 
-        # crv = cf.line([0, 0], [1, 1])
-        # pt,t = crv.closest_point([0.3, 0.3])
-        # expects = np.array([0.3, 0.3])
-        # print(expects)
-        # print(pt)
-        # self.assertAlmostEqual(np.linalg.norm(pt - expects), 0.0)
-        # self.assertAlmostEqual(t, 0.3)
+        # test nontrivial away from t=4/5 (exact normal n=[4,1])
+        pt, t = crv.closest_point([24/25+12, 9/25+3])
+        self.assertAlmostEqual(pt[0], 24/25)
+        self.assertAlmostEqual(pt[1],  9/25)
+        self.assertAlmostEqual(t, 0.8) 
 
-        # pt,t = crv.closest_point([0.5, 0.0])
-        # expects = np.array([0.25, 0.25])
-        # self.assertAlmostEqual(np.linalg.norm(pt - expects), 0.0)
-        # self.assertAlmostEqual(t, 0.25)
+        # test on the curve itself
+        pt, t = crv.closest_point([0.19, .99])
+        self.assertAlmostEqual(pt[0], .19)
+        self.assertAlmostEqual(pt[1], .99)
+        self.assertAlmostEqual(t, 0.1) 
+
+        crv = cf.line([0, 0], [1, 1])
+        pt,t = crv.closest_point([0.3, 0.3])
+        expects = np.array([0.3, 0.3])
+        self.assertAlmostEqual(np.linalg.norm(pt - expects), 0.0)
+        self.assertAlmostEqual(t, 0.3)
+
+        pt,t = crv.closest_point([0.5, 0.0])
+        expects = np.array([0.25, 0.25])
+        self.assertAlmostEqual(np.linalg.norm(pt - expects), 0.0)
+        self.assertAlmostEqual(t, 0.25)
 
     def test_length(self):
         crv = Curve()
