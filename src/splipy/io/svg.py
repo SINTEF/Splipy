@@ -78,7 +78,22 @@ class SVG(MasterIO):
         self.height = height
         self.margin = margin
 
+        self.default_colors = [
+            "#1f77b4",
+            "#ff7f0e",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf",
+        ]
+        self.col_i = -1
+
         self.all_objects = []
+        self.all_kwargs = []
 
     def __enter__(self):
         return self
@@ -91,7 +106,7 @@ class SVG(MasterIO):
 
         # compute the bounding box for all geometries
         boundingbox = [np.inf, np.inf, -np.inf, -np.inf]
-        for entry in self.all_objects:
+        for entry, args in zip(self.all_objects, self.all_kwargs):
             bb = entry.bounding_box()
             boundingbox[0] = min(boundingbox[0], bb[0][0])
             boundingbox[1] = min(boundingbox[1], bb[1][0])
@@ -127,9 +142,9 @@ class SVG(MasterIO):
         # populate tree with all curves and surfaces in entities
         for entry in self.all_objects:
             if isinstance(entry, Curve):
-                self.write_curve(self.xmlRoot, entry)
+                self.write_curve(self.xmlRoot, entry, **args)
             elif isinstance(entry, Surface):
-                self.write_surface(entry)
+                self.write_surface(entry, **args)
 
         # if no objects are stored, then we've most likely only called read()
         if len(self.all_objects) > 0:
@@ -141,7 +156,11 @@ class SVG(MasterIO):
             return None
         return None
 
-    def write_curve(self, xmlNode, curve, fill="none", stroke="#000000", width=2):
+    def _next_color(self):
+        self.col_i = (self.col_i + 1) % len(self.default_colors)
+        return self.default_colors[self.col_i]
+
+    def write_curve(self, xmlNode, curve, fill="none", stroke="#000000", opacity=1.0, width=2):
         """Writes a Curve to the xml tree. This will draw a single curve
 
         :param xmlNode: Node in xml tree
@@ -152,6 +171,8 @@ class SVG(MasterIO):
         :type  fill   : String
         :param stroke : Line color written in hex, i.e. '#000000'
         :type  stroke : String
+        :param opacity: Color opacity
+        :type  opactiy: Float
         :param width  : Line width, measured in pixels
         :type  width  : Int
         :returns: None
@@ -159,7 +180,7 @@ class SVG(MasterIO):
         """
         curveNode = ET.SubElement(xmlNode, "path")
         curveNode.attrib["style"] = (
-            f"fill:{fill};stroke:{stroke};stroke-width:{width}px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+            f"fill:{fill};stroke:{stroke};stroke-width:{width}px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:{opacity}"
         )
         bezier = bezier_representation(curve)
         bezier -= self.center
@@ -172,16 +193,22 @@ class SVG(MasterIO):
 
         curveNode.attrib["d"] = pathString
 
-    def write_surface(self, surface, fill="#ffcc99"):
+    def write_surface(self, surface, fill=None, subdivide=0):
         """Writes a Surface to the xml tree. This will draw the surface along with all knot lines
 
-        :param surface: The spline surface to write
-        :type  surface: Surface
-        :param fill   : Surface color written in hex, i.e. '#ffcc99'
-        :type  fill   : String
+        :param surface   : The spline surface to write
+        :type  surface   : Surface
+        :param fill      : Surface color written in hex, i.e. '#ffcc99'
+        :type  fill      : String
+        :param subdivide : Number of subdivision meshlines (inside elements) to be drawn on mesh
+        :type  subdivide : int
         :returns: None
         :rtype  : NoneType
         """
+
+        if fill is None:
+            fill = self._next_color()
+
         # fetch boundary curves and create a connected, oriented bezier loop from it
         bndry_curves = surface.edges()
         bndry_curves[0].reverse()
@@ -192,24 +219,37 @@ class SVG(MasterIO):
         boundary.append(bndry_curves[3])
 
         # fetch all meshlines (i.e. elements, also known as knot spans)
-        knot = surface.knots()
+        knot = surface.knots(with_multiplicities=False)
         knotlines = []
         for k in knot[0][1:-1]:
             knotlines.append(surface.const_par_curve(k, 0))
         for k in knot[1][1:-1]:
             knotlines.append(surface.const_par_curve(k, 1))
 
+        # fetch all subdivison lines (i.e. inter-element evaluation points)
+        sublines = []
+        for i in range(len(knot[0]) - 1):
+            for k in np.linspace(knot[0][i], knot[0][i + 1], subdivide, endpoint=False):
+                sublines.append(surface.const_par_curve(k, 0))
+        for i in range(len(knot[1]) - 1):
+            for k in np.linspace(knot[1][i], knot[1][i + 1], subdivide, endpoint=False):
+                sublines.append(surface.const_par_curve(k, 1))
+
         # create a group node for all elements corresponding to this surface patch
         groupNode = ET.SubElement(self.xmlRoot, "g")
 
         # fill interior with a peach color
-        self.write_curve(groupNode, boundary, fill, width=2)
+        self.write_curve(groupNode, boundary, fill, width=3)
+
+        # draw all subgrid meshlines
+        for meshline in sublines:
+            self.write_curve(groupNode, meshline, width=1, stroke="#000000", opacity=0.3)
 
         # draw all meshlines
         for meshline in knotlines:
             self.write_curve(groupNode, meshline, width=1)
 
-    def write(self, obj):
+    def write(self, obj, **kwargs):
         """Writes a list of planar curves and surfaces to vector graphics SVG file.
         The image will never be stretched, and the geometry will keep width/height ratio
         of original geometry, regardless of provided width/height ratio from arguments.
@@ -224,7 +264,7 @@ class SVG(MasterIO):
 
         if isinstance(obj[0], SplineObject):  # input SplineModel or list
             for o in obj:
-                self.write(o)
+                self.write(o, **kwargs)
             return
 
         if obj.dimension != 2:
@@ -232,6 +272,7 @@ class SVG(MasterIO):
 
         # have to clone stuff we put here, in case they change on the outside
         self.all_objects.append(obj.clone())
+        self.all_kwargs.append(kwargs)
 
     def read(self):
         tree = ET.parse(self.filename)
