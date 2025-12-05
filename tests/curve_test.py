@@ -488,11 +488,73 @@ class TestCurve(unittest.TestCase):
         pt2 = crv3(t + 1.0)
         self.assertAlmostEqual(np.linalg.norm(pt - pt2), 0.0)
 
+    def test_closest_point(self):
+        # quadratic curve x(t) = t(2-t), y(t) = 1-t^2
+        crv = Curve(BSplineBasis(3), [[0, 1], [1, 1], [1, 0]])
+
+        # test away from diagonal x=y
+        pt, t = crv.closest_point([0.8, 0.8])
+        self.assertAlmostEqual(pt[0], 0.75)
+        self.assertAlmostEqual(pt[1], 0.75)
+        self.assertAlmostEqual(t, 0.5)
+
+        # test other side of diagonal x=y
+        pt, t = crv.closest_point([0.6, 0.6])
+        self.assertAlmostEqual(pt[0], 0.75)
+        self.assertAlmostEqual(pt[1], 0.75)
+        self.assertAlmostEqual(t, 0.5)
+
+        # test endpoint (start)
+        pt, t = crv.closest_point([0.0, 0.4])
+        self.assertAlmostEqual(pt[0], 0.00)
+        self.assertAlmostEqual(pt[1], 1.00)
+        self.assertAlmostEqual(t, 0.0)
+
+        # test endpoint (stop)
+        pt, t = crv.closest_point([0.0, -0.1])
+        self.assertAlmostEqual(pt[0], 1.00)
+        self.assertAlmostEqual(pt[1], 0.00)
+        self.assertAlmostEqual(t, 1.0)
+
+        # test nontrivial away from t=4/5 (exact normal n=[4,1])
+        pt, t = crv.closest_point([24 / 25 + 12, 9 / 25 + 3])
+        self.assertAlmostEqual(pt[0], 24 / 25)
+        self.assertAlmostEqual(pt[1], 9 / 25)
+        self.assertAlmostEqual(t, 0.8)
+
+        # test on the curve itself
+        pt, t = crv.closest_point([0.19, 0.99])
+        self.assertAlmostEqual(pt[0], 0.19)
+        self.assertAlmostEqual(pt[1], 0.99)
+        self.assertAlmostEqual(t, 0.1)
+
+        crv = cf.line([0, 0], [1, 1])
+        pt, t = crv.closest_point([0.3, 0.3])
+        expects = np.array([0.3, 0.3])
+        self.assertAlmostEqual(np.linalg.norm(pt - expects), 0.0)
+        self.assertAlmostEqual(t, 0.3)
+
+        pt, t = crv.closest_point([0.5, 0.0])
+        expects = np.array([0.25, 0.25])
+        self.assertAlmostEqual(np.linalg.norm(pt - expects), 0.0)
+        self.assertAlmostEqual(t, 0.25)
+
     def test_length(self):
         crv = Curve()
         self.assertAlmostEqual(crv.length(), 1.0)
         crv = Curve(BSplineBasis(2, [-1, -1, 1, 2, 3, 3]), [[0, 0, 0], [1, 0, 0], [1, 0, 3], [1, 10, 3]])
         self.assertAlmostEqual(crv.length(), 14.0)
+        basis = BSplineBasis(order=4, knots=[0, 0, 0, 0, 1, 1, 1, 1])
+        curve = Curve(basis, [[-1, 0], [0, 1], [0, 1], [1, 0]])
+        self.assertAlmostEqual(curve.length(), 2.54861512024293, places=4)
+        waves = Curve(basis, [[-1, 0], [0, -1], [0, 1], [1, 0]])
+        self.assertAlmostEqual(waves.length(), 2.3709893215943936, places=3)
+        peak = Curve(basis, [[-1, 0], [1, 1], [-1, 1], [1, 0]])
+        self.assertAlmostEqual(peak.length(), 2.54861512024293, places=1)
+        loop = Curve(basis, [[-1, 0], [5, 1], [-5, 1], [1, 0]])
+        self.assertAlmostEqual(loop.length(), 6.319416448472324, places=2)
+        zigzack = Curve(basis, [[-1, 0], [5, -1], [-5, 1], [1, 0]])
+        self.assertAlmostEqual(zigzack.length(), 6.131548783913573, places=1)
 
     def test_make_periodic(self):
         my_cps = np.array([[0, -1], [1, 0], [0, 1], [-1, 0], [0, -1]], dtype=float)

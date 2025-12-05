@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, ClassVar, Self, cast
 import numpy as np
 import scipy.sparse.linalg as splinalg
 
+from . import state
 from .basis import BSplineBasis
 from .splineobject import SplineObject
 from .utils import ensure_listlike, is_singleton
@@ -13,7 +14,7 @@ from .utils import ensure_listlike, is_singleton
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from .typing import ArrayLike, Direction, FloatArray, ScalarLike
+    from .typing import ArrayLike, Direction, FloatArray, Scalar
 
 __all__ = ["Curve"]
 
@@ -45,7 +46,7 @@ class Curve(SplineObject):
         """
         super().__init__([basis], controlpoints, rational, raw=raw)
 
-    def evaluate(self, *params: ArrayLike | ScalarLike, tensor: bool = True) -> FloatArray:
+    def evaluate(self, *params: ArrayLike | Scalar, tensor: bool = True) -> FloatArray:
         """Evaluate the object at given parametric values.
 
         This function returns an *n1* × *n2* × ... × *dim* array, where *ni* is
@@ -85,7 +86,7 @@ class Curve(SplineObject):
 
     def derivative(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         d: int | Sequence[int] = 1,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -144,7 +145,7 @@ class Curve(SplineObject):
 
         return result
 
-    def binormal(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray:
+    def binormal(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray:
         """Evaluate the normalized binormal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
@@ -192,7 +193,7 @@ class Curve(SplineObject):
 
         return result / magnitude
 
-    def normal(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray:
+    def normal(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray:
         """Evaluate the normal of the curve at the given parametric value(s).
 
         This function returns an *n* × 3 array, where *n* is the number of
@@ -217,7 +218,7 @@ class Curve(SplineObject):
 
         return np.cross(B, T)
 
-    def curvature(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray | float:
+    def curvature(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray | float:
         """Evaluate the curvaure at specified point(s). The curvature is defined as
 
         .. math:: \\frac{|\\boldsymbol{v}\\times \\boldsymbol{a}|}{|\\boldsymbol{v}|^3}
@@ -241,7 +242,7 @@ class Curve(SplineObject):
         speed: FloatArray = np.linalg.norm(v, axis=-1)
         return magnitude / speed**3
 
-    def torsion(self, t: ArrayLike | ScalarLike, above: bool = True) -> FloatArray | float:
+    def torsion(self, t: ArrayLike | Scalar, above: bool = True) -> FloatArray | float:
         """Evaluate the torsion for a 3D curve at specified point(s). The torsion is defined as
 
         .. math:: \\frac{(\\boldsymbol{v}\\times \\boldsymbol{a})\\cdot
@@ -359,7 +360,7 @@ class Curve(SplineObject):
 
         return self
 
-    def continuity(self, knot: ScalarLike) -> int | float:
+    def continuity(self, knot: Scalar) -> int | float:
         """Get the parametric continuity of the curve at a given point. Will
         return p-1-m, where m is the knot multiplicity and inf between knots"""
         return self.bases[0].continuity(knot)
@@ -369,14 +370,17 @@ class Curve(SplineObject):
         continuity"""
         return np.array([k for k in self.knots(0) if self.continuity(k) < 1], dtype=np.float64)
 
-    def length(self, t0: ScalarLike | None = None, t1: ScalarLike | None = None) -> float:
+    def length(self, t0: Scalar | None = None, t1: Scalar | None = None) -> float:
         """Computes the euclidian length of the curve in geometric space
 
         .. math:: \\int_{t_0}^{t_1}\\sqrt{x(t)^2 + y(t)^2 + z(t)^2} dt
 
         """
-        (x, w) = np.polynomial.legendre.leggauss(self.order(0) + 1)
         knots = self.knots(0)
+        quadrature_points = self.order(0) + 1
+        if len(knots) == 2:
+            quadrature_points *= 2
+        (x, w) = np.polynomial.legendre.leggauss(quadrature_points)
         # keep only integration boundaries within given start (t0) and stop (t1) interval
         if t0 is not None:
             t0 = float(t0)
@@ -422,6 +426,69 @@ class Curve(SplineObject):
 
         # return new resampled curve
         return Curve(basis, controlpoints)
+
+    def _closest_point_linear_curve(self, pt: ArrayLike) -> tuple[FloatArray, float]:
+        """Computes the closest point on a linear curve to a given point.
+        :param array-like pt: point to which the closest point on the curve is sought
+        :return: the closest point on the curve and its parametric location
+        :rtype: tuple(numpy.array, float)
+
+        """
+        knots = self.knots(0)
+        mindist_squared = np.linalg.norm(pt - self.controlpoints[0]) ** 2
+        t = knots[0]
+        for p1, p0, t1, t0 in zip(self.controlpoints[1:], self.controlpoints[:-1], knots[2:-1], knots[1:-2]):
+            b = p1 - p0
+            a = pt - p0
+            if 0 <= np.dot(a, b) <= np.dot(b, b):
+                dist_squared = np.dot(a, a) - np.dot(a, b) ** 2 / np.dot(b, b)
+                if dist_squared < mindist_squared:
+                    mindist_squared = dist_squared
+                    t = t0 + (np.dot(a, b) / np.dot(b, b)) * (t1 - t0)
+                if np.dot(p1 - pt, p1 - p0) < mindist_squared:
+                    mindist_squared = np.dot(p1 - pt, p1 - pt)
+                    t = t1
+        return self(t), t
+
+    def closest_point(self, pt: ArrayLike, t0: Scalar = None) -> tuple[FloatArray, float]:
+        """Computes the closest point on this curve to a given point. This is done by newton iteration
+        and is using the state variables `controlpoint_absolute_tolerance`
+        to determine convergence; but limited to 15 iterations.
+        :param array-like pt: point to which the closest point on the curve is sought
+        :param float t0: optional starting guess for the parametric location of the closest point
+        :return: the closest point on the curve and its parametric location
+        :rtype: tuple(numpy.array, float)
+
+        """
+        if self.order(0) == 1:
+            return self._closest_point_linear_curve(pt)
+
+        if t0 is None:
+            dist = [np.linalg.norm(cp - pt) for cp in self.controlpoints]
+        i = np.argmin(dist)
+        t0 = self.bases[0].greville(i)
+        t = t0
+        iter = 0
+        atol = state.controlpoint_absolute_tolerance
+        F = np.dot(self(t) - pt, self.derivative(t))
+        while np.abs(F) > atol:
+            x = self(t)
+            dx = self.derivative(t)
+            ddx = self.derivative(t, d=2)
+            e = x - pt
+            dF = np.dot(dx, dx) + np.dot(e, ddx)
+            dt = -F / dF
+            # closest point outside curve definition. Return the closest endpoint
+            if (t == self.bases[0].start() and dt < 0) or (t == self.bases[0].end() and dt > 0):
+                break
+            t += dt
+            t = np.clip(t, self.bases[0].start(), self.bases[0].end())
+            F = np.dot(self(t) - pt, self.derivative(t))
+            iter += 1
+            if iter > 15:
+                # print(f'Warning: did not converge in 15 iterations, returning last {t=}, {F=}')
+                break
+        return self(t), t
 
     def error(self, target: Curve) -> tuple[FloatArray, float]:
         """Computes the L2 (squared and per knot span) and max error between

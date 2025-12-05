@@ -13,7 +13,7 @@ from .utils import check_direction, ensure_listlike, is_singleton, sections
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from .typing import ArrayLike, Direction, FloatArray, ScalarLike
+    from .typing import ArrayLike, Direction, FloatArray, Scalar
 
 __all__ = ["Surface"]
 
@@ -49,8 +49,8 @@ class Surface(SplineObject):
 
     def normal(
         self,
-        u: ArrayLike | ScalarLike,
-        v: ArrayLike | ScalarLike,
+        u: ArrayLike | Scalar,
+        v: ArrayLike | Scalar,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
     ) -> FloatArray:
@@ -107,7 +107,7 @@ class Surface(SplineObject):
 
     def derivative(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         d: int | Sequence[int] = 1,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -290,7 +290,7 @@ class Surface(SplineObject):
             tuple(self.section(*args) for args in sections(2, 1)),
         )
 
-    def const_par_curve(self, knot: ScalarLike, direction: Direction) -> Curve:
+    def const_par_curve(self, knot: Scalar, direction: Direction) -> Curve:
         """Get a Curve representation of the parametric line of some constant
         knot value.
         :param float knot: The constant knot value to sample the surface

@@ -23,7 +23,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from .typing import ArrayLike, Direction, FloatArray, ScalarLike, SectionElement, SectionKwargs
+    from .typing import ArrayLike, Direction, FloatArray, Scalar, SectionElement, SectionKwargs
 
 __all__ = ["SplineObject"]
 
@@ -149,7 +149,7 @@ class SplineObject:
 
     def evaluate(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         tensor: bool = True,
     ) -> FloatArray:
         """Evaluate the object at given parametric values.
@@ -201,7 +201,7 @@ class SplineObject:
 
     def derivative(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         d: int | Sequence[int] = 1,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -358,7 +358,7 @@ class SplineObject:
     @overload
     def tangent(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         direction: Direction,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -367,7 +367,7 @@ class SplineObject:
     @overload
     def tangent(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         direction: None = None,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -375,7 +375,7 @@ class SplineObject:
 
     def tangent(
         self,
-        *params: ArrayLike | ScalarLike,
+        *params: ArrayLike | Scalar,
         direction: Direction | None = None,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -789,7 +789,7 @@ class SplineObject:
 
         return self
 
-    def insert_knot(self, knot: ScalarLike | ArrayLike, direction: Direction = 0) -> Self:
+    def insert_knot(self, knot: Scalar | ArrayLike, direction: Direction = 0) -> Self:
         """Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
@@ -866,14 +866,14 @@ class SplineObject:
         return self
 
     @overload
-    def reparam(self, *args: tuple[ScalarLike, ScalarLike]) -> Self: ...
+    def reparam(self, *args: tuple[Scalar, Scalar]) -> Self: ...
 
     @overload
-    def reparam(self, arg: tuple[ScalarLike, ScalarLike] = ..., /, *, direction: Direction) -> Self: ...
+    def reparam(self, arg: tuple[Scalar, Scalar] = ..., /, *, direction: Direction) -> Self: ...
 
     def reparam(
         self,
-        *args: tuple[ScalarLike, ScalarLike],
+        *args: tuple[Scalar, Scalar],
         direction: Direction | None = None,
     ) -> Self:
         """Redefine the parametric domain. This function accepts two calling
@@ -961,9 +961,9 @@ class SplineObject:
     def scale(self, arg: ArrayLike, /) -> Self: ...
 
     @overload
-    def scale(self, arg: ScalarLike, *args: ScalarLike) -> Self: ...
+    def scale(self, arg: Scalar, *args: Scalar) -> Self: ...
 
-    def scale(self, arg: ArrayLike | ScalarLike, *args: ScalarLike) -> Self:
+    def scale(self, arg: ArrayLike | Scalar, *args: Scalar) -> Self:
         """Scale, or magnify the object by a given amount.
 
         In case of one input argument, the scaling is uniform.
@@ -1275,7 +1275,7 @@ class SplineObject:
 
         return self
 
-    def split(self, knots: ScalarLike | ArrayLike, direction: Direction = 0) -> Self | list[Self]:
+    def split(self, knots: Scalar | ArrayLike, direction: Direction = 0) -> Self | list[Self]:
         """Split an object into two or more separate representations with C0
         continuity between them.
 
@@ -1497,11 +1497,11 @@ class SplineObject:
         self.translate(-np.asarray(x, dtype=np.float64))  # can't do -x if x is a list, so we rewrap it here
         return self
 
-    def __imul__(self, x: ArrayLike | ScalarLike) -> Self:
+    def __imul__(self, x: ArrayLike | Scalar) -> Self:
         self.scale(x)
         return self
 
-    def __itruediv__(self, x: ArrayLike | ScalarLike) -> Self:
+    def __itruediv__(self, x: ArrayLike | Scalar) -> Self:
         self.scale(1.0 / np.asarray(x, dtype=np.float64))
         return self
 
@@ -1520,15 +1520,15 @@ class SplineObject:
         new_obj -= x
         return new_obj
 
-    def __mul__(self, x: ArrayLike | ScalarLike) -> Self:
+    def __mul__(self, x: ArrayLike | Scalar) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj *= x
         return new_obj
 
-    def __rmul__(self, x: ArrayLike | ScalarLike) -> Self:
+    def __rmul__(self, x: ArrayLike | Scalar) -> Self:
         return self * x
 
-    def __truediv__(self, x: ArrayLike | ScalarLike) -> Self:
+    def __truediv__(self, x: ArrayLike | Scalar) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj /= x
         return new_obj
