@@ -7,11 +7,11 @@ authors = [
     { name = "Kjetil Andre Johannessen", email = "kjetil.johannessen@sintef.no" },
     { name = "Eivind Fonn", email = "eivind.fonn@sintef.no" },
 ]
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "deprecated>=1.2.18",
-    "numpy>=1.25",
-    "scipy>=1.10",
+    "numpy>=1.27",
+    "scipy>=1.12",
     "splipy-core",
 ]
 
