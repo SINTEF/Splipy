@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from typing import Literal, SupportsFloat, TypeAlias, TypedDict, TypeVar
+from typing import Literal, SupportsFloat, TypedDict, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 
 B = TypeVar("B", bound=npt.NBitBase)
 
-ArrayLike: TypeAlias = npt.ArrayLike
-Scalar: TypeAlias = SupportsFloat
-FloatArray: TypeAlias = npt.NDArray[np.floating]
-Direction: TypeAlias = Literal["u", "v", "w", "U", "V", "W"] | int
-SectionElement: TypeAlias = Literal[-1, 0] | None
-Section: TypeAlias = tuple[SectionElement, ...]
+type ArrayLike = npt.ArrayLike
+type Scalar = SupportsFloat
+type FloatArray = npt.NDArray[np.floating]
+type Direction = Literal["u", "v", "w", "U", "V", "W"] | int
+type SectionElement = Literal[-1, 0] | None
+type Section = tuple[SectionElement, ...]
 
 
 class SectionKwargs(TypedDict, total=False):
