@@ -33,17 +33,16 @@ Resources
 Development and building from source
 ====================================
 
-Poetry
-------
+Uv
+--
 
-Splipy uses Poetry as a project management tool. To install poetry, use::
+Splipy uses uv as a project management tool. To install uv, use the
+`official installation instructions<https://docs.astral.sh/uv/#installation>`.
 
-    pip install poetry
-
-Poetry is the only tool that must be installed outside of the virtual
+Uv is the only tool that must be installed outside of the virtual
 environment for Splipy. Once installed, run the command::
 
-    make install
+    make sync
 
 in the root Splipy directory. This will install Splipy and its dependencies in a
 virtual environment located in the ``.venv`` directory.
@@ -61,7 +60,7 @@ To run the tests::
 Installing
 ----------
 
-To install, use::
+To install from source, use::
 
     pip install .
 
@@ -118,8 +117,9 @@ You can also specify the new version directly by using::
 Once you are satisfied with the results, run the command without `--dry-run`.
 We highly recommend to always use a dry run!
 
-After that, CI should automatically build and deploy the packages to PyPi. It
-would be helpful to monitor the actions so that errors can be fixed quickly.
+After the version is tagged and pushed, CI should automatically build and deploy
+the packages to PyPi. It would be helpful to monitor the actions so that errors
+can be fixed quickly.
 
 
 =========
