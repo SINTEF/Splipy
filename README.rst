@@ -37,7 +37,9 @@ Uv
 --
 
 Splipy uses uv as a project management tool. To install uv, use the
-`official installation instructions<https://docs.astral.sh/uv/#installation>`.
+`official installation instructions`_.
+
+.. _official installation instructions: https://docs.astral.sh/uv/#installation
 
 Uv is the only tool that must be installed outside of the virtual
 environment for Splipy. Once installed, run the command::
