@@ -716,3 +716,142 @@ def fit_points(x, t=[], rtol=1e-4, atol=0.0):
 
     linear = polygon(x, t=t) if len(t) > 0 else polygon(x)
     return fit(linear, linear.start(0), linear.end(0), rtol=rtol, atol=atol)
+
+
+def arc_length_parameterize(curve, samples=1000, tol=0.1, maximum_iterations=20):
+    """Make curve approximately arc length parameterized.
+
+    :param Curve curve: Curve to be arc length parameterized. Must be non-rational and non-periodic
+    :param int samples: Number of samples used for least square fit
+    :param float tol: Desired maximum average deviation from true arc length parameterization
+    :param int maximum_iterations: Maximum number of attempts at achieving desired accuracy
+    by adding more knots
+    :raises ValueError: For rational curves
+    :raises ValueError: For periodic curves
+    :return: Arc length parameterized curve
+    :rtype: Curve
+    """
+
+    def arc_length_table_gauss(curve, t_test, respect_knots=True):
+        x, w = np.polynomial.legendre.leggauss(curve.order(0) + 1)
+
+        t_test = np.asarray(t_test, dtype=float)  # converts to numpy array if needed
+        t_orig = t_test  # keep a reference to the original points
+
+        if respect_knots:
+            knots = np.array(curve.knots(0))
+            knots = knots[(knots > t_test[0]) & (knots < t_test[-1])]
+            t_test = np.union1d(t_test, knots)
+
+        a = t_test[:-1]
+        b = t_test[1:]
+
+        t_nodes = (x[None, :] + 1) / 2 * (b - a)[:, None] + a[:, None]
+        w_nodes = w[None, :] / 2 * (b - a)[:, None]
+
+        t_flat = t_nodes.ravel()
+        speed = np.linalg.norm(curve.derivative(t_flat), axis=1)
+        speed = speed.reshape(t_nodes.shape)
+
+        span_lengths = np.sum(speed * w_nodes, axis=1)
+        s_at_t_test = np.concatenate(([0.0], np.cumsum(span_lengths)))
+
+        # pull out only the cumulative lengths at the original t_test points
+        idx = np.searchsorted(t_test, t_orig)
+        return s_at_t_test[idx]
+
+    def t_of_arc_length_newton(arc_lengths, curve, M=500, iterations=5):
+        t0 = curve.start()[0]
+        t1 = curve.end()[0]
+
+        t_lookup = np.linspace(t0, t1, M)
+        s_lookup = arc_length_table_gauss(curve, t_lookup)
+
+        t_values = np.interp(arc_lengths, s_lookup, t_lookup)
+
+        for i in range(iterations):
+            F = np.array([curve.length(t0, t) for t in t_values]) - arc_lengths
+            speed = np.array([np.linalg.norm(curve.derivative(t)) for t in t_values])
+            t_values -= F / speed
+
+        return t_values
+
+    def average_deviation_from_arc_length(curve, t_start=None, t_end=None, samples=1000):
+        if t_start is None:
+            t_start = curve.start()[0]
+        if t_end is None:
+            t_end = curve.end()[0]
+
+        t_test = np.linspace(t_start, t_end, samples)
+        s_test = arc_length_table_gauss(curve, t_test)
+
+        return np.mean(np.abs(t_test - t_start - s_test))
+
+    is_periodic = curve.bases[0].periodic >= 0
+    is_rational = curve.rational
+
+    if is_rational:
+        raise ValueError("Only non-rational splines can be reparameterized")
+
+    if is_periodic:
+        raise ValueError("Only non-periodic splines can be reparameterized")
+
+    knots = curve.bases[0].knots
+    order = curve.bases[0].order
+
+    L = curve.length()
+
+    new_knots = []
+    for i in range(order):
+        new_knots.append(0)
+    for i in range(len(knots) - 2 * order):
+        new_knots.append(((i + 1) * L) / (len(knots) - 2 * order + 1))
+    for i in range(order):
+        new_knots.append(L)
+
+    new_basis = BSplineBasis(order=order, knots=new_knots)
+
+    s = np.linspace(0, L, samples)
+
+    t_s = t_of_arc_length_newton(s, curve)
+
+    new_points = curve.evaluate(t_s)
+
+    new_curve = least_square_fit(new_points, new_basis, s)
+
+    iterations = 0
+    while average_deviation_from_arc_length(new_curve) > tol:
+        if iterations == maximum_iterations:
+            print("Maximum number of iterations reached without achieving desired accuracy")
+            break
+
+        potential_new_knot = None
+
+        worst = 0
+        knots_to_append = []
+
+        for i in range(len(new_knots) - 1):
+            if new_knots[i] != new_knots[i + 1]:  # Knots with same value ignored
+                dev = average_deviation_from_arc_length(
+                    new_curve, t_start=new_knots[i], t_end=new_knots[i + 1]
+                )
+
+                if dev > tol * 1.5:
+                    knots_to_append.append((new_knots[i] + new_knots[i + 1]) / 2)
+
+                if dev > worst:
+                    potential_new_knot = (new_knots[i] + new_knots[i + 1]) / 2
+                    worst = dev
+
+        if len(knots_to_append) == 0:
+            knots_to_append.append(potential_new_knot)
+
+        new_knots.extend(knots_to_append)
+        new_knots.sort()
+
+        new_basis = BSplineBasis(order=order, knots=new_knots)
+        new_curve = least_square_fit(new_points, new_basis, s)
+
+        iterations += 1
+
+    return new_curve

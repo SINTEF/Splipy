@@ -389,6 +389,76 @@ class TestCurveFactory(unittest.TestCase):
             s = 1 / sqrt(2)
             self.assertAlmostEqual(((s * x + s * z) / 1) ** 2 + ((s * x - s * z) / 2) ** 2, 1)
 
+    def test_arc_length_parameterize(self):
+        def arc_length_table_gauss(curve, t_test, respect_knots=True):
+            """
+            curve: curve we are working on
+            t_test: list of t-values where we want the arc length (from first value in t_test)
+            respect_knots: if true, length calculation skips over knots
+
+            Returns:
+            s_at_t_test: array with arc lengths from first value in t_test to each value in t_test
+
+            """
+
+            x, w = np.polynomial.legendre.leggauss(curve.order(0) + 1)
+
+            t_test = np.asarray(t_test, dtype=float)  # converts to numpy array if needed
+            t_orig = t_test  # keep a reference to the original points
+
+            if respect_knots:
+                knots = np.array(curve.knots(0))
+                knots = knots[(knots > t_test[0]) & (knots < t_test[-1])]
+                t_test = np.union1d(t_test, knots)
+
+            a = t_test[:-1]
+            b = t_test[1:]
+
+            t_nodes = (x[None, :] + 1) / 2 * (b - a)[:, None] + a[:, None]
+            w_nodes = w[None, :] / 2 * (b - a)[:, None]
+
+            t_flat = t_nodes.ravel()
+            speed = np.linalg.norm(curve.derivative(t_flat), axis=1)
+            speed = speed.reshape(t_nodes.shape)
+
+            span_lengths = np.sum(speed * w_nodes, axis=1)
+            s_at_t_test = np.concatenate(([0.0], np.cumsum(span_lengths)))
+
+            # pull out only the cumulative lengths at the original t_test points
+            idx = np.searchsorted(t_test, t_orig)
+            return s_at_t_test[idx]
+
+        # Make test curve
+        ellipse = cf.ellipse(r1=1, r2=2)
+        Rebuilt_ellipse = ellipse.rebuild(4, 10)
+
+        # Arc length parameterize, tol=0.05 makes sure knots need to be inserted, fewer samples to save time
+        New_ellipse = cf.arc_length_parameterize(Rebuilt_ellipse, samples=100, tol=0.05)
+
+        # Test if actually arc length parameterized
+        N = 500
+        t_test = np.linspace(New_ellipse.start(), New_ellipse.end(), N)
+        s_test = arc_length_table_gauss(New_ellipse, t_test)
+        avg_dev = np.mean(np.abs(t_test - s_test))
+
+        self.assertLess(avg_dev, 0.03)
+
+        N = 500
+
+        # Test geometric accuracy
+        t1 = np.linspace(Rebuilt_ellipse.start()[0], Rebuilt_ellipse.end()[0], N)
+        t2 = np.linspace(New_ellipse.start()[0], New_ellipse.end()[0], N)
+
+        P1 = Rebuilt_ellipse.evaluate(t1)
+        P2 = New_ellipse.evaluate(t2)
+
+        diff = P1[:, None, :] - P2[None, :, :]  # shape (N, N, 3), all pairwise differences
+        dist = np.linalg.norm(diff, axis=2)
+
+        avg_dist = np.mean(np.min(dist, axis=1))
+
+        self.assertLess(avg_dist, 0.02)
+
 
 if __name__ == "__main__":
     unittest.main()
