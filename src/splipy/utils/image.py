@@ -55,7 +55,7 @@ def get_corners(
         if M[0] == 0:
             dCand = abs(X[index - 1, 0] - X[i - 1, 0])
         else:
-            m = float(M[1]) / M[0]
+            m = M[1] / M[0]
             dCand = abs(X[index - 1, 1] - m * X[index - 1, 0] + m * X[i - 1, 0] - X[i - 1, 1]) / sqrt(
                 m**2 + 1
             )
@@ -142,9 +142,7 @@ def image_curves(filename: str) -> list[Curve]:
             corners = get_corners(pts)  # recompute corners, since previous sem might be smooth
 
         n = len(pts)
-        parpt: list[float] = list(range(n))
-        for i in range(n):
-            parpt[i] = float(parpt[i]) / (n - 1)
+        parpt = np.linspace(0, 1, num=n)
 
         # the choice of knot vector is a tricky one. We'll go with the following strategy:
         # - cubic, p=3 curve
@@ -180,7 +178,7 @@ def image_curves(filename: str) -> list[Curve]:
 
         # make it span [0,1] instead of [0,n-1]
         for i in range(len(knot)):
-            knot[i] /= float(n - 1)
+            knot[i] /= n - 1
 
         # make it periodic since these are all closed curves
         knot[0] -= knot[-1] - knot[-5]

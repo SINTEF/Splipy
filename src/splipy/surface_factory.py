@@ -21,7 +21,7 @@ from .utils.nutils import controlpoints, degree, multiplicities
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-    from splipy.typing import ArrayLike, FloatArray, Scalar
+    from splipy.typing import FloatArray, Params, Point, Scalar
 
 __all__ = [
     "square",
@@ -41,7 +41,7 @@ __all__ = [
 ]
 
 
-def square(size: Scalar = 1, lower_left: ArrayLike = (0, 0)) -> Surface:
+def square(size: Scalar = 1, lower_left: Point = (0, 0)) -> Surface:
     """Create a square with parametric origin at *(0,0)*.
 
     :param float size: Size(s), either a single scalar or a tuple of scalars per axis
@@ -57,10 +57,10 @@ def square(size: Scalar = 1, lower_left: ArrayLike = (0, 0)) -> Surface:
 
 def disc(
     r: Scalar = 1,
-    center: ArrayLike = (0, 0, 0),
-    normal: ArrayLike = (0, 0, 1),
+    center: Point = (0, 0, 0),
+    normal: Point = (0, 0, 1),
     type: Literal["radial", "square"] = "radial",
-    xaxis: ArrayLike = (1, 0, 0),
+    xaxis: Point = (1, 0, 0),
 ) -> Surface:
     """Create a circular disc. The *type* parameter distinguishes between
     different parametrizations.
@@ -73,7 +73,6 @@ def disc(
     :return: The disc
     :rtype: Surface
     """
-    r = float(r)
     if type == "radial":
         c1 = curve_factory.circle(r, center=center, normal=normal, xaxis=xaxis)
         c2 = flip_and_move_plane_geometry(c1 * 0, center, normal)
@@ -83,17 +82,19 @@ def disc(
         return result
     if type == "square":
         w = 1 / sqrt(2)
-        cp: list[list[float]] = [
-            [-r * w, -r * w, 1],
-            [0, -r, w],
-            [r * w, -r * w, 1],
-            [-r, 0, w],
-            [0, 0, 1],
-            [r, 0, w],
-            [-r * w, r * w, 1],
-            [0, r, w],
-            [r * w, r * w, 1],
-        ]
+        cp = np.array(
+            [
+                [-r * w, -r * w, 1],
+                [0, -r, w],
+                [r * w, -r * w, 1],
+                [-r, 0, w],
+                [0, 0, 1],
+                [r, 0, w],
+                [-r * w, r * w, 1],
+                [0, r, w],
+                [r * w, r * w, 1],
+            ]
+        )
         basis1 = BSplineBasis(3)
         basis2 = BSplineBasis(3)
         result = Surface(basis1, basis2, cp, True)
@@ -103,9 +104,9 @@ def disc(
 
 def sphere(
     r: Scalar = 1,
-    center: ArrayLike = (0, 0, 0),
-    zaxis: ArrayLike = (0, 0, 1),
-    xaxis: ArrayLike = (1, 0, 0),
+    center: Point = (0, 0, 0),
+    zaxis: Point = (0, 0, 1),
+    xaxis: Point = (1, 0, 0),
 ) -> Surface:
     """Create a spherical shell.
 
@@ -125,7 +126,7 @@ def sphere(
     return flip_and_move_plane_geometry(result, center, zaxis)
 
 
-def extrude(curve: Curve, amount: ArrayLike) -> Surface:
+def extrude(curve: Curve, amount: Point) -> Surface:
     """Extrude a curve by sweeping it to a given height.
 
     :param Curve curve: Curve to extrude
@@ -144,7 +145,7 @@ def extrude(curve: Curve, amount: ArrayLike) -> Surface:
     return Surface(curve.bases[0], BSplineBasis(2), cp, curve.rational)
 
 
-def revolve(curve: Curve, theta: Scalar = 2 * pi, axis: ArrayLike = (0, 0, 1)) -> Surface:
+def revolve(curve: Curve, theta: Scalar = 2 * pi, axis: Point = (0, 0, 1)) -> Surface:
     """Revolve a surface by sweeping a curve in a rotational fashion around
     the *z* axis.
 
@@ -194,9 +195,9 @@ def revolve(curve: Curve, theta: Scalar = 2 * pi, axis: ArrayLike = (0, 0, 1)) -
 def cylinder(
     r: Scalar = 1,
     h: Scalar = 1,
-    center: ArrayLike = (0, 0, 0),
-    axis: ArrayLike = (0, 0, 1),
-    xaxis: ArrayLike = (1, 0, 0),
+    center: Point = (0, 0, 0),
+    axis: Point = (0, 0, 1),
+    xaxis: Point = (1, 0, 0),
 ) -> Surface:
     """Create a cylinder shell with no top or bottom
 
@@ -214,9 +215,9 @@ def cylinder(
 def torus(
     minor_r: Scalar = 1,
     major_r: Scalar = 3,
-    center: ArrayLike = (0, 0, 0),
-    normal: ArrayLike = (0, 0, 1),
-    xaxis: ArrayLike = (1, 0, 0),
+    center: Point = (0, 0, 0),
+    normal: Point = (0, 0, 1),
+    xaxis: Point = (1, 0, 0),
 ) -> Surface:
     """Create a torus (doughnut) by revolving a circle of size *minor_r*
     around the *z* axis with radius *major_r*.
@@ -231,7 +232,7 @@ def torus(
     """
     circle = curve_factory.circle(minor_r)
     circle.rotate(pi / 2, (1, 0, 0))  # flip up into xz-plane
-    circle.translate((float(major_r), 0, 0))  # move into position to spin around z-axis
+    circle.translate((major_r, 0, 0))  # move into position to spin around z-axis
     result = revolve(circle)
 
     result.rotate(rotate_local_x_axis(xaxis, normal))
@@ -375,8 +376,8 @@ def coons_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface
 
 
 def poisson_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> Surface:
-    from nutils import function as fn  # type: ignore[import-untyped]
-    from nutils import mesh
+    from nutils import function as fn  # type: ignore[import-untyped,import-not-found,unused-ignore]
+    from nutils import mesh  # type: ignore[import-untyped,import-not-found,unused-ignore]
 
     # error test input
     if left.rational or right.rational or top.rational or bottom.rational:
@@ -591,7 +592,7 @@ def finitestrain_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> 
     return srf
 
 
-def thicken(curve: Curve, amount: Scalar | Callable[..., float]) -> Surface:
+def thicken(curve: Curve, amount: Scalar | Callable[..., Scalar]) -> Surface:
     """Generate a surface by adding thickness to a curve.
 
     - For 2D curves this will generate a 2D planar surface with the curve
@@ -668,7 +669,7 @@ def thicken(curve: Curve, amount: Scalar | Callable[..., float]) -> Surface:
                 left_points[i, 0] = x[i, 0] + v[i, 1] * dist  # x at top
                 left_points[i, 1] = x[i, 1] - v[i, 0] * dist  # y at top
         else:
-            a = float(cast("Scalar", amount))
+            a = cast("Scalar", amount)
             right_points[:, 0] = x[:, 0] - v[:, 1] * a  # x at bottom
             right_points[:, 1] = x[:, 1] + v[:, 0] * a  # y at bottom
             left_points[:, 0] = x[:, 0] + v[:, 1] * a  # x at top
@@ -679,6 +680,9 @@ def thicken(curve: Curve, amount: Scalar | Callable[..., float]) -> Surface:
         return edge_curves(right, left)
 
     # dimension=3, we will create a surrounding tube
+    # callable amount is not supported
+    if callable(amount):
+        raise TypeError("Callable amount not supported for three-dimensional curves")
     return sweep(curve, curve_factory.circle(r=amount))
 
 
@@ -764,9 +768,6 @@ def loft(*in_curves: Curve | Sequence[Curve]) -> Surface:
     # ensure all centers have the same dimension (typically some are 2D points and others are 3D points)
     max_dim = max(c.dimension for c in curves)
     x = [np.pad(xi, (0, max_dim - len(xi)), mode="constant") for xi in x]
-    dist = [0]
-    for x1, x0 in zip(x[1:], x[:-1]):
-        dist.append(dist[-1] + np.linalg.norm(x1 - x0))
 
     # clone input, so we don't change those references
     # make sure everything has the same dimension since we need to compute length
@@ -774,14 +775,17 @@ def loft(*in_curves: Curve | Sequence[Curve]) -> Surface:
     if len(curves) == 2:
         return edge_curves(curves)
     if len(curves) == 3:
+        dist = curve_length_parametrization(x)
+
         # can't do cubic spline interpolation, so we'll do quadratic
         basis2 = BSplineBasis(3)
     else:
         # create knot vector from the euclidian length between the curves
-        dist = curve_length_parametrization([c.center() for c in curves])
+        dist = curve_length_parametrization(np.asarray([c.center() for c in curves]))
+        knot = curve_length_parametrization(np.asarray([c.center() for c in curves]), reps=4)
 
         # using "free" boundary condition by setting N'''(u) continuous at second to last and second knot
-        knot = [dist[0]] * 4 + dist[2:-2] + [dist[-1]] * 4
+        knot = np.delete(knot, [4, -5])
         basis2 = BSplineBasis(4, knot)
 
     n = len(curves)
@@ -801,12 +805,12 @@ def loft(*in_curves: Curve | Sequence[Curve]) -> Surface:
     Nv_inv = np.linalg.inv(Nv)
 
     # compute interpolation points in physical space
-    x = np.zeros((m, n, curves[0][0].size))
+    cp: FloatArray = np.zeros((m, n, curves[0][0].size))
     for i in range(n):
-        x[:, i, :] = Nu @ curves[i].controlpoints
+        cp[:, i, :] = Nu @ curves[i].controlpoints
 
     # solve interpolation problem
-    cp = np.tensordot(Nv_inv, x, axes=(1, 1))
+    cp = np.tensordot(Nv_inv, cp, axes=(1, 1))
     cp = np.tensordot(Nu_inv, cp, axes=(1, 1))
 
     # re-order controlpoints so they match up with Surface constructor
@@ -819,7 +823,7 @@ def loft(*in_curves: Curve | Sequence[Curve]) -> Surface:
 def interpolate(
     x: FloatArray,
     bases: Sequence[BSplineBasis],
-    u: Sequence[ArrayLike] | None = None,
+    u: Sequence[Params] | None = None,
 ) -> Surface:
     """Interpolate a surface on a set of regular gridded interpolation points `x`.
 
@@ -849,7 +853,7 @@ def interpolate(
     return Surface(bases[0], bases[1], cp.transpose(1, 0, 2).reshape((np.prod(surf_shape), dim)))
 
 
-def least_square_fit(x: FloatArray, bases: Sequence[BSplineBasis], u: Sequence[ArrayLike]) -> Surface:
+def least_square_fit(x: FloatArray, bases: Sequence[BSplineBasis], u: Sequence[Params]) -> Surface:
     """Perform a least-square fit of a point cloud `x` onto a spline basis.
 
     The points can be either a matrix (in which case the first index is

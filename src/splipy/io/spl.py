@@ -56,7 +56,7 @@ class SPL(MasterIO):
         knots = [[float(k) for k in islice(lines, nkts)] for nkts in nknots]
         bases = [BSplineBasis(p, kts, -1) for p, kts in zip(orders, knots)]
 
-        cpts = np.array([float(k) for k in islice(lines, totcoeffs * physdim)])
+        cpts = np.array(list(islice(lines, totcoeffs * physdim)), dtype=float)
         cpts = cpts.reshape(physdim, *(ncoeffs[::-1])).transpose()
 
         obj = SplineObject.construct_subclass(bases, cpts, rational=False, raw=True)

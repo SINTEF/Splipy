@@ -1,9 +1,12 @@
+# Make type-checking work in cases where rhino3dm is not installed
+# mypy: disable-error-code="no-any-unimported"
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Protocol, Self, cast
 
 import numpy as np
-from rhino3dm import (
+from rhino3dm import (  # type: ignore[import-not-found,unused-ignore]
     Arc,
     BezierCurve,
     Brep,
@@ -30,10 +33,12 @@ from splipy import BSplineBasis, Curve, Surface, curve_factory
 from .master import MasterIO
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
     from types import TracebackType
 
+    from splipy.splinemodel import SplineModel
     from splipy.splineobject import SplineObject
+    from splipy.typing import Point
 
 
 # The rhino3dm type hints are incomplete, hence we have some shims.
@@ -62,7 +67,7 @@ class ThreeDM(MasterIO):
     def __enter__(self) -> Self:
         return self
 
-    def write(self, _: SplineObject) -> None:
+    def write(self, _: SplineObject | Sequence[SplineObject] | SplineModel) -> None:
         raise OSError("Writing to 3DM not supported")
 
     def read(self) -> list[SplineObject]:
@@ -85,7 +90,7 @@ class ThreeDM(MasterIO):
                     result.append(self.read_surface(nsrf))
 
             if type(geom) is Line:
-                result.append(curve_factory.line(geom.From, geom.To))
+                result.append(curve_factory.line(cast("Point", geom.From), cast("Point", geom.To)))
                 continue
             if type(geom) is PolylineCurve:
                 geom = geom.ToPolyline()

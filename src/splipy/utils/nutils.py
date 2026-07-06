@@ -12,7 +12,7 @@ from splipy.volume import Volume
 
 if TYPE_CHECKING:
     from splipy.splineobject import SplineObject
-    from splipy.typing import FloatArray
+    from splipy.typing import FloatArray, Scalar
 
 
 def controlpoints(spline: SplineObject) -> FloatArray:
@@ -28,7 +28,7 @@ def controlpoints(spline: SplineObject) -> FloatArray:
     raise RuntimeError("Non-spline argument detected")
 
 
-def multiplicities(spline: SplineObject) -> list[list[float]]:
+def multiplicities(spline: SplineObject) -> list[list[Scalar]]:
     """Returns the multiplicity of the knots at all knot values as a 2D array for
     all parametric directions, for all knots"""
     return [
@@ -44,7 +44,7 @@ def degree(spline: SplineObject) -> list[int]:
 
 def splipy_to_nutils(spline: SplineObject) -> Any:
     """Returns nutils domain and geometry object for spline mapping given by the argument"""
-    from nutils import function, mesh  # type: ignore[import-untyped]
+    from nutils import function, mesh  # type: ignore[import-untyped,import-not-found,unused-ignore]
 
     domain, geom = mesh.rectilinear(spline.knots())
     cp = controlpoints(spline)

@@ -23,7 +23,9 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from .typing import ArrayLike, Direction, FloatArray, Scalar, SectionElement, SectionKwargs
+    from splipy.typing import ControlPoints, Point
+
+    from .typing import ArrayLike, Direction, FloatArray, Params, Scalar, SectionElement, SectionKwargs
 
 __all__ = ["SplineObject"]
 
@@ -67,7 +69,7 @@ class SplineObject:
     @staticmethod
     def construct_subclass(
         bases: Sequence[BSplineBasis],
-        controlpoints: ArrayLike,
+        controlpoints: ControlPoints,
         rational: bool,
         raw: bool = True,
     ) -> SplineObject:
@@ -85,7 +87,7 @@ class SplineObject:
     def __init__(
         self,
         bases: Sequence[BSplineBasis | None],
-        controlpoints: ArrayLike | None = None,
+        controlpoints: ControlPoints | None = None,
         rational: bool = False,
         raw: bool = False,
     ) -> None:
@@ -123,7 +125,7 @@ class SplineObject:
 
             self.controlpoints = cps
         else:
-            self.controlpoints = np.array(controlpoints, dtype=np.float64)
+            self.controlpoints = np.asarray(controlpoints, dtype=np.float64)
 
         self.dimension = self.controlpoints.shape[-1] - rational
         self.rational = rational
@@ -139,20 +141,9 @@ class SplineObject:
             if b.periodic < 0 and (np.min(p) < b.start() or b.end() < np.max(p)):
                 raise ValueError("Evaluation outside parametric domain")
 
-    # TODO(Eivind): Remove this method
-    def _validate_domain_old(self, *params):  # type: ignore[no-untyped-def]
-        """Check whether the given evaluation parameters are valid.
-
-        :raises ValueError: If the parameters are outside the domain
-        """
-        for b, p in zip(self.bases, params):
-            b.snap(p)
-            if b.periodic < 0 and (min(p) < b.start() or b.end() < max(p)):
-                raise ValueError("Evaluation outside parametric domain")
-
     def evaluate(
         self,
-        *params: ArrayLike | Scalar,
+        *params: Params | Scalar,
         tensor: bool = True,
     ) -> FloatArray:
         """Evaluate the object at given parametric values.
@@ -204,7 +195,7 @@ class SplineObject:
 
     def derivative(
         self,
-        *params: ArrayLike | Scalar,
+        *params: Params | Scalar,
         d: int | Sequence[int] = 1,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -342,14 +333,14 @@ class SplineObject:
         if self.bases[d].periodic < 0:
             C = np.zeros((n - 1, n))
             for i in range(n - 1):
-                C[i, i] = -float(p) / (k[i + p + 1] - k[i + 1])
-                C[i, i + 1] = float(p) / (k[i + p + 1] - k[i + 1])
+                C[i, i] = -p / (k[i + p + 1] - k[i + 1])
+                C[i, i + 1] = p / (k[i + p + 1] - k[i + 1])
         else:
             C = np.zeros((n, n))
             for i in range(n):
                 ip1 = np.mod(i + 1, n)
-                C[i, i] = -float(p) / (k[i + p + 1] - k[i + 1])
-                C[i, ip1] = float(p) / (k[i + p + 1] - k[i + 1])
+                C[i, i] = -p / (k[i + p + 1] - k[i + 1])
+                C[i, ip1] = p / (k[i + p + 1] - k[i + 1])
 
         derivative_cps = np.tensordot(C, self.controlpoints, axes=(1, d))
         derivative_cps = derivative_cps.transpose(transpose_fix(self.pardim, d))
@@ -363,12 +354,12 @@ class SplineObject:
 
     @overload
     def get_antiderivative_spline(
-        self, direction: Direction, constant: ArrayLike | None = None
+        self, direction: Direction, constant: Point | None = None
     ) -> SplineObject: ...
 
     def get_antiderivative_spline(
-        self, direction: Direction | None = None, constant: ArrayLike | None = None
-    ) -> SplineObject:
+        self, direction: Direction | None = None, constant: Point | None = None
+    ) -> SplineObject | list[SplineObject]:
         """Compute the antiderivative (integral) of the spline object in a given parametric direction.
 
         The antiderivative is computed by inverting the derivative operator on
@@ -449,8 +440,8 @@ class SplineObject:
             delta_knot = old_knots[i + p] - old_knots[i]
 
             # Build index slices: [..., i, ...] and [..., i+1, ...]
-            idx_current = [slice(None)] * self.pardim
-            idx_next = [slice(None)] * self.pardim
+            idx_current: list[slice | int] = [slice(None)] * self.pardim
+            idx_next: list[slice | int] = [slice(None)] * self.pardim
             idx_current[d] = i
             idx_next[d] = i + 1
 
@@ -486,7 +477,7 @@ class SplineObject:
     @overload
     def tangent(
         self,
-        *params: ArrayLike | Scalar,
+        *params: Params | Scalar,
         direction: Direction,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -495,7 +486,7 @@ class SplineObject:
     @overload
     def tangent(
         self,
-        *params: ArrayLike | Scalar,
+        *params: Params | Scalar,
         direction: None = None,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -503,7 +494,7 @@ class SplineObject:
 
     def tangent(
         self,
-        *params: ArrayLike | Scalar,
+        *params: Params | Scalar,
         direction: Direction | None = None,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -781,9 +772,9 @@ class SplineObject:
     def start(self) -> tuple[float, ...]: ...
 
     @overload
-    def start(self, direction: Direction) -> float: ...
+    def start(self, direction: Direction) -> Scalar: ...
 
-    def start(self, direction: Direction | None = None) -> float | tuple[float, ...]:
+    def start(self, direction: Direction | None = None) -> Scalar | tuple[Scalar, ...]:
         """Return the start of the parametric domain.
 
         If `direction` is given, returns the start of that direction, as a
@@ -804,7 +795,7 @@ class SplineObject:
     @overload
     def end(self, direction: Direction) -> float: ...
 
-    def end(self, direction: Direction | None = None) -> float | tuple[float, ...]:
+    def end(self, direction: Direction | None = None) -> Scalar | tuple[Scalar, ...]:
         """Return the end of the parametric domain.
 
         If `direction` is given, returns the end of that direction, as a float.
@@ -917,7 +908,7 @@ class SplineObject:
 
         return self
 
-    def insert_knot(self, knot: Scalar | ArrayLike, direction: Direction = 0) -> Self:
+    def insert_knot(self, knot: Scalar | Params, direction: Direction = 0) -> Self:
         """Insert a new knot into the spline.
 
         :param int direction: The direction to insert in
@@ -986,7 +977,7 @@ class SplineObject:
 
         for n, d in zip(args, directions):
             knots = self.knots(direction=d)  # excluding multiple knots
-            new_knots: list[FloatArray] = []
+            new_knots: list[Scalar] = []
             for k0, k1 in zip(knots[:-1], knots[1:]):
                 new_knots.extend(np.linspace(k0, k1, n + 2)[1:-1])
             self.insert_knot(new_knots, d)
@@ -1036,7 +1027,7 @@ class SplineObject:
 
         return self
 
-    def translate(self, x: ArrayLike) -> Self:
+    def translate(self, x: Point) -> Self:
         """Translate (i.e. move) the object by a given distance.
 
         :param array-like x: The vector to translate by.
@@ -1086,12 +1077,12 @@ class SplineObject:
         return self
 
     @overload
-    def scale(self, arg: ArrayLike, /) -> Self: ...
+    def scale(self, arg: Point, /) -> Self: ...
 
     @overload
     def scale(self, arg: Scalar, *args: Scalar) -> Self: ...
 
-    def scale(self, arg: ArrayLike | Scalar, *args: Scalar) -> Self:
+    def scale(self, arg: Point | Scalar, *args: Scalar) -> Self:
         """Scale, or magnify the object by a given amount.
 
         In case of one input argument, the scaling is uniform.
@@ -1137,7 +1128,7 @@ class SplineObject:
 
         return self
 
-    def rotate(self, theta: float, normal: ArrayLike = (0, 0, 1)) -> Self:
+    def rotate(self, theta: Scalar, normal: ArrayLike = (0, 0, 1)) -> Self:
         """Rotate the object around an axis.
 
         :param float theta: Angle to rotate about, measured in radians
@@ -1254,7 +1245,7 @@ class SplineObject:
 
         return self
 
-    def bounding_box(self) -> list[tuple[float, float]]:
+    def bounding_box(self) -> list[tuple[Scalar, Scalar]]:
         """Gets the bounding box of a spline object, computed from the
         control-point values. Could be inaccurate for rational splines.
 
@@ -1266,12 +1257,12 @@ class SplineObject:
         """
         dim = self.dimension
 
-        result: list[tuple[float, float]] = []
+        result: list[tuple[Scalar, Scalar]] = []
         for i in range(dim):
             result.append(
                 (
-                    float(np.min(self.controlpoints[..., i])),
-                    float(np.max(self.controlpoints[..., i])),
+                    np.min(self.controlpoints[..., i]),
+                    np.max(self.controlpoints[..., i]),
                 )
             )
         return result
@@ -1621,46 +1612,46 @@ class SplineObject:
         """The dimensions of the control point array."""
         return self.controlpoints.shape[:-1]
 
-    def __iadd__(self, x: ArrayLike) -> Self:
+    def __iadd__(self, x: Point) -> Self:
         self.translate(x)
         return self
 
-    def __isub__(self, x: ArrayLike) -> Self:
+    def __isub__(self, x: Point) -> Self:
         self.translate(-np.asarray(x, dtype=np.float64))  # can't do -x if x is a list, so we rewrap it here
         return self
 
-    def __imul__(self, x: ArrayLike | Scalar) -> Self:
+    def __imul__(self, x: Point | Scalar) -> Self:
         self.scale(x)
         return self
 
-    def __itruediv__(self, x: ArrayLike | Scalar) -> Self:
+    def __itruediv__(self, x: Point | Scalar) -> Self:
         self.scale(1.0 / np.asarray(x, dtype=np.float64))
         return self
 
     __ifloordiv__ = __itruediv__  # integer division (should not distinguish)
 
-    def __add__(self, x: ArrayLike) -> Self:
+    def __add__(self, x: Point) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj += x
         return new_obj
 
-    def __radd__(self, x: ArrayLike) -> Self:
+    def __radd__(self, x: Point) -> Self:
         return self + x
 
-    def __sub__(self, x: ArrayLike) -> Self:
+    def __sub__(self, x: Point) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj -= x
         return new_obj
 
-    def __mul__(self, x: ArrayLike | Scalar) -> Self:
+    def __mul__(self, x: Point | Scalar) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj *= x
         return new_obj
 
-    def __rmul__(self, x: ArrayLike | Scalar) -> Self:
+    def __rmul__(self, x: Point | Scalar) -> Self:
         return self * x
 
-    def __truediv__(self, x: ArrayLike | Scalar) -> Self:
+    def __truediv__(self, x: Point | Scalar) -> Self:
         new_obj = copy.deepcopy(self)
         new_obj /= x
         return new_obj

@@ -13,6 +13,8 @@ from .utils import check_direction, ensure_listlike, is_singleton, sections
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from splipy.typing import Params, Point
+
     from .typing import ArrayLike, Direction, FloatArray, Scalar
 
 __all__ = ["Surface"]
@@ -49,8 +51,8 @@ class Surface(SplineObject):
 
     def normal(
         self,
-        u: ArrayLike | Scalar,
-        v: ArrayLike | Scalar,
+        u: Params | Scalar,
+        v: Params | Scalar,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
     ) -> FloatArray:
@@ -107,7 +109,7 @@ class Surface(SplineObject):
 
     def derivative(
         self,
-        *params: ArrayLike | Scalar,
+        *params: Params | Scalar,
         d: int | Sequence[int] = 1,
         above: bool | Sequence[bool] = True,
         tensor: bool = True,
@@ -144,11 +146,8 @@ class Surface(SplineObject):
 
         u = np.atleast_1d(np.asarray(u, dtype=np.float64))
         v = np.atleast_1d(np.asarray(v, dtype=np.float64))
-        # u = ensure_listlike_old(u)
-        # v = ensure_listlike_old(v)
+
         result: FloatArray = np.zeros((len(u), len(v), self.dimension))
-        # dNus = [self.bases[0].evaluate(u, d, above) for d in range(derivs[0]+1)]
-        # dNvs = [self.bases[1].evaluate(v, d, above) for d in range(derivs[1]+1)]
         dNus = [self.bases[0].evaluate(u, d, above[0]) for d in range(np.sum(derivs) + 1)]
         dNvs = [self.bases[1].evaluate(v, d, above[1]) for d in range(np.sum(derivs) + 1)]
 
@@ -247,12 +246,8 @@ class Surface(SplineObject):
 
         return result
 
-    def area(self) -> float:
+    def area(self) -> Scalar:
         """Computes the area of the surface in geometric space"""
-
-        w1: FloatArray
-        w2: FloatArray
-
         # fetch integration points
         (x1, w1) = np.polynomial.legendre.leggauss(self.order(0) + 1)
         (x2, w2) = np.polynomial.legendre.leggauss(self.order(1) + 1)
@@ -277,7 +272,7 @@ class Surface(SplineObject):
         J = du[..., 0] * dv[..., 1] - du[..., 1] * dv[..., 0] if self.dimension == 2 else np.cross(du, dv)
 
         J = np.sqrt(np.sum(J**2, axis=2)) if self.dimension == 3 else np.abs(J)
-        return float(w1.dot(J).dot(w2))
+        return w1.dot(J).dot(w2)  # type: ignore[no-any-return]
 
     def edges(self) -> tuple[Curve, Curve, Curve, Curve]:
         """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax
@@ -374,7 +369,7 @@ class Surface(SplineObject):
                 result += str(self.controlpoints[i, j, :]) + "\n"
         return result
 
-    def get_antiderivative_surface(self, direction: Direction, constant: ArrayLike | None = None) -> Surface:
+    def get_antiderivative_surface(self, direction: Direction, constant: Point | None = None) -> Surface:
         """Compute the antiderivative (integral) of the surface in a given parametric direction.
 
         The antiderivative is computed by inverting the derivative operator on

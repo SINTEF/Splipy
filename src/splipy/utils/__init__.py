@@ -1,20 +1,30 @@
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence, Sized
+from collections.abc import Iterable, Iterator, Sequence, Sized
 from itertools import combinations, product, repeat
 from math import atan2, sqrt
-from typing import TYPE_CHECKING, SupportsFloat, TypeVar, Unpack
+from typing import TYPE_CHECKING, Any, Literal, Unpack, cast
 
 import numpy as np
 
 if TYPE_CHECKING:
     from splipy.splineobject import SplineObject
-    from splipy.typing import Direction, FloatArray, Section, SectionElement, SectionKwargs
+    from splipy.typing import (
+        Direction,
+        FloatArray,
+        Int,
+        Point,
+        Points,
+        Scalar,
+        Section,
+        SectionElement,
+        SectionKwargs,
+    )
 
 
 def knot_vector(
-    start: SupportsFloat = 0.0,
-    end: SupportsFloat | None = None,
+    start: Scalar = 0.0,
+    end: Scalar | None = None,
     num_intervals: int | None = None,
     interior_reps: int = 1,
     endpoint_reps: int = 1,
@@ -24,23 +34,29 @@ def knot_vector(
 
     if end is None:
         assert num_intervals is not None
-        end = float(start) + num_intervals
+        end = start + num_intervals
     elif num_intervals is None:
-        num_intervals = int(float(end) - float(start))
+        num_intervals = int(end - start)
 
-    def iter() -> Iterator[float]:
-        yield from repeat(float(start), endpoint_reps)
+    def iter() -> Iterator[Scalar]:
+        yield from repeat(start, endpoint_reps)
         for i in range(1, num_intervals):
             a = i / num_intervals
-            val = float(start) * (1 - a) + float(end) * a
+            val = start * (1 - a) + end * a
             yield from repeat(val, interior_reps)
-        yield from repeat(float(end), endpoint_reps)
+        yield from repeat(end, endpoint_reps)
 
     count = interior_reps * (num_intervals - 1) + endpoint_reps * 2
     return np.fromiter(iter(), dtype=np.float64, count=count)
 
 
-def is_right_hand(patch, tol=1e-3):
+def with_repeated_knots(knots: FloatArray, reps: int = 1) -> FloatArray:
+    if reps == 1:
+        return knots
+    return np.pad(knots, pad_width=reps - 1, mode="edge")
+
+
+def is_right_hand(patch: SplineObject, tol: float = 1e-3) -> bool:
     param = tuple((a + b) / 2 for a, b in zip(patch.start(), patch.end()))
 
     if patch.dimension == patch.pardim == 3:
@@ -54,7 +70,7 @@ def is_right_hand(patch, tol=1e-3):
         dw = dw / np.linalg.norm(dw)
 
         # Compare cross product
-        return np.dot(dw, np.cross(du, dv)) >= tol
+        return np.dot(dw, np.cross(du, dv)) >= tol  # type: ignore[no-any-return]
 
     if patch.dimension == patch.pardim == 2:
         du = patch.derivative(*param, d=(1, 0))
@@ -64,13 +80,14 @@ def is_right_hand(patch, tol=1e-3):
         du = du / np.linalg.norm(du)
         dv = dv / np.linalg.norm(dv)
 
-        return np.cross(du, dv) >= tol
+        return np.cross(du, dv) >= tol  # type: ignore[return-value]
 
     raise ValueError("Right-handedness only defined for 2D or 3D patches in 2D or 3D space, respectively")
 
 
-def rotation_matrix(theta, axis):
-    axis = axis / np.sqrt(np.dot(axis, axis))
+def rotation_matrix(theta: Scalar, axis: Point) -> FloatArray:
+    axis = np.asarray(axis, dtype=float)
+    axis /= np.linalg.norm(axis)
     a = np.cos(theta / 2)
     b, c, d = -axis * np.sin(theta / 2)
     return np.array(
@@ -78,11 +95,12 @@ def rotation_matrix(theta, axis):
             [a * a + b * b - c * c - d * d, 2 * (b * c - a * d), 2 * (b * d + a * c)],
             [2 * (b * c + a * d), a * a + c * c - b * b - d * d, 2 * (c * d - a * b)],
             [2 * (b * d - a * c), 2 * (c * d + a * b), a * a + d * d - b * b - c * c],
-        ]
+        ],
+        dtype=float,
     )
 
 
-def sections(src_dim, tgt_dim):
+def sections(src_dim: int, tgt_dim: int) -> Iterator[Section]:
     """Generate all boundary sections from a source dimension to a target
     dimension. For example, `sections(3,1)` generates all edges on a volume.
 
@@ -92,16 +110,17 @@ def sections(src_dim, tgt_dim):
     """
     # Enumerate all combinations of fixed directions
     nfixed = src_dim - tgt_dim
+    pool: list[Literal[0, -1]] = [0, -1]
     for fixed in combinations(range(src_dim), r=nfixed):
         # Enumerate all {0,-1}^n over the fixed directions
-        for indices in product([0, -1], repeat=nfixed):
-            args = [None] * src_dim
+        for indices in product(pool, repeat=nfixed):
+            args: list[Literal[0, -1] | None] = [None] * src_dim
             for f, i in zip(fixed, indices[::-1]):
                 args[f] = i
-            yield args
+            yield tuple(args)
 
 
-def section_from_index(src_dim, tgt_dim, i):
+def section_from_index(src_dim: int, tgt_dim: int, i: int) -> Section:
     """Return the i'th section from a source dimension to a target dimension.
 
     See :func:`splipy.Utils.sections` for more information.
@@ -109,17 +128,17 @@ def section_from_index(src_dim, tgt_dim, i):
     for j, s in enumerate(sections(src_dim, tgt_dim)):
         if i == j:
             return s
-    return None
+    raise ValueError(f"No such section: {i} for dimensions {src_dim} and {tgt_dim}")
 
 
-def section_to_index(section):
+def section_to_index(section: Section) -> int:
     """Return the index corresponding to a section."""
     src_dim = len(section)
     tgt_dim = sum(1 for s in section if s is None)
     for i, t in enumerate(sections(src_dim, tgt_dim)):
         if tuple(section) == tuple(t):
             return i
-    return None
+    assert False
 
 
 def check_section(*args: SectionElement, pardim: int, **kwargs: Unpack[SectionKwargs]) -> Section:
@@ -134,6 +153,7 @@ def check_section(*args: SectionElement, pardim: int, **kwargs: Unpack[SectionKw
     while len(args_list) < pardim:
         args_list.append(None)
     for k in set(kwargs.keys()) & set("uvw"):
+        k = cast("Literal['u', 'v', 'w']", k)
         index = "uvw".index(k)
         args_list[index] = kwargs[k]
     return tuple(args_list)
@@ -149,22 +169,12 @@ def check_direction(direction: Direction, pardim: int) -> int:
     raise ValueError("Invalid direction")
 
 
-def ensure_flatlist(x):
-    """Flattens a multi-list x to a single index list."""
-    if isinstance(x[0], Sized):
-        return x[0]
-    return x
-
-
-def is_singleton(x):
+def is_singleton(x: Any) -> bool:
     """Checks if x is list-like."""
     return not isinstance(x, Sized)
 
 
-T = TypeVar("T")
-
-
-def ensure_listlike(x: T | Sequence[T], dups: int = 1) -> tuple[T, ...]:
+def ensure_listlike[T](x: T | Sequence[T], dups: int = 1) -> tuple[T, ...]:
     if isinstance(x, Sequence):
         y = tuple(x)
         while len(y) < dups:
@@ -173,21 +183,16 @@ def ensure_listlike(x: T | Sequence[T], dups: int = 1) -> tuple[T, ...]:
     return (x,) * dups
 
 
-# TODO(Eivind): Remove.
-def ensure_listlike_old(x, dups=1):
-    """Wraps x in a list if it's not list-like."""
-    try:
-        while len(x) < dups:
-            x = list(x)
-            x.append(x[-1])
-        return x
-    except TypeError:
-        return [x] * dups
-    except IndexError:
-        return []
+def normalize_points(*points: Point | Points) -> FloatArray:
+    """Utility function for functions that accept a single sequence of points or
+    multiple points as parameters.
+    """
+    if len(points) == 1:
+        return np.asarray(points[0])
+    return np.asarray(points)
 
 
-def rotate_local_x_axis(xaxis=(1, 0, 0), normal=(0, 0, 1)):
+def rotate_local_x_axis(xaxis: Point = (1, 0, 0), normal: Point = (0, 0, 1)) -> Scalar:
     # rotate xaxis vector back to reference domain (r=1, around origin)
     theta = atan2(normal[1], normal[0])
     phi = atan2(sqrt(normal[0] ** 2 + normal[1] ** 2), normal[2])
@@ -195,29 +200,42 @@ def rotate_local_x_axis(xaxis=(1, 0, 0), normal=(0, 0, 1)):
     R2 = rotation_matrix(-phi, (0, 1, 0))
     if len(xaxis) != 3:  # typically 2D geometries
         xaxis = [xaxis[0], xaxis[1], 0]
-    xaxis = np.array([xaxis])
-    xaxis = xaxis.dot(R1).dot(R2)
+    xaxis_array = np.array([xaxis])
+    xaxis_array = xaxis_array.dot(R1).dot(R2)
     # if xaxis is orthogonal to normal, then xaxis[2]==0 now. If not then
     # treating it as such is the closest projection, which makes perfect sense
-    return atan2(xaxis[0, 1], xaxis[0, 0])
+    return atan2(xaxis_array[0, 1], xaxis_array[0, 0])
 
 
-def flip_and_move_plane_geometry[T: SplineObject](obj: T, center=(0, 0, 0), normal=(0, 0, 1)) -> T:
+def flip_and_move_plane_geometry[T: SplineObject](
+    obj: T,
+    center: Point = (0, 0, 0),
+    normal: Point = (0, 0, 1),
+) -> T:
     """re-orients a planar geometry by moving it to a different location and
     tilting it"""
     # don't touch it if not needed. translate or scale operations may force
     # object into 3D space
-    if not np.allclose(normal, np.array([0, 0, 1])):
-        theta = atan2(normal[1], normal[0])
-        phi = atan2(sqrt(normal[0] ** 2 + normal[1] ** 2), normal[2])
+    normal_arr = np.asarray(normal)
+    if not np.allclose(normal_arr, np.array([0, 0, 1])):
+        theta = atan2(normal_arr[1], normal_arr[0])
+        phi = atan2(sqrt(normal_arr[0] ** 2 + normal_arr[1] ** 2), normal_arr[2])
         obj.rotate(phi, (0, 1, 0))
         obj.rotate(theta, (0, 0, 1))
-    if not np.allclose(center, 0):
-        obj.translate(center)
+
+    center_arr = np.asarray(center)
+    if not np.allclose(center_arr, 0):
+        obj.translate(center_arr)
+
     return obj
 
 
-def reshape(cps, newshape, order="C", ncomps=None):
+def reshape(
+    cps: FloatArray,
+    newshape: tuple[int, ...],
+    order: Literal["C", "F"] = "C",
+    ncomps: Int | None = None,
+) -> FloatArray:
     """Like numpy's reshape, but preserves control points of several dimensions
     that are stored contiguously.
 
@@ -236,10 +254,12 @@ def reshape(cps, newshape, order="C", ncomps=None):
         except AttributeError:
             ncomps = len(cps) // npts
 
+    shape: Sequence[Int]
     if order == "C":
         shape = list(newshape) + [ncomps]
     elif order == "F":
         shape = list(newshape[::-1]) + [ncomps]
+
     cps = np.reshape(cps, shape)
     if order == "F":
         spec = list(range(len(newshape)))[::-1] + [len(newshape)]
@@ -247,7 +267,7 @@ def reshape(cps, newshape, order="C", ncomps=None):
     return cps
 
 
-def uniquify(iterator):
+def uniquify[T](iterator: Iterable[T]) -> Iterator[T]:
     """Iterates over all elements in `iterator`, removing duplicates."""
     seen = set()
     for i in iterator:
@@ -257,7 +277,7 @@ def uniquify(iterator):
         yield i
 
 
-def raise_order_1D(n, k, T, P, m, periodic):
+def raise_order_1D(n: int, k: int, T: FloatArray, P: FloatArray, m: int, periodic: int) -> FloatArray:
     """Implementation of method in "Efficient Degree Elevation and Knot
     Insertion for B-spline Curves using Derivatives" by Qi-Xing Huang a Shi-Min
     Hu, Ralph R Martin. Only the case of open knot vector is fully implemented.
@@ -280,7 +300,7 @@ def raise_order_1D(n, k, T, P, m, periodic):
 
     # Find multiplicity of the knot vector T
     b = BSplineBasis(k, T)
-    z = [k - 1 - b.continuity(t0) for t0 in b.knot_spans()]
+    z = [k - 1 - b.knot_continuity(t0) for t0 in b.knot_spans()]
 
     # Step 1: Find Pt_i^j
     Pt = np.zeros((d, n + 1, k))
@@ -346,9 +366,7 @@ __all__ = [
     "section_to_index",
     "check_section",
     "check_direction",
-    "ensure_flatlist",
     "is_singleton",
-    "ensure_listlike_old",
     "rotate_local_x_axis",
     "flip_and_move_plane_geometry",
     "reshape",

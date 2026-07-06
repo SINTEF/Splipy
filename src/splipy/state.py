@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import sys
 from contextlib import contextmanager
+from typing import TYPE_CHECKING, TypedDict, Unpack
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 states = [
     "controlpoint_relative_tolerance",
@@ -35,8 +39,17 @@ unlimited = 1e4
 """Since splipy insists on finite parametric domains, we define 'unbounded' here"""
 
 
+class StateKwargs(TypedDict, total=False):
+    controlpoint_absolute_tolerance: float
+    controlpoint_relative_tolerance: float
+    parametric_absolute_tolerance: float
+    parametric_relative_tolerance: float
+    knot_tolerance: float
+    unlimited: float
+
+
 @contextmanager
-def state(**kwargs):
+def state(**kwargs: Unpack[StateKwargs]) -> Iterator[None]:
     """A context manager for running code in a modified state.
 
     This takes an arbitrary number of keyword arguments, which correspond to

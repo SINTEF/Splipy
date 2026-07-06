@@ -1,14 +1,16 @@
-from numpy import floating, int_
+from numpy import floating, int_, integer
 from numpy.typing import NDArray
 
-def snap_point(knots: NDArray[floating], eval_pt: float, tolerance: float) -> float: ...
-def snap_points(knots: NDArray[floating], eval_pts: NDArray[floating], tolerance: float) -> None: ...
+type Scalar = float | floating | int | integer
+
+def snap_point(knots: NDArray[floating], eval_pt: Scalar, tolerance: Scalar) -> Scalar: ...
+def snap_points(knots: NDArray[floating], eval_pts: NDArray[floating], tolerance: Scalar) -> None: ...
 def evaluate(
     knots: NDArray[floating],
     order: int,
     eval_pts: NDArray[floating],
     periodic: int,
-    tolerance: float,
+    tolerance: Scalar,
     d: int,
     from_right: bool = True,
 ) -> tuple[

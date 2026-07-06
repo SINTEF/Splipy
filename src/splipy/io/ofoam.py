@@ -3,19 +3,23 @@ from __future__ import annotations
 from itertools import groupby
 from operator import itemgetter
 from pathlib import Path
+from typing import TYPE_CHECKING, Self
 
 import numpy as np
 
-from splipy.splinemodel import SplineModel
+from splipy.splinemodel import FaceArray, SplineModel
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 
 class OpenFOAM:
     target: Path
 
-    def __init__(self, target):
+    def __init__(self, target: str) -> None:
         self.target = Path(target)
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         # Create the target directory if it does not exist
         if not self.target.exists():
             self.target.mkdir(parents=True, exist_ok=True)
@@ -25,10 +29,15 @@ class OpenFOAM:
 
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        traceback: TracebackType,
+    ) -> None:
         pass
 
-    def _header(self, cls, obj, note=None):
+    def _header(self, cls: str, obj: str, note: str | None = None) -> str:
         s = "FoamFile\n{\n"
         s += "    version     2.0;\n"
         s += "    format      ascii;\n"
@@ -39,7 +48,7 @@ class OpenFOAM:
         s += "}\n"
         return s
 
-    def write(self, model):
+    def write(self, model: SplineModel) -> None:
         assert isinstance(model, SplineModel), "OpenFOAM.write only supports SplineModel objects"
 
         # Only linear volumes in 3D, please
@@ -51,7 +60,7 @@ class OpenFOAM:
         model.generate_cp_numbers()
         model.generate_cell_numbers()
         faces = model.faces()
-        ninternal = sum(faces["name"] is None)
+        ninternal = sum(faces.name == None)  # noqa: E711
         note = (
             f"nPoints: {model.ncps} nCells: {model.ncells} nFaces: {len(faces)} nInternalFaces: {ninternal}"
         )
@@ -62,11 +71,11 @@ class OpenFOAM:
         # - All faces in the same boundary must be contiguous
         # - Low number owners before high number owners
         # - Low number neighbors before high number neighbors
-        faces = list(faces)
-        faces = sorted(faces, key=itemgetter("neighbor"))
-        faces = sorted(faces, key=itemgetter("owner"))
-        faces = sorted(faces, key=lambda x: (x["name"] is not None, x["name"]))
-        faces = np.array(faces)
+        faces_list = list(faces)
+        faces_list = sorted(faces_list, key=itemgetter("neighbor"))
+        faces_list = sorted(faces_list, key=itemgetter("owner"))
+        faces_list = sorted(faces_list, key=lambda x: (x["name"] is not None, x["name"]))
+        faces = np.array(faces_list).view(FaceArray)
 
         # Write the points file (vertex coordinates)
         with (self.target / "points").open("w") as f:

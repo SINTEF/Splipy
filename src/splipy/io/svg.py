@@ -74,7 +74,7 @@ class SVG(MasterIO):
     margin: float
 
     all_objects: list[SplineObject]
-    all_kwargs: list[tuple[Any]]
+    all_kwargs: list[dict[str, Any]]
 
     center: tuple[float, float]
     offset: tuple[float, float]
@@ -152,7 +152,7 @@ class SVG(MasterIO):
 
         # compute scaling factors by keeping aspect ratio, and never exceed
         # width or height size (including margins)
-        geometryRatio = float(boundingbox[3] - boundingbox[1]) / (boundingbox[2] - boundingbox[0])
+        geometryRatio = (boundingbox[3] - boundingbox[1]) / (boundingbox[2] - boundingbox[0])
         imageRatio = 1.0 * self.height / self.width
         if geometryRatio > imageRatio:  # scale by y-coordinate
             marginPixels = self.height * self.margin

@@ -53,7 +53,7 @@ examples:
 	uv run python examples/write.py
 
 .PHONY: test
-test: pytest ruff examples
+test: pytest mypy ruff examples
 
 
 # Build targets (used from CI)

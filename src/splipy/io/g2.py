@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from splipy.curve import Curve
+    from splipy.typing import FloatArray
     from splipy.volume import Volume
 
 
@@ -42,14 +43,23 @@ class G2(MasterIO):
         start, end = map(float, next(self.fstream).split())
         return start, end
 
+    def read_next_bool(self) -> bool:
+        return next(self.fstream).strip() != "0"
+
+    def read_next_float(self) -> float:
+        return float(next(self.fstream).strip())
+
+    def read_next_array(self) -> FloatArray:
+        return np.array(next(self.fstream).split(), dtype=float)
+
     def circle(self) -> Curve:
         int(self.read_next_non_whitespace().strip())
-        r = float(next(self.fstream).strip())
-        center = np.array(next(self.fstream).split(), dtype=float)
-        normal = np.array(next(self.fstream).split(), dtype=float)
-        xaxis = np.array(next(self.fstream).split(), dtype=float)
+        r = self.read_next_float()
+        center = self.read_next_array()
+        normal = self.read_next_array()
+        xaxis = self.read_next_array()
         param = self.read_next_param_range()
-        reverse = next(self.fstream).strip() != "0"
+        reverse = self.read_next_bool()
 
         result = curve_factory.circle(r=r, center=center, normal=normal, xaxis=xaxis)
         result.reparam(param)
@@ -59,13 +69,13 @@ class G2(MasterIO):
 
     def ellipse(self) -> Curve:
         int(self.read_next_non_whitespace().strip())
-        r1 = float(next(self.fstream).strip())
-        r2 = float(next(self.fstream).strip())
-        center = np.array(next(self.fstream).split(), dtype=float)
-        normal = np.array(next(self.fstream).split(), dtype=float)
-        xaxis = np.array(next(self.fstream).split(), dtype=float)
+        r1 = self.read_next_float()
+        r2 = self.read_next_float()
+        center = self.read_next_array()
+        normal = self.read_next_array()
+        xaxis = self.read_next_array()
         param = self.read_next_param_range()
-        reverse = next(self.fstream).strip() != "0"
+        reverse = self.read_next_bool()
 
         result = curve_factory.ellipse(r1=r1, r2=r2, center=center, normal=normal, xaxis=xaxis)
         result.reparam(param)
@@ -75,18 +85,15 @@ class G2(MasterIO):
 
     def line(self) -> Curve:
         int(self.read_next_non_whitespace().strip())
-        start = np.array(next(self.fstream).split(), dtype=float)
-        direction = np.array(next(self.fstream).split(), dtype=float)
-        finite = next(self.fstream).strip() != "0"
+        start = self.read_next_array()
+        direction = self.read_next_array()
+        finite = self.read_next_bool()
         param = self.read_next_param_range()
-        reverse = next(self.fstream).strip() != "0"
-        d = np.array(direction)
-        s = np.array(start)
-        # d /= np.linalg.norm(d)
+        reverse = self.read_next_bool()
         if not finite:
             param = (-state.unlimited, state.unlimited)
 
-        result = curve_factory.line(s + d * param[0], s + d * param[1])
+        result = curve_factory.line(start + direction * param[0], start + direction * param[1])
         if reverse:
             result.reverse()
         return result
@@ -105,14 +112,14 @@ class G2(MasterIO):
 
     def cylinder(self) -> Surface:
         int(self.read_next_non_whitespace().strip())
-        r = float(next(self.fstream).strip())
-        center = np.array(next(self.fstream).split(), dtype=float)
-        z_axis = np.array(next(self.fstream).split(), dtype=float)
-        x_axis = np.array(next(self.fstream).split(), dtype=float)
-        finite = next(self.fstream).strip() != "0"
+        r = self.read_next_float()
+        center = self.read_next_array()
+        z_axis = self.read_next_array()
+        x_axis = self.read_next_array()
+        finite = self.read_next_bool()
         param_u = self.read_next_param_range()
         param_v = self.read_next_param_range() if finite else (-state.unlimited, state.unlimited)
-        swap = next(self.fstream).strip() != "0"
+        swap = self.read_next_bool()
 
         center = center + z_axis * param_v[0]
         h = param_v[1] - param_v[0]
@@ -124,15 +131,15 @@ class G2(MasterIO):
 
     def disc(self) -> Surface:
         int(self.read_next_non_whitespace().strip())
-        center = np.array(next(self.fstream).split(), dtype=float)
-        r = float(next(self.fstream).strip())
-        z_axis = np.array(next(self.fstream).split(), dtype=float)
-        x_axis = np.array(next(self.fstream).split(), dtype=float)
-        degen = next(self.fstream).strip() != "0"
-        angles = [float(next(self.fstream).strip()) for i in range(4)]
+        center = self.read_next_array()
+        r = self.read_next_float()
+        z_axis = self.read_next_array()
+        x_axis = self.read_next_array()
+        degen = self.read_next_bool()
+        angles = [self.read_next_float() for _ in range(4)]
         param_u = self.read_next_param_range()
         param_v = self.read_next_param_range()
-        swap = next(self.fstream).strip() != "0"
+        swap = self.read_next_bool()
 
         if degen:
             result = surface_factory.disc(r=r, center=center, xaxis=x_axis, normal=z_axis, type="radial")
@@ -147,17 +154,17 @@ class G2(MasterIO):
 
     def plane(self) -> Surface:
         int(self.read_next_non_whitespace().strip())
-        center = np.array(next(self.fstream).split(), dtype=float)
-        normal = np.array(next(self.fstream).split(), dtype=float)
-        x_axis = np.array(next(self.fstream).split(), dtype=float)
-        finite = next(self.fstream).strip() != "0"
+        center = self.read_next_array()
+        normal = self.read_next_array()
+        x_axis = self.read_next_array()
+        finite = self.read_next_bool()
         if finite:
             param_u = self.read_next_param_range()
             param_v = self.read_next_param_range()
         else:
             param_u = (-state.unlimited, +state.unlimited)
             param_v = (-state.unlimited, +state.unlimited)
-        swap = next(self.fstream).strip() != "0"
+        swap = self.read_next_bool()
 
         result = Surface() * [param_u[1] - param_u[0], param_v[1] - param_v[0]] + [param_u[0], param_v[0]]
         result.rotate(rotate_local_x_axis(x_axis, normal))
@@ -169,15 +176,15 @@ class G2(MasterIO):
 
     def torus(self) -> Surface:
         int(self.read_next_non_whitespace().strip())
-        r2 = float(next(self.fstream).strip())
-        r1 = float(next(self.fstream).strip())
-        center = np.array(next(self.fstream).split(), dtype=float)
-        z_axis = np.array(next(self.fstream).split(), dtype=float)
-        x_axis = np.array(next(self.fstream).split(), dtype=float)
-        next(self.fstream).strip() != "0"  # I have no idea what this does :(
+        r2 = self.read_next_float()
+        r1 = self.read_next_float()
+        center = self.read_next_array()
+        z_axis = self.read_next_array()
+        x_axis = self.read_next_array()
+        self.read_next_bool()  # I have no idea what this does :(
         param_u = self.read_next_param_range()
         param_v = self.read_next_param_range()
-        swap = next(self.fstream).strip() != "0"
+        swap = self.read_next_bool()
 
         result = surface_factory.torus(minor_r=r1, major_r=r2, center=center, normal=z_axis, xaxis=x_axis)
         result.reparam(param_u, param_v)
@@ -187,13 +194,13 @@ class G2(MasterIO):
 
     def sphere(self) -> Surface:
         int(self.read_next_non_whitespace().strip())
-        r = float(next(self.fstream).strip())
-        center = np.array(next(self.fstream).split(), dtype=float)
-        z_axis = np.array(next(self.fstream).split(), dtype=float)
-        x_axis = np.array(next(self.fstream).split(), dtype=float)
+        r = self.read_next_float()
+        center = self.read_next_array()
+        z_axis = self.read_next_array()
+        x_axis = self.read_next_array()
         param_u = self.read_next_param_range()
         param_v = self.read_next_param_range()
-        swap = next(self.fstream).strip() != "0"
+        swap = self.read_next_bool()
 
         result = surface_factory.sphere(r=r, center=center, xaxis=x_axis, zaxis=z_axis).swap()
         if swap:
@@ -228,10 +235,10 @@ class G2(MasterIO):
         int(self.read_next_non_whitespace().strip())
         crv = self.splines(1)
         normal = np.array(self.read_next_non_whitespace().split(), dtype=float)
-        finite = next(self.fstream).strip() != "0"
+        finite = self.read_next_bool()
         param_u = self.read_next_param_range()
         param_v = self.read_next_param_range() if finite else (-state.unlimited, +state.unlimited)
-        swap = next(self.fstream).strip() != "0"
+        swap = self.read_next_bool()
 
         result = surface_factory.extrude(crv + normal * param_v[0], normal * (param_v[1] - param_v[0]))
         result.reparam(param_u, param_v)

@@ -12,10 +12,12 @@ from deprecated import deprecated
 from scipy.sparse import csr_matrix
 
 from . import state
-from .utils import ensure_listlike_old
+from .utils import ensure_listlike
 
 if TYPE_CHECKING:
-    from .typing import ArrayLike, FloatArray, Scalar
+    from splipy.typing import Knots, Params
+
+    from .typing import FloatArray, Int, Scalar
 
 __all__ = ["BSplineBasis"]
 
@@ -41,7 +43,7 @@ class BSplineBasis:
     def __init__(
         self,
         order: int = 2,
-        knots: ArrayLike | None = None,
+        knots: Knots | None = None,
         periodic: int = -1,
     ) -> None:
         """Construct a B-Spline basis with a given order and knot vector.
@@ -88,16 +90,16 @@ class BSplineBasis:
         .. warning:: This is different from :func:`splipy.BSplineBasis.__len__`."""
         return len(self.knots) - self.order - (self.periodic + 1)
 
-    def start(self) -> float:
+    def start(self) -> Scalar:
         """Start point of parametric domain. For open knot vectors, this is the
         first knot.
 
         :return: Knot number *p*, where *p* is the spline order
         :rtype: float
         """
-        return float(self.knots.flat[self.order - 1])
+        return self.knots.flat[self.order - 1]
 
-    def end(self) -> float:
+    def end(self) -> Scalar:
         """End point of parametric domain. For open knot vectors, this is the
         last knot.
 
@@ -105,7 +107,7 @@ class BSplineBasis:
             the number of knots
         :rtype: Float
         """
-        return float(self.knots.flat[-self.order])
+        return self.knots.flat[-self.order]
 
     def greville_all(self) -> FloatArray:
         """Fetch all greville points, also known as knot averages:
@@ -118,7 +120,7 @@ class BSplineBasis:
         operator = np.ones((self.order - 1,), dtype=np.float64) / (self.order - 1)
         return np.convolve(self.knots[1 : -1 - (self.periodic + 1)], operator, mode="valid")
 
-    def greville_single(self, index: int) -> float:
+    def greville_single(self, index: Int) -> Scalar:
         """Fetch a greville point, also known as a knot averages:
 
         .. math:: \\sum_{j=i+1}^{i+p-1} \\frac{t_j}{p-1}
@@ -128,15 +130,15 @@ class BSplineBasis:
         :return: A Greville point
         :rtype: float
         """
-        return float(np.sum(self.knots[index + 1 : index + self.order]) / (self.order - 1))
+        return np.sum(self.knots[index + 1 : index + self.order]) / (self.order - 1)
 
     @overload
-    def greville(self, index: int) -> float: ...
+    def greville(self, index: Int) -> Scalar: ...
 
     @overload
     def greville(self) -> FloatArray: ...
 
-    def greville(self, index: int | None = None) -> float | FloatArray:
+    def greville(self, index: Int | None = None) -> Scalar | FloatArray:
         """Fetch greville points, also known as knot averages:
 
         .. math:: \\sum_{j=i+1}^{i+p-1} \\frac{t_j}{p-1}
@@ -151,7 +153,7 @@ class BSplineBasis:
     @overload
     def evaluate(
         self,
-        t: ArrayLike | Scalar,
+        t: Params | Scalar,
         d: int = 0,
         from_right: bool = ...,
     ) -> npt.NDArray[np.double]: ...
@@ -159,7 +161,7 @@ class BSplineBasis:
     @overload
     def evaluate(
         self,
-        t: ArrayLike | Scalar,
+        t: Params | Scalar,
         d: int = 0,
         from_right: bool = ...,
         sparse: Literal[False] = ...,
@@ -168,7 +170,7 @@ class BSplineBasis:
     @overload
     def evaluate(
         self,
-        t: ArrayLike | Scalar,
+        t: Params | Scalar,
         d: int = 0,
         from_right: bool = ...,
         sparse: Literal[True] = ...,
@@ -176,7 +178,7 @@ class BSplineBasis:
 
     def evaluate(
         self,
-        t: ArrayLike | Scalar,
+        t: Params | Scalar,
         d: int = 0,
         from_right: bool = True,
         sparse: bool = False,
@@ -226,7 +228,7 @@ class BSplineBasis:
         :rtype: numpy.array
         """
         # for single-value input, wrap it into a list so it don't crash on the loop below
-        t = ensure_listlike_old(t)
+        t = ensure_listlike(t)
         self.snap(t)
 
         p = self.order  # knot vector order
@@ -264,10 +266,10 @@ class BSplineBasis:
                 for j in range(p - q - 1, p):
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
                     if j != p - q - 1:
-                        M[j] = M[j] * float(evalT - self.knots[k]) / (self.knots[k + q] - self.knots[k])
+                        M[j] = M[j] * (evalT - self.knots[k]) / (self.knots[k + q] - self.knots[k])
 
                     if j != p - 1:
-                        M[j] = M[j] + M[j + 1] * float(self.knots[k + q + 1] - evalT) / (
+                        M[j] = M[j] + M[j + 1] * (self.knots[k + q + 1] - evalT) / (
                             self.knots[k + q + 1] - self.knots[k + 1]
                         )
 
@@ -275,9 +277,9 @@ class BSplineBasis:
                 for j in range(p - q - 1, p):
                     k = mu - p + j  # 'i'-index in global knot vector (ref Hughes book pg.21)
                     if j != p - q - 1:
-                        M[j] = M[j] * float(q) / (self.knots[k + q] - self.knots[k])
+                        M[j] = M[j] * q / (self.knots[k + q] - self.knots[k])
                     if j != p - 1:
-                        M[j] = M[j] - M[j + 1] * float(q) / (self.knots[k + q + 1] - self.knots[k + 1])
+                        M[j] = M[j] - M[j + 1] * q / (self.knots[k + q + 1] - self.knots[k + 1])
 
             data[i * p : (i + 1) * p] = M
             indices[i * p : (i + 1) * p] = np.arange(mu - p, mu) % n
@@ -332,9 +334,6 @@ class BSplineBasis:
 
         :raises ValueError: If *end* ≤ *start*
         """
-        start = float(start)
-        end = float(end)
-
         if end <= start:
             raise ValueError("end must be larger than start")
         self.normalize()
@@ -357,8 +356,6 @@ class BSplineBasis:
             knots.
         :rtype: int or float
         """
-        knot = float(knot)
-
         if self.periodic >= 0:
             if knot < self.start() or knot > self.end():
                 knot = (knot - self.start()) % (self.end() - self.start()) + self.start()
@@ -375,7 +372,7 @@ class BSplineBasis:
             raise NotAKnotError
         return self.order - (hi - lo) - 1
 
-    def continuity(self, knot: Scalar) -> int | float:
+    def continuity(self, knot: Scalar) -> int | Scalar:
         """Get the continuity of the basis functions at a given point.
 
         :return: *p*--*m*--1 at a knot with multiplicity *m*, or ``inf``
@@ -510,8 +507,6 @@ class BSplineBasis:
         :rtype: numpy.array
         :raises ValueError: If the new knot is outside the domain
         """
-        new_knot = float(new_knot)
-
         if self.periodic >= 0:
             if new_knot < self.start() or new_knot > self.end():
                 new_knot = (new_knot - self.start()) % (self.end() - self.start()) + self.start()
@@ -598,7 +593,7 @@ class BSplineBasis:
             atol=state.knot_tolerance,
         )
 
-    def snap_point(self, t: float) -> float:
+    def snap_point(self, t: Scalar) -> Scalar:
         """Snap evaluation point to knots if it is sufficiently close
         as given in by state.state.knot_tolerance.
 
@@ -647,24 +642,24 @@ class BSplineBasis:
         """Returns the number of knots in this basis."""
         return len(self.knots)
 
-    def __getitem__(self, i: int) -> float:
+    def __getitem__(self, i: int) -> Scalar:
         """Returns the knot at a given index."""
-        return float(self.knots[i])
+        return self.knots[i]  # type: ignore[no-any-return]
 
     def __iadd__(self, a: Scalar) -> Self:
-        self.knots += float(a)
+        self.knots += a
         return self
 
     def __isub__(self, a: Scalar) -> Self:
-        self.knots -= float(a)
+        self.knots -= a
         return self
 
     def __imul__(self, a: Scalar) -> Self:
-        self.knots *= float(a)
+        self.knots *= a
         return self
 
     def __itruediv__(self, a: Scalar) -> Self:
-        self.knots /= float(a)
+        self.knots /= a
         return self
 
     __ifloordiv__ = __itruediv__  # integer division (should not distinguish)

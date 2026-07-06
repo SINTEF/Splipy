@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, SupportsFloat, cast
+from typing import TYPE_CHECKING, cast
 
 __doc__ = "Implementation of various refinement schemes."
 
@@ -14,14 +14,14 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from splipy.splineobject import SplineObject
-    from splipy.typing import Direction, FloatArray
+    from splipy.typing import Direction, FloatArray, Scalar
 
 
 # TODO(Eivind): put control over these tolerances somewhere. Modstate in splipy
 # seems to be the place for it, but we can't let splipy.utils influence the
 # structure of splipy.
-def knot_exists(existing_knots: FloatArray, new_knot: SupportsFloat) -> bool:
-    return bool(np.any(np.isclose(existing_knots, float(new_knot), atol=1e-7, rtol=1e-10)))
+def knot_exists(existing_knots: FloatArray, new_knot: Scalar) -> bool:
+    return bool(np.any(np.isclose(existing_knots, new_knot, atol=1e-7, rtol=1e-10)))
 
 
 def geometric_refine(

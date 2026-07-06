@@ -1,18 +1,30 @@
 from __future__ import annotations
 
-from collections import Counter, OrderedDict, namedtuple
-from collections.abc import Callable, Iterator
+import bisect
+from collections import Counter, OrderedDict
+from collections.abc import Callable, Iterator, Sequence
+from dataclasses import dataclass
 from itertools import chain, islice, permutations, product
 from operator import itemgetter
 from pathlib import Path
-from typing import Any
+from typing import Any, Unpack, cast
 
 import numpy as np
+import numpy.typing as npt
+
+from splipy.typing import (
+    FloatArray,
+    Int,
+    IntArray,
+    Scalar,
+    Section,
+    SectionElement,
+    SectionKwargs,
+)
 
 from . import state
 from .splineobject import SplineObject
 from .utils import (
-    bisect,
     check_section,
     is_right_hand,
     section_from_index,
@@ -27,17 +39,38 @@ except ImportError:
     from collections.abc import MutableMapping
 
 
-def _section_to_index(section):
+def _section_to_index(section: Section) -> tuple[slice | int]:
     """Replace all `None` in `section` with `slice(None)`, so that it
     works as a numpy array indexing tuple.
     """
-    return tuple(slice(None) if s is None else s for s in section)
+    return tuple(slice(None) if s is None else s for s in section)  # type: ignore[return-value]
 
 
-face_t = np.dtype([("nodes", int, (4,)), ("owner", int, ()), ("neighbor", int, ()), ("name", object, ())])
+class FaceScalar(np.record):
+    nodes: np.ndarray[tuple[int], np.dtype[np.int64]]
+    owner: np.int64
+    neighbor: np.int64
+    name: object
 
 
-class VertexDict(MutableMapping):
+class FaceArray(np.recarray[Any, np.dtype[FaceScalar]]):
+    nodes: np.ndarray[Any, np.dtype[np.int64]]
+    owner: np.ndarray[Any, np.dtype[np.int64]]
+    neighbor: np.ndarray[Any, np.dtype[np.int64]]
+    name: np.ndarray[Any, np.dtype[np.object_]]
+
+
+face_t = np.dtype(
+    [
+        ("nodes", int, (4,)),
+        ("owner", int, ()),
+        ("neighbor", int, ()),
+        ("name", object, ()),
+    ],
+)
+
+
+class VertexDict[T](MutableMapping[FloatArray, T]):
     """A dictionary where the keys are numpy arrays, and where equality
     is computed in an approximate sense for floating point numbers.
 
@@ -47,20 +80,19 @@ class VertexDict(MutableMapping):
     rtol: float
     atol: float
 
-    _keys: list[np.ndarray | None]
-    _values: list[Any]
+    _keys: list[FloatArray | None]
+    _values: list[T | None]
 
-    lut: dict[tuple[int, ...], list[tuple[int, float]]]
+    lut: dict[tuple[int, ...], list[tuple[int, Scalar]]]
 
-    def __init__(self, rtol=1e-5, atol=1e-8):
-        # List of (key, value) pairs
+    def __init__(self, rtol: float = 1e-5, atol: float = 1e-8) -> None:
         self.rtol = rtol
         self.atol = atol
         self._keys = []
         self._values = []
         self.lut = {}
 
-    def _bounds(self, key):
+    def _bounds(self, key: Scalar) -> tuple[Scalar, Scalar]:
         if key >= self.atol:
             return (
                 (key - self.atol) / (1 + self.rtol),
@@ -78,14 +110,14 @@ class VertexDict(MutableMapping):
             (key + self.atol) / (1 - self.rtol),
         )
 
-    def _candidate(self, key):
+    def _candidate(self, key: FloatArray) -> int:
         """Return the internal index for the first stored mapping that matches the
         given key.
 
         :param numpy.array key: The key to look for
         :raises KeyError: If the key is not found
         """
-        candidates = None
+        candidates: set[int] | None = None
         for coord, k in np.ndenumerate(key):
             lut = self.lut.setdefault(coord, [])
             minval, maxval = self._bounds(k)
@@ -95,12 +127,14 @@ class VertexDict(MutableMapping):
                 candidates = {i for i, _ in lut[lo:hi]}
             else:
                 candidates &= {i for i, _ in lut[lo:hi]}
+        if not candidates:
+            raise KeyError(key)
         for c in candidates:
             if self._keys[c] is not None:
                 return c
         raise KeyError(key)
 
-    def _insert(self, key, value):
+    def _insert(self, key: FloatArray, value: T) -> None:
         newindex = len(self._values)
         for coord, v in np.ndenumerate(key):
             lut = self.lut.setdefault(coord, [])
@@ -108,7 +142,7 @@ class VertexDict(MutableMapping):
         self._keys.append(key)
         self._values.append(value)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: FloatArray, value: T) -> None:
         """Assign a key to a value."""
         try:
             c = self._candidate(key)
@@ -116,15 +150,17 @@ class VertexDict(MutableMapping):
         except KeyError:
             self._insert(key, value)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: FloatArray) -> T:
         """Gets the value assigned to a key.
 
         :raises KeyError: If the key is not found
         """
         c = self._candidate(key)
-        return self._values[c]
+        value = self._values[c]
+        assert value is not None
+        return value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: FloatArray) -> None:
         """Deletes an assignment."""
         try:
             i = self._candidate(key)
@@ -133,18 +169,16 @@ class VertexDict(MutableMapping):
         self._keys[i] = None
         self._values[i] = None
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[FloatArray]:
         """Iterate over all keys.
 
         .. note:: This generates all the stored keys, not all matching keys.
         """
-        yield from self._keys
+        for k in self._keys:
+            if k is not None:
+                yield k
 
-    def items(self):
-        """Return a list of key, value pairs."""
-        yield from self._values
-
-    def __len__(self):
+    def __len__(self) -> int:
         """Returns the number of stored assignments."""
         return len(self._values)
 
@@ -178,7 +212,11 @@ class Orientation:
       direction `d` *in the reference system* should be reversed.
     """
 
-    def __init__(self, perm, flip):
+    perm: Sequence[int]
+    perm_inv: Sequence[int]
+    flip: Sequence[bool]
+
+    def __init__(self, perm: Sequence[int], flip: Sequence[bool]) -> None:
         """Initialize an Orientation object.
 
         .. warning:: This constructor is for internal use. Use
@@ -190,7 +228,7 @@ class Orientation:
         self.perm_inv = tuple(perm.index(d) for d in range(len(perm)))
 
     @classmethod
-    def compute(cls, cpa, cpb=None):
+    def compute(cls, cpa: SplineObject, cpb: SplineObject | None = None) -> Orientation:
         """Compute and return a new orientation object representing the mapping between
         `cpa` (the reference system) and `cpb` (the mapped system).
 
@@ -257,10 +295,10 @@ class Orientation:
         raise OrientationError("Non-matching objects")
 
     @property
-    def pardim(self):
+    def pardim(self) -> int:
         return len(self.perm)
 
-    def __mul__(self, other):
+    def __mul__(self, other: Orientation) -> Orientation:
         """Compose two mappings.
 
         If `ort_left` maps system `A` (reference) to system `B`, and
@@ -275,13 +313,13 @@ class Orientation:
 
         return Orientation(perm, flip)
 
-    def map_array(self, array):
+    def map_array[T: np.generic](self, array: npt.NDArray[T]) -> npt.NDArray[T]:
         """Map an array in the mapped system to the reference system."""
         array = array.transpose(*self.perm)
         flips = tuple(slice(None, None, -1) if f else slice(None) for f in self.flip)
         return array[flips]
 
-    def map_section(self, section):
+    def map_section(self, section: Section) -> Section:
         """Map a section in the mapped system to the reference system.
 
         The input is a section tuple as described in
@@ -291,11 +329,8 @@ class Orientation:
         """
         permuted = tuple(section[d] for d in self.perm)
 
-        flipped = ()
-        for (
-            s,
-            f,
-        ) in zip(permuted, self.flip):
+        flipped: Section = ()
+        for s, f in zip(permuted, self.flip):
             # Flipping only applies to indexed directions, not variable ones
             if f and s is not None:
                 flipped += (0 if s == -1 else -1,)
@@ -304,7 +339,7 @@ class Orientation:
 
         return flipped
 
-    def view_section(self, section):
+    def view_section(self, section: Section) -> Orientation:
         """Reduce a mapping to a lower dimension.
 
         The input is a section tuple as described in
@@ -332,7 +367,7 @@ class Orientation:
         return self.__class__(new_perm, new_flip)
 
     @property
-    def ifem_format(self):
+    def ifem_format(self) -> int:
         """Compute the orientation in IFEM format.
 
         For one-dimensional objects, this is a single binary digit indicating
@@ -390,7 +425,17 @@ class TopologicalNode:
         of any kind.
     """
 
-    def __init__(self, obj, lower_nodes, index):
+    obj: SplineObject
+    index: int
+    lower_nodes: list[tuple[TopologicalNode, ...]]
+    higher_nodes: dict[int, list[TopologicalNode]]
+    owner: TopologicalNode | None
+
+    name: str | None
+    cell_numbers: IntArray | None
+    cp_numbers: IntArray | None
+
+    def __init__(self, obj: SplineObject, lower_nodes: list[tuple[TopologicalNode, ...]], index: int) -> None:
         """Initialize a `TopologicalNode` object associated with the given
         `SplineObject` and lower order nodes.
 
@@ -419,26 +464,26 @@ class TopologicalNode:
                     node._transfer_ownership(self)
 
     @property
-    def pardim(self):
+    def pardim(self) -> int:
         return self.obj.pardim
 
     @property
-    def nhigher(self):
+    def nhigher(self) -> int:
         return len(self.higher_nodes[self.pardim + 1])
 
     @property
-    def super_owner(self):
+    def super_owner(self) -> TopologicalNode:
         """Return the highest owning node."""
         owner = self
         while owner.owner is not None:
             owner = owner.owner
         return owner
 
-    def assign_higher(self, node):
+    def assign_higher(self, node: TopologicalNode) -> None:
         """Add a link to a node of higher dimension."""
         self.higher_nodes.setdefault(node.pardim, []).append(node)
 
-    def view(self, other_obj=None):
+    def view(self, other_obj: SplineObject | None = None) -> NodeView:
         """Return a `NodeView` object of this node.
 
         The returned view has an orientation that matches that of the input
@@ -451,7 +496,7 @@ class TopologicalNode:
         orientation = Orientation.compute(self.obj, other_obj) if other_obj else Orientation.compute(self.obj)
         return NodeView(self, orientation)
 
-    def _transfer_ownership(self, new_owner):
+    def _transfer_ownership(self, new_owner: TopologicalNode) -> None:
         """Transfers ownership of this node to a new owner. This operation is
         transitive, so all child nodes owned by this node, or who are
         owner-less will also be transferred.
@@ -465,7 +510,7 @@ class TopologicalNode:
                 if child.owner is self or child.owner is None:
                     child._transfer_ownership(new_owner)
 
-    def generate_cp_numbers(self, start=0):
+    def generate_cp_numbers(self, start: Int = 0) -> Int:
         """Generate a control point numbering starting at `start`. Return the next unused index."""
         assert self.owner is None
 
@@ -488,7 +533,7 @@ class TopologicalNode:
         self.assign_cp_numbers(numbers)
         return start + nowned
 
-    def assign_cp_numbers(self, numbers):
+    def assign_cp_numbers(self, numbers: IntArray) -> None:
         """Directly assign control point numbers."""
         self.cp_numbers = numbers
 
@@ -500,17 +545,22 @@ class TopologicalNode:
                     # orientations not matching up.
                     node.assign_cp_numbers(numbers[_section_to_index(section)])
 
-    def read_cp_numbers(self):
+    def read_cp_numbers(self) -> None:
         """Read control point numbers for unowned control points from child nodes."""
+        assert self.cp_numbers is not None
+
         for node, section in zip(self.lower_nodes[-1], sections(self.pardim, self.pardim - 1)):
             if node.owner is not self:
                 # The two sections may not agree on orientation, so we fix this here.
-                ori = Orientation.compute(self.obj.section(*section), node.obj)
+                sub = self.obj.section(*section)
+                assert isinstance(sub, SplineObject)
+                ori = Orientation.compute(sub, node.obj)
+                assert node.cp_numbers is not None
                 self.cp_numbers[_section_to_index(section)] = ori.map_array(node.cp_numbers)
 
         assert (self.cp_numbers != -1).all()
 
-    def generate_cell_numbers(self, start=0):
+    def generate_cell_numbers(self, start: Int = 0) -> Int:
         """Generate a cell numbering starting at `start`. Return the next unused index."""
         assert self.owner is None
 
@@ -520,16 +570,19 @@ class TopologicalNode:
         self.cell_numbers = np.reshape(np.arange(start, start + nelems, dtype=int), shape)
         return start + nelems
 
-    def faces(self):
+    def faces(self) -> list[FaceArray]:
         """Return all faces owned by this node, as a list of numpy arrays with dtype `face_t`."""
         assert self.pardim == 3
         assert self.obj.order() == (2, 2, 2)
+        assert self.cp_numbers is not None
+        assert self.cell_numbers is not None
+
         shape = [len(kvec) - 1 for kvec in self.obj.knots()]
         ncells = np.prod(shape)
-        retval = []
+        retval: list[FaceArray] = []
 
-        def mkindex(dim, z, a, b):
-            rval = [a, b] if dim != 1 else [b, a]
+        def mkindex(dim: int, z: slice | int, a: slice, b: slice) -> tuple[slice | int, ...]:
+            rval: list[slice | int] = [a, b] if dim != 1 else [b, a]
             rval.insert(dim, z)
             return tuple(rval)
 
@@ -549,7 +602,7 @@ class TopologicalNode:
             faces["nodes"][:, 3] = self.cp_numbers[mkindex(d, np.s_[1:-1], np.s_[:-1], np.s_[1:])].flatten()
             faces["owner"] = self.cell_numbers[mkindex(d, np.s_[:-1], np.s_[:], np.s_[:])].flatten()
             faces["neighbor"] = self.cell_numbers[mkindex(d, np.s_[1:], np.s_[:], np.s_[:])].flatten()
-            retval.append(faces)
+            retval.append(faces.view(FaceArray))
 
             # Go through the two boundaries
             for bdnode, bdindex in zip(islice(lower, 2), (0, -1)):
@@ -588,16 +641,18 @@ class TopologicalNode:
                     # Get the spline object on that interface as oriented from the neighbor's perspective
                     nb_sec = section_from_index(3, 2, nb_index)
                     nb_obj = neighbor.obj.section(*nb_sec)
+                    assert isinstance(nb_obj, SplineObject)
 
                     # Compute the relative orientation
                     ori = Orientation.compute(bdnode.obj, nb_obj)
 
                     # Get the neighbor cell numbers from the neighbor's
                     # perspective, and map them to our system
+                    assert neighbor.cell_numbers is not None
                     cellidxs = neighbor.cell_numbers[_section_to_index(nb_sec)]
                     faces["neighbor"] = ori.map_array(cellidxs).flatten()
 
-                retval.append(faces)
+                retval.append(faces.view(FaceArray))
 
         for faces in retval:
             assert ((faces["owner"] < faces["neighbor"]) | (faces["neighbor"] == -1)).all()
@@ -613,7 +668,10 @@ class NodeView:
         persistent.
     """
 
-    def __init__(self, node, orientation=None):
+    node: TopologicalNode
+    orientation: Orientation
+
+    def __init__(self, node: TopologicalNode, orientation: Orientation) -> None:
         """Initialize a `NodeView` object with the given node and orientation.
 
         .. warning:: This constructor is for internal use.
@@ -622,18 +680,18 @@ class NodeView:
         self.orientation = orientation
 
     @property
-    def pardim(self):
+    def pardim(self) -> int:
         return self.node.pardim
 
     @property
-    def name(self):
+    def name(self) -> str | None:
         return self.node.name
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str | None) -> None:
         self.node.name = value
 
-    def section(self, *args, **kwargs):
+    def section(self, *args: SectionElement, **kwargs: Unpack[SectionKwargs]) -> NodeView:
         """Return a section. See :func:`splipy.SplineObject.section` for more details
         on the input arguments.
 
@@ -657,32 +715,32 @@ class NodeView:
 
         return NodeView(node, ref_ori * my_ori)
 
-    def corner(self, i):
+    def corner(self, i: int) -> NodeView:
         """Return the i'th corner."""
         return self.section(*section_from_index(self.pardim, 0, i))
 
     @property
-    def corners(self):
+    def corners(self) -> tuple[NodeView, ...]:
         """A tuple of all corners."""
-        return tuple(self.section(s) for s in sections(self.pardim, 0))
+        return tuple(self.section(*s) for s in sections(self.pardim, 0))
 
-    def edge(self, i):
+    def edge(self, i: int) -> NodeView:
         """Return the i'th edge."""
         return self.section(*section_from_index(self.pardim, 1, i))
 
     @property
-    def edges(self):
+    def edges(self) -> tuple[NodeView, ...]:
         """A tuple of all edges."""
-        return tuple(self.section(s) for s in sections(self.pardim, 1))
+        return tuple(self.section(*s) for s in sections(self.pardim, 1))
 
-    def face(self, i):
+    def face(self, i: int) -> NodeView:
         """Return the i'th face."""
         return self.section(*section_from_index(self.pardim, 2, i))
 
     @property
-    def faces(self):
+    def faces(self) -> tuple[NodeView, ...]:
         """A tuple of all faces."""
-        return tuple(self.section(s) for s in sections(self.pardim, 2))
+        return tuple(self.section(*s) for s in sections(self.pardim, 2))
 
 
 class ObjectCatalogue:
@@ -690,7 +748,13 @@ class ObjectCatalogue:
     at most `pardim` parametric directions.
     """
 
-    def __init__(self, pardim):
+    pardim: int
+    count: int
+    internal: OrderedDict[tuple[TopologicalNode, ...], list[TopologicalNode]]
+    lower: ObjectCatalogue | VertexDict[TopologicalNode]
+    callbacks: dict[str, list[Callable[[TopologicalNode], None]]]
+
+    def __init__(self, pardim: int) -> None:
         """Initialize a catalogue for objects of parametric dimension
         `pardim`.
         """
@@ -710,11 +774,11 @@ class ObjectCatalogue:
         # Callbacks for events
         self.callbacks = {}
 
-    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]):
+    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]) -> None:
         """Add a callback function to be called on a given event."""
         self.callbacks.setdefault(event, []).append(callback)
 
-    def lookup(self, obj, add=False, raise_on_twins=()):
+    def lookup(self, obj: SplineObject, add: bool = False, raise_on_twins: Sequence[int] = ()) -> NodeView:
         """Obtain the `NodeView` object corresponding to a given object.
 
         If the keyword argument `add` is true, this function may generate one
@@ -738,21 +802,25 @@ class ObjectCatalogue:
         """
         # Pass lower-dimensional objects through to the lower levels
         if self.pardim > obj.pardim:
+            assert isinstance(self.lower, ObjectCatalogue)
             return self.lower.lookup(obj, add=add, raise_on_twins=raise_on_twins)
 
         # Special case for points: self.lower is a mapping from array to node
         if self.pardim == 0:
+            lower = cast("VertexDict[TopologicalNode]", self.lower)
             cps = obj.controlpoints
             if obj.rational:
                 cps = cps[..., :-1]
             if add:
                 node = TopologicalNode(obj, [], index=self.count)
                 self.count += 1
-                rval = self.lower.setdefault(cps, node).view()
+                rval = lower.setdefault(cps, node).view()
                 for cb in self.callbacks.get("add", []):
                     cb(node)
                 return rval
-            return self.lower[cps].view()
+            return lower[cps].view()
+
+        assert isinstance(self.lower, ObjectCatalogue)
 
         # Get all nodes of lower dimension (points, vertices, etc.)
         # This involves a recursive call to self.lower.__call__
@@ -811,7 +879,7 @@ class ObjectCatalogue:
             raise KeyError("No such object found")
         return self._add(obj, lower_nodes)
 
-    def add(self, obj, raise_on_twins=()):
+    def add(self, obj: SplineObject, raise_on_twins: Sequence[int] = ()) -> NodeView:
         """Add new nodes to the graph to accommodate the given object, then return the
         corresponding `NodeView` object.
 
@@ -836,7 +904,7 @@ class ObjectCatalogue:
         """
         return self.lookup(obj, add=True, raise_on_twins=raise_on_twins)
 
-    def _add(self, obj, lower_nodes):
+    def _add(self, obj: SplineObject, lower_nodes: list[tuple[TopologicalNode, ...]]) -> NodeView:
         node = TopologicalNode(obj, lower_nodes, index=self.count)
         self.count += 1
         # Assign the new node to each possible permutation of lower-order
@@ -852,16 +920,19 @@ class ObjectCatalogue:
     __call__ = add
     __getitem__ = lookup
 
-    def top_nodes(self):
+    def top_nodes(self) -> list[TopologicalNode]:
         """Return all nodes of the highest parametric dimension."""
         return self.nodes(self.pardim)
 
-    def nodes(self, pardim):
+    def nodes(self, pardim: int) -> list[TopologicalNode]:
         """Return all nodes of a given parametric dimension."""
         if self.pardim == pardim:
             if self.pardim > 0:
+                assert isinstance(self.lower, ObjectCatalogue)
                 return list(uniquify(chain.from_iterable(self.internal.values())))
-            return list(uniquify(self.lower.values()))
+            lower = cast("VertexDict[TopologicalNode]", self.lower)
+            return list(uniquify(lower.values()))
+        assert isinstance(self.lower, ObjectCatalogue)
         return self.lower.nodes(pardim)
 
 
@@ -870,7 +941,19 @@ class ObjectCatalogue:
 
 
 class SplineModel:
-    def __init__(self, pardim=3, dimension=3, objs=[], force_right_hand=False):
+    pardim: int
+    dimension: int
+    force_right_hand: bool
+    cataloge: ObjectCatalogue
+    names: dict[str, SplineObject]
+
+    def __init__(
+        self,
+        pardim: int = 3,
+        dimension: int = 3,
+        objs: Sequence[SplineObject] | None = None,
+        force_right_hand: bool = False,
+    ) -> None:
         self.pardim = pardim
         self.dimension = dimension
 
@@ -882,45 +965,49 @@ class SplineModel:
 
         self.catalogue = ObjectCatalogue(pardim)
         self.names = {}
-        self.add(objs)
+        if objs is not None:
+            self.add(objs)
 
-    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]):
-        catalogue = self.catalogue
+    def add_callback(self, event: str, callback: Callable[[TopologicalNode], None]) -> None:
+        catalogue: ObjectCatalogue | VertexDict[TopologicalNode] = self.catalogue
         while isinstance(catalogue, ObjectCatalogue):
             catalogue.add_callback(event, callback)
             catalogue = catalogue.lower
 
-    def add(self, obj, name=None, raise_on_twins=True):
+    def add(
+        self,
+        obj: SplineObject | Sequence[SplineObject],
+        name: str | None = None,
+        raise_on_twins: bool | Sequence[int] = True,
+    ) -> None:
         if raise_on_twins is True:
             raise_on_twins = tuple(range(self.pardim + 1))
         elif raise_on_twins is False:
             raise_on_twins = ()
-        if isinstance(obj, SplineObject):
-            obj = [obj]
-        self._validate(obj)
-        self._generate(obj, raise_on_twins=raise_on_twins)
+        self._validate([obj] if isinstance(obj, SplineObject) else obj)
+        self._generate([obj] if isinstance(obj, SplineObject) else obj, raise_on_twins=raise_on_twins)
         if name and isinstance(obj, SplineObject):
             self.names[name] = obj
 
-    def __getitem__(self, obj):
+    def __getitem__(self, obj: SplineObject) -> NodeView:
         return self.catalogue[obj]
 
     def objects(self) -> Iterator[SplineObject]:
         for node in self.catalogue.top_nodes():
             yield node.obj
 
-    def boundary(self, name=None):
+    def boundary(self, name: str | None = None) -> Iterator[TopologicalNode]:
         for node in self.catalogue.nodes(self.pardim - 1):
             if node.nhigher == 1 and (name is None or name == node.name):
                 yield node
 
-    def assign_boundary(self, name):
+    def assign_boundary(self, name: str) -> None:
         """Give a name to all unnamed boundary nodes."""
         for node in self.boundary():
             if node.name is None:
                 node.name = name
 
-    def _validate(self, objs):
+    def _validate(self, objs: Sequence[SplineObject]) -> None:
         if any(p.dimension != self.dimension for p in objs):
             raise ValueError("Patches with different dimension added")
         if any(p.pardim > self.pardim for p in objs):
@@ -931,10 +1018,10 @@ class SplineModel:
                 indices = ", ".join(map(str, left_inds))
                 raise ValueError(f"Possibly left-handed patches detected, indexes {indices}")
 
-    def _generate(self, objs, **kwargs):
+    def _generate(self, objs: Sequence[SplineObject], raise_on_twins: Sequence[int]) -> None:
         for i, p in enumerate(objs):
             try:
-                self.catalogue.add(p, **kwargs)
+                self.catalogue.add(p, raise_on_twins=raise_on_twins)
             except OrientationError as err:
                 # TODO(Eivind): Mutating exceptions is fishy.
                 if len(err.args) > 1:
@@ -944,55 +1031,66 @@ class SplineModel:
                     )
                 raise err
 
-    def generate_cp_numbers(self):
-        index = 0
+    def generate_cp_numbers(self) -> None:
+        index: Int = 0
         for node in self.catalogue.top_nodes():
             index = node.generate_cp_numbers(index)
         self.ncps = index
         for node in self.catalogue.top_nodes():
             node.read_cp_numbers()
 
-    def generate_cell_numbers(self):
-        index = 0
+    def generate_cell_numbers(self) -> None:
+        index: Int = 0
         for node in self.catalogue.top_nodes():
             index = node.generate_cell_numbers(index)
         self.ncells = index
 
-    def cps(self):
+    def cps(self) -> FloatArray:
         cps = np.zeros((self.ncps, self.dimension))
         for node in self.catalogue.top_nodes():
+            assert node.cp_numbers is not None
             indices = node.cp_numbers.reshape(-1)
             values = node.obj.controlpoints.reshape(-1, self.dimension)
             cps[indices] = values
         return cps
 
-    def faces(self):
+    def faces(self) -> FaceArray:
         assert self.pardim == 3
         faces = list(chain.from_iterable(node.faces() for node in self.catalogue.top_nodes()))
-        return np.hstack(faces)
+        return np.hstack(faces).view(FaceArray)
 
-    def summary(self):
-        c = self.catalogue
+    def summary(self) -> None:
+        c: ObjectCatalogue | VertexDict[TopologicalNode] = self.catalogue
         while isinstance(c, ObjectCatalogue):
             print(f"Dim {c.pardim}: {len(c.top_nodes())}")
             c = c.lower
 
-    def write_ifem(self, filename):
+    def write_ifem(self, filename: str) -> None:
         IFEMWriter(self).write(filename)
 
 
-IFEMConnection = namedtuple("IFEMConnection", ["master", "slave", "midx", "sidx", "orient"])
+@dataclass
+class IFEMConnection:
+    master: int
+    slave: int
+    midx: int
+    sidx: int
+    orient: int
 
 
 class IFEMWriter:
-    def __init__(self, model):
+    model: SplineModel
+    nodes: list[TopologicalNode]
+    node_ids: dict[TopologicalNode, int]
+
+    def __init__(self, model: SplineModel) -> None:
         self.model = model
 
         # List the nodes so that the order is deterministic
         self.nodes = list(model.catalogue.top_nodes())
         self.node_ids = {node: i for i, node in enumerate(self.nodes)}
 
-    def connections(self):
+    def connections(self) -> Iterator[IFEMConnection]:
         p = self.model.pardim
 
         # For every object in the model...
@@ -1037,7 +1135,7 @@ class IFEMWriter:
                             orient=orientation.ifem_format,
                         )
 
-    def write(self, filename):
+    def write(self, filename: str) -> None:
         lines = [
             "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
             "<topology>",
@@ -1067,11 +1165,12 @@ class IFEMWriter:
         )
 
         for name in names:
-            entries = {}
+            entries: dict[int, set[int]] = {}
             for node in self.model.catalogue.nodes(self.model.pardim - 1):
                 if node.name != name:
                     continue
                 parent = node.owner
+                assert parent is not None
                 sub_idx = next(
                     idx for idx, sub in enumerate(parent.lower_nodes[self.model.pardim - 1]) if sub is node
                 )
