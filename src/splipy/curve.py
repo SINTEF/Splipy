@@ -9,7 +9,7 @@ import scipy.sparse.linalg as splinalg
 from . import state
 from .basis import BSplineBasis
 from .splineobject import SplineObject
-from .utils import ensure_listlike, is_singleton
+from .utils import ensure_listlike, is_singleton, refine_until_converged
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -383,10 +383,6 @@ class Curve(SplineObject):
 
         """
         knots = self.knots(0)
-        quadrature_points = self.order(0) + 1
-        if len(knots) == 2:
-            quadrature_points *= 2
-        (x, w) = np.polynomial.legendre.leggauss(quadrature_points)
         # keep only integration boundaries within given start (t0) and stop (t1) interval
         if t0 is not None:
             t0 = float(t0)
@@ -399,13 +395,21 @@ class Curve(SplineObject):
             knots = knots[:i]
             knots = np.insert(knots, i, t1)
 
-        t = np.array(
-            [(x + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots[:-1], knots[1:])], dtype=np.float64
-        ).flatten()
-        w = np.array([w / 2 * (t1 - t0) for t0, t1 in zip(knots[:-1], knots[1:])], dtype=np.float64).flatten()
-        dx = self.derivative(t)
-        detJ = np.sqrt(np.sum(dx**2, axis=1))
-        return float(np.dot(detJ, w))
+        base_points = self.order(0) + 1
+
+        def integrate(mult: int) -> float:
+            (x, w) = np.polynomial.legendre.leggauss(base_points * mult)
+            t = np.array(
+                [(x + 1) / 2 * (b - a) + a for a, b in zip(knots[:-1], knots[1:])], dtype=np.float64
+            ).flatten()
+            wq = np.array(
+                [w / 2 * (b - a) for a, b in zip(knots[:-1], knots[1:])], dtype=np.float64
+            ).flatten()
+            dx = self.derivative(t)
+            detJ = np.sqrt(np.sum(dx**2, axis=1))
+            return float(np.dot(detJ, wq))
+
+        return float(refine_until_converged(integrate))
 
     def rebuild(self, p: int, n: int) -> Curve:
         """Creates an approximation to this curve by resampling it using a
@@ -525,17 +529,25 @@ class Curve(SplineObject):
             print('|| e ||_max = ', maxerr)
         """
         knots = self.knots(0)
-        (x, w) = np.polynomial.legendre.leggauss(self.order(0) + 1)
-        err2: list[float] = []
-        err_inf = 0.0
-        for t0, t1 in zip(knots[:-1], knots[1:]):  # for all knot spans
-            tg = (x + 1) / 2 * (t1 - t0) + t0  # evaluation points
-            wg = w / 2 * (t1 - t0)  # integration weights
-            error = self(tg) - target(tg)  # [x-xh, y-yh, z-zh]
-            error = np.sum(error**2, axis=1)  # |x-xh|^2
-            err2.append(np.dot(error, wg))  # integrate over domain
-            err_inf = max(np.max(np.sqrt(error)), err_inf)
-        return (np.array(err2, dtype=np.float64), err_inf)
+        base_points = self.order(0) + 1
+        sup: dict[str, float] = {}
+
+        def integrate(mult: int) -> FloatArray:
+            (x, w) = np.polynomial.legendre.leggauss(base_points * mult)
+            err2: list[float] = []
+            err_inf = 0.0
+            for t0, t1 in zip(knots[:-1], knots[1:]):  # for all knot spans
+                tg = (x + 1) / 2 * (t1 - t0) + t0  # evaluation points
+                wg = w / 2 * (t1 - t0)  # integration weights
+                error = self(tg) - target(tg)  # [x-xh, y-yh, z-zh]
+                error = np.sum(error**2, axis=1)  # |x-xh|^2
+                err2.append(np.dot(error, wg))  # integrate over domain
+                err_inf = max(np.max(np.sqrt(error)), err_inf)
+            sup["inf"] = err_inf
+            return np.array(err2, dtype=np.float64)
+
+        err2 = refine_until_converged(integrate)
+        return (err2, sup["inf"])
 
     def get_antiderivative_curve(self, constant: ArrayLike | None = None) -> Curve:
         """Compute the antiderivative (integral) of the curve.

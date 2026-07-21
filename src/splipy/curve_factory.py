@@ -15,7 +15,7 @@ from numpy.linalg import norm
 from . import state
 from .basis import BSplineBasis
 from .curve import Curve
-from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from .utils import flip_and_move_plane_geometry, refine_until_converged, rotate_local_x_axis
 
 if TYPE_CHECKING:
     from .typing import Scalar
@@ -733,8 +733,6 @@ def arc_length_parameterize(curve, samples=1000, tol=0.1, maximum_iterations=20)
     """
 
     def arc_length_table_gauss(curve, t_test, respect_knots=True):
-        x, w = np.polynomial.legendre.leggauss(curve.order(0) + 1)
-
         t_test = np.asarray(t_test, dtype=float)  # converts to numpy array if needed
         t_orig = t_test  # keep a reference to the original points
 
@@ -745,16 +743,18 @@ def arc_length_parameterize(curve, samples=1000, tol=0.1, maximum_iterations=20)
 
         a = t_test[:-1]
         b = t_test[1:]
+        base_points = curve.order(0) + 1
 
-        t_nodes = (x[None, :] + 1) / 2 * (b - a)[:, None] + a[:, None]
-        w_nodes = w[None, :] / 2 * (b - a)[:, None]
+        def integrate(mult: int) -> np.ndarray:
+            x, w = np.polynomial.legendre.leggauss(base_points * mult)
+            t_nodes = (x[None, :] + 1) / 2 * (b - a)[:, None] + a[:, None]
+            w_nodes = w[None, :] / 2 * (b - a)[:, None]
+            speed = np.linalg.norm(curve.derivative(t_nodes.ravel()), axis=1)
+            speed = speed.reshape(t_nodes.shape)
+            span_lengths = np.sum(speed * w_nodes, axis=1)
+            return np.concatenate(([0.0], np.cumsum(span_lengths)))
 
-        t_flat = t_nodes.ravel()
-        speed = np.linalg.norm(curve.derivative(t_flat), axis=1)
-        speed = speed.reshape(t_nodes.shape)
-
-        span_lengths = np.sum(speed * w_nodes, axis=1)
-        s_at_t_test = np.concatenate(([0.0], np.cumsum(span_lengths)))
+        s_at_t_test = refine_until_converged(integrate)
 
         # pull out only the cumulative lengths at the original t_test points
         idx = np.searchsorted(t_test, t_orig)

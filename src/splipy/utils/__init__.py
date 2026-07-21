@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence, Sized
+from collections.abc import Callable, Iterator, Sequence, Sized
 from itertools import combinations, product, repeat
 from math import atan2, sqrt
 from typing import TYPE_CHECKING, SupportsFloat, TypeVar, Unpack
@@ -333,6 +333,31 @@ def raise_order_1D(n, k, T, P, m, periodic):
     return Qt[:, :, 0]
 
 
+def refine_until_converged(
+    integrate: Callable[[int], FloatArray | float],
+    *,
+    rtol: float = 1e-10,
+    max_refinements: int = 6,
+) -> FloatArray:
+    """Evaluate a Gauss-Legendre quadrature at increasing resolution until it stabilises.
+
+    ``integrate(mult)`` must return the integral (a scalar or a per-span array) computed
+    with ``mult`` times the base number of points per knot span. The point count is
+    doubled until two successive estimates agree to ``rtol``, then the finer one is
+    returned. Arc-length and surface-area integrands are square roots of polynomials, so
+    no fixed-order rule integrates them exactly (#188); refining until convergence
+    recovers the true integral to tolerance while staying exact for polynomial integrands.
+    """
+    result = np.asarray(integrate(1), dtype=np.float64)
+    mult = 1
+    for _ in range(max_refinements):
+        mult *= 2
+        prev, result = result, np.asarray(integrate(mult), dtype=np.float64)
+        if np.max(np.abs(result - prev)) <= rtol * np.max(np.abs(result)):
+            break
+    return result
+
+
 __all__ = [
     "nutils",
     "refinement",
@@ -353,4 +378,5 @@ __all__ = [
     "flip_and_move_plane_geometry",
     "reshape",
     "raise_order_1D",
+    "refine_until_converged",
 ]
