@@ -8,7 +8,7 @@ import numpy as np
 from .basis import BSplineBasis
 from .curve import Curve
 from .splineobject import SplineObject, evaluate
-from .utils import check_direction, ensure_listlike, is_singleton, sections
+from .utils import check_direction, ensure_listlike, is_singleton, refine_until_converged, sections
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -250,34 +250,40 @@ class Surface(SplineObject):
     def area(self) -> float:
         """Computes the area of the surface in geometric space"""
 
-        w1: FloatArray
-        w2: FloatArray
-
-        # fetch integration points
-        (x1, w1) = np.polynomial.legendre.leggauss(self.order(0) + 1)
-        (x2, w2) = np.polynomial.legendre.leggauss(self.order(1) + 1)
-
-        # map points to parametric coordinates (and update the weights)
         (knots1, knots2) = self.knots()
-        u = np.array([(x1 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots1[:-1], knots1[1:])])
-        w1 = np.array([w1 / 2 * (t1 - t0) for t0, t1 in zip(knots1[:-1], knots1[1:])])
-        v = np.array([(x2 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots2[:-1], knots2[1:])])
-        w2 = np.array([w2 / 2 * (t1 - t0) for t0, t1 in zip(knots2[:-1], knots2[1:])])
+        base1 = self.order(0) + 1
+        base2 = self.order(1) + 1
 
-        # wrap everything to vectors
-        u = np.ndarray.flatten(u)
-        v = np.ndarray.flatten(v)
-        w1 = np.ndarray.flatten(w1)
-        w2 = np.ndarray.flatten(w2)
+        def integrate(mult: int) -> float:
+            w1: FloatArray
+            w2: FloatArray
 
-        # compute all quantities of interest (i.e. the jacobian)
-        du = self.derivative(u, v, d=(1, 0))
-        dv = self.derivative(u, v, d=(0, 1))
+            # fetch integration points
+            (x1, w1) = np.polynomial.legendre.leggauss(base1 * mult)
+            (x2, w2) = np.polynomial.legendre.leggauss(base2 * mult)
 
-        J = du[..., 0] * dv[..., 1] - du[..., 1] * dv[..., 0] if self.dimension == 2 else np.cross(du, dv)
+            # map points to parametric coordinates (and update the weights)
+            u = np.array([(x1 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots1[:-1], knots1[1:])])
+            w1 = np.array([w1 / 2 * (t1 - t0) for t0, t1 in zip(knots1[:-1], knots1[1:])])
+            v = np.array([(x2 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots2[:-1], knots2[1:])])
+            w2 = np.array([w2 / 2 * (t1 - t0) for t0, t1 in zip(knots2[:-1], knots2[1:])])
 
-        J = np.sqrt(np.sum(J**2, axis=2)) if self.dimension == 3 else np.abs(J)
-        return float(w1.dot(J).dot(w2))
+            # wrap everything to vectors
+            u = np.ndarray.flatten(u)
+            v = np.ndarray.flatten(v)
+            w1 = np.ndarray.flatten(w1)
+            w2 = np.ndarray.flatten(w2)
+
+            # compute all quantities of interest (i.e. the jacobian)
+            du = self.derivative(u, v, d=(1, 0))
+            dv = self.derivative(u, v, d=(0, 1))
+
+            J = du[..., 0] * dv[..., 1] - du[..., 1] * dv[..., 0] if self.dimension == 2 else np.cross(du, dv)
+
+            J = np.sqrt(np.sum(J**2, axis=2)) if self.dimension == 3 else np.abs(J)
+            return float(w1.dot(J).dot(w2))
+
+        return float(refine_until_converged(integrate))
 
     def edges(self) -> tuple[Curve, Curve, Curve, Curve]:
         """Return the four edge curves in (parametric) order: umin, umax, vmin, vmax

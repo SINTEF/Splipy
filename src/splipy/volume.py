@@ -8,7 +8,7 @@ import numpy as np
 from .basis import BSplineBasis
 from .splineobject import SplineObject
 from .surface import Surface
-from .utils import check_direction, ensure_listlike, sections
+from .utils import check_direction, ensure_listlike, refine_until_converged, sections
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -137,43 +137,50 @@ class Volume(SplineObject):
     def volume(self) -> float:
         """Computes the volume of the object in geometric space"""
 
-        w1: FloatArray
-        w2: FloatArray
-        w3: FloatArray
-
-        # fetch integration points
-        (x1, w1) = np.polynomial.legendre.leggauss(self.order(0) + 1)
-        (x2, w2) = np.polynomial.legendre.leggauss(self.order(1) + 1)
-        (x3, w3) = np.polynomial.legendre.leggauss(self.order(2) + 1)
-        # map points to parametric coordinates (and update the weights)
         (knots1, knots2, knots3) = self.knots()
-        u = np.array([(x1 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots1[:-1], knots1[1:])])
-        w1 = np.array([w1 / 2 * (t1 - t0) for t0, t1 in zip(knots1[:-1], knots1[1:])])
-        v = np.array([(x2 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots2[:-1], knots2[1:])])
-        w2 = np.array([w2 / 2 * (t1 - t0) for t0, t1 in zip(knots2[:-1], knots2[1:])])
-        w = np.array([(x3 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots3[:-1], knots3[1:])])
-        w3 = np.array([w3 / 2 * (t1 - t0) for t0, t1 in zip(knots3[:-1], knots3[1:])])
+        base1 = self.order(0) + 1
+        base2 = self.order(1) + 1
+        base3 = self.order(2) + 1
 
-        # wrap everything to vectors
-        u = np.ndarray.flatten(u)
-        v = np.ndarray.flatten(v)
-        w = np.ndarray.flatten(w)
-        w1 = np.ndarray.flatten(w1)
-        w2 = np.ndarray.flatten(w2)
-        w3 = np.ndarray.flatten(w3)
+        def integrate(mult: int) -> float:
+            w1: FloatArray
+            w2: FloatArray
+            w3: FloatArray
 
-        # compute all quantities of interest (i.e. the jacobian)
-        du = self.derivative(u, v, w, d=(1, 0, 0))
-        dv = self.derivative(u, v, w, d=(0, 1, 0))
-        dw = self.derivative(u, v, w, d=(0, 0, 1))
+            # fetch integration points
+            (x1, w1) = np.polynomial.legendre.leggauss(base1 * mult)
+            (x2, w2) = np.polynomial.legendre.leggauss(base2 * mult)
+            (x3, w3) = np.polynomial.legendre.leggauss(base3 * mult)
+            # map points to parametric coordinates (and update the weights)
+            u = np.array([(x1 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots1[:-1], knots1[1:])])
+            w1 = np.array([w1 / 2 * (t1 - t0) for t0, t1 in zip(knots1[:-1], knots1[1:])])
+            v = np.array([(x2 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots2[:-1], knots2[1:])])
+            w2 = np.array([w2 / 2 * (t1 - t0) for t0, t1 in zip(knots2[:-1], knots2[1:])])
+            w = np.array([(x3 + 1) / 2 * (t1 - t0) + t0 for t0, t1 in zip(knots3[:-1], knots3[1:])])
+            w3 = np.array([w3 / 2 * (t1 - t0) for t0, t1 in zip(knots3[:-1], knots3[1:])])
 
-        c1 = dv[..., 1] * dw[..., 2] - dv[..., 2] * dw[..., 1]
-        c2 = dv[..., 0] * dw[..., 2] - dv[..., 2] * dw[..., 0]
-        c3 = dv[..., 0] * dw[..., 1] - dv[..., 1] * dw[..., 0]
+            # wrap everything to vectors
+            u = np.ndarray.flatten(u)
+            v = np.ndarray.flatten(v)
+            w = np.ndarray.flatten(w)
+            w1 = np.ndarray.flatten(w1)
+            w2 = np.ndarray.flatten(w2)
+            w3 = np.ndarray.flatten(w3)
 
-        J = du[:, :, :, 0] * c1 - du[:, :, :, 1] * c2 + du[:, :, :, 2] * c3
+            # compute all quantities of interest (i.e. the jacobian)
+            du = self.derivative(u, v, w, d=(1, 0, 0))
+            dv = self.derivative(u, v, w, d=(0, 1, 0))
+            dw = self.derivative(u, v, w, d=(0, 0, 1))
 
-        return float(np.abs(J).dot(w3).dot(w2).dot(w1))
+            c1 = dv[..., 1] * dw[..., 2] - dv[..., 2] * dw[..., 1]
+            c2 = dv[..., 0] * dw[..., 2] - dv[..., 2] * dw[..., 0]
+            c3 = dv[..., 0] * dw[..., 1] - dv[..., 1] * dw[..., 0]
+
+            J = du[:, :, :, 0] * c1 - du[:, :, :, 1] * c2 + du[:, :, :, 2] * c3
+
+            return float(np.abs(J).dot(w3).dot(w2).dot(w1))
+
+        return float(refine_until_converged(integrate))
 
     def rebuild(self, p: int | Sequence[int], n: int | Sequence[int]) -> Volume:
         """Creates an approximation to this volume by resampling it using
