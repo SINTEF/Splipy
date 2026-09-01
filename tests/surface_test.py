@@ -672,9 +672,7 @@ class TestSurface(unittest.TestCase):
         self.assertEqual(merged.shape, (3, 3))
         self.assertEqual(merged.order(direction=0), 2)
         self.assertEqual(merged.rational, False)
-        self.assertAlmostEqual(
-            np.linalg.norm(merged.knots(0, with_multiplicities=True) - expected_knot), 0.0
-        )
+        self.assertAlmostEqual(np.linalg.norm(merged.knots(0, with_multiplicities=True) - expected_knot), 0.0)
 
         u = np.linspace(0, 1, 5)
         v = np.linspace(0, 1, 5)

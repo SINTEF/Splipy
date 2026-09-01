@@ -82,6 +82,36 @@ def rotation_matrix(theta, axis):
     )
 
 
+def rot(v: FloatArray, theta: float) -> FloatArray:
+    """Rotate a 2D vector by an angle.
+
+    :param array-like v: 2D vector
+    :param float theta: Rotation angle in radians (counterclockwise)
+    :return: The rotated vector
+    :rtype: numpy.array
+    """
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([c * v[0] - s * v[1], s * v[0] + c * v[1]])
+
+
+def angle_between(A: FloatArray, B: FloatArray, C: FloatArray) -> float:
+    """Compute the unsigned angle ABC in radians, with B as the vertex.
+
+    :param array-like A: First point
+    :param array-like B: Vertex point
+    :param array-like C: Second point
+    :return: The angle ABC, in the range [0, pi]
+    :rtype: float
+    """
+    BA = A - B
+    BC = C - B
+
+    dot = np.dot(BA, BC)
+    det = BA[0] * BC[1] - BA[1] * BC[0]
+
+    return float(np.arctan2(abs(det), dot))
+
+
 def sections(src_dim, tgt_dim):
     """Generate all boundary sections from a source dimension to a target
     dimension. For example, `sections(3,1)` generates all edges on a volume.
