@@ -644,6 +644,115 @@ class TestSurface(unittest.TestCase):
             self.assertEqual(s.bases[0].continuity(0.2), 2)
             self.assertEqual(s.bases[0].continuity(0.9), 1)
 
+    def test_append(self):
+        # two bilinear patches sharing the edge u=1 (surf1) / u=0 (surf2)
+        b1 = BSplineBasis(2, [0, 0, 1, 1])
+        b2 = BSplineBasis(3, [0, 0, 0, 1, 1, 1])
+        cp1 = np.array(
+            [
+                [[0, 0], [0, 1], [0, 2]],
+                [[1, 0], [1, 1], [1, 2]],
+            ],
+            dtype=float,
+        )
+        surf1 = Surface(b1, b2, cp1, raw=True)
+
+        cp2 = np.array(
+            [
+                [[1, 0], [1, 1], [1, 2]],
+                [[2, 0], [2, 1], [2, 2]],
+            ],
+            dtype=float,
+        )
+        surf2 = Surface(b1.clone(), b2.clone(), cp2, raw=True)
+
+        merged = surf1.clone().append(surf2, direction=0)
+
+        expected_knot = [0, 0, 1, 2, 2]
+        self.assertEqual(merged.shape, (3, 3))
+        self.assertEqual(merged.order(direction=0), 2)
+        self.assertEqual(merged.rational, False)
+        self.assertAlmostEqual(
+            np.linalg.norm(merged.knots(0, with_multiplicities=True) - expected_knot), 0.0
+        )
+
+        u = np.linspace(0, 1, 5)
+        v = np.linspace(0, 1, 5)
+        self.assertAlmostEqual(np.linalg.norm(merged(u, v) - surf1(u, v)), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(merged(u + 1.0, v) - surf2(u, v)), 0.0)
+
+    def test_append_direction0_mismatched_transverse(self):
+        # append along u (direction=0); v-direction order and knot vector
+        # differ between the two surfaces and should be reconciled
+        # automatically
+        b1 = BSplineBasis(2, [0, 0, 1, 1])
+        b2a = BSplineBasis(2, [0, 0, 1, 1])
+        cp1 = np.array(
+            [
+                [[0, 0], [0, 1]],
+                [[1, 0], [1, 1]],
+            ],
+            dtype=float,
+        )
+        surf1 = Surface(b1, b2a, cp1, raw=True)
+
+        b2b = BSplineBasis(3, [0, 0, 0, 0.5, 1, 1, 1])
+        cp2 = np.array(
+            [
+                [[1, 0], [1, 0.25], [1, 0.75], [1, 1]],
+                [[2, 0], [2, 0.25], [2, 0.75], [2, 1]],
+            ],
+            dtype=float,
+        )
+        surf2 = Surface(b1.clone(), b2b, cp2, raw=True)
+
+        merged = surf1.clone().append(surf2, direction=0)
+
+        expected_knot_u = [0, 0, 1, 2, 2]
+        expected_knot_v = [0, 0, 0, 0.5, 1, 1, 1]
+        self.assertEqual(merged.order(), (2, 3))
+        self.assertAlmostEqual(
+            np.linalg.norm(merged.knots(0, with_multiplicities=True) - expected_knot_u), 0.0
+        )
+        self.assertAlmostEqual(
+            np.linalg.norm(merged.knots(1, with_multiplicities=True) - expected_knot_v), 0.0
+        )
+
+        u = np.linspace(0, 1, 5)
+        v = np.linspace(0, 1, 5)
+        self.assertAlmostEqual(np.linalg.norm(merged(u, v) - surf1(u, v)), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(merged(u + 1.0, v) - surf2(u, v)), 0.0)
+
+    def test_append_mismatched_transverse(self):
+        # append along v (direction=1); u-direction discretization differs
+        # between the two surfaces and should be reconciled automatically
+        surf1 = Surface(BSplineBasis(2), BSplineBasis(2), [[0, 0], [1, 0], [0, 1], [1, 1]])
+
+        b1b = BSplineBasis(3)
+        cp2 = np.array(
+            [
+                [[0, 1], [0, 2]],
+                [[0.5, 1], [0.5, 2]],
+                [[1, 1], [1, 2]],
+            ],
+            dtype=float,
+        )
+        surf2 = Surface(b1b, BSplineBasis(2), cp2, raw=True)
+
+        merged = surf1.clone().append(surf2, direction=1)
+
+        self.assertEqual(merged.order(), (3, 2))
+        u = np.linspace(0, 1, 5)
+        v = np.linspace(0, 1, 5)
+        self.assertAlmostEqual(np.linalg.norm(merged(u, v) - surf1(u, v)), 0.0)
+        self.assertAlmostEqual(np.linalg.norm(merged(u, v + 1.0) - surf2(u, v)), 0.0)
+
+    def test_append_periodic_raises(self):
+        surf1 = sf.cylinder()
+        surf2 = surf1.clone()
+        with self.assertRaises(RuntimeError):
+            surf1.append(surf2, direction=0)
+
     def test_center(self):
         # make an ellipse at (2,1)
         surf = sf.disc(3)
