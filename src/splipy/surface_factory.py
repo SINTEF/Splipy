@@ -9,13 +9,19 @@ from typing import TYPE_CHECKING, Literal, cast, overload
 
 import numpy as np
 
-from splipy.utils.curve import curve_length_parametrization
+from splipy.utils.curve import (
+    Feature,
+    curve_length_parametrization,
+    find_all_features,
+    normal,
+    offset_points,
+)
 
 from . import curve_factory, state
 from .basis import BSplineBasis
 from .curve import Curve
 from .surface import Surface
-from .utils import flip_and_move_plane_geometry, rotate_local_x_axis
+from .utils import angle_between, flip_and_move_plane_geometry, rot, rotate_local_x_axis
 from .utils.nutils import controlpoints, degree, multiplicities
 
 if TYPE_CHECKING:
@@ -591,7 +597,169 @@ def finitestrain_patch(bottom: Curve, right: Curve, top: Curve, left: Curve) -> 
     return srf
 
 
-def thicken(curve: Curve, amount: Scalar | Callable[..., float]) -> Surface:
+def _create_surfaces(
+    curves: list[Curve],
+    features: list[Feature],
+    offset: float,
+) -> list[Surface]:
+    """Given list of curves that make up the original curve, a thicken surface is made for each curve part.
+
+    For each curve, the surface is made based on if it is a feature section in need of editing, or if it is a
+    regular part of the curve where thicken can be used directly.
+
+    :param list[Curve] curves: list of input curves
+    :param list[Feature] features: list of features that must be edited
+    :param float offset: the offset to make the thickened curve
+    :return: list of thickened surfaces
+    :rtype: list[Surface]
+    """
+    if not curves:
+        return []
+
+    expected_features = len(curves) // 2
+    if len(features) != expected_features:
+        raise ValueError(f"Expected {expected_features} features, got {len(features)}")
+
+    def endpoint_override(feature: Feature) -> tuple[FloatArray, str]:
+        return cast("tuple[FloatArray, str]", (feature.point, feature.side))
+
+    surfaces = []
+    last_curve = len(curves) - 1
+
+    for i, curve in enumerate(curves):
+        # if edit curve
+        if i % 2:
+            surfaces.append(_make_edit_surface(curve, features[i // 2], offset))
+            continue
+
+        basis = curve.bases[0]
+        greville = basis.greville()
+
+        # We move one end control point so it perfectly aligns with the next edited section's corner point.
+        change_1 = None if i == 0 else endpoint_override(features[i // 2 - 1])
+        change_2 = None if i == last_curve else endpoint_override(features[i // 2])
+
+        left_points, right_points = offset_points(curve, greville, offset, change_1, change_2)
+
+        surfaces.append(
+            edge_curves(
+                curve_factory.interpolate(left_points, basis),
+                curve_factory.interpolate(right_points, basis),
+            )
+        )
+
+    return surfaces
+
+
+def _make_edit_surface(
+    curve: Curve,
+    feature: Feature,
+    offset: float,
+) -> Surface:
+    """Given a feature, the function creates the edited surface element corresponding to this curve section.
+
+    :param Curve curve: curve of the section that needs editing
+    :param Feature feature: the feature corresponding to this curve section
+    :param float offset: the offset distance
+    :return: edited Surface element corresponding to thickening the curve section
+    :rtype: Surface
+    """
+    if feature.side not in {"left", "right"}:
+        raise ValueError(f"Unknown side: {feature.side}")
+    point = cast("FloatArray", feature.point)
+
+    if feature.kind == "kink":
+        order = curve.order()[0]
+        T1 = cast("float", feature.T1)
+        T2 = cast("float", feature.T2)
+        sign = 1 if feature.side == "left" else -1
+
+        arc_start = curve.evaluate(T1) + sign * offset * normal(curve, T1)
+        arc_end = curve.evaluate(T2) + sign * offset * normal(curve, T2)
+        total_angle = angle_between(arc_start, point, arc_end)
+
+        n_interpolation_points = 3  # There should be an option to set this value, or set the boundaries below
+
+        if 0 < total_angle < np.deg2rad(20):
+            n_interpolation_points = 0
+        elif total_angle < np.deg2rad(35):
+            n_interpolation_points = 1
+        elif total_angle < np.deg2rad(70):
+            n_interpolation_points = 2
+        elif total_angle < np.deg2rad(130):
+            n_interpolation_points = 3
+        else:
+            n_interpolation_points = 4
+
+        # Create the arc points used to make the corner curve
+        angles = np.linspace(0.0, total_angle, n_interpolation_points + 2)[1:-1]
+        v0 = arc_start - point
+        arc_points = np.array([arc_start] + [point + rot(v0, sign * angle) for angle in angles] + [arc_end])
+
+        spline = curve_factory.fit_points(arc_points).rebuild(p=order, n=len(arc_points))
+
+        # Create left and right offset curve. The corner side is a point
+        if feature.side == "left":
+            left_spline = spline.clone()
+            left_spline[:] = point
+            right_spline = spline
+        else:
+            left_spline = spline
+            right_spline = spline.clone()
+            right_spline[:] = point
+
+    elif feature.kind == "curvature":
+        basis = curve.bases[0]
+        greville = basis.greville()
+
+        left_points, right_points = offset_points(curve, greville, offset)
+
+        # Create left and right offset curve. The corner side is a point
+        if feature.side == "left":
+            spline = curve_factory.interpolate(right_points, basis)
+            left_spline = spline.clone()
+            left_spline[:] = point
+            right_spline = spline
+        else:
+            spline = curve_factory.interpolate(left_points, basis)
+            left_spline = spline
+            right_spline = spline.clone()
+            right_spline[:] = point
+
+    else:
+        raise ValueError(f"Unknown feature kind '{feature.kind}'")
+
+    return edge_curves(left_spline, right_spline)
+
+
+def _thicken_fix_corners(curve: Curve, amount: float) -> Surface:
+    """Thicken a 2D curve into a surface, locally re-fitting the offset curves at sharp corners
+    and high-curvature turns to avoid self-intersection.
+
+    :param Curve curve: The generating curve (must be 2D)
+    :param float amount: The (one-sided) thickening offset, matching :func:`thicken`'s *amount*
+    :return: Surrounding surface
+    :rtype: Surface
+    """
+    curve = curve.clone()
+    features = find_all_features(curve, amount)
+
+    splitting_points: list[float] = []
+    for feature in features:
+        splitting_points.append(cast("float", feature.T1))
+        splitting_points.append(cast("float", feature.T2))
+
+    curves = cast("list[Curve]", curve.split(splitting_points))
+    surfaces = _create_surfaces(curves, features, amount)
+
+    merged_surface = surfaces[0]
+    for surf in surfaces[1:]:
+        merged_surface = merged_surface.append(surf)
+
+    return merged_surface
+
+
+def thicken(curve: Curve, amount: Scalar | Callable[..., float], *, fix_corners: bool = False) -> Surface:
     """Generate a surface by adding thickness to a curve.
 
     - For 2D curves this will generate a 2D planar surface with the curve
@@ -607,9 +775,20 @@ def thicken(curve: Curve, amount: Scalar | Callable[..., float]) -> Surface:
     :param Curve curve: The generating curve
     :param amount: The amount of thickness, either constant or variable (if
         variable, the function must accept parameters named *x*, *y*, *z* and/or *t*)
+    :param fix_corners: If true, and the curve is 2D, detect sharp corners and high-curvature
+        turns and locally re-fit the offset curves there to avoid self-intersection; slower
+        than the default but produces cleaner results near corners. Requires a constant
+        (non-callable) *amount*.
     :return: Surrounding surface
     :rtype: Surface
     """
+    if fix_corners:
+        if curve.dimension != 2:
+            raise ValueError("fix_corners=True is only supported for 2D curves")
+        if not isinstance(amount, (int, float)):
+            raise TypeError("fix_corners=True does not support variable (callable) thickness")
+        return _thicken_fix_corners(curve, float(amount))
+
     # NOTES: There are several pitfalls with this function
     #  * self intersection:
     #     could be handled more gracefully, but is here ignored
@@ -628,9 +807,8 @@ def thicken(curve: Curve, amount: Scalar | Callable[..., float]) -> Surface:
     if curve.dimension == 2:
         # linear parametrization across domain
         n = len(curve)
-        left_points = np.zeros((n, 2))
-        right_points = np.zeros((n, 2))
-        BSplineBasis(2)
+        left_points: FloatArray = np.zeros((n, 2))
+        right_points: FloatArray = np.zeros((n, 2))
 
         x = curve.evaluate(t)  # curve at interpolation points
         v = curve.derivative(t)  # velocity at interpolation points
@@ -669,10 +847,12 @@ def thicken(curve: Curve, amount: Scalar | Callable[..., float]) -> Surface:
                 left_points[i, 1] = x[i, 1] - v[i, 0] * dist  # y at top
         else:
             a = float(cast("Scalar", amount))
-            right_points[:, 0] = x[:, 0] - v[:, 1] * a  # x at bottom
-            right_points[:, 1] = x[:, 1] + v[:, 0] * a  # y at bottom
-            left_points[:, 0] = x[:, 0] + v[:, 1] * a  # x at top
-            left_points[:, 1] = x[:, 1] - v[:, 0] * a  # y at top
+            # note: offset_points()'s "left"/"right" naming follows the curve's true
+            # left/right sides (rotate tangent +90/-90 degrees), which is the opposite
+            # of this function's (historical) "right_points"/"left_points" naming, so
+            # the two return values are assigned in swapped order here to preserve
+            # this function's existing output/orientation
+            right_points, left_points = offset_points(curve, t, a)
         # perform interpolation on each side
         right = curve_factory.interpolate(right_points, curve.bases[0])
         left = curve_factory.interpolate(left_points, curve.bases[0])

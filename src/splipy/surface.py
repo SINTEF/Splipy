@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from bisect import bisect_left
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, Self, cast
 
 import numpy as np
 
@@ -289,6 +289,87 @@ class Surface(SplineObject):
             "tuple[Curve, Curve, Curve, Curve]",
             tuple(self.section(*args) for args in sections(2, 1)),
         )
+
+    def append(self, surf: Surface, direction: Direction = 0) -> Self:
+        """Extend the surface by merging another surface to the end of it
+        in the given parametric direction.
+
+        The surfaces are glued together in a C0 fashion with enough
+        repeated knots. The function assumes that the edge of this surface
+        at the maximum end of *direction* perfectly matches the edge of
+        *surf* at the minimum end of the same direction. The transverse
+        (other) direction is made identical between the two surfaces first
+        (matching order and knot vector, reparametrized to (0, 1)), raising
+        order and inserting knots as needed.
+
+        :param Surface surf: Another surface
+        :param direction: The parametric direction to extend (0 or 'u' for
+            the first, 1 or 'v' for the second)
+        :type direction: int or str
+        :raises RuntimeError: If either surface is periodic in *direction*
+        :return: self
+        """
+        # ASSUMPTION: open knot vectors in the append direction
+
+        i = check_direction(direction, 2)
+        j = 1 - i
+
+        # error test input
+        if self.bases[i].periodic > -1 or surf.bases[i].periodic > -1:
+            raise RuntimeError("Cannot append with periodic surfaces")
+
+        # copy input surface so we don't change that one directly
+        extending_surf = surf.clone()
+
+        # make sure both are in the same space, have rational weights (if
+        # needed), and share an identical discretization in the transverse
+        # direction
+        Surface.make_splines_identical(self, extending_surf, direction=j)
+
+        # make sure both have the same discretization order in the append direction
+        p1 = self.order(i)
+        p2 = extending_surf.order(i)
+        if p1 < p2:
+            self.raise_order(p2 - p1, direction=i)
+        else:
+            extending_surf.raise_order(p1 - p2, direction=i)
+        p = max(p1, p2)
+
+        # build new knot vector by merging the two existing ones
+        old_knot = self.knots(direction=i, with_multiplicities=True)
+        add_knot = extending_surf.knots(direction=i, with_multiplicities=True)
+        # make sure that the new one starts where the old one stops
+        add_knot = add_knot - add_knot[0]
+        add_knot = add_knot + old_knot[-1]
+        new_knot = np.zeros(len(add_knot) + len(old_knot) - p - 1)
+        new_knot[: len(old_knot) - 1] = old_knot[:-1]
+        new_knot[len(old_knot) - 1 :] = add_knot[p:]
+
+        # build new control points by merging the two existing arrays along
+        # the append direction, dropping the duplicated boundary row/column
+        n1 = self.shape[i]
+        n2 = extending_surf.shape[i]
+        new_shape = list(self.controlpoints.shape)
+        new_shape[i] = n1 + n2 - 1
+        new_controlpoints = np.zeros(new_shape, dtype=np.float64)
+
+        self_slice: list[slice] = [slice(None)] * len(new_shape)
+        self_slice[i] = slice(0, n1)
+        new_controlpoints[tuple(self_slice)] = self.controlpoints
+
+        dest_slice: list[slice] = [slice(None)] * len(new_shape)
+        dest_slice[i] = slice(n1, n1 + n2 - 1)
+        src_slice: list[slice] = [slice(None)] * len(new_shape)
+        src_slice[i] = slice(1, n2)
+        new_controlpoints[tuple(dest_slice)] = extending_surf.controlpoints[tuple(src_slice)]
+
+        # update basis and controlpoints
+        new_bases = list(self.bases)
+        new_bases[i] = BSplineBasis(p, new_knot)
+        self.bases = new_bases
+        self.controlpoints = new_controlpoints
+
+        return self
 
     def const_par_curve(self, knot: Scalar, direction: Direction) -> Curve:
         """Get a Curve representation of the parametric line of some constant

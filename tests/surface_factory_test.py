@@ -410,6 +410,47 @@ class TestSurfaceFactory(unittest.TestCase):
                 self.assertAlmostEqual(x[1] ** 2 + x[2] ** 2, 1.0**2)  # distance to x-axis
                 self.assertAlmostEqual(x[0], u)  # x coordinate should be linear
 
+        # fix_corners=True requires a 2D curve
+        c = Curve()
+        c.set_dimension(3)
+        with self.assertRaises(ValueError):
+            sf.thicken(c, 0.5, fix_corners=True)
+
+        # fix_corners=True does not accept a callable thickness function
+        c = cf.line((0, 0), (1, 0))
+        with self.assertRaises(TypeError):
+            sf.thicken(c, myThickness, fix_corners=True)
+
+        # sharp acute V-corner: plain thicken() self-intersects near the tip for
+        # a width comparable to the segment lengths, fix_corners=True should still
+        # produce a valid, non-degenerate 2D surface
+        v_curve = cf.line((-2, 2), (0, 0))
+        v_curve.append(cf.line((0, 0), (2, 2)))
+        s = sf.thicken(v_curve, 1.0, fix_corners=True)
+        self.assertIsInstance(s, Surface)
+        self.assertEqual(s.dimension, 2)
+        self.assertFalse(np.any(np.isnan(s.controlpoints)))
+        self.assertTrue(np.all(np.isfinite(np.asarray(s.start()))))
+        self.assertTrue(np.all(np.isfinite(np.asarray(s.end()))))
+
+        # a plain straight line has no kinks or high-curvature features, so
+        # fix_corners=True should behave the same as the default thicken()
+        straight = cf.line((0, 0), (5, 0))
+        s_plain = sf.thicken(straight, 0.3)
+        s_fixed = sf.thicken(straight, 0.3, fix_corners=True)
+        self.assertTrue(np.allclose(s_plain.bounding_box()[0], s_fixed.bounding_box()[0], atol=1e-6))
+        self.assertTrue(np.allclose(s_plain.bounding_box()[1], s_fixed.bounding_box()[1], atol=1e-6))
+
+        # rectangle: closed loop with four sequential sharp corners (smoke test)
+        rect = cf.line((0, 0), (4, 0))
+        rect.append(cf.line((4, 0), (4, 3)))
+        rect.append(cf.line((4, 3), (0, 3)))
+        rect.append(cf.line((0, 3), (0, 0)))
+        s_rect = sf.thicken(rect, 0.3, fix_corners=True)
+        self.assertIsInstance(s_rect, Surface)
+        self.assertEqual(s_rect.dimension, 2)
+        self.assertFalse(np.any(np.isnan(s_rect.controlpoints)))
+
     def test_surface_loft(self):
         # Test 1: loft two straight lines to the unit square
         crv1 = cf.line((0, 0), (1, 0))
